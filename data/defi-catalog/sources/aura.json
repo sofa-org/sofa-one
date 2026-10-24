@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "aura",
+      "familyVersion": "phase6@36599d53",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xA57b8d98dAE62B26Ec3bcC4a365338157060B234",
+          "status": "inactive",
+          "contractName": "Aura Phase 6 Booster (Ethereum Mainnet)",
+          "sourceRefs": ["aura-mainnet-deployment", "aura-phase6-mainnet-config", "aura-booster-implementation"],
+          "abiFunctions": [
+            { "type": "function", "name": "deposit", "stateMutability": "nonpayable", "inputs": [{ "name": "_pid", "type": "uint256", "internalType": "uint256" }, { "name": "_amount", "type": "uint256", "internalType": "uint256" }, { "name": "_stake", "type": "bool", "internalType": "bool" }], "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }] },
+            { "type": "function", "name": "depositAll", "stateMutability": "nonpayable", "inputs": [{ "name": "_pid", "type": "uint256", "internalType": "uint256" }, { "name": "_stake", "type": "bool", "internalType": "bool" }], "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }] },
+            { "type": "function", "name": "withdraw", "stateMutability": "nonpayable", "inputs": [{ "name": "_pid", "type": "uint256", "internalType": "uint256" }, { "name": "_amount", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }] },
+            { "type": "function", "name": "withdrawAll", "stateMutability": "nonpayable", "inputs": [{ "name": "_pid", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }] }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0x712CC5BeD99aA06fC4D5FB50Aea3750fA5161D0f",
+          "status": "inactive",
+          "contractName": "Aura BaseRewardPool (historical Booster pool 0)",
+          "sourceRefs": ["aura-mainnet-deployment", "aura-base-reward-pool-implementation"],
+          "abiFunctions": [
+            { "type": "function", "name": "withdrawAndUnwrap", "stateMutability": "nonpayable", "inputs": [{ "name": "amount", "type": "uint256", "internalType": "uint256" }, { "name": "claim", "type": "bool", "internalType": "bool" }], "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }] },
+            { "type": "function", "name": "getReward", "stateMutability": "nonpayable", "inputs": [], "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }] }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    { "sourceId": "aura-mainnet-deployment", "url": "https://github.com/aurafinance/aura-contracts/blob/36599d53946aab701e2a1757e164261f49529399/deployments/1.json", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official Aura deployment manifest identifies the Phase 6 Booster at 0xA57b8d98dAE62B26Ec3bcC4a365338157060B234. Its declared address/role does not assert current runtime code or a live/open pool." },
+    { "sourceId": "aura-phase6-mainnet-config", "url": "https://github.com/aurafinance/aura-contracts/blob/36599d53946aab701e2a1757e164261f49529399/tasks/deploy/mainnet-config.ts", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official Phase 6 mainnet deployment configuration independently assigns the same Booster role/address; older phase deployment guesses are not used." },
+    { "sourceId": "aura-booster-implementation", "url": "https://github.com/aurafinance/convex-platform/blob/e7c23cfeec5ef9beb4873d87069363ee458fc184/contracts/contracts/Booster.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned Aura-owned convex-platform Booster implementation source declares the four selected functions, each nonpayable returning bool. The snapshot is an exact selected declaration set, not a claim that all pools are open." },
+    { "sourceId": "aura-base-reward-pool-implementation", "url": "https://github.com/aurafinance/convex-platform/blob/e7c23cfeec5ef9beb4873d87069363ee458fc184/contracts/contracts/BaseRewardPool.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned Aura-owned BaseRewardPool implementation declares withdrawAndUnwrap(uint256,bool) and getReward() as nonpayable bool-returning calls. This own implementation is used instead of conflicting unused interface declarations; operator-only withdrawTo and ambiguous withdrawAll(bool) variants are excluded." }
+  ]
+}

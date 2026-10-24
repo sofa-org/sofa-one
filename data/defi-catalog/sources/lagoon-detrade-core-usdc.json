@@ -1,0 +1,3740 @@
+{
+  "schemaVersion": 1,
+  "chainId": 8453,
+  "address": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+  "protocol": "Lagoon Finance",
+  "protocolId": "lagoon-detrade-core-usdc",
+  "website": "https://lagoon.finance/",
+  "scope": "Lagoon Finance DeTrade Core USDC v0.5.0 Base vault: exact ordinary asynchronous USDC request, cancel-deposit, settled share/asset claim overloads, bundled self claim-and-request-redeem, and conditional valid-NAV synchronous deposit. No Safe executors, curator settlement, role/admin, permit or bridge.",
+  "lifecycleEvidence": {
+    "verifiedAt": "2026-10-22",
+    "decision": "eligible-active",
+    "sourceRefs": [
+      "https://app.lagoon.finance/vault/8453/0x8092ca384d44260ea4feaf7457b629b8dc6f88f0",
+      "https://app.lagoon.finance/",
+      "https://docs.lagoon.finance/overview/readme.md",
+      "https://docs.lagoon.finance/developer-hub/integration/async-deposit-flow.md",
+      "https://docs.lagoon.finance/vault/deposit-and-withdraw-flows.md"
+    ],
+    "evidence": "Official Lagoon active vault directory lists DeTrade Core USDC and its exact current product page offers DEPOSIT, Base USDC, curator, role, version v0.5.0 and market-specific total deposited approximately $676.65K. Reviewed official sources contain no closed/retired/wind-down notice for this vault. This source binds the still-listed current v0.5.0 deployment rather than assuming that newer v0.6.0 features apply. UI total deposited and performance are snapshots, not independently verified balances or DAU; no aggregate TVL is attributed as this vault TVL."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://app.lagoon.finance/vault/8453/0x8092ca384d44260ea4feaf7457b629b8dc6f88f0",
+    "verifiedAt": "2026-10-22",
+    "chainId": 8453,
+    "address": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+    "deployment": {
+      "transactionHash": "0xcb8d35462800eeb74e7de91f118966433aab7225998c154f4bc7e1d9ba0fb1a9",
+      "blockNumber": "27186200",
+      "transactionIndex": "122",
+      "deployer": "0x8846189A4E46997Dd30Fd9e8bE48C1fA1B846920"
+    },
+    "proxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0xE50554ec802375C9c3F9c087a8a7bb8C26d3DEDf",
+          "name": "Vault"
+        }
+      ]
+    },
+    "evidence": "Official exact vault URL and page identify Base chain, 0x8092ca384d44260ea4feaf7457b629b8dc6f88f0, USDC underlying 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913 and v0.5.0. BaseScan exact proxy page displays BeaconProxy and implementation 0xE50554ec802375C9c3F9c087a8a7bb8C26d3DEDf. On-page constructor/deployed beacon literal is 0xee6a60be216058afd7a0643795b4f1e197c8b150. Sourcify proxyResolution independently reports the same Vault implementation. Only vault proxy is admitted; custody Safe is not an executor target.",
+    "beaconAddress": "0xee6a60be216058afd7a0643795b4f1e197c8b150",
+    "explorerSourceRef": "https://basescan.org/address/0x8092ca384d44260ea4feaf7457b629b8dc6f88f0#code",
+    "constructorArguments": "0x000000000000000000000000ee6a60be216058afd7a0643795b4f1e197c8b15000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000264d4799d810000000000000000000000000000000000000000000000000000000000000020000000000000000000000000833589fcd6edb6e08f4c7c32d4f71b54bda0291300000000000000000000000000000000000000000000000000000000000001c00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000c6835323372a4393b90bcc227c58e82d45ce4b7d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c6835323372a4393b90bcc227c58e82d45ce4b7d000000000000000000000000c6835323372a4393b90bcc227c58e82d45ce4b7d0000000000000000000000007489d305f10760d686f8d4bb2e211a7f31c2f7870000000000000000000000006da4d1859ba1d02d095d2246142cdad52233e27c0000000000000000000000004200000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005dc0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001518000000000000000000000000000000000000000000000000000000000000000114465547261646520436f726520555344430000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006445455534443000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0xE50554ec802375C9c3F9c087a8a7bb8C26d3DEDf?fields=all",
+    "verifiedAt": "2026-10-22",
+    "chainId": 8453,
+    "address": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+    "implementationAddress": "0xE50554ec802375C9c3F9c087a8a7bb8C26d3DEDf",
+    "proxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0xE50554ec802375C9c3F9c087a8a7bb8C26d3DEDf",
+          "name": "Vault"
+        }
+      ]
+    },
+    "reportedProxyCreationMatch": "exact_match",
+    "reportedProxyRuntimeMatch": "exact_match",
+    "reportedImplementationCreationMatch": "exact_match",
+    "reportedImplementationRuntimeMatch": "exact_match",
+    "sourceServiceProxyVerifiedAt": "2025-06-30T14:26:58Z",
+    "sourceServiceImplementationVerifiedAt": "2026-06-23T00:02:50Z",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.26+commit.8a97fa7a",
+      "compilerSettings": {
+        "viaIR": false,
+        "metadata": {
+          "appendCBOR": true,
+          "bytecodeHash": "ipfs",
+          "useLiteralContent": false
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 1,
+          "enabled": true
+        },
+        "evmVersion": "cancun",
+        "remappings": [
+          "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+          "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+          "@openzeppelin-foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/",
+          "@src/=src/",
+          "@test/=test/",
+          "ds-test/=lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/",
+          "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+          "forge-std/=lib/forge-std/src/",
+          "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/",
+          "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+          "openzeppelin-foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/",
+          "solidity-stringutils/=lib/openzeppelin-foundry-upgrades/lib/solidity-stringutils/"
+        ]
+      },
+      "name": "Vault",
+      "fullyQualifiedName": "src/v0.5.0/Vault.sol:Vault"
+    },
+    "evidence": "Full applicable implementation ABI and source obtained from the exact deployed implementation through Sourcify v2, resolved from exact proxy. Match labels are recorded verbatim. No generic ERC4626 ABI substitution and no fresh RPC identity/execution assertion.",
+    "explorerProxyReportedMatch": "Exact Match"
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "disable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "AboveMaxRate",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "maxRate",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "AddressEmptyCode",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "AddressInsufficientBalance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "CantDepositNativeToken",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "Closed",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ERC20InsufficientAllowance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "allowance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InsufficientBalance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "balance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidApprover",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "approver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidReceiver",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSpender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxDeposit",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxMint",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxRedeem",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxWithdraw",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC7540InvalidOperator",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ERC7540PreviewDepositDisabled",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ERC7540PreviewMintDisabled",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ERC7540PreviewRedeemDisabled",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ERC7540PreviewWithdrawDisabled",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "EnforcedPause",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ExpectedPause",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "FailedInnerCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidInitialization",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "MathOverflowedMulDiv",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "NewTotalAssetsMissing",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "NotClosing",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "currentState",
+          "type": "uint8",
+          "internalType": "enum State"
+        }
+      ]
+    },
+    {
+      "name": "NotInitializing",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "NotOpen",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "currentState",
+          "type": "uint8",
+          "internalType": "enum State"
+        }
+      ]
+    },
+    {
+      "name": "NotWhitelisted",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyAsyncDepositAllowed",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyOneRequestAllowed",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlySafe",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "safe",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "OnlySyncDepositAllowed",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyValuationManager",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "valuationManager",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "OnlyWhitelistManager",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "whitelistManager",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "OwnableInvalidOwner",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "OwnableUnauthorizedAccount",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "RequestIdNotClaimable",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RequestNotCancelable",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "SafeERC20FailedOperation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ValuationUpdateNotAllowed",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "WrongNewTotalAssets",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DepositRequest",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DepositRequestCanceled",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DepositSync",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "FeeReceiverUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldReceiver",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newReceiver",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "HighWaterMarkUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldHighWaterMark",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newHighWaterMark",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Initialized",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "NewTotalAssetsUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "totalAssets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OperatorSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "operator",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "approved",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OwnershipTransferStarted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OwnershipTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Paused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RatesUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldRates",
+          "type": "tuple",
+          "indexed": false,
+          "components": [
+            {
+              "name": "managementRate",
+              "type": "uint16",
+              "internalType": "uint16"
+            },
+            {
+              "name": "performanceRate",
+              "type": "uint16",
+              "internalType": "uint16"
+            }
+          ],
+          "internalType": "struct Rates"
+        },
+        {
+          "name": "newRate",
+          "type": "tuple",
+          "indexed": false,
+          "components": [
+            {
+              "name": "managementRate",
+              "type": "uint16",
+              "internalType": "uint16"
+            },
+            {
+              "name": "performanceRate",
+              "type": "uint16",
+              "internalType": "uint16"
+            }
+          ],
+          "internalType": "struct Rates"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RedeemRequest",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Referral",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "referral",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SettleDeposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "epochId",
+          "type": "uint40",
+          "indexed": true,
+          "internalType": "uint40"
+        },
+        {
+          "name": "settledId",
+          "type": "uint40",
+          "indexed": true,
+          "internalType": "uint40"
+        },
+        {
+          "name": "totalAssets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalSupply",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "assetsDeposited",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "sharesMinted",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SettleRedeem",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "epochId",
+          "type": "uint40",
+          "indexed": true,
+          "internalType": "uint40"
+        },
+        {
+          "name": "settledId",
+          "type": "uint40",
+          "indexed": true,
+          "internalType": "uint40"
+        },
+        {
+          "name": "totalAssets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalSupply",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "assetsWithdrawed",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "sharesBurned",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "StateUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "state",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "enum State"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TotalAssetsLifespanUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldLifespan",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        },
+        {
+          "name": "newLifespan",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TotalAssetsUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "totalAssets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Unpaused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ValuationManagerUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldManager",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newManager",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "WhitelistDisabled",
+      "type": "event",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "name": "WhitelistManagerUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldManager",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newManager",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "WhitelistUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "authorized",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MAX_MANAGEMENT_RATE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "MAX_PERFORMANCE_RATE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "MAX_PROTOCOL_RATE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "acceptOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addToWhitelist",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "accounts",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "asset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "cancelRequestDeposit",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claimSharesAndRequestRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "sharesToRedeem",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "requestId",
+          "type": "uint40",
+          "internalType": "uint40"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claimSharesOnBehalf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "controllers",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claimableDepositRequest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "claimableRedeemRequest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "close",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_newTotalAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "disableWhitelist",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "expireTotalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "feeRates",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "managementRate",
+              "type": "uint16",
+              "internalType": "uint16"
+            },
+            {
+              "name": "performanceRate",
+              "type": "uint16",
+              "internalType": "uint16"
+            }
+          ],
+          "internalType": "struct Rates"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getRolesStorage",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "_rolesStorage",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "whitelistManager",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "feeReceiver",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "safe",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "feeRegistry",
+              "type": "address",
+              "internalType": "contract FeeRegistry"
+            },
+            {
+              "name": "valuationManager",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "internalType": "struct Roles.RolesStorage"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "feeRegistry",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "wrappedNativeToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "initiateClosing",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "isOperator",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "operator",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isTotalAssetsValid",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isWhitelisted",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "paused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pendingDepositRequest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pendingOwner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pendingRedeemRequest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "previewMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "previewRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "previewWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "requestDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "requestDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "referral",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "requestRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "revokeFromWhitelist",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "accounts",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "safe",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "setOperator",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "operator",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "approved",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "success",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "settleDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_newTotalAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "settleRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_newTotalAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "share",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "supportsInterface",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "syncDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "referral",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferOwnership",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unpause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateFeeReceiver",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_feeReceiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateNewTotalAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_newTotalAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateRates",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newRates",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "managementRate",
+              "type": "uint16",
+              "internalType": "uint16"
+            },
+            {
+              "name": "performanceRate",
+              "type": "uint16",
+              "internalType": "uint16"
+            }
+          ],
+          "internalType": "struct Rates"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateTotalAssetsLifespan",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "lifespan",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateValuationManager",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_valuationManager",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateWhitelistManager",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_whitelistManager",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "version",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "proxyAbi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "beacon",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "AddressEmptyCode",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967InvalidBeacon",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "beacon",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967InvalidImplementation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967NonPayable",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "FailedInnerCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "BeaconUpgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "beacon",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "fallback",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionDecisions": [
+    {
+      "signature": "MAX_MANAGEMENT_RATE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "MAX_MANAGEMENT_RATE() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "MAX_PERFORMANCE_RATE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "MAX_PERFORMANCE_RATE() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "MAX_PROTOCOL_RATE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "MAX_PROTOCOL_RATE() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "acceptOwnership()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Pending-owner-only administration accepts ownership; not a depositor action."
+    },
+    {
+      "signature": "addToWhitelist(address[])",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyWhitelistManager changes eligibility list; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "allowance(address,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "allowance(address,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "approve(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "ERC20 allowance authorization is outside reviewed vault entry/exit scope; no generic approval capability added."
+    },
+    {
+      "signature": "asset()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "asset() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "balanceOf(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "balanceOf(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "cancelRequestDeposit()",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Caller cancels own deposit only in the still-current epoch and receives pendingSilo USDC refund; pause check applies."
+    },
+    {
+      "signature": "claimSharesAndRequestRedeem(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Caller claims own settled deposit then requests redemption of shares; fixed internal user workflow, not an arbitrary executor."
+    },
+    {
+      "signature": "claimSharesOnBehalf(address[])",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlySafe curator batch distributes settled shares; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "claimableDepositRequest(uint256,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "claimableDepositRequest(uint256,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "claimableRedeemRequest(uint256,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "claimableRedeemRequest(uint256,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "close(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlySafe permanently closes a Closing vault; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "convertToAssets(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "convertToAssets(uint256) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "convertToAssets(uint256,uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "convertToAssets(uint256,uint256) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "convertToShares(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "convertToShares(uint256) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "convertToShares(uint256,uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "convertToShares(uint256,uint256) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "decimals()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "decimals() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "deposit(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Controller or approved operator partially claims settled deposit assets as shares to receiver via epoch conversion."
+    },
+    {
+      "signature": "deposit(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Claims caller settled deposit expressed in asset units, transfers corresponding pre-minted vault shares to receiver; not a synchronous deposit."
+    },
+    {
+      "signature": "disableWhitelist()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOwner disables eligibility control; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "expireTotalAssets()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlySafe expires NAV and changes entry mode; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "feeRates()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "feeRates() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "getRolesStorage()",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "getRolesStorage() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "initialize(bytes,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Deployment-only initializer changes critical vault identity/configuration; not an ordinary user action."
+    },
+    {
+      "signature": "initiateClosing()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOwner begins irreversible vault closure; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "isOperator(address,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "isOperator(address,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "isTotalAssetsValid()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "isTotalAssetsValid() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "isWhitelisted(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "isWhitelisted(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "maxDeposit(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "maxDeposit(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "maxMint(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "maxMint(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "maxRedeem(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "maxRedeem(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "maxWithdraw(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "maxWithdraw(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "mint(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Claims caller settled deposit expressed as desired shares; consumes rounded-up epoch assets and transfers existing shares to receiver."
+    },
+    {
+      "signature": "mint(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Controller or approved operator claims settled deposit by exact share amount with epoch asset rounding-up."
+    },
+    {
+      "signature": "name()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "name() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "owner()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "owner() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "pause()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOwner pauses vault; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "paused()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "paused() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "pendingDepositRequest(uint256,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "pendingDepositRequest(uint256,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "pendingOwner()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "pendingOwner() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "pendingRedeemRequest(uint256,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "pendingRedeemRequest(uint256,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "previewDeposit(uint256)",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "previewDeposit(uint256) is deliberately disabled by this deployed asynchronous-vault implementation and unconditionally reverts; not an ordinary supported preview."
+    },
+    {
+      "signature": "previewMint(uint256)",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "previewMint(uint256) is deliberately disabled by this deployed asynchronous-vault implementation and unconditionally reverts; not an ordinary supported preview."
+    },
+    {
+      "signature": "previewRedeem(uint256)",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "previewRedeem(uint256) is deliberately disabled by this deployed asynchronous-vault implementation and unconditionally reverts; not an ordinary supported preview."
+    },
+    {
+      "signature": "previewWithdraw(uint256)",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "previewWithdraw(uint256) is deliberately disabled by this deployed asynchronous-vault implementation and unconditionally reverts; not an ordinary supported preview."
+    },
+    {
+      "signature": "redeem(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Controller or approved operator partially claims settled redemption as USDC using share amount; pause checks apply. Closed-mode fallback is not the lifecycle admission basis."
+    },
+    {
+      "signature": "renounceOwnership()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Owner-only administration relinquishes control; not a depositor action."
+    },
+    {
+      "signature": "requestDeposit(uint256,address,address)",
+      "stateMutability": "payable",
+      "selected": true,
+      "reason": "Owner or operator queues USDC into pendingSilo only while NAV is expired, with whitelist and pause checks; controller receives eventual claim."
+    },
+    {
+      "signature": "requestDeposit(uint256,address,address,address)",
+      "stateMutability": "payable",
+      "selected": true,
+      "reason": "Same owner/operator asynchronous deposit request, with explicit referral event; requires expired NAV and whitelist/pause checks."
+    },
+    {
+      "signature": "requestRedeem(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Requests ordinary user redemption while Open; uses owner/operator or share allowance and whitelisted owner; escrows shares pending curator settlement."
+    },
+    {
+      "signature": "revokeFromWhitelist(address[])",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyWhitelistManager changes eligibility list; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "safe()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "safe() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "setOperator(address,bool)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Persistent ERC7540 operator authorization is outside this direct-user vault workflow; existing valid operator checks are preserved, not granted."
+    },
+    {
+      "signature": "settleDeposit(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlySafe curator valuation/settlement action; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "settleRedeem(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlySafe curator redemption settlement action; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "share()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "share() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "supportsInterface(bytes4)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "supportsInterface(bytes4) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "symbol()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "symbol() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "syncDeposit(uint256,address,address)",
+      "stateMutability": "payable",
+      "selected": true,
+      "reason": "Ordinary caller deposits USDC to fixed custody Safe and receives shares while NAV remains valid and vault is Open; whitelist and share-mint pause checks remain enforced."
+    },
+    {
+      "signature": "totalAssets()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "totalAssets() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "totalSupply()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "totalSupply() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "transfer(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "ERC20 share transfer is outside reviewed vault deposit/redemption scope."
+    },
+    {
+      "signature": "transferFrom(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "ERC20 third-party share transfer is outside reviewed vault deposit/redemption scope."
+    },
+    {
+      "signature": "transferOwnership(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Owner-only administration transfers protocol ownership; not a depositor action."
+    },
+    {
+      "signature": "unpause()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOwner resumes vault; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "updateFeeReceiver(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOwner changes fee recipient; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "updateNewTotalAssets(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyValuationManager proposes NAV; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "updateRates((uint16,uint16))",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOwner changes vault fee rates; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "updateTotalAssetsLifespan(uint128)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlySafe changes NAV validity duration; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "updateValuationManager(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOwner changes valuation authority; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "updateWhitelistManager(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOwner changes eligibility authority; privileged administration/curation is not an ordinary depositor capability."
+    },
+    {
+      "signature": "version()",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "version() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "withdraw(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Controller or approved operator partially claims settled redemption as USDC using asset amount and rounded-up epoch shares; pause checks apply."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "name": "cancelRequestDeposit",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:cancel-deposit-request",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "cancelRequestDeposit",
+      "signature": "cancelRequestDeposit()",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "cancel-deposit-request",
+      "label": "Cancel pending deposit",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    },
+    {
+      "abi": {
+        "name": "claimSharesAndRequestRedeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "sharesToRedeem",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "requestId",
+            "type": "uint40",
+            "internalType": "uint40"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:claim-and-request-redeem",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "claimSharesAndRequestRedeem",
+      "signature": "claimSharesAndRequestRedeem(uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "claim-and-request-redeem",
+      "label": "Claim shares and request redemption",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    },
+    {
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "controller",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:claim-deposit-controller",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "claim-deposit-controller",
+      "label": "Claim controller deposit shares",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    },
+    {
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:claim-deposit",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "claim-deposit",
+      "label": "Claim deposit shares",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    },
+    {
+      "abi": {
+        "name": "mint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:claim-mint",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "mint",
+      "signature": "mint(uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "claim-mint",
+      "label": "Claim deposit by share amount",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    },
+    {
+      "abi": {
+        "name": "mint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "controller",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:claim-mint-controller",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "mint",
+      "signature": "mint(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "claim-mint-controller",
+      "label": "Claim controller deposit by shares",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    },
+    {
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "controller",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:claim-redeem",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "claim-redeem",
+      "label": "Claim settled redemption by shares",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    },
+    {
+      "abi": {
+        "name": "requestDeposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "controller",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "requestId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:request-deposit",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "requestDeposit",
+      "signature": "requestDeposit(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "request-deposit",
+      "label": "Request USDC deposit",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    },
+    {
+      "abi": {
+        "name": "requestDeposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "controller",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referral",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "requestId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:request-deposit-referral",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "requestDeposit",
+      "signature": "requestDeposit(uint256,address,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "request-deposit-referral",
+      "label": "Request USDC deposit with referral",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    },
+    {
+      "abi": {
+        "name": "requestRedeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "controller",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "requestId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:request-redeem",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "requestRedeem",
+      "signature": "requestRedeem(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "request-redeem",
+      "label": "Request share redemption",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    },
+    {
+      "abi": {
+        "name": "syncDeposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referral",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:sync-deposit",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "syncDeposit",
+      "signature": "syncDeposit(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "sync-deposit",
+      "label": "Deposit against valid NAV",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    },
+    {
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "controller",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "lagoon-detrade-core-usdc:v1:8453:0x8092ca384d44260ea4feaf7457b629b8dc6f88f0:claim-withdraw",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x8092cA384D44260ea4feaf7457B629B8DC6f88F0",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/lagoon-detrade-core-usdc.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Lagoon Finance",
+      "operation": "claim-withdraw",
+      "label": "Claim settled redemption by assets",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+        "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+        "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+        "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+        "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+      ]
+    }
+  ],
+  "sourceCode": {
+    "src/v0.5.0/Vault.sol": "// SPDX-License-Identifier: BUSL-1.1\npragma solidity \"0.8.26\";\n\nimport {ERC7540} from \"./ERC7540.sol\";\nimport {FeeManager} from \"./FeeManager.sol\";\nimport {Roles} from \"./Roles.sol\";\nimport {Whitelistable} from \"./Whitelistable.sol\";\nimport {State} from \"./primitives/Enums.sol\";\nimport {\n    CantDepositNativeToken,\n    Closed,\n    ERC7540InvalidOperator,\n    NotClosing,\n    NotOpen,\n    NotWhitelisted,\n    OnlyAsyncDepositAllowed,\n    OnlySyncDepositAllowed,\n    ValuationUpdateNotAllowed\n} from \"./primitives/Errors.sol\";\n\nimport {DepositSync, Referral, StateUpdated} from \"./primitives/Events.sol\";\nimport {ERC20Upgradeable} from \"@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol\";\nimport {ERC4626Upgradeable} from \"@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol\";\nimport {IERC4626} from \"@openzeppelin/contracts/interfaces/IERC4626.sol\";\nimport {IERC20Metadata} from \"@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol\";\nimport {IERC20, SafeERC20} from \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\nimport {Math} from \"@openzeppelin/contracts/utils/math/Math.sol\";\nimport {FeeRegistry} from \"@src/protocol/FeeRegistry.sol\";\n\nusing SafeERC20 for IERC20;\n\n/// @custom:storage-definition erc7201:hopper.storage.vault\n/// @param underlying The address of the underlying asset.\n/// @param name The name of the vault and by extension the ERC20 token.\n/// @param symbol The symbol of the vault and by extension the ERC20 token.\n/// @param safe The address of the safe smart contract.\n/// @param whitelistManager The address of the whitelist manager.\n/// @param valuationManager The address of the valuation manager.\n/// @param admin The address of the owner of the vault.\n/// @param feeReceiver The address of the fee receiver.\n/// @param feeRegistry The address of the fee registry.\n/// @param wrappedNativeToken The address of the wrapped native token.\n/// @param managementRate The management fee rate.\n/// @param performanceRate The performance fee rate.\n/// @param rateUpdateCooldown The cooldown period for updating the fee rates.\n/// @param enableWhitelist A boolean indicating whether the whitelist is enabled.\nstruct InitStruct {\n    IERC20 underlying;\n    string name;\n    string symbol;\n    address safe;\n    address whitelistManager;\n    address valuationManager;\n    address admin;\n    address feeReceiver;\n    uint16 managementRate;\n    uint16 performanceRate;\n    bool enableWhitelist;\n    uint256 rateUpdateCooldown;\n}\n\n/// @custom:oz-upgrades-from src/v0.4.0/Vault.sol:Vault\ncontract Vault is ERC7540, Whitelistable, FeeManager {\n    /// @custom:storage-location erc7201:hopper.storage.vault\n    /// @param newTotalAssets The new total assets of the vault. It is used to update the totalAssets variable.\n    /// @param state The state of the vault. It can be Open, Closing, or Closed.\n    struct VaultStorage {\n        State state;\n    }\n\n    // keccak256(abi.encode(uint256(keccak256(\"hopper.storage.vault\")) - 1)) & ~bytes32(uint256(0xff))\n    /// @custom:slot erc7201:hopper.storage.vault\n    // solhint-disable-next-line const-name-snakecase\n    bytes32 private constant vaultStorage = 0x0e6b3200a60a991c539f47dddaca04a18eb4bcf2b53906fb44751d827f001400;\n\n    /// @notice Returns the storage struct of the vault.\n    /// @return _vaultStorage The storage struct of the vault.\n    function _getVaultStorage() internal pure returns (VaultStorage storage _vaultStorage) {\n        // solhint-disable-next-line no-inline-assembly\n        assembly {\n            _vaultStorage.slot := vaultStorage\n        }\n    }\n\n    /// @custom:oz-upgrades-unsafe-allow constructor\n    // solhint-disable-next-line ignoreConstructors\n    constructor(\n        bool disable\n    ) {\n        if (disable) _disableInitializers();\n    }\n\n    /// @notice Initializes the vault.\n    /// @param data The encoded initialization parameters of the vault.\n    function initialize(\n        bytes memory data,\n        address feeRegistry,\n        address wrappedNativeToken\n    ) public virtual initializer {\n        InitStruct memory init = abi.decode(data, (InitStruct));\n        __Ownable_init(init.admin); // initial vault owner\n        __Roles_init(\n            Roles.RolesStorage({\n                whitelistManager: init.whitelistManager,\n                feeReceiver: init.feeReceiver,\n                safe: init.safe,\n                feeRegistry: FeeRegistry(feeRegistry),\n                valuationManager: init.valuationManager\n            })\n        );\n        __ERC20_init(init.name, init.symbol);\n        __ERC20Pausable_init();\n        __ERC4626_init(init.underlying);\n        __ERC7540_init(init.underlying, wrappedNativeToken);\n        __Whitelistable_init(init.enableWhitelist);\n        __FeeManager_init(\n            feeRegistry,\n            init.managementRate,\n            init.performanceRate,\n            IERC20Metadata(address(init.underlying)).decimals(),\n            init.rateUpdateCooldown\n        );\n\n        emit StateUpdated(State.Open);\n    }\n\n    /////////////////////\n    // ## MODIFIERS ## //\n    /////////////////////\n\n    /// @notice Reverts if the vault is not open.\n    modifier onlyOpen() {\n        State _state = _getVaultStorage().state;\n        if (_state != State.Open) revert NotOpen(_state);\n        _;\n    }\n\n    /// @notice Reverts if the vault is not closing.\n    modifier onlyClosing() {\n        State _state = _getVaultStorage().state;\n        if (_state != State.Closing) revert NotClosing(_state);\n        _;\n    }\n\n    // @notice Reverts if totalAssets is expired.\n    modifier onlySyncDeposit() {\n        // if total assets is not valid we can only do asynchronous deposit\n        if (!isTotalAssetsValid()) {\n            revert OnlyAsyncDepositAllowed();\n        }\n        _;\n    }\n\n    // @notice Reverts if totalAssets is valid.\n    modifier onlyAsyncDeposit() {\n        // if total assets is valid we can only do synchronous deposit\n        if (isTotalAssetsValid()) {\n            revert OnlySyncDepositAllowed();\n        }\n        _;\n    }\n\n    /////////////////////////////////////////////\n    // ## DEPOSIT AND REDEEM FLOW FUNCTIONS ## //\n    /////////////////////////////////////////////\n\n    /// @param assets The amount of assets to deposit.\n    /// @param controller The address of the controller involved in the deposit request.\n    /// @param owner The address of the owner for whom the deposit is requested.\n    function requestDeposit(\n        uint256 assets,\n        address controller,\n        address owner\n    ) public payable override onlyOperator(owner) whenNotPaused onlyAsyncDeposit returns (uint256 requestId) {\n        if (!isWhitelisted(owner)) revert NotWhitelisted();\n        return _requestDeposit(assets, controller, owner);\n    }\n\n    /// @notice Requests a deposit of assets, subject to whitelist validation.\n    /// @param assets The amount of assets to deposit.\n    /// @param controller The address of the controller involved in the deposit request.\n    /// @param owner The address of the owner for whom the deposit is requested.\n    /// @param referral The address who referred the deposit.\n    function requestDeposit(\n        uint256 assets,\n        address controller,\n        address owner,\n        address referral\n    ) public payable onlyOperator(owner) whenNotPaused onlyAsyncDeposit returns (uint256 requestId) {\n        if (!isWhitelisted(owner)) revert NotWhitelisted();\n        requestId = _requestDeposit(assets, controller, owner);\n\n        emit Referral(referral, owner, requestId, assets);\n    }\n\n    /// @notice Deposit in a sychronous fashion into the vault.\n    /// @param assets The assets to deposit.\n    /// @param receiver The receiver of the shares.\n    /// @return shares The resulting shares.\n    function syncDeposit(\n        uint256 assets,\n        address receiver,\n        address referral\n    ) public payable onlySyncDeposit onlyOpen returns (uint256 shares) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        if (!isWhitelisted(msg.sender)) revert NotWhitelisted();\n\n        if (msg.value != 0) {\n            // if user sends eth and the underlying is wETH we will wrap it for him\n            if (asset() == address($.wrappedNativeToken)) {\n                assets = msg.value;\n                // we do not send directly eth in case the safe is not payable\n                $.pendingSilo.depositEth{value: assets}();\n                IERC20(asset()).safeTransferFrom(address($.pendingSilo), safe(), assets);\n            } else {\n                revert CantDepositNativeToken();\n            }\n        } else {\n            IERC20(asset()).safeTransferFrom(msg.sender, safe(), assets);\n        }\n        shares = _convertToShares(assets, Math.Rounding.Floor);\n        $.totalAssets += assets;\n        _mint(receiver, shares);\n\n        emit DepositSync(msg.sender, receiver, assets, shares);\n\n        emit Referral(referral, msg.sender, 0, assets);\n    }\n\n    /// @notice Requests the redemption of tokens, subject to whitelist validation.\n    /// @param shares The number of tokens to redeem.\n    /// @param controller The address of the controller involved in the redemption request.\n    /// @param owner The address of the token owner requesting redemption.\n    /// @return requestId The id of the redeem request.\n    function requestRedeem(\n        uint256 shares,\n        address controller,\n        address owner\n    ) public onlyOpen whenNotPaused returns (uint256 requestId) {\n        if (!isWhitelisted(owner)) revert NotWhitelisted();\n        return _requestRedeem(shares, controller, owner);\n    }\n\n    /// @notice Function to bundle a claim of shares and a request redeem. It can be convenient for UX.\n    /// @dev if claimable == 0, it has the same behavior as requestRedeem function.\n    /// @dev if claimable > 0, user shares follow this path: vault --> user ; user --> pendingSilo\n    function claimSharesAndRequestRedeem(\n        uint256 sharesToRedeem\n    ) public onlyOpen whenNotPaused returns (uint40 requestId) {\n        if (!isWhitelisted(msg.sender)) revert NotWhitelisted();\n\n        uint256 claimable = claimableDepositRequest(0, msg.sender);\n        if (claimable > 0) _deposit(claimable, msg.sender, msg.sender);\n\n        uint256 redeemId = _requestRedeem(sharesToRedeem, msg.sender, msg.sender);\n\n        return uint40(redeemId);\n    }\n\n    /// @dev Unusable when paused.\n    /// @dev First _withdraw path: whenNotPaused via ERC20Pausable._update.\n    /// @dev Second _withdraw path: whenNotPaused in ERC7540.\n    function withdraw(\n        uint256 assets,\n        address receiver,\n        address controller\n    ) public override(ERC4626Upgradeable, IERC4626) whenNotPaused returns (uint256 shares) {\n        VaultStorage storage $ = _getVaultStorage();\n\n        if ($.state == State.Closed && claimableRedeemRequest(0, controller) == 0) {\n            shares = _convertToShares(assets, Math.Rounding.Ceil);\n            _withdraw(msg.sender, receiver, controller, assets, shares); // sync\n        } else {\n            if (controller != msg.sender && !isOperator(controller, msg.sender)) {\n                revert ERC7540InvalidOperator();\n            }\n            return _withdraw(assets, receiver, controller); // async\n        }\n    }\n\n    /// @dev Unusable when paused.\n    /// @dev First _withdraw path: whenNotPaused via ERC20Pausable._update.\n    /// @dev Second _withdraw path: whenNotPaused in ERC7540.\n    /// @notice Claim assets from the vault. After a request is made and settled.\n    /// @param shares The amount shares to convert into assets.\n    /// @param receiver The receiver of the assets.\n    /// @param controller The controller, who owns the redeem request.\n    /// @return assets The corresponding assets.\n    function redeem(\n        uint256 shares,\n        address receiver,\n        address controller\n    ) public override(ERC4626Upgradeable, IERC4626) whenNotPaused returns (uint256 assets) {\n        VaultStorage storage $ = _getVaultStorage();\n\n        if ($.state == State.Closed && claimableRedeemRequest(0, controller) == 0) {\n            assets = _convertToAssets(shares, Math.Rounding.Floor);\n            _withdraw(msg.sender, receiver, controller, assets, shares);\n        } else {\n            if (controller != msg.sender && !isOperator(controller, msg.sender)) {\n                revert ERC7540InvalidOperator();\n            }\n            return _redeem(shares, receiver, controller);\n        }\n    }\n\n    /// @dev override ERC4626 synchronous withdraw; called only when vault is closed\n    /// @param caller The address of the caller.\n    /// @param receiver The address of the receiver of the assets.\n    /// @param owner The address of the owner of the shares.\n    /// @param assets The amount of assets to withdraw.\n    /// @param shares The amount of shares to burn.\n    function _withdraw(\n        address caller,\n        address receiver,\n        address owner,\n        uint256 assets,\n        uint256 shares\n    ) internal virtual override {\n        if (caller != owner && !isOperator(owner, caller)) {\n            _spendAllowance(owner, caller, shares);\n        }\n\n        _getERC7540Storage().totalAssets -= assets;\n\n        _burn(owner, shares);\n\n        IERC20(asset()).safeTransfer(receiver, assets);\n\n        emit Withdraw(caller, receiver, owner, assets, shares);\n    }\n\n    /// @notice Claims all available shares for a list of controller addresses.\n    /// @dev Iterates over each controller address, checks for claimable deposits, and deposits them on their behalf.\n    /// @param controllers The list of controller addresses for which to claim shares.\n    function claimSharesOnBehalf(\n        address[] memory controllers\n    ) external onlySafe {\n        for (uint256 i = 0; i < controllers.length; i++) {\n            uint256 claimable = claimableDepositRequest(0, controllers[i]);\n            if (claimable > 0) {\n                _deposit(claimable, controllers[i], controllers[i]);\n            }\n        }\n    }\n\n    ///////////////////////////////////////////////////////\n    // ## VALUATION UPDATING AND SETTLEMENT FUNCTIONS ## //\n    ///////////////////////////////////////////////////////\n\n    function updateTotalAssetsLifespan(\n        uint128 lifespan\n    ) external onlySafe {\n        _updateTotalAssetsLifespan(lifespan);\n    }\n\n    /// @notice Function to propose a new valuation for the vault.\n    /// @notice It can only be called by the ValueManager.\n    /// @param _newTotalAssets The new total assets of the vault.\n    function updateNewTotalAssets(\n        uint256 _newTotalAssets\n    ) public onlyValuationManager {\n        if (_getVaultStorage().state == State.Closed) revert Closed();\n\n        // if totalAssets is not expired yet it means syncDeposit are allowed\n        // in this case we do not allow onlyValuationManager to propose a new nav\n        // he must call unvalidateTotalAssets first.\n        if (isTotalAssetsValid()) {\n            revert ValuationUpdateNotAllowed();\n        }\n        _updateNewTotalAssets(_newTotalAssets);\n    }\n\n    /// @notice Settles deposit requests, integrates user funds into the vault strategy, and enables share claims.\n    /// If possible, it also settles redeem requests.\n    /// @dev Unusable when paused, protected by whenNotPaused in _updateTotalAssets.\n    function settleDeposit(\n        uint256 _newTotalAssets\n    ) public override onlySafe onlyOpen {\n        _updateTotalAssetsAndTakeFees(_newTotalAssets);\n        _settleDeposit(msg.sender);\n        _settleRedeem(msg.sender); // if it is possible to settleRedeem, we should do so\n    }\n\n    /// @notice Settles redeem requests, only callable by the safe.\n    /// @dev Unusable when paused, protected by whenNotPaused in _updateTotalAssets.\n    /// @dev After updating totalAssets, it takes fees, updates highWaterMark and finally settles redeem requests.\n    /// @inheritdoc ERC7540\n    function settleRedeem(\n        uint256 _newTotalAssets\n    ) public override onlySafe onlyOpen {\n        _updateTotalAssetsAndTakeFees(_newTotalAssets);\n        _settleRedeem(msg.sender);\n    }\n\n    /// @notice Settles deposit requests, integrates user funds into the vault strategy, and enables share claims.\n    /// If possible, it also settles redeem requests.\n    /// @dev Unusable when paused, protected by whenNotPaused in _updateTotalAssets.\n    function _updateTotalAssetsAndTakeFees(\n        uint256 _newTotalAssets\n    ) internal {\n        RolesStorage storage $roles = _getRolesStorage();\n\n        _updateTotalAssets(_newTotalAssets);\n        _takeFees($roles.feeReceiver, $roles.feeRegistry.protocolFeeReceiver());\n    }\n\n    /////////////////////////////\n    // ## CLOSING FUNCTIONS ## //\n    /////////////////////////////\n\n    /// @notice Initiates the closing of the vault. Can only be called by the owner.\n    /// @dev we make sure that initiate closing will make an epoch changement if the variable newTotalAssets is\n    /// \"defined\"\n    /// @dev (!= type(uint256).max). This guarantee that no userShares will be locked in a pending state.\n    function initiateClosing() external onlyOwner onlyOpen {\n        ERC7540Storage storage $ = _getERC7540Storage();\n        if ($.newTotalAssets != type(uint256).max) {\n            _updateNewTotalAssets($.newTotalAssets);\n        }\n        _getVaultStorage().state = State.Closing;\n        emit StateUpdated(State.Closing);\n    }\n\n    /// @notice Closes the vault, only redemption and withdrawal are allowed after this. Can only be called by the safe.\n    /// @dev Users can still requestDeposit but it can't be settled.\n    function close(\n        uint256 _newTotalAssets\n    ) external onlySafe onlyClosing {\n        RolesStorage storage $roles = _getRolesStorage();\n        _updateTotalAssets(_newTotalAssets);\n        _takeFees($roles.feeReceiver, $roles.feeRegistry.protocolFeeReceiver());\n\n        _settleDeposit(msg.sender);\n        _settleRedeem(msg.sender);\n        _getVaultStorage().state = State.Closed;\n\n        // Transfer will fail if there are not enough assets inside the safe, making sure that redeem requests are\n        // fulfilled\n        IERC20(asset()).safeTransferFrom(msg.sender, address(this), _getERC7540Storage().totalAssets);\n\n        emit StateUpdated(State.Closed);\n    }\n\n    /////////////////////////////////\n    // ## PAUSABILITY FUNCTIONS ## //\n    /////////////////////////////////\n\n    /// @notice Halts core operations of the vault. Can only be called by the owner.\n    /// @notice Core operations include deposit, redeem, withdraw, any type of request, settles deposit and redeem and\n    /// newTotalAssets update.\n    function pause() public onlyOwner {\n        _pause();\n    }\n\n    /// @notice Resumes core operations of the vault. Can only be called by the owner.\n    function unpause() public onlyOwner {\n        _unpause();\n    }\n\n    function expireTotalAssets() public onlySafe {\n        _getERC7540Storage().totalAssetsExpiration = 0;\n    }\n\n    // MAX FUNCTIONS OVERRIDE //\n\n    /// @notice Returns the maximum redeemable shares for a controller.\n    /// @param controller The controller.\n    /// @return shares The maximum redeemable shares.\n    /// @dev When the vault is closed, users may claim there assets (erc7540.redeem style) or redeem there assets in a\n    /// sync manner.\n    /// this is why when they have nothing to claim and the vault is closed, we return their shares balance\n    function maxRedeem(\n        address controller\n    ) public view override(IERC4626, ERC4626Upgradeable) returns (uint256) {\n        if (paused()) return 0;\n        uint256 shares = claimableRedeemRequest(0, controller);\n        if (shares == 0 && _getVaultStorage().state == State.Closed) {\n            // controller has no redeem claimable, we will use the synchronous flow\n            return balanceOf(controller);\n        }\n        return shares;\n    }\n\n    /// @notice Returns the amount of assets a controller will get if he redeem.\n    /// @param controller The controller.\n    /// @return The maximum amount of assets to get.\n    /// @dev This is the same philosophy as maxRedeem, except that we take care to convertToAssets the value before\n    /// returning it\n    function maxWithdraw(\n        address controller\n    ) public view override(IERC4626, ERC4626Upgradeable) returns (uint256) {\n        if (paused()) return 0;\n\n        uint256 shares = claimableRedeemRequest(0, controller);\n        if (shares == 0 && _getVaultStorage().state == State.Closed) {\n            // controller has no redeem claimable, we will use the synchronous flow\n            return convertToAssets(balanceOf(controller));\n        }\n        uint256 lastRedeemId = _getERC7540Storage().lastRedeemRequestId[controller];\n        return convertToAssets(shares, lastRedeemId);\n    }\n\n    /// @notice Returns the amount of assets a controller will get if he redeem.\n    /// @param  controller address to check\n    /// @dev    If the contract is paused no deposit/claims are possible.\n    function maxDeposit(\n        address controller\n    ) public view override(IERC4626, ERC4626Upgradeable) returns (uint256) {\n        if (paused()) return 0;\n        return claimableDepositRequest(0, controller);\n    }\n\n    /// @notice Returns the amount of sharres a controller will get if he calls Deposit.\n    /// @param controller The controller.\n    /// @dev    If the contract is paused no deposit/claims are possible.\n    /// @dev    We read the claimableDepositRequest of the controller then convert it to shares using the\n    /// convertToShares\n    /// of the related epochId\n    /// @return The maximum amount of shares to get.\n    function maxMint(\n        address controller\n    ) public view override(IERC4626, ERC4626Upgradeable) returns (uint256) {\n        if (paused()) return 0;\n        uint256 lastDepositId = _getERC7540Storage().lastDepositRequestId[controller];\n        uint256 claimable = claimableDepositRequest(lastDepositId, controller);\n        return convertToShares(claimable, lastDepositId);\n    }\n\n    function isTotalAssetsValid() public view returns (bool) {\n        return block.timestamp < _getERC7540Storage().totalAssetsExpiration;\n    }\n\n    function safe() public view override returns (address) {\n        return _getRolesStorage().safe;\n    }\n\n    function version() public pure returns (string memory) {\n        return \"v0.5.0\";\n    }\n}\n",
+    "src/v0.5.0/ERC7540.sol": "// SPDX-License-Identifier: BUSL-1.1\npragma solidity \"0.8.26\";\n\nimport {Silo} from \"./Silo.sol\";\nimport {IERC7540Deposit} from \"./interfaces/IERC7540Deposit.sol\";\nimport {IERC7540Redeem} from \"./interfaces/IERC7540Redeem.sol\";\nimport {IWETH9} from \"./interfaces/IWETH9.sol\";\nimport {\n    CantDepositNativeToken,\n    ERC7540InvalidOperator,\n    ERC7540PreviewDepositDisabled,\n    ERC7540PreviewMintDisabled,\n    ERC7540PreviewRedeemDisabled,\n    ERC7540PreviewWithdrawDisabled,\n    NewTotalAssetsMissing,\n    OnlyOneRequestAllowed,\n    RequestIdNotClaimable,\n    RequestNotCancelable,\n    WrongNewTotalAssets\n} from \"./primitives/Errors.sol\";\nimport {\n    DepositRequestCanceled,\n    NewTotalAssetsUpdated,\n    SettleDeposit,\n    SettleRedeem,\n    TotalAssetsLifespanUpdated,\n    TotalAssetsUpdated\n} from \"./primitives/Events.sol\";\nimport {EpochData, SettleData} from \"./primitives/Struct.sol\";\nimport {\n    ERC20Upgradeable,\n    IERC20,\n    IERC20Metadata\n} from \"@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol\";\nimport {ERC20PausableUpgradeable} from\n    \"@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol\";\nimport {ERC4626Upgradeable} from \"@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol\";\nimport {IERC165} from \"@openzeppelin/contracts/interfaces/IERC165.sol\";\nimport {IERC4626} from \"@openzeppelin/contracts/interfaces/IERC4626.sol\";\nimport {IERC20, SafeERC20} from \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\nimport {Math} from \"@openzeppelin/contracts/utils/math/Math.sol\";\n\nusing SafeERC20 for IERC20;\nusing Math for uint256;\n\n/// @title ERC7540Upgradeable\n/// @dev An implementation of the ERC7540 standard. It defines the core data structures and functions necessary\n/// to do requests and process them.\nabstract contract ERC7540 is IERC7540Redeem, IERC7540Deposit, ERC20PausableUpgradeable, ERC4626Upgradeable {\n    /// @custom:storage-location erc7201:hopper.storage.ERC7540\n    /// @param totalAssets The total assets.\n    /// @param depositEpochId The current deposit epoch ID.\n    /// @param depositSettleId The current deposit settle ID.\n    /// @param lastDepositEpochIdSettled The last deposit epoch ID settled.\n    /// @param redeemEpochId The current redeem epoch ID.\n    /// @param redeemSettleId The current redeem settle ID.\n    /// @param lastRedeemEpochIdSettled The last redeem epoch ID settled.\n    /// @param epochs A mapping of epochs data.\n    /// @param settles A mapping of settle data.\n    /// @param lastDepositRequestId A mapping of the last deposit request ID for each user.\n    /// @param lastRedeemRequestId A mapping of the last redeem request ID for each user.\n    /// @param isOperator A mapping of operators for each user.\n    /// @param pendingSilo The pending silo.\n    /// @param wrappedNativeToken The wrapped native token. WETH9 for ethereum.\n    struct ERC7540Storage {\n        uint256 totalAssets;\n        uint256 newTotalAssets;\n        uint40 depositEpochId;\n        uint40 depositSettleId;\n        uint40 lastDepositEpochIdSettled;\n        uint40 redeemEpochId;\n        uint40 redeemSettleId;\n        uint40 lastRedeemEpochIdSettled;\n        mapping(uint40 epochId => EpochData) epochs;\n        mapping(uint40 settleId => SettleData) settles;\n        mapping(address user => uint40 epochId) lastDepositRequestId;\n        mapping(address user => uint40 epochId) lastRedeemRequestId;\n        mapping(address controller => mapping(address operator => bool)) isOperator;\n        Silo pendingSilo;\n        IWETH9 wrappedNativeToken;\n        uint8 decimals;\n        uint8 decimalsOffset;\n        // New variables introduce with v0.5.0\n        uint128 totalAssetsExpiration;\n        uint128 totalAssetsLifespan;\n    }\n\n    // keccak256(abi.encode(uint256(keccak256(\"hopper.storage.ERC7540\")) - 1)) & ~bytes32(uint256(0xff));\n    /// @custom:slot erc7201:hopper.storage.ERC7540\n    // solhint-disable-next-line const-name-snakecase\n    bytes32 private constant erc7540Storage = 0x5c74d456014b1c0eb4368d944667a568313858a3029a650ff0cb7b56f8b57a00;\n\n    /// @notice Returns the ERC7540 storage struct.\n    /// @return _erc7540Storage The ERC7540 storage struct.\n    function _getERC7540Storage() internal pure returns (ERC7540Storage storage _erc7540Storage) {\n        // solhint-disable-next-line no-inline-assembly\n        assembly {\n            _erc7540Storage.slot := erc7540Storage\n        }\n    }\n\n    /// @notice Initializes the ERC7540 contract.\n    /// @param underlying The underlying token.\n    /// @param wrappedNativeToken The wrapped native token.\n    // solhint-disable-next-line func-name-mixedcase\n    function __ERC7540_init(IERC20 underlying, address wrappedNativeToken) internal onlyInitializing {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        $.depositEpochId = 1;\n        $.redeemEpochId = 2;\n\n        $.depositSettleId = 1;\n        $.redeemSettleId = 2;\n\n        $.pendingSilo = new Silo(underlying, wrappedNativeToken);\n        $.wrappedNativeToken = IWETH9(wrappedNativeToken);\n        $.newTotalAssets = type(uint256).max;\n\n        uint8 underlyingDecimals = ERC20Upgradeable(asset()).decimals();\n        if (underlyingDecimals >= 18) {\n            $.decimals = underlyingDecimals;\n        } else {\n            $.decimals = 18;\n            unchecked {\n                $.decimalsOffset = 18 - underlyingDecimals;\n            }\n        }\n    }\n\n    ///////////////\n    // MODIFIERS //\n    ///////////////\n\n    /// @notice Make sure the caller is an operator or the controller.\n    /// @param controller The controller.\n    modifier onlyOperator(\n        address controller\n    ) {\n        if (controller != msg.sender && !isOperator(controller, msg.sender)) {\n            revert ERC7540InvalidOperator();\n        }\n        _;\n    }\n\n    /////////////////////\n    // ## Overrides ## //\n    /////////////////////\n\n    /// @notice Returns the total assets.\n    /// @return The total assets.\n    function totalAssets() public view override(IERC4626, ERC4626Upgradeable) returns (uint256) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n        return $.totalAssets;\n    }\n\n    function decimals()\n        public\n        view\n        virtual\n        override(ERC4626Upgradeable, ERC20Upgradeable, IERC20Metadata)\n        returns (uint8)\n    {\n        return _getERC7540Storage().decimals;\n    }\n\n    function _decimalsOffset() internal view virtual override returns (uint8) {\n        return _getERC7540Storage().decimalsOffset;\n    }\n\n    function _update(\n        address from,\n        address to,\n        uint256 value\n    ) internal virtual override(ERC20PausableUpgradeable, ERC20Upgradeable) {\n        return ERC20PausableUpgradeable._update(from, to, value);\n    }\n\n    ///////////////////\n    // ## EIP7540 ## //\n    ///////////////////\n\n    function isOperator(address controller, address operator) public view returns (bool) {\n        return _getERC7540Storage().isOperator[controller][operator];\n    }\n\n    /// @dev should not be usable when contract is paused\n    function setOperator(address operator, bool approved) external whenNotPaused returns (bool success) {\n        _getERC7540Storage().isOperator[msg.sender][operator] = approved;\n        emit OperatorSet(msg.sender, operator, approved);\n        return true;\n    }\n\n    function previewDeposit(\n        uint256\n    ) public pure override(ERC4626Upgradeable, IERC4626) returns (uint256) {\n        revert ERC7540PreviewDepositDisabled();\n    }\n\n    function previewMint(\n        uint256\n    ) public pure override(ERC4626Upgradeable, IERC4626) returns (uint256) {\n        revert ERC7540PreviewMintDisabled();\n    }\n\n    function previewRedeem(\n        uint256\n    ) public pure override(ERC4626Upgradeable, IERC4626) returns (uint256) {\n        revert ERC7540PreviewRedeemDisabled();\n    }\n\n    function previewWithdraw(\n        uint256\n    ) public pure override(ERC4626Upgradeable, IERC4626) returns (uint256) {\n        revert ERC7540PreviewWithdrawDisabled();\n    }\n\n    ////////////////////////////////\n    // ## EIP7540 Deposit Flow ## //\n    ////////////////////////////////\n\n    /// @dev Unusable when paused. Modifier not needed as it's overridden.\n    /// @notice Request deposit of assets into the vault.\n    /// @param assets The amount of assets to deposit.\n    /// @param controller The controller is the address that will manage the request.\n    /// @param owner The owner of the assets.\n    function _requestDeposit(uint256 assets, address controller, address owner) internal returns (uint256) {\n        uint256 claimable = claimableDepositRequest(0, controller);\n        if (claimable > 0) _deposit(claimable, controller, controller);\n\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        uint40 _depositId = $.depositEpochId;\n        if ($.lastDepositRequestId[controller] != _depositId) {\n            if (pendingDepositRequest(0, controller) > 0) {\n                revert OnlyOneRequestAllowed();\n            }\n            $.lastDepositRequestId[controller] = _depositId;\n        }\n\n        if (msg.value != 0) {\n            // if user sends eth and the underlying is wETH we will wrap it for him\n            if (asset() == address($.wrappedNativeToken)) {\n                $.pendingSilo.depositEth{value: msg.value}();\n                assets = msg.value;\n            } else {\n                revert CantDepositNativeToken();\n            }\n        } else {\n            IERC20(asset()).safeTransferFrom(owner, address($.pendingSilo), assets);\n        }\n        $.epochs[_depositId].depositRequest[controller] += assets;\n\n        emit DepositRequest(controller, owner, _depositId, msg.sender, assets);\n        return _depositId;\n    }\n\n    /// @dev Unusable when paused. Protected by ERC20PausableUpgradeable's _transfer function.\n    /// @notice Claim the assets from the vault after a request has been settled.\n    /// @param assets The amount of assets requested to deposit.\n    /// @param receiver The receiver of the shares.\n    /// @return shares The corresponding shares.\n    function deposit(\n        uint256 assets,\n        address receiver\n    ) public virtual override(ERC4626Upgradeable, IERC4626) returns (uint256) {\n        return _deposit(assets, receiver, msg.sender);\n    }\n\n    /// @dev Unusable when paused. Protected by ERC20PausableUpgradeable's _transfer function.\n    /// @notice Claim the assets from the vault after a request has been settled.\n    /// @param assets The assets to deposit.\n    /// @param receiver The receiver of the shares.\n    /// @param controller The controller, who owns the deposit request.\n    /// @return shares The corresponding shares.\n    function deposit(\n        uint256 assets,\n        address receiver,\n        address controller\n    ) external virtual onlyOperator(controller) returns (uint256) {\n        return _deposit(assets, receiver, controller);\n    }\n\n    /// @notice Claim the assets from the vault after a request has been settled.\n    /// @param assets The assets to deposit.\n    /// @param receiver The receiver of the shares.\n    /// @param controller The controller, who owns the deposit request.\n    /// @return shares The corresponding shares.\n    function _deposit(uint256 assets, address receiver, address controller) internal virtual returns (uint256 shares) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        uint40 requestId = $.lastDepositRequestId[controller];\n        if (requestId > $.lastDepositEpochIdSettled) {\n            revert RequestIdNotClaimable();\n        }\n\n        $.epochs[requestId].depositRequest[controller] -= assets;\n        shares = convertToShares(assets, requestId);\n\n        _transfer(address(this), receiver, shares);\n\n        emit Deposit(controller, receiver, assets, shares);\n    }\n\n    /// @dev Unusable when paused. Protected by ERC20PausableUpgradeable's _transfer function.\n    function mint(\n        uint256 shares,\n        address receiver\n    ) public virtual override(ERC4626Upgradeable, IERC4626) returns (uint256) {\n        return _mint(shares, receiver, msg.sender);\n    }\n\n    /// @dev Unusable when paused. Protected by ERC20PausableUpgradeable's _transfer function.\n    /// @notice Claim shares from the vault after a request deposit.\n    function mint(\n        uint256 shares,\n        address receiver,\n        address controller\n    ) external virtual onlyOperator(controller) returns (uint256) {\n        return _mint(shares, receiver, controller);\n    }\n\n    /// @notice Mint shares from the vault.\n    /// @param shares The shares to mint.\n    /// @param receiver The receiver of the shares.\n    /// @param controller The controller, who owns the mint request.\n    /// @return assets The corresponding assets.\n    function _mint(uint256 shares, address receiver, address controller) internal virtual returns (uint256 assets) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        uint40 requestId = $.lastDepositRequestId[controller];\n        if (requestId > $.lastDepositEpochIdSettled) {\n            revert RequestIdNotClaimable();\n        }\n\n        assets = _convertToAssets(shares, requestId, Math.Rounding.Ceil);\n\n        $.epochs[requestId].depositRequest[controller] -= assets;\n        _transfer(address(this), receiver, shares);\n\n        emit Deposit(controller, receiver, assets, shares);\n    }\n\n    /// @dev Unusable when paused. Protected by whenNotPaused.\n    /// @notice Cancel a deposit request.\n    /// @dev It can only be called in the same epoch.\n    function cancelRequestDeposit() external whenNotPaused {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        uint40 requestId = $.lastDepositRequestId[msg.sender];\n        if (requestId != $.depositEpochId) {\n            revert RequestNotCancelable(requestId);\n        }\n\n        uint256 requestedAmount = $.epochs[requestId].depositRequest[msg.sender];\n        $.epochs[requestId].depositRequest[msg.sender] = 0;\n        IERC20(asset()).safeTransferFrom(address($.pendingSilo), msg.sender, requestedAmount);\n\n        emit DepositRequestCanceled(requestId, msg.sender);\n    }\n\n    ///////////////////////////////\n    // ## EIP7540 REDEEM FLOW ## //\n    ///////////////////////////////\n\n    /// @dev Unusable when paused. Protected by ERC20PausableUpgradeable's _update function.\n    /// @notice Request redemption of shares from the vault.\n    /// @param shares The amount of shares to redeem.\n    /// @param controller The controller is the address that will manage the request.\n    /// @param owner The owner of the shares.\n    /// @return The request ID. It is the current redeem epoch ID.\n    function _requestRedeem(uint256 shares, address controller, address owner) internal returns (uint256) {\n        if (msg.sender != owner && !isOperator(owner, msg.sender)) {\n            _spendAllowance(owner, msg.sender, shares);\n        }\n        ERC7540Storage storage $ = _getERC7540Storage();\n        uint256 claimable = claimableRedeemRequest(0, controller);\n        if (claimable > 0) _redeem(claimable, controller, controller);\n\n        uint40 _redeemId = $.redeemEpochId;\n        if ($.lastRedeemRequestId[controller] != _redeemId) {\n            if (pendingRedeemRequest(0, controller) > 0) {\n                revert OnlyOneRequestAllowed();\n            }\n            $.lastRedeemRequestId[controller] = _redeemId;\n        }\n        $.epochs[_redeemId].redeemRequest[controller] += shares;\n\n        _update(owner, address($.pendingSilo), shares);\n\n        emit RedeemRequest(controller, owner, _redeemId, msg.sender, shares);\n        return _redeemId;\n    }\n\n    /// @notice Redeem shares from the vault.\n    /// @param shares The shares to redeem.\n    /// @param receiver The receiver of the assets.\n    /// @param controller The controller, who owns the redeem request.\n    /// @return assets The corresponding assets.\n    function _redeem(uint256 shares, address receiver, address controller) internal returns (uint256 assets) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        uint40 requestId = $.lastRedeemRequestId[controller];\n        if (requestId > $.lastRedeemEpochIdSettled) {\n            revert RequestIdNotClaimable();\n        }\n\n        $.epochs[requestId].redeemRequest[controller] -= shares;\n        assets = _convertToAssets(shares, requestId, Math.Rounding.Floor);\n        IERC20(asset()).safeTransfer(receiver, assets);\n\n        emit Withdraw(msg.sender, receiver, controller, assets, shares);\n    }\n\n    /// @notice Withdraw assets from the vault.\n    /// @param assets The assets to withdraw.\n    /// @param receiver The receiver of the assets.\n    /// @param controller The controller, who owns the request.\n    /// @return shares The corresponding shares.\n    function _withdraw(uint256 assets, address receiver, address controller) internal returns (uint256 shares) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        uint40 requestId = $.lastRedeemRequestId[controller];\n        if (requestId > $.lastRedeemEpochIdSettled) {\n            revert RequestIdNotClaimable();\n        }\n\n        shares = _convertToShares(assets, requestId, Math.Rounding.Ceil);\n        $.epochs[requestId].redeemRequest[controller] -= shares;\n        IERC20(asset()).safeTransfer(receiver, assets);\n\n        emit Withdraw(msg.sender, receiver, controller, assets, shares);\n    }\n\n    ////////////////////////////////\n    // ## SETTLEMENT FUNCTIONS ## //\n    ////////////////////////////////\n\n    /// @dev This function will deposit the pending assets of the pendingSilo.\n    /// and save the deposit parameters in the settleData.\n    /// @param assetsCustodian The address that will hold the assets.\n    function _settleDeposit(\n        address assetsCustodian\n    ) internal {\n        ERC7540Storage storage $erc7540 = _getERC7540Storage();\n\n        uint40 depositSettleId = $erc7540.depositSettleId;\n\n        uint256 _pendingAssets = $erc7540.settles[depositSettleId].pendingAssets;\n        if (_pendingAssets == 0) return;\n\n        uint256 shares = _convertToShares(_pendingAssets, Math.Rounding.Floor);\n\n        // cache\n        uint256 _totalAssets = totalAssets();\n        uint256 _totalSupply = totalSupply();\n        uint40 lastDepositEpochIdSettled = $erc7540.depositEpochId - 2;\n\n        SettleData storage settleData = $erc7540.settles[depositSettleId];\n\n        settleData.totalAssets = _totalAssets;\n        settleData.totalSupply = _totalSupply;\n\n        _mint(address(this), shares);\n\n        _totalAssets += _pendingAssets;\n        _totalSupply += shares;\n\n        $erc7540.totalAssets = _totalAssets;\n        $erc7540.depositSettleId = depositSettleId + 2;\n        $erc7540.lastDepositEpochIdSettled = lastDepositEpochIdSettled;\n\n        IERC20(asset()).safeTransferFrom(address($erc7540.pendingSilo), assetsCustodian, _pendingAssets);\n\n        emit SettleDeposit(\n            lastDepositEpochIdSettled, depositSettleId, _totalAssets, _totalSupply, _pendingAssets, shares\n        );\n    }\n\n    /// @dev This function will redeem the pending shares of the pendingSilo.\n    /// and save the redeem parameters in the settleData.\n    /// @param assetsCustodian The address that holds the assets.\n    function _settleRedeem(\n        address assetsCustodian\n    ) internal {\n        ERC7540Storage storage $erc7540 = _getERC7540Storage();\n\n        uint40 redeemSettleId = $erc7540.redeemSettleId;\n\n        address _asset = asset();\n\n        uint256 pendingShares = $erc7540.settles[redeemSettleId].pendingShares;\n        uint256 assetsToWithdraw = _convertToAssets(pendingShares, Math.Rounding.Floor);\n\n        uint256 assetsInTheSafe = IERC20(_asset).balanceOf(assetsCustodian);\n        if (assetsToWithdraw == 0 || assetsToWithdraw > assetsInTheSafe) return;\n\n        // cache\n        uint256 _totalAssets = totalAssets();\n        uint256 _totalSupply = totalSupply();\n        uint40 lastRedeemEpochIdSettled = $erc7540.redeemEpochId - 2;\n\n        SettleData storage settleData = $erc7540.settles[redeemSettleId];\n\n        settleData.totalAssets = _totalAssets;\n        settleData.totalSupply = _totalSupply;\n\n        _burn(address($erc7540.pendingSilo), pendingShares);\n\n        _totalAssets -= assetsToWithdraw;\n        _totalSupply -= pendingShares;\n\n        $erc7540.totalAssets = _totalAssets;\n\n        $erc7540.redeemSettleId = redeemSettleId + 2;\n        $erc7540.lastRedeemEpochIdSettled = lastRedeemEpochIdSettled;\n\n        IERC20(_asset).safeTransferFrom(assetsCustodian, address(this), assetsToWithdraw);\n\n        emit SettleRedeem(\n            lastRedeemEpochIdSettled, redeemSettleId, _totalAssets, _totalSupply, assetsToWithdraw, pendingShares\n        );\n    }\n\n    ////////////////////////////////////////\n    // ## TOTALASSETS UPDATE FUNCTIONS ## //\n    ////////////////////////////////////////\n\n    /// @notice Update newTotalAssets variable in order to update totalAssets.\n    /// @param _newTotalAssets The new total assets of the vault.\n    function _updateNewTotalAssets(\n        uint256 _newTotalAssets\n    ) internal whenNotPaused {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        $.epochs[$.depositEpochId].settleId = $.depositSettleId;\n        $.epochs[$.redeemEpochId].settleId = $.redeemSettleId;\n\n        address _pendingSilo = address($.pendingSilo);\n        uint256 pendingAssets = IERC20(asset()).balanceOf(_pendingSilo);\n        uint256 pendingShares = balanceOf(_pendingSilo);\n\n        if (pendingAssets != 0) {\n            $.depositEpochId += 2;\n            $.settles[$.depositSettleId].pendingAssets = pendingAssets;\n        }\n        if (pendingShares != 0) {\n            $.redeemEpochId += 2;\n            $.settles[$.redeemSettleId].pendingShares = pendingShares;\n        }\n\n        $.newTotalAssets = _newTotalAssets;\n\n        emit NewTotalAssetsUpdated(_newTotalAssets);\n    }\n\n    /// @dev Updates the totalAssets variable with the newTotalAssets variable.\n    function _updateTotalAssets(\n        uint256 _newTotalAssets\n    ) internal whenNotPaused {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        uint256 newTotalAssets = $.newTotalAssets;\n\n        if (\n            newTotalAssets == type(uint256).max // it means newTotalAssets has not been updated\n        ) revert NewTotalAssetsMissing();\n\n        if (_newTotalAssets != newTotalAssets) {\n            revert WrongNewTotalAssets();\n        }\n\n        $.totalAssets = newTotalAssets;\n        $.newTotalAssets = type(uint256).max; // by setting it to max, we ensure that it is not called again\n\n        $.totalAssetsExpiration = uint128(block.timestamp) + $.totalAssetsLifespan;\n        emit TotalAssetsUpdated(newTotalAssets);\n    }\n\n    function _updateTotalAssetsLifespan(\n        uint128 lifespan\n    ) internal {\n        ERC7540Storage storage $ = _getERC7540Storage();\n        uint128 oldLifespan = $.totalAssetsLifespan;\n        $.totalAssetsLifespan = lifespan;\n        emit TotalAssetsLifespanUpdated(oldLifespan, lifespan);\n    }\n\n    //////////////////////////\n    // ## VIEW FUNCTIONS ## //\n    //////////////////////////\n\n    /// @notice Converts assets to shares for a specific epoch.\n    /// @param assets The assets to convert.\n    /// @param requestId The request ID, which is equivalent to the epoch ID.\n    /// @return The corresponding shares.\n    function convertToShares(uint256 assets, uint256 requestId) public view returns (uint256) {\n        return _convertToShares(assets, uint40(requestId), Math.Rounding.Floor);\n    }\n\n    /// @dev Converts assets to shares for a specific epoch.\n    /// @param assets The assets to convert.\n    /// @param requestId The request ID.\n    /// @param rounding The rounding method.\n    /// @return The corresponding shares.\n    function _convertToShares(\n        uint256 assets,\n        uint40 requestId,\n        Math.Rounding rounding\n    ) internal view returns (uint256) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        // cache\n        uint40 settleId = $.epochs[requestId].settleId;\n\n        uint256 _totalAssets = $.settles[settleId].totalAssets + 1;\n        uint256 _totalSupply = $.settles[settleId].totalSupply + 10 ** _decimalsOffset();\n\n        return assets.mulDiv(_totalSupply, _totalAssets, rounding);\n    }\n\n    /// @dev Converts shares to assets for a specific epoch.\n    /// @param shares The shares to convert.\n    /// @param requestId The request ID.\n    function convertToAssets(uint256 shares, uint256 requestId) public view returns (uint256) {\n        return _convertToAssets(shares, uint40(requestId), Math.Rounding.Floor);\n    }\n\n    /// @notice Convert shares to assets for a specific epoch/request.\n    /// @param shares The shares to convert.\n    /// @param requestId The request ID at which the conversion should be done.\n    /// @param rounding The rounding method.\n    /// @return The corresponding assets.\n    function _convertToAssets(\n        uint256 shares,\n        uint40 requestId,\n        Math.Rounding rounding\n    ) internal view returns (uint256) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        // cache\n        uint40 settleId = $.epochs[requestId].settleId;\n\n        uint256 _totalAssets = $.settles[settleId].totalAssets + 1;\n        uint256 _totalSupply = $.settles[settleId].totalSupply + 10 ** _decimalsOffset();\n\n        return shares.mulDiv(_totalAssets, _totalSupply, rounding);\n    }\n\n    /// @notice Returns the pending redeem request for a controller.\n    /// @param requestId The request ID.\n    /// @param controller The controller.\n    /// @return shares The shares that are waiting to be settled.\n    function pendingRedeemRequest(uint256 requestId, address controller) public view returns (uint256 shares) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        if (requestId == 0) {\n            requestId = $.lastRedeemRequestId[controller];\n        }\n        if (requestId > $.lastRedeemEpochIdSettled) {\n            return $.epochs[uint40(requestId)].redeemRequest[controller];\n        }\n    }\n\n    /// @notice Returns the claimable redeem request for a controller for a specific request ID.\n    /// @param requestId The request ID.\n    /// @param controller The controller.\n    /// @return shares The shares that can be redeemed.\n    function claimableRedeemRequest(uint256 requestId, address controller) public view returns (uint256 shares) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        if (requestId == 0) requestId = $.lastRedeemRequestId[controller];\n        if (requestId <= $.lastRedeemEpochIdSettled) {\n            return $.epochs[uint40(requestId)].redeemRequest[controller];\n        }\n    }\n\n    /// @notice Returns the amount of assets that are pending to be deposited for a controller. For a specific request\n    /// ID.\n    /// @param requestId The request ID.\n    /// @param controller The controller.\n    /// @return assets The assets that are waiting to be settled.\n    function pendingDepositRequest(uint256 requestId, address controller) public view returns (uint256 assets) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        if (requestId == 0) requestId = $.lastDepositRequestId[controller];\n        if (requestId > $.lastDepositEpochIdSettled) {\n            return $.epochs[uint40(requestId)].depositRequest[controller];\n        }\n    }\n\n    /// @notice Returns the claimable deposit request for a controller for a specific request ID.\n    /// @param requestId The request ID.\n    /// @param controller The controller.\n    /// @return assets The assets that can be claimed.\n    function claimableDepositRequest(uint256 requestId, address controller) public view returns (uint256 assets) {\n        ERC7540Storage storage $ = _getERC7540Storage();\n\n        if (requestId == 0) requestId = $.lastDepositRequestId[controller];\n        if (requestId <= $.lastDepositEpochIdSettled) {\n            return $.epochs[uint40(requestId)].depositRequest[controller];\n        }\n    }\n\n    ///////////////////\n    // ## EIP7575 ## //\n    ///////////////////\n\n    function share() external view returns (address) {\n        return (address(this));\n    }\n\n    ///////////////////\n    // ## EIP165 ## //\n    //////////////////\n\n    function supportsInterface(\n        bytes4 interfaceId\n    ) public view virtual returns (bool) {\n        return interfaceId == 0x2f0a18c5 // IERC7575\n            || interfaceId == 0xf815c03d // IERC7575 shares\n            || interfaceId == 0xce3bbe50 // IERC7540Deposit\n            || interfaceId == 0x620ee8e4 // IERC7540Redeem\n            || interfaceId == 0xe3bc4e65 // IERC7540\n            || interfaceId == type(IERC165).interfaceId;\n    }\n\n    //////////////////////////////////\n    // ## FUNCTIONS TO IMPLEMENT ## //\n    //////////////////////////////////\n\n    /// @dev Settles deposit requests by transferring assets from the pendingSilo to the safe\n    /// and minting the corresponding shares to vault.\n    /// The function is not implemented here and must be implemented.\n    function settleDeposit(\n        uint256 _newTotalAssets\n    ) public virtual;\n\n    /// @dev Settles redeem requests by transferring assets from the safe to the vault\n    /// and burning the corresponding shares from the pending silo.\n    /// The function is not implemented here and must be implemented.\n    function settleRedeem(\n        uint256 _newTotalAssets\n    ) public virtual;\n\n    function safe() public view virtual returns (address);\n}\n",
+    "src/v0.5.0/Roles.sol": "// SPDX-License-Identifier: BUSL-1.1\npragma solidity \"0.8.26\";\n\nimport {FeeRegistry} from \"../protocol/FeeRegistry.sol\";\nimport {OnlySafe, OnlyValuationManager, OnlyWhitelistManager} from \"./primitives/Errors.sol\";\nimport {FeeReceiverUpdated, ValuationManagerUpdated, WhitelistManagerUpdated} from \"./primitives/Events.sol\";\nimport {Ownable2StepUpgradeable} from \"@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol\";\n\n/// @title RolesUpgradeable\n/// @dev This contract is used to define the various roles needed for a vault to operate.\n/// @dev It also defines the modifiers used to check functions' caller.\nabstract contract Roles is Ownable2StepUpgradeable {\n    /// @notice Stores the various roles responsible of managing the vault.\n    /// @param whitelistManager The address responsible of managing the whitelist.\n    /// @param feeReceiver The address that will receive the fees generated.\n    /// @param safe Every lagoon vault is associated with a Safe smart contract. This address will receive the assets of\n    /// the vault and can settle deposits and redeems.\n    /// @param feeRegistry The address of the FeeRegistry contract.\n    /// @param valuationManager. This address is responsible of updating the newTotalAssets value of the vault.\n    /// @param owner The address of the owner of the contract. It considered as the admin. It is not visible in the\n    /// struct. It can change the others roles and itself. Initiate the fund closing. Disable the whitelist.\n    struct RolesStorage {\n        address whitelistManager;\n        address feeReceiver;\n        address safe;\n        FeeRegistry feeRegistry;\n        address valuationManager;\n    }\n\n    /// @dev Initializes the roles of the vault.\n    /// @param roles The roles to be initialized.\n    // solhint-disable-next-line func-name-mixedcase\n    function __Roles_init(\n        RolesStorage memory roles\n    ) internal onlyInitializing {\n        RolesStorage storage $ = _getRolesStorage();\n\n        $.whitelistManager = roles.whitelistManager;\n        $.feeReceiver = roles.feeReceiver;\n        $.safe = roles.safe;\n        $.feeRegistry = FeeRegistry(roles.feeRegistry);\n        $.valuationManager = roles.valuationManager;\n    }\n\n    // keccak256(abi.encode(uint256(keccak256(\"hopper.storage.Roles\")) - 1)) & ~bytes32(uint256(0xff))\n    /// @custom:storage-location erc7201:hopper.storage.Roles\n    // solhint-disable-next-line const-name-snakecase\n    bytes32 private constant rolesStorage = 0x7c302ed2c673c3d6b4551cf74a01ee649f887e14fd20d13dbca1b6099534d900;\n\n    /// @dev Returns the storage struct of the roles.\n    /// @return _rolesStorage The storage struct of the roles.\n    function _getRolesStorage() internal pure returns (RolesStorage storage _rolesStorage) {\n        // solhint-disable-next-line no-inline-assembly\n        assembly {\n            _rolesStorage.slot := rolesStorage\n        }\n    }\n\n    /// @dev Returns the storage struct of the roles.\n    /// @return _rolesStorage The storage struct of the roles.\n    function getRolesStorage() public pure returns (RolesStorage memory _rolesStorage) {\n        _rolesStorage = _getRolesStorage();\n    }\n\n    /// @dev Modifier to check if the caller is the safe.\n    modifier onlySafe() {\n        address _safe = _getRolesStorage().safe;\n        if (_safe != msg.sender) revert OnlySafe(_safe);\n        _;\n    }\n\n    /// @dev Modifier to check if the caller is the whitelist manager.\n    modifier onlyWhitelistManager() {\n        address _whitelistManager = _getRolesStorage().whitelistManager;\n        if (_whitelistManager != msg.sender) {\n            revert OnlyWhitelistManager(_whitelistManager);\n        }\n        _;\n    }\n\n    /// @dev Modifier to check if the caller is the valuation manager.\n    modifier onlyValuationManager() {\n        address _valuationManager = _getRolesStorage().valuationManager;\n        if (_valuationManager != msg.sender) {\n            revert OnlyValuationManager(_valuationManager);\n        }\n        _;\n    }\n\n    /// @notice Updates the address of the whitelist manager.\n    /// @param _whitelistManager The new address of the whitelist manager.\n    /// @dev Only the owner can call this function.\n    function updateWhitelistManager(\n        address _whitelistManager\n    ) external onlyOwner {\n        emit WhitelistManagerUpdated(_getRolesStorage().whitelistManager, _whitelistManager);\n        _getRolesStorage().whitelistManager = _whitelistManager;\n    }\n\n    /// @notice Updates the address of the valuation manager.\n    /// @param _valuationManager The new address of the valuation manager.\n    /// @dev Only the owner can call this function.\n    function updateValuationManager(\n        address _valuationManager\n    ) external onlyOwner {\n        emit ValuationManagerUpdated(_getRolesStorage().valuationManager, _valuationManager);\n        _getRolesStorage().valuationManager = _valuationManager;\n    }\n\n    /// @notice Updates the address of the fee receiver.\n    /// @param _feeReceiver The new address of the fee receiver.\n    /// @dev Only the owner can call this function.\n    function updateFeeReceiver(\n        address _feeReceiver\n    ) external onlyOwner {\n        emit FeeReceiverUpdated(_getRolesStorage().feeReceiver, _feeReceiver);\n        _getRolesStorage().feeReceiver = _feeReceiver;\n    }\n}\n",
+    "src/v0.5.0/Whitelistable.sol": "// SPDX-License-Identifier: BUSL-1.1\npragma solidity \"0.8.26\";\n\nimport {Roles} from \"./Roles.sol\";\nimport {WhitelistDisabled, WhitelistUpdated} from \"./primitives/Events.sol\";\n\nabstract contract Whitelistable is Roles {\n    // keccak256(abi.encode(uint256(keccak256(\"hopper.storage.Whitelistable\")) - 1)) & ~bytes32(uint256(0xff))\n    /// @custom:storage-location erc7201:hopper.storage.Whitelistable\n    // solhint-disable-next-line const-name-snakecase\n    bytes32 private constant whitelistableStorage = 0x083cc98ab296d1a1f01854b5f7a2f47df4425a56ba7b35f7faa3a336067e4800;\n\n    /// @custom:storage-definition erc7201:hopper.storage.Whitelistable\n    /// @param isWhitelisted The mapping of whitelisted addresses.\n    /// @param isActivated The flag to check if the whitelist is activated.\n    struct WhitelistableStorage {\n        mapping(address => bool) isWhitelisted;\n        bool isActivated;\n    }\n\n    /// @dev Returns the storage struct of the whitelist.\n    /// @return _whitelistableStorage The storage struct of the whitelist.\n    function _getWhitelistableStorage() internal pure returns (WhitelistableStorage storage _whitelistableStorage) {\n        // solhint-disable-next-line no-inline-assembly\n        assembly {\n            _whitelistableStorage.slot := whitelistableStorage\n        }\n    }\n\n    /// @dev Initializes the whitelist.\n    /// @param activate if the whitelist should be activated.\n    // solhint-disable-next-line func-name-mixedcase\n    function __Whitelistable_init(\n        bool activate\n    ) internal onlyInitializing {\n        if (activate) {\n            WhitelistableStorage storage $ = _getWhitelistableStorage();\n            $.isActivated = true;\n        }\n    }\n\n    /// @notice Deactivates the whitelist\n    function disableWhitelist() public onlyOwner {\n        _getWhitelistableStorage().isActivated = false;\n        emit WhitelistDisabled();\n    }\n\n    /// @notice Checks if an account is whitelisted\n    /// @param account The address of the account to check\n    /// @return True if the account is whitelisted, false otherwise\n    function isWhitelisted(\n        address account\n    ) public view returns (bool) {\n        WhitelistableStorage storage $ = _getWhitelistableStorage();\n        if (_getRolesStorage().feeRegistry.protocolFeeReceiver() == account) {\n            return true;\n        }\n        return $.isActivated ? $.isWhitelisted[account] : true;\n    }\n\n    /// @notice Adds multiple accounts to the whitelist\n    function addToWhitelist(\n        address[] memory accounts\n    ) external onlyWhitelistManager {\n        WhitelistableStorage storage $ = _getWhitelistableStorage();\n\n        for (uint256 i = 0; i < accounts.length; i++) {\n            $.isWhitelisted[accounts[i]] = true;\n            emit WhitelistUpdated(accounts[i], true);\n        }\n    }\n\n    /// @notice Removes multiple accounts from the whitelist\n    /// @param accounts The addresses of the accounts to remove\n    function revokeFromWhitelist(\n        address[] memory accounts\n    ) external onlyWhitelistManager {\n        WhitelistableStorage storage $ = _getWhitelistableStorage();\n        uint256 i = 0;\n        for (; i < accounts.length;) {\n            $.isWhitelisted[accounts[i]] = false;\n            emit WhitelistUpdated(accounts[i], false);\n            // solhint-disable-next-line no-inline-assembly\n            unchecked {\n                ++i;\n            }\n        }\n    }\n}\n",
+    "src/v0.5.0/FeeManager.sol": "// SPDX-License-Identifier: BUSL-1.1\npragma solidity \"0.8.26\";\n\nimport {ERC7540} from \"./ERC7540.sol\";\nimport {AboveMaxRate} from \"./primitives/Errors.sol\";\nimport {HighWaterMarkUpdated, RatesUpdated} from \"./primitives/Events.sol\";\nimport {Rates} from \"./primitives/Struct.sol\";\nimport {Ownable2StepUpgradeable} from \"@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol\";\nimport {Math} from \"@openzeppelin/contracts/utils/math/Math.sol\";\nimport {FeeRegistry} from \"@src/protocol/FeeRegistry.sol\";\n\nuint256 constant ONE_YEAR = 365 days;\nuint256 constant BPS_DIVIDER = 10_000; // 100 %\n\nabstract contract FeeManager is Ownable2StepUpgradeable, ERC7540 {\n    using Math for uint256;\n\n    uint16 public constant MAX_MANAGEMENT_RATE = 1000; // 10 %\n    uint16 public constant MAX_PERFORMANCE_RATE = 5000; // 50 %\n    uint16 public constant MAX_PROTOCOL_RATE = 3000; // 30 %\n\n    /// @custom:storage-definition erc7201:hopper.storage.FeeManager\n    /// @param newRatesTimestamp the timestamp at which the new rates will be applied\n    /// @param lastFeeTime the timestamp of the last fee calculation, it is used to compute management fees\n    /// @param highWaterMark the highest price per share ever reached, performance fees are taken when the price per\n    /// share is above this value\n    /// @param cooldown the time to wait before applying new rates\n    /// @param rates the current fee rates\n    /// @param oldRates the previous fee rates, they are used during the cooldown period when new rates are set\n    /// @param feeRegistry the fee registry contract, it is used to read the protocol rate\n    struct FeeManagerStorage {\n        FeeRegistry feeRegistry;\n        uint256 newRatesTimestamp;\n        uint256 lastFeeTime;\n        uint256 highWaterMark;\n        uint256 cooldown;\n        Rates rates;\n        Rates oldRates;\n    }\n\n    // keccak256(abi.encode(uint256(keccak256(\"hopper.storage.FeeManager\")) - 1)) & ~bytes32(uint256(0xff));\n    /// @custom:storage-location erc7201:hopper.storage.FeeManager\n    // solhint-disable-next-line const-name-snakecase\n    bytes32 private constant feeManagerStorage = 0xa5292f7ccd85acc1b3080c01f5da9af7799f2c26826bd4d79081d6511780bd00;\n\n    /// @notice Get the storage slot for the FeeManagerStorage struct\n    /// @return _feeManagerStorage the storage slot\n    function _getFeeManagerStorage() internal pure returns (FeeManagerStorage storage _feeManagerStorage) {\n        // solhint-disable-next-line no-inline-assembly\n        assembly {\n            _feeManagerStorage.slot := feeManagerStorage\n        }\n    }\n\n    /// @notice Initialize the FeeManager contract\n    /// @param _registry the address of the fee registry contract\n    /// @param _managementRate the management rate, expressed in BPS\n    /// @param _performanceRate the performance rate, expressed in BPS\n    /// @param _decimals the number of decimals of the shares\n    /// @param _cooldown the time to wait before applying new rates\n    // solhint-disable-next-line func-name-mixedcase\n    function __FeeManager_init(\n        address _registry,\n        uint16 _managementRate,\n        uint16 _performanceRate,\n        uint256 _decimals,\n        uint256 _cooldown\n    ) internal onlyInitializing {\n        if (_managementRate > MAX_MANAGEMENT_RATE) {\n            revert AboveMaxRate(MAX_MANAGEMENT_RATE);\n        }\n        if (_performanceRate > MAX_PERFORMANCE_RATE) {\n            revert AboveMaxRate(MAX_PERFORMANCE_RATE);\n        }\n\n        FeeManagerStorage storage $ = _getFeeManagerStorage();\n\n        $.newRatesTimestamp = block.timestamp;\n\n        $.cooldown = _cooldown;\n\n        $.feeRegistry = FeeRegistry(_registry);\n        $.highWaterMark = 10 ** _decimals;\n\n        $.rates.managementRate = _managementRate;\n        $.rates.performanceRate = _performanceRate;\n    }\n\n    /// @notice Take the fees by minting the manager and protocol shares\n    /// @param feeReceiver the address that will receive the manager shares\n    /// @param protocolFeeReceiver the address that will receive the protocol shares\n    function _takeFees(address feeReceiver, address protocolFeeReceiver) internal {\n        FeeManagerStorage storage $ = _getFeeManagerStorage();\n\n        (uint256 managerShares, uint256 protocolShares) = _calculateFees();\n\n        if (managerShares > 0) {\n            _mint(feeReceiver, managerShares);\n            if (\n                protocolShares > 0 // they can't be protocolShares without managerShares\n            ) _mint(protocolFeeReceiver, protocolShares);\n        }\n        uint256 pricePerShare = _convertToAssets(10 ** decimals(), Math.Rounding.Floor);\n        _setHighWaterMark(pricePerShare);\n\n        $.lastFeeTime = block.timestamp;\n    }\n\n    /// @notice update the fee rates, the new rates will be applied after the cooldown period\n    /// @param newRates the new fee rates\n    function updateRates(\n        Rates memory newRates\n    ) external onlyOwner {\n        FeeManagerStorage storage $ = _getFeeManagerStorage();\n        if (newRates.managementRate > MAX_MANAGEMENT_RATE) {\n            revert AboveMaxRate(MAX_MANAGEMENT_RATE);\n        }\n        if (newRates.performanceRate > MAX_PERFORMANCE_RATE) {\n            revert AboveMaxRate(MAX_PERFORMANCE_RATE);\n        }\n\n        uint256 newRatesTimestamp = block.timestamp + $.cooldown;\n        Rates memory currentRates = $.rates;\n\n        $.newRatesTimestamp = newRatesTimestamp;\n        $.oldRates = currentRates;\n        $.rates = newRates;\n        emit RatesUpdated(currentRates, newRates, newRatesTimestamp);\n    }\n\n    /// @dev Since we have a cooldown period and to avoid a double call\n    /// to update the feeRates, this function returns a different rate\n    /// following the timestamp\n    /// @notice the current fee rates\n    function feeRates() public view returns (Rates memory) {\n        FeeManagerStorage storage $ = _getFeeManagerStorage();\n\n        if ($.newRatesTimestamp <= block.timestamp) return $.rates;\n        return $.oldRates;\n    }\n\n    /// @dev Update the high water mark only if the new value is greater than the current one\n    /// @dev The high water mark is the highest price per share ever reached\n    /// @param _newHighWaterMark the new high water mark\n    function _setHighWaterMark(\n        uint256 _newHighWaterMark\n    ) internal {\n        FeeManagerStorage storage $ = _getFeeManagerStorage();\n\n        uint256 _highWaterMark = $.highWaterMark;\n\n        if (_newHighWaterMark > _highWaterMark) {\n            emit HighWaterMarkUpdated(_highWaterMark, _newHighWaterMark);\n            $.highWaterMark = _newHighWaterMark;\n        }\n    }\n\n    /// @dev Read the protocol rate from the fee registry\n    /// @dev if the value is above the MAX_PROTOCOL_RATE, return the MAX_PROTOCOL_RATE\n    /// @return protocolRate the protocol rate\n    function _protocolRate() internal view returns (uint256 protocolRate) {\n        FeeManagerStorage storage $ = _getFeeManagerStorage();\n\n        protocolRate = $.feeRegistry.protocolRate();\n        if (protocolRate > MAX_PROTOCOL_RATE) return MAX_PROTOCOL_RATE;\n        return protocolRate;\n    }\n\n    /// @dev Calculate and return the manager and protocol shares to be minted as fees\n    /// @dev total fees are the sum of the management and performance fees\n    /// @dev manager shares are the fees that go to the manager, it is the difference between the total fees and the\n    /// protocol fees\n    /// @dev protocol shares are the fees that go to the protocol\n    /// @return managerShares the manager shares to be minted as fees\n    /// @return protocolShares the protocol shares to be minted as fees\n    function _calculateFees() internal view returns (uint256 managerShares, uint256 protocolShares) {\n        FeeManagerStorage storage $ = _getFeeManagerStorage();\n\n        uint256 _decimals = decimals();\n\n        Rates memory _rates = feeRates();\n\n        /// Management fee computation ///\n\n        uint256 timeElapsed = block.timestamp - $.lastFeeTime;\n        uint256 _totalAssets = totalAssets();\n        uint256 managementFees = _calculateManagementFee(_totalAssets, _rates.managementRate, timeElapsed);\n\n        // by taking management fees the price per share decreases\n        uint256 pricePerShare = (10 ** _decimals).mulDiv(\n            _totalAssets + 1 - managementFees, totalSupply() + 10 ** _decimalsOffset(), Math.Rounding.Ceil\n        );\n\n        /// Performance fee computation ///\n\n        uint256 _totalSupply = totalSupply();\n        uint256 performanceFees =\n            _calculatePerformanceFee(_rates.performanceRate, _totalSupply, pricePerShare, $.highWaterMark, _decimals);\n\n        /// Protocol fee computation & convertion to shares ///\n\n        uint256 totalFees = managementFees + performanceFees;\n\n        // since we are minting shares without actually increasing the totalAssets, we need to compensate the future\n        // dilution of price per share by virtually decreasing totalAssets in our computation\n        uint256 totalShares =\n            totalFees.mulDiv(_totalSupply + 10 ** _decimalsOffset(), (_totalAssets - totalFees) + 1, Math.Rounding.Ceil);\n\n        protocolShares = totalShares.mulDiv(_protocolRate(), BPS_DIVIDER, Math.Rounding.Ceil);\n        managerShares = totalShares - protocolShares;\n    }\n\n    /// @dev Calculate the management fee\n    /// @param assets the total assets under management\n    /// @param annualRate the management rate, expressed in BPS and corresponding to the annual\n    /// @param timeElapsed the time elapsed since the last fee calculation in seconds\n    /// @return managementFee the management fee express in assets\n    function _calculateManagementFee(\n        uint256 assets,\n        uint256 annualRate,\n        uint256 timeElapsed\n    ) internal pure returns (uint256 managementFee) {\n        uint256 annualFee = assets.mulDiv(annualRate, BPS_DIVIDER, Math.Rounding.Ceil);\n        managementFee = annualFee.mulDiv(timeElapsed, ONE_YEAR, Math.Rounding.Ceil);\n    }\n\n    /// @dev Calculate the performance fee\n    /// @dev The performance is calculated as the difference between the current price per share and the high water mark\n    /// @dev The performance fee is calculated as the product of the performance and the performance rate\n    /// @param _rate the performance rate, expressed in BPS\n    /// @param _totalSupply the total supply of shares\n    /// @param _pricePerShare the current price per share\n    /// @param _highWaterMark the highest price per share ever reached\n    /// @param _decimals the number of decimals of the shares\n    /// @return performanceFee the performance fee express in assets\n    function _calculatePerformanceFee(\n        uint256 _rate,\n        uint256 _totalSupply,\n        uint256 _pricePerShare,\n        uint256 _highWaterMark,\n        uint256 _decimals\n    ) internal pure returns (uint256 performanceFee) {\n        if (_pricePerShare > _highWaterMark) {\n            uint256 profitPerShare;\n            unchecked {\n                profitPerShare = _pricePerShare - _highWaterMark;\n            }\n            uint256 profit = profitPerShare.mulDiv(_totalSupply, 10 ** _decimals, Math.Rounding.Ceil);\n            performanceFee = profit.mulDiv(_rate, BPS_DIVIDER, Math.Rounding.Ceil);\n        }\n    }\n}\n"
+  },
+  "warnings": [
+    "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+    "Exact Base USDC DeTrade Core vault v0.5.0 only, not every Lagoon vault or v0.6 interface. USDC calls require zero native value and appropriate asset allowance.",
+    "Asynchronous request -> curator valuation/settlement -> claim; no guaranteed settlement deadline. v0.5.0 requestRedeem cannot be cancelled.",
+    "requestDeposit requires expired NAV; syncDeposit requires currently valid NAV and Open state. Both are conditional ordinary user entrypoints, not an execution guarantee.",
+    "Whitelist/owner/operator/allowance and pause rules remain enforced. Fees, NAV and curator strategy risk apply; no access/qualification bypass.",
+    "Claims support partial amounts, unlike Spectra wrapper claims. syncDeposit has no explicit min-shares parameter; the caller must independently constrain execution and value."
+  ],
+  "proxySourceCode": {
+    "lib/openzeppelin-contracts/contracts/proxy/beacon/BeaconProxy.sol": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.0.0) (proxy/beacon/BeaconProxy.sol)\n\npragma solidity ^0.8.20;\n\nimport {IBeacon} from \"./IBeacon.sol\";\nimport {Proxy} from \"../Proxy.sol\";\nimport {ERC1967Utils} from \"../ERC1967/ERC1967Utils.sol\";\n\n/**\n * @dev This contract implements a proxy that gets the implementation address for each call from an {UpgradeableBeacon}.\n *\n * The beacon address can only be set once during construction, and cannot be changed afterwards. It is stored in an\n * immutable variable to avoid unnecessary storage reads, and also in the beacon storage slot specified by\n * https://eips.ethereum.org/EIPS/eip-1967[EIP1967] so that it can be accessed externally.\n *\n * CAUTION: Since the beacon address can never be changed, you must ensure that you either control the beacon, or trust\n * the beacon to not upgrade the implementation maliciously.\n *\n * IMPORTANT: Do not use the implementation logic to modify the beacon storage slot. Doing so would leave the proxy in\n * an inconsistent state where the beacon storage slot does not match the beacon address.\n */\ncontract BeaconProxy is Proxy {\n    // An immutable address for the beacon to avoid unnecessary SLOADs before each delegate call.\n    address private immutable _beacon;\n\n    /**\n     * @dev Initializes the proxy with `beacon`.\n     *\n     * If `data` is nonempty, it's used as data in a delegate call to the implementation returned by the beacon. This\n     * will typically be an encoded function call, and allows initializing the storage of the proxy like a Solidity\n     * constructor.\n     *\n     * Requirements:\n     *\n     * - `beacon` must be a contract with the interface {IBeacon}.\n     * - If `data` is empty, `msg.value` must be zero.\n     */\n    constructor(address beacon, bytes memory data) payable {\n        ERC1967Utils.upgradeBeaconToAndCall(beacon, data);\n        _beacon = beacon;\n    }\n\n    /**\n     * @dev Returns the current implementation address of the associated beacon.\n     */\n    function _implementation() internal view virtual override returns (address) {\n        return IBeacon(_getBeacon()).implementation();\n    }\n\n    /**\n     * @dev Returns the beacon.\n     */\n    function _getBeacon() internal view virtual returns (address) {\n        return _beacon;\n    }\n}\n"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Arrakis Finance",
+  "reviewedAt": "2026-10-24",
+  "decision": "not admitted",
+  "reason": "Current ordinary public-investor product binding is not established; the sole documented flagship public vault has a paused active module, blocking its source-defined deposit entrypoint. This is not evidence of categorical Arrakis shutdown.",
+  "evidence": [
+    {
+      "sourceRef": "https://arrakis.finance/",
+      "observation": "Current maintained product is Arrakis Pro issuer-owned liquidity management; official app links redirect to issuer sign-in."
+    },
+    {
+      "sourceRef": "https://raw.githubusercontent.com/ArrakisFinance/arrakis-docs/46d63e1e5a0504c1803cd691d7ab57c7ff58fb56/src/text/modules/hotAmm/publicVaults.md",
+      "revision": "46d63e1e5a0504c1803cd691d7ab57c7ff58fb56",
+      "snapshot": "# Public Vault List\n\nJust want to deposit? Here's our [New User Interface](https://app.arrakis.finance/modular)\n\n## Ethereum Mainnet\n\n### WETH/USDC Vault\n\nThis is the first and flagship Arrakis Modular Public Vault.\n\n- Network: `Ethereum Mainnet`\n- Vault Address: [`0xf790870ccF6aE66DdC69f68e6d05d446f1a6ad83`](https://etherscan.io/address/0xf790870ccF6aE66DdC69f68e6d05d446f1a6ad83)\n- Type: `ERC20`\n- Symbol: `ARRAKIS`\n- Active Module: [`HOT AMM`](../modules/hotAmm/overview.md)\n- Whitelisted Modules: [`HOT AMM`](../modules/hotAmm/overview.md), [`Bunker`]() (safety module)\n- Vault Owner (Timelock): [`0xCFaD8B6981Da1c734352Bd31618040C23FE99117`](https://etherscan.io/address/0xCFaD8B6981Da1c734352Bd31618040C23FE99117)\n- Vault Timelock Admin: [`0x5108EF86cF493905BcD35A3736e4B46DeCD7de58`](https://etherscan.io/address/0x5108EF86cF493905BcD35A3736e4B46DeCD7de58) (Arrakis Multisig)\n\nManagement Configuration:\n\n- Vault Executor: [`0x030DE9fd3ca63AB012f4E22dB595b66C812c8525`](https://etherscan.io/address/0x030DE9fd3ca63AB012f4E22dB595b66C812c8525) (HOTExecutor)\n- Price Oracle: [`0xF23d83Da92844C53aD57e6031c231dC93eC4eE80`](https://etherscan.io/address/0xF23d83Da92844C53aD57e6031c231dC93eC4eE80) (Wrapped `Chainlink` feeds)\n- Cooldown Period: `60 seconds`\n- Max Oracle Deviation: `2%`\n- Max Swap Slippage: `2%`\n- Manager Fee (on Swap Fees Earned): `1%`\n\nHOT AMM pool WETH/USDC Config:\n\n- QuoteSigner: `0x498c8a1a179b5D1D4Ff64bC90Cf3224a3478765C` (controlled by Arrakis)\n- HOT Manager: [`0xAf6f9640092cB1236E5DB6E517576355b6C40b7f`](https://etherscan.io/address/0xAf6f9640092cB1236E5DB6E517576355b6C40b7f) (timelocked)\n- Price Oracle: `Chainlink`\n- Max HOT Swaps Per Block: `3`\n- Max HOT Swap Oracle Deviation: `3.5%`\n\nRead more about the [HOT AMM Quoter](../modules/hotAmm/quoter.md) and the [Vault Manager Functions](../modules/hotAmm/manager.md) which both perform actions that help power this Public Vault.\n",
+      "observation": "Official retained repository identifies Ethereum public USDC/WETH vault 0xf790870ccF6aE66DdC69f68e6d05d446f1a6ad83."
+    },
+    {
+      "sourceRef": "https://etherscan.io/readContract?m=normal&a=0xf790870ccF6aE66DdC69f68e6d05d446f1a6ad83&v=0xf790870ccF6aE66DdC69f68e6d05d446f1a6ad83",
+      "observedGetters": {
+        "module()": "0x505f0Cc4D88E1B32d3F0F7FBf21258d2B30aD1E5",
+        "token0()": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        "token1()": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+      }
+    },
+    {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x505f0Cc4D88E1B32d3F0F7FBf21258d2B30aD1E5?fields=all",
+      "runtimeMatch": "exact_match",
+      "proxyResolution": {
+        "isProxy": true,
+        "proxyType": "EIP1967Proxy",
+        "implementations": [
+          {
+            "address": "0x9Ac1249E37EE1bDc38dC0fF873F1dB0c5E6aDdE3",
+            "name": "ValantisModulePublic"
+          }
+        ]
+      },
+      "sourceObservation": "Matched BeaconProxy source dispatches through beacon 0xe973cf1e347ecf26232a95dbcc862aa488b0351b; source-service label EIP1967Proxy does not override actual beacon design."
+    },
+    {
+      "sourceRef": "https://etherscan.io/readContract?m=normal&a=0xe973cf1e347ecf26232a95dbcc862aa488b0351b&v=0xe973cf1e347ecf26232a95dbcc862aa488b0351b",
+      "observedGetters": {
+        "implementation()": "0x9Ac1249E37EE1bDc38dC0fF873F1dB0c5E6aDdE3"
+      }
+    },
+    {
+      "sourceRef": "https://etherscan.io/readContract?m=normal&a=0x505f0Cc4D88E1B32d3F0F7FBf21258d2B30aD1E5&v=0x9Ac1249E37EE1bDc38dC0fF873F1dB0c5E6aDdE3",
+      "observedGetters": {
+        "paused()": true,
+        "metaVault()": "0xf790870ccF6aE66DdC69f68e6d05d446f1a6ad83"
+      }
+    },
+    {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x9Ac1249E37EE1bDc38dC0fF873F1dB0c5E6aDdE3?fields=all",
+      "sourcePath": "src/modules/ValantisHOTModulePublic.sol",
+      "sourceSnapshot": "// SPDX-License-Identifier: BUSL-1.1\npragma solidity 0.8.19;\n\nimport {IArrakisLPModulePublic} from\n    \"../interfaces/IArrakisLPModulePublic.sol\";\nimport {ValantisModule} from \"../abstracts/ValantisHOTModule.sol\";\nimport {BASE} from \"../constants/CArrakis.sol\";\n\nimport {SafeERC20} from\n    \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\nimport {IERC20Metadata} from\n    \"@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol\";\n\nimport {FullMath} from \"@v3-lib-0.8/contracts/FullMath.sol\";\n\ncontract ValantisModulePublic is\n    ValantisModule,\n    IArrakisLPModulePublic\n{\n    using SafeERC20 for IERC20Metadata;\n\n    bool public notFirstDeposit;\n\n    constructor(address guardian_) ValantisModule(guardian_) {}\n\n    /// @notice deposit function for public vault.\n    /// @param depositor_ address that will provide the tokens.\n    /// @param proportion_ percentage of portfolio position vault want to expand.\n    /// @return amount0 amount of token0 needed to expand the portfolio by \"proportion\"\n    /// percent.\n    /// @return amount1 amount of token1 needed to expand the portfolio by \"proportion\"\n    /// percent.\n    function deposit(\n        address depositor_,\n        uint256 proportion_\n    )\n        external\n        payable\n        onlyMetaVault\n        whenNotPaused\n        nonReentrant\n        returns (uint256 amount0, uint256 amount1)\n    {\n        if (msg.value > 0) revert NoNativeToken();\n        if (depositor_ == address(0)) revert AddressZero();\n        if (proportion_ == 0) revert ProportionZero();\n\n        // #region effects.\n\n        {\n            (uint256 _amt0, uint256 _amt1) = pool.getReserves();\n\n            if (!notFirstDeposit) {\n                if (_amt0 > 0 || _amt1 > 0) {\n                    // #region send dust on pool to manager.\n\n                    address manager = metaVault.manager();\n\n                    alm.withdrawLiquidity(_amt0, _amt1, manager, 0, 0);\n\n                    // #endregion send dust on pool to manager.\n                }\n\n                _amt0 = _init0;\n                _amt1 = _init1;\n                notFirstDeposit = true;\n            }\n\n            amount0 =\n                FullMath.mulDivRoundingUp(proportion_, _amt0, BASE);\n            amount1 =\n                FullMath.mulDivRoundingUp(proportion_, _amt1, BASE);\n        }\n\n        // #region get the tokens from the depositor.\n\n        token0.safeTransferFrom(depositor_, address(this), amount0);\n        token1.safeTransferFrom(depositor_, address(this), amount1);\n\n        // #endregion get the tokens from the depositor.\n\n        // #region increase allowance to alm.\n\n        token0.forceApprove(address(alm), amount0);\n        token1.forceApprove(address(alm), amount1);\n\n        // #endregion increase allowance to alm.\n\n        alm.depositLiquidity(amount0, amount1, 0, 0);\n\n        // #endregion interactions.\n\n        emit LogDeposit(depositor_, proportion_, amount0, amount1);\n    }\n\n    /// @notice function used by metaVault to withdraw tokens from the strategy.\n    /// @param receiver_ address that will receive tokens.\n    /// @param proportion_ number of share needed to be withdrawn.\n    /// @return amount0 amount of token0 withdrawn.\n    /// @return amount1 amount of token1 withdrawn.\n    function withdraw(\n        address receiver_,\n        uint256 proportion_\n    ) public override returns (uint256 amount0, uint256 amount1) {\n        if (proportion_ == BASE) {\n            notFirstDeposit = false;\n        }\n        return super.withdraw(receiver_, proportion_);\n    }\n\n    function initializePosition(bytes calldata data_)\n        external\n        override\n        onlyMetaVault\n    {\n        notFirstDeposit = true;\n        _initializePosition();\n    }\n}\n",
+      "observation": "deposit is onlyMetaVault and whenNotPaused; paused active module blocks vault mint. Withdrawals alone cannot establish maintained ordinary investor entry product."
+    }
+  ],
+  "limits": [
+    "No claim that Arrakis team disbanded, entire protocol shut down or module will remain paused.",
+    "Current Arrakis Pro private-issuer offering is distinct from the old public investor vault; no private/manager operation is silently substituted.",
+    "No new capabilities activated.",
+    "Failed old docs URLs/certificate issues are not treated as lifecycle evidence; primary repository and exact deployment/source/getter observations were used."
+  ]
+}

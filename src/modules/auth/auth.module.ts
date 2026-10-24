@@ -5,9 +5,10 @@ import { ApiKeyModule } from '../api-key/api-key.module';
 import { SecurityEventModule } from '../security-events/security-event.module';
 import { StepUpModule } from '../step-up/step-up.module';
 import { BillingModule } from '../billing/billing.module';
+import { AppSessionModule } from '../app-session/app-session.module';
 
 @Module({
-  imports: [ApiKeyModule, SecurityEventModule, StepUpModule, BillingModule],
+  imports: [AppSessionModule, ApiKeyModule, SecurityEventModule, StepUpModule, BillingModule],
   controllers: [AuthController],
   providers: [AuthService],
 })

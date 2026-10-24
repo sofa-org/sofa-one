@@ -981,13 +981,13 @@ export class BillingReconciliationService {
       // Resolve against the user's wallet snapshot; an agent address may be
       // the transaction identity for either execution mode, not walletAddress.
       where: { userId },
-      select: { walletAddress: true, agentWalletAddress: true },
+      select: { walletAddress: true, signerAddress: true },
     });
     const matchingWallets = ownedWallets.filter((wallet) =>
       isBackendEoa
-        ? wallet.agentWalletAddress?.toLowerCase() === tx.walletAddress?.toLowerCase()
+        ? wallet.signerAddress?.toLowerCase() === tx.walletAddress?.toLowerCase()
         : wallet.walletAddress?.toLowerCase() === tx.walletAddress?.toLowerCase() ||
-          wallet.agentWalletAddress?.toLowerCase() === tx.walletAddress?.toLowerCase(),
+          wallet.signerAddress?.toLowerCase() === tx.walletAddress?.toLowerCase(),
     );
     if (
       !tx.walletAddress ||

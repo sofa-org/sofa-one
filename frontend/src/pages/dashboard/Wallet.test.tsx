@@ -1,21 +1,26 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { padHex, type Hex } from 'viem';
-import { CALIBUR_ADDRESSES, CALIBUR_DELEGATION_CODES, hashKey, KeyType } from '@/lib/calibur';
+import { CALIBUR_ADDRESSES, CALIBUR_DELEGATION_CODES, hashKey, KeyType } from '../../../../src/common/calibur/calibur-primitives';
 import WalletPage from './Wallet';
 
 const mocks = vi.hoisted(() => ({
   getAccessToken: vi.fn(async () => 'test-token'),
-  getMe: vi.fn(), syncSession: vi.fn(), authorize: vi.fn(), create: vi.fn(),
+  getMe: vi.fn(), authorize: vi.fn(), create: vi.fn(),
+  providerAuthenticated: true,
   update: vi.fn(), setActive: vi.fn(), user: { id: 'user-1' }, hookAddress: undefined as string | undefined, providerRequest: vi.fn(async () => ['0x1111111111111111111111111111111111111111']),
   publicClient: undefined as any,
   signAuthorization: vi.fn(), createCaliburAccount: vi.fn(),
   createBundlerClient: vi.fn(), createPaymasterClient: vi.fn(), sendUserOperation: vi.fn(),
 }));
 
+vi.mock('@/components/AppSessionProvider', () => ({
+  useAppSession: () => ({ session: { sessionId: 'session-1', userId: 'user-1', mfaVerified: true }, loading: false }),
+}));
+vi.mock('@/pages/EmailOtpForm', () => ({ default: () => <p>Wallet identity reconnection form</p> }));
 vi.mock('@openfort/react', () => ({
   AccountTypeEnum: { EOA: 'EOA' }, RecoveryMethod: { PASSWORD: 'PASSWORD' },
-  useUser: () => ({ getAccessToken: mocks.getAccessToken, isAuthenticated: true, isLoading: false, user: mocks.user }),
+  useUser: () => ({ getAccessToken: mocks.getAccessToken, isAuthenticated: mocks.providerAuthenticated, isLoading: false, user: mocks.user }),
   useOpenfort: () => ({ updateEmbeddedAccounts: mocks.update, client: { embeddedWallet: { getEthereumProvider: vi.fn(async () => ({ request: mocks.providerRequest })) } } }),
   use7702Authorization: () => ({ signAuthorization: mocks.signAuthorization }),
 }));
@@ -34,11 +39,12 @@ vi.mock('viem/account-abstraction', async (importOriginal) => ({
   createPaymasterClient: mocks.createPaymasterClient,
 }));
 vi.mock('@/lib/api', () => ({
-  DEFAULT_CHAIN_ID: 84532, getMe: mocks.getMe, syncSession: mocks.syncSession,
+  DEFAULT_CHAIN_ID: 84532, getMe: mocks.getMe,
   authorizeEmbeddedWallet: mocks.authorize,
   getBalancesAuth: vi.fn(async () => ({ chains: [] })),
   getApiErrorMessage: (e: unknown) => e instanceof Error ? e.message : String(e),
-  hasApiErrorCode: () => false,
+  hasApiErrorCode: (error: unknown, ...codes: string[]) => typeof error === 'object' && error !== null &&
+    'code' in error && typeof error.code === 'string' && codes.includes(error.code),
 }));
 vi.mock('@/lib/calibur', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/calibur')>()),
@@ -48,7 +54,7 @@ vi.mock('@/lib/calibur', async (importOriginal) => ({
 const address = '0x1111111111111111111111111111111111111111';
 const addressA = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const addressB = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
-const created = { id: 'wallet-B', walletAddress: address, agentWalletAddress: null, agentKeyHash: null, chainAuthorizations: [], isDefault: true };
+const created = { id: 'wallet-B', walletAddress: address, signerAddress: null, agentKeyHash: null, chainAuthorizations: [], isDefault: true };
 
 async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string, walletCode: Hex = '0x', clientChainId = chainId) {
   vi.stubEnv('VITE_OPENFORT_FEE_SPONSORSHIP_ID', feeSponsorshipId ?? '');
@@ -56,7 +62,7 @@ async function setupRegistrationRpc(chainId: number, feeSponsorshipId?: string, 
   const agentKeyHash = hashKey({ keyType: KeyType.Secp256k1, publicKey: padHex(addressB as Hex, { size: 32 }) });
   const authorizedWallet = {
     ...created,
-    agentWalletAddress: addressB,
+    signerAddress: addressB,
     agentKeyHash,
     chainAuthorizations: [{ chainId, expiresAt: new Date(Date.now() + 86_400_000).toISOString(), status: 'authorized' }],
   };
@@ -91,6 +97,7 @@ describe('WalletPage provisioning identity', () => {
   afterEach(() => vi.unstubAllEnvs());
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.providerAuthenticated = true;
     mocks.hookAddress = undefined;
     mocks.publicClient = undefined;
     mocks.getAccessToken.mockResolvedValue('test-token');
@@ -108,12 +115,53 @@ describe('WalletPage provisioning identity', () => {
     mocks.sendUserOperation.mockResolvedValue('0xuserop');
   });
 
+  it('loads app-cookie wallet data while requesting separate Openfort reconnection', async () => {
+    mocks.providerAuthenticated = false;
+    mocks.getMe.mockResolvedValue({ wallet: created, wallets: [created] });
+    render(<WalletPage />);
+    expect(await screen.findByText('Wallet identity reconnection form')).toBeInTheDocument();
+    expect((await screen.findAllByText(address)).length).toBeGreaterThan(0);
+    expect(mocks.getAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('keeps wallet identity correction available even while the provider is authenticated', async () => {
+    render(<WalletPage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Reconnect wallet identity' }));
+    expect(await screen.findByText('Wallet identity reconnection form')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Agent Wallet' })).toBeInTheDocument();
+  });
+
+  it('requests wallet reauthentication without retrying an invalid identity bearer', async () => {
+    mocks.authorize.mockRejectedValueOnce(Object.assign(new Error('Reconnect wallet identity'), { code: 'AUTH_PROVIDER_INVALID' }));
+    render(<WalletPage />);
+    await screen.findByRole('button', { name: 'Create EOA' });
+    fireEvent.change(screen.getByPlaceholderText('At least 8 characters'), { target: { value: 'correct horse' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create EOA' }));
+    expect(await screen.findByText('Wallet identity reconnection form')).toBeInTheDocument();
+    expect(mocks.authorize).toHaveBeenCalledTimes(1);
+  });
+
+  it('separates user wallet and TEE signer identity without implying authorization', async () => {
+    const wallet = { ...created, signerAddress: addressB, chainAuthorizations: [] };
+    mocks.getMe.mockResolvedValue({ wallet, wallets: [wallet] });
+    render(<WalletPage />);
+    const walletLabel = await screen.findByText('Wallet Address');
+    const signerLabel = screen.getByText('Signer Address');
+    expect(walletLabel.parentElement?.textContent).toContain(address);
+    expect(walletLabel.parentElement?.textContent).toContain('EIP-7702');
+    expect(signerLabel.closest('.rounded-xl')?.textContent).toContain(addressB);
+    expect(screen.getByText(/This address alone does not establish authorization/)).toBeTruthy();
+    expect(screen.queryByText('Authorized Signer')).toBeNull();
+    expect(screen.getByText('0 networks configured')).toBeTruthy();
+    expect(mocks.signAuthorization).not.toHaveBeenCalled();
+  });
+
   it('authorizes the created provider identity even when response has no openfortAccountId', async () => {
     render(<WalletPage />);
     await screen.findByRole('button', { name: 'Create EOA' });
     fireEvent.change(screen.getByPlaceholderText('At least 8 characters'), { target: { value: 'correct horse' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create EOA' }));
-    await waitFor(() => expect(mocks.authorize).toHaveBeenCalledWith(expect.any(Function), {
+    await waitFor(() => expect(mocks.authorize).toHaveBeenCalledWith('test-token', {
       embeddedWalletAddress: address, embeddedOpenfortAccountId: 'account-B',
     }));
     expect((await screen.findAllByText(address)).length).toBeGreaterThan(0);
@@ -127,7 +175,7 @@ describe('WalletPage provisioning identity', () => {
     mocks.authorize.mockResolvedValueOnce({ wallet: walletC, wallets: [created, walletC] });
     fireEvent.click(screen.getByRole('button', { name: 'Create new wallet' }));
     await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(2));
-    expect(mocks.authorize).toHaveBeenLastCalledWith(expect.any(Function), {
+    expect(mocks.authorize).toHaveBeenLastCalledWith('test-token', {
       embeddedWalletAddress: addressA, embeddedOpenfortAccountId: 'account-C',
     });
   });
@@ -150,7 +198,7 @@ describe('WalletPage provisioning identity', () => {
     expect(mocks.create).toHaveBeenCalledTimes(1);
     mocks.hookAddress = address;
     fireEvent.click(screen.getByRole('button', { name: 'Create new wallet' }));
-    await waitFor(() => expect(mocks.authorize).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({
+    await waitFor(() => expect(mocks.authorize).toHaveBeenCalledWith('test-token', expect.objectContaining({
       embeddedWalletAddress: address, embeddedOpenfortAccountId: 'account-B',
     })));
     expect(mocks.create).toHaveBeenCalledTimes(1);
@@ -180,7 +228,7 @@ describe('WalletPage provisioning identity', () => {
   });
 
   it('does not authorize when refreshed accounts are ordered B then A, and uses the live selected provider for A', async () => {
-    const walletA = { ...created, id: 'wallet-A', walletAddress: addressA, openfortAccountId: 'account-A', agentWalletAddress: addressB, agentKeyHash: '0x' + '1'.repeat(64), chainAuthorizations: [] };
+    const walletA = { ...created, id: 'wallet-A', walletAddress: addressA, openfortAccountId: 'account-A', signerAddress: addressB, agentKeyHash: '0x' + '1'.repeat(64), chainAuthorizations: [] };
     const walletB = { ...walletA, id: 'wallet-B', walletAddress: addressB, openfortAccountId: 'account-B' };
     mocks.getMe.mockResolvedValue({ wallet: walletA, wallets: [walletA, walletB] });
     mocks.update.mockResolvedValue([{ id: 'account-B', address: addressB }, { id: 'account-A', address: addressA }]);
@@ -194,12 +242,12 @@ describe('WalletPage provisioning identity', () => {
     fireEvent.change(document.querySelector('input[type="datetime-local"]')!, { target: { value: new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 16) } });
     fireEvent.click(screen.getByRole('button', { name: 'Authorize API Access' }));
     await screen.findAllByText('authorize sentinel');
-    expect(mocks.authorize).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({ embeddedWalletAddress: addressA, embeddedOpenfortAccountId: 'account-A' }));
+    expect(mocks.authorize).toHaveBeenCalledWith('test-token', expect.objectContaining({ embeddedWalletAddress: addressA, embeddedOpenfortAccountId: 'account-A' }));
     expect(mocks.setActive).toHaveBeenCalledWith(expect.objectContaining({ address: addressA }));
   });
 
   it('rejects a live provider on B even when the SDK hook reports A active', async () => {
-    const walletA = { ...created, id: 'wallet-A', walletAddress: addressA, openfortAccountId: 'account-A', agentWalletAddress: addressB, agentKeyHash: '0x' + '1'.repeat(64), chainAuthorizations: [] };
+    const walletA = { ...created, id: 'wallet-A', walletAddress: addressA, openfortAccountId: 'account-A', signerAddress: addressB, agentKeyHash: '0x' + '1'.repeat(64), chainAuthorizations: [] };
     const walletB = { ...walletA, id: 'wallet-B', walletAddress: addressB, openfortAccountId: 'account-B' };
     mocks.getMe.mockResolvedValue({ wallet: walletA, wallets: [walletA, walletB] });
     mocks.update.mockResolvedValue([{ id: 'account-A', address: addressA }, { id: 'account-B', address: addressB }]);
@@ -220,7 +268,7 @@ describe('WalletPage provisioning identity', () => {
       ...created,
       walletAddress: address,
       openfortAccountId: 'account-A',
-      agentWalletAddress: addressB,
+      signerAddress: addressB,
       agentKeyHash: `0x${'1'.repeat(64)}`,
       chainAuthorizations: [],
     };

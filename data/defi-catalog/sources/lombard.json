@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "families": [{
+    "familyId": "lombard",
+    "familyVersion": "staked-lbtc-v1",
+    "contracts": [{
+      "chainId": 1,
+      "address": "0x8236a87084f8B84306F72007F36F2618A5634494",
+      "status": "inactive",
+      "contractName": "Lombard LBTC proxy",
+      "sourceRefs": ["lombard-sdk-repository", "lombard-token-addresses", "lombard-lbtc-proxy-sourcify", "lombard-staked-lbtc-implementation-sourcify"],
+      "abiFunctions": [
+        { "type": "function", "name": "redeemForBtc", "stateMutability": "nonpayable", "inputs": [{ "name": "scriptPubkey", "type": "bytes", "internalType": "bytes" }, { "name": "amount", "type": "uint256", "internalType": "uint256" }], "outputs": [], "sourceId": "lombard-staked-lbtc-implementation-sourcify" },
+        { "type": "function", "name": "redeem", "stateMutability": "nonpayable", "inputs": [{ "name": "amount", "type": "uint256", "internalType": "uint256" }], "outputs": [], "sourceId": "lombard-staked-lbtc-implementation-sourcify" }
+      ]
+    }]
+  }],
+  "sources": [
+    { "sourceId": "lombard-sdk-repository", "url": "https://github.com/Lombard-Finance/sdk/tree/f454aa43decc4fb82fc880ac9e3fd9f1c9707bb8", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official Lombard-Finance/sdk commit f454aa43decc4fb82fc880ac9e3fd9f1c9707bb8; this source snapshot does not establish current runtime identity." },
+    { "sourceId": "lombard-token-addresses", "url": "https://github.com/Lombard-Finance/sdk/blob/f454aa43decc4fb82fc880ac9e3fd9f1c9707bb8/packages/sdk/src/tokens/token-addresses.ts", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned SDK EVM_LBTC_ADDRESSES maps production Ethereum LBTC to user-facing token/proxy 0x8236a87084f8B84306F72007F36F2618A5634494." },
+    { "sourceId": "lombard-lbtc-proxy-sourcify", "url": "https://sourcify.dev/server/v2/contract/1/0x8236a87084f8b84306f72007f36f2618a5634494?fields=all", "retrievedAtUtc": "2026-10-04", "evidence": "Sourcify exact-match proxy shell record (verified 2024-08-08) classifies the address as EIP-1967 proxy and resolves a listed StakedLBTC implementation at 0x072072317469ebB6C340a47e41561C9C3b782BD9. This dated shell resolution is not a current implementation-slot/runtime assertion; the shell ABI itself does not declare the selected user methods." },
+    { "sourceId": "lombard-staked-lbtc-implementation-sourcify", "url": "https://sourcify.dev/server/v2/contract/1/0x072072317469ebb6c340a47e41561c9c3b782bd9?fields=abi,sources,compilation,metadata", "retrievedAtUtc": "2026-10-04", "evidence": "Sourcify exact-match implementation record 28242592, verified 2026-04-24, identifies contracts/LBTC/StakedLBTC.sol, Solidity 0.8.24+commit.e11b9ed9. Its exact full ABI supplies redeemForBtc(bytes scriptPubkey,uint256 amount) and redeem(uint256 amount), both nonpayable with no outputs; implementation ABI/source evidence only, not an authorized target." }
+  ]
+}

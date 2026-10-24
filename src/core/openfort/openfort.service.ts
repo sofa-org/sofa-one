@@ -8,6 +8,7 @@ import {
   Logger,
   Optional,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
@@ -20,15 +21,13 @@ import { getSupportedChain, isMonadChain } from '../../common/chains/supported-c
 import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { sanitizeErrorMessage } from '../../common/utils/sanitize';
 import {
-  CALIBUR_ADDRESSES,
   createCaliburSessionAccount,
   getAgentKeyUsabilityFailure,
   getCaliburKeySettings,
   hasCaliburDelegation,
-  hashKey,
   isCaliburKeyRegistered,
-  KeyType,
 } from '../../common/calibur/calibur';
+import { CALIBUR_ADDRESSES, hashKey, KeyType } from '../../common/calibur/calibur-primitives';
 
 @Injectable()
 export class OpenfortService {
@@ -83,7 +82,10 @@ export class OpenfortService {
         'getOpenfortIamSession',
       )) as any;
       const openfortUserId = session?.user?.id ?? session?.id;
-      if (!openfortUserId) throw new ForbiddenException('Invalid Openfort session');
+      if (!openfortUserId) throw new UnauthorizedException({
+        code: API_ERROR_CODES.AUTH_PROVIDER_INVALID,
+        message: 'Invalid Openfort session',
+      });
 
       const email =
         session?.user?.email ??
@@ -93,10 +95,23 @@ export class OpenfortService {
         undefined;
 
       return { openfortUserId, email, session };
-    } catch (error: any) {
-      if (error instanceof ForbiddenException) throw error;
-      this.logOpenfortError('verifyIamSession', error);
-      throw new BadGatewayException('Wallet service temporarily unavailable');
+    } catch (error: unknown) {
+      if (error instanceof UnauthorizedException) throw error;
+      if (error && typeof error === 'object' && 'statusCode' in error && error.statusCode === HttpStatus.UNAUTHORIZED) {
+        throw new UnauthorizedException({
+          code: API_ERROR_CODES.AUTH_PROVIDER_INVALID,
+          message: 'Invalid or expired Openfort session',
+        });
+      }
+      this.logger.error(this.logContext({
+        message: 'Openfort IAM unavailable',
+        operation: 'verifyIamSession',
+        failureCategory: this.isTimeoutError(error) ? 'timeout' : 'provider_error',
+      }));
+      throw new BadGatewayException({
+        code: API_ERROR_CODES.AUTH_PROVIDER_UNAVAILABLE,
+        message: 'Authentication provider temporarily unavailable',
+      });
     }
   }
 
@@ -151,7 +166,7 @@ export class OpenfortService {
       }
       return { openfortUserId, accountId: account.id, address: normalizedAddress };
     } catch (error: any) {
-      if (error instanceof ForbiddenException) throw error;
+      if (error instanceof ForbiddenException || error instanceof UnauthorizedException || error instanceof BadGatewayException) throw error;
       this.logOpenfortError('authorizeEmbeddedAddress', error);
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
@@ -334,12 +349,11 @@ export class OpenfortService {
       const rpc = this.getUserOperationRpc(params.chainId, publishableKey);
       await this.assertCaliburContractAvailable(client, params.chainId);
       const gasPrice = await this.estimateUserOperationFees(rpc);
-      const bundlerTransport = http(
-        rpc.url,
-        rpc.authorizationHeader
-          ? { fetchOptions: { headers: { Authorization: rpc.authorizationHeader } } }
-          : undefined,
-      );
+      const bundlerTransport = http(rpc.url, {
+        fetchOptions: {
+          ...(rpc.authorizationHeader ? { headers: { Authorization: rpc.authorizationHeader } } : {}),
+        },
+      } as any);
       const submission = await this.sendUserOperationWithSponsorship({
         account: sessionAccount,
         chain,
@@ -697,7 +711,11 @@ export class OpenfortService {
         'signData',
       );
     } catch (error: any) {
-      this.logOpenfortError('signData', error);
+      this.logger.error(this.logContext({
+        message: 'Openfort signing failed',
+        operation: 'signData',
+        failureCategory: this.isTimeoutError(error) ? 'timeout' : 'provider_error',
+      }));
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }

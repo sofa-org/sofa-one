@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useUser } from '@openfort/react';
+import { useAppSession } from '@/components/AppSessionProvider'
 import { Bell, AlertTriangle, Loader2, RotateCcw, Check, CheckCheck } from 'lucide-react';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
 import {
@@ -103,14 +103,8 @@ function getDetailEntries(metadata: SecurityNotificationRecord['metadata']) {
 }
 
 export default function SecurityNotificationsPage() {
-  const { getAccessToken, isAuthenticated, isLoading: authLoading } = useUser();
-  const getToken = useCallback(async () => {
-    const token = await getAccessToken();
-    if (!token) {
-      throw new Error('Openfort session is not ready. Refresh and sign in again.');
-    }
-    return token;
-  }, [getAccessToken]);
+  const { session, loading: authLoading } = useAppSession()
+  
 
   const [notifications, setNotifications] = useState<SecurityNotificationRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +119,7 @@ export default function SecurityNotificationsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await listSecurityNotificationsAuth(getToken, undefined, signal);
+      const data = await listSecurityNotificationsAuth(undefined, signal);
       const sorted = [...data].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
@@ -141,25 +135,25 @@ export default function SecurityNotificationsPage() {
         setLoading(false);
       }
     }
-  }, [getToken]);
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!isAuthenticated) {
+    if (!session) {
       setLoading(false);
       return;
     }
     const controller = new AbortController();
     fetchNotifications(controller.signal);
     return () => controller.abort();
-  }, [authLoading, isAuthenticated, fetchNotifications, refreshNonce]);
+  }, [authLoading, session, fetchNotifications, refreshNonce]);
 
   async function handleMarkAllRead() {
     if (unreadCount === 0) return;
     setActionLoading(true);
     setActionError(null);
     try {
-      await markAllSecurityNotificationsReadAuth(getToken);
+      await markAllSecurityNotificationsReadAuth();
       setNotifications((prev) =>
         prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })),
       );
@@ -175,7 +169,7 @@ export default function SecurityNotificationsPage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      await markSecurityNotificationReadAuth(getToken, notificationId);
+      await markSecurityNotificationReadAuth(notificationId);
       setNotifications((prev) =>
         prev.map((n) =>
           n.id === notificationId ? { ...n, readAt: n.readAt ?? new Date().toISOString() } : n,

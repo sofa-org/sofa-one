@@ -5,34 +5,24 @@ jest.mock('viem/actions', () => ({
   readContract: jest.fn(),
 }));
 
+import { decodeAbiParameters, decodeFunctionData, parseAbi } from 'viem';
 import {
-  CALIBUR_ADDRESSES,
-  CALIBUR_ADDRESS,
   encodeCaliburExecuteUserOpCalls,
-  EIP7702_DELEGATION_PREFIX,
-  getCaliburDelegationCodes,
   getCaliburDelegationCode,
-  hasCaliburDelegation,
+  KeyType,
+  ZERO_ADDRESS,
+  hashKey,
+  packSettings,
+  unpackSettings,
+  encodeRegisterKey,
+  encodeUpdateKeySettings,
   LEGACY_CALIBUR_ADDRESS,
-} from './calibur';
+} from './calibur-primitives';
+import { hasCaliburDelegation } from './calibur';
 
 describe('Calibur delegation helpers', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  it('builds the expected EIP-7702 delegation code for Calibur', () => {
-    expect(getCaliburDelegationCode()).toBe(
-      `${EIP7702_DELEGATION_PREFIX}${CALIBUR_ADDRESS.slice(2)}`,
-    );
-    expect(getCaliburDelegationCode(LEGACY_CALIBUR_ADDRESS)).toBe(
-      `${EIP7702_DELEGATION_PREFIX}${LEGACY_CALIBUR_ADDRESS.slice(2)}`,
-    );
-    expect(getCaliburDelegationCodes()).toEqual(
-      CALIBUR_ADDRESSES.map(
-        (address) => `${EIP7702_DELEGATION_PREFIX}${address.slice(2)}`,
-      ),
-    );
   });
 
   it('detects whether an EOA is delegated to Calibur', async () => {
@@ -46,16 +36,63 @@ describe('Calibur delegation helpers', () => {
     await expect(hasCaliburDelegation({} as any, account)).resolves.toBe(false);
   });
 
-  it('encodes Calibur session calls with the EntryPoint executeUserOp selector', async () => {
+  it('encodes the EntryPoint BatchedCall with complete values and call defaults', () => {
+    const to = '0x1111111111111111111111111111111111111111';
     const callData = encodeCaliburExecuteUserOpCalls([
-      {
-        to: '0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB',
-        value: 0n,
-        data: '0x095ea7b3000000000000000000000000e111180000d2663c0091e4f400237545b87b996bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-      },
+      { to, value: 7n, data: '0x1234' },
+      { to },
     ]);
 
-    expect(callData).toMatch(/^0x8dd7712f/);
-    expect(callData).not.toMatch(/^0xc0972062/);
+    expect(callData.slice(0, 10)).toBe('0x8dd7712f');
+    expect(
+      decodeAbiParameters(
+        [{ type: 'tuple', components: [
+          { type: 'tuple[]', components: [
+            { type: 'address' }, { type: 'uint256' }, { type: 'bytes' },
+          ] },
+          { type: 'bool' },
+        ] }],
+        `0x${callData.slice(10)}`,
+      ),
+    ).toEqual([[[[to, 7n, '0x1234'], [to, 0n, '0x']], true]]);
+  });
+
+  it('packs and unpacks the full Calibur settings bit layout', () => {
+    const settings = {
+      isAdmin: true,
+      expiration: 2 ** 40 - 1,
+      hook: '0x0000000000000000000000000000000000000001' as const,
+    };
+    const packed = (1n << 200n) | (((1n << 40n) - 1n) << 160n) | 1n;
+
+    expect(packSettings(settings)).toBe(packed);
+    expect(unpackSettings(packed)).toEqual(settings);
+    expect(unpackSettings(0n)).toEqual({ isAdmin: false, expiration: 0, hook: ZERO_ADDRESS });
+  });
+
+  it('distinguishes key types and public key bytes in key identity', () => {
+    const key = { keyType: KeyType.Secp256k1, publicKey: '0x1234' as const };
+    expect(hashKey(key)).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(hashKey(key)).not.toBe(hashKey({ ...key, keyType: KeyType.P256 }));
+    expect(hashKey(key)).not.toBe(hashKey({ ...key, publicKey: '0x123400' }));
+  });
+
+  it('encodes key registration and settings updates using the contract ABI', () => {
+    const key = { keyType: KeyType.Secp256k1, publicKey: '0x1234' as const };
+    const keyHash = hashKey(key);
+    const settings = { isAdmin: false, expiration: 123, hook: ZERO_ADDRESS };
+    const abi = parseAbi([
+      'function register((uint8 keyType, bytes publicKey) key)',
+      'function update(bytes32 keyHash, uint256 settings)',
+    ]);
+
+    expect(decodeFunctionData({ abi, data: encodeRegisterKey(key) })).toEqual({
+      functionName: 'register',
+      args: [key],
+    });
+    expect(decodeFunctionData({ abi, data: encodeUpdateKeySettings(keyHash, settings) })).toEqual({
+      functionName: 'update',
+      args: [keyHash, 123n << 160n],
+    });
   });
 });

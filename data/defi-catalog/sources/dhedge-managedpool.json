@@ -1,0 +1,1760 @@
+{
+  "schemaVersion": 1,
+  "protocol": "dHEDGE",
+  "protocolId": "dhedge-managedpool",
+  "website": "https://chamberfi.com/",
+  "reviewedAt": "2026-10-22",
+  "aliases": [
+    "Chamber"
+  ],
+  "lifecycleEvidence": {
+    "sourceRef": "https://docs.chamberfi.com/introduction/dhedge-to-chamber.md",
+    "verifiedAt": "2026-10-22",
+    "evidence": "Official rebrand page states same team, same DAO, same existing live vault contracts and share continuity; no migration. Official current vault page identifies this exact Optimism address as Ethereum Savings Account managed by Infinite Trading DAO and offers Buy/Sell. No vault retirement/shutdown notice encountered in reviewed sources; UI management value is not activity proof."
+  },
+  "contracts": [
+    {
+      "chainId": 10,
+      "address": "0xa2ffe6ed599e8f7aac8047f5ee0de3d83de1b320",
+      "deploymentEvidence": {
+        "sourceRef": "https://chamberfi.com/vault/0xa2ffe6ed599e8f7aac8047f5ee0de3d83de1b320",
+        "verifiedAt": "2026-10-22",
+        "chainId": 10,
+        "address": "0xa2ffe6ed599e8f7aac8047f5ee0de3d83de1b320",
+        "implementationAddress": "0x50e8e2DB93b04827D7fDFeFb5037CC9485eDE388",
+        "proxySourceRef": "https://sourcify.dev/server/v2/contract/10/0xa2ffe6ed599e8f7aac8047f5ee0de3d83de1b320?fields=abi,compilation,proxyResolution,deployment",
+        "proxyReportedCreationMatch": null,
+        "proxyReportedRuntimeMatch": "exact_match",
+        "proxyReportedMatch": "exact_match",
+        "proxyResolution": {
+          "isProxy": true,
+          "proxyType": "EIP1967Proxy",
+          "implementations": [
+            {
+              "address": "0x5e61a079A178f0E5784107a4963baAe0c5a680c6",
+              "name": "TransparentUpgradeableProxy"
+            }
+          ]
+        },
+        "reportedExplorerProxyVerification": "Explorer blocked by HTTP 403; Sourcify evidence used",
+        "binding": "Verified custom BaseUpgradeabilityProxy stores factory in EIP1967 implementation slot and resolves HasLogic(factory).getLogic(proxyType); proxyType 2 denotes PoolLogic. Sourcify reports factory 0x5e61a079A178f0E5784107a4963baAe0c5a680c6 as implementation, NOT final pool logic. Official Optimism v2.12.0 deployment manifest binds that factory to PoolLogic 0x50e8e2DB93b04827D7fDFeFb5037CC9485eDE388. No current getLogic eth_call or fresh runtime identity proof claimed."
+      },
+      "abiEvidence": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/10/0x50e8e2DB93b04827D7fDFeFb5037CC9485eDE388?fields=abi,compilation,sources,deployment,proxyResolution",
+        "verifiedAt": "2026-10-22",
+        "implementationAddress": "0x50e8e2DB93b04827D7fDFeFb5037CC9485eDE388",
+        "reportedExplorerVerification": "Not relied upon; Sourcify response used",
+        "reportedSourceServiceCreationMatch": "match",
+        "reportedSourceServiceRuntimeMatch": "match",
+        "reportedSourceServiceMatch": "match",
+        "sourceServiceVerifiedAt": "2026-07-12T15:53:11Z",
+        "compilation": {
+          "language": "Solidity",
+          "compiler": "solc",
+          "compilerVersion": "0.7.6+commit.7338295f",
+          "compilerSettings": {
+            "libraries": {
+              "contracts/PoolLogic.sol": {
+                "PoolLogicLib": "0x5860e5c624711b0b0d9f2ce028bbab0500495db1"
+              }
+            },
+            "optimizer": {
+              "runs": 20,
+              "enabled": true
+            }
+          },
+          "name": "PoolLogic",
+          "fullyQualifiedName": "contracts/PoolLogic.sol:PoolLogic"
+        },
+        "deployment": {
+          "transactionHash": "0xda1639cfe376e131fc64ebe81154a6839a0be91dc8d612762dde080d566d5a95",
+          "blockNumber": "154136231",
+          "transactionIndex": "10",
+          "deployer": "0xef31D75A2f85CfDD9032158A2CEB773C84d79192"
+        },
+        "sourceSha256": {
+          "@openzeppelin/contracts-upgradeable/introspection/IERC165Upgradeable.sol": "dad9c392cbf79051972941198d2040668df6f33690afcc91b63b08f700791e6d",
+          "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol": "413aed58c69b8095e69483ff99f700d415c2f63d6d14a5986b0c07b92436030e",
+          "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol": "2c3a3edc2b1a4ac2c4a8645475b51f2668b1ad5ea22df074d0c0ebd3122ce2e7",
+          "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol": "43a696ee43bf5d8415b5935142a131c458865f4def5e7afca07ede95162ea9dd",
+          "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol": "f69d5b5ffa1e58d4b7bdbe68b7359344f0ce3d7fbf19c235f4c7974c7a8653ef",
+          "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol": "5373c38f149db3e4563813f31dc7d9aa591da356f24a570751dd9e47d2b6b39b",
+          "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol": "f73758d2e44ef16b74099452ceb8d82e0443ca86061428915d5979d92eea1131",
+          "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol": "b9c1700bc8c28217952147b408dc67aa128eb2f71a45fceb4a8e73dff43fedac",
+          "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol": "be40d05d0f5f78fa5ee21cfc77c587c4fa68576392d95c1f3619728982cc7fa8",
+          "@openzeppelin/contracts/math/SafeMath.sol": "60e99c951790aa056fe6f7f887780fc8a34783859bc420aad188e1abae116fdf",
+          "contracts/interfaces/aave/IFlashLoanReceiver.sol": "d3f14926a636c35223f34931799d4b9b8ff9a6db08c5f629207e2fae6076e269",
+          "contracts/interfaces/dytm/IDytmDelegatee.sol": "aad22b6e0624e3712e859ffe8403b4ce05d6c895c7c5af3df15164c02fb23d39",
+          "contracts/interfaces/dytm/IDytmOffice.sol": "60ccd8d5e0a35c08295f2554851a92adf0cef8357daccbcc8c0de793ecd942da",
+          "contracts/interfaces/dytm/IDytmOfficeContractGuard.sol": "e063787f9fc109738f456c9aad29b18adbe992c403a79c3817a9428342aeadca",
+          "contracts/interfaces/guards/IAaveLendingPoolAssetGuard.sol": "a778f6602d2daa0e8019638a89ce8ec5e6bee74c9d7a4ecde4a48f1500e64a3b",
+          "contracts/interfaces/guards/IAssetGuard.sol": "122cdee0d0bfbc1e3325828bfdc1d22491e86ab1d381114c461d00c8aa4e599b",
+          "contracts/interfaces/guards/IComplexAssetGuard.sol": "01c885f840ca9a58323d20d93c01e3ff5702dc675c982c43491d1379aa980ca7",
+          "contracts/interfaces/guards/IERC721VerifyingGuard.sol": "40528d388eabb27aed94d0a7811466145247adadebb26117ec67f7a97372027f",
+          "contracts/interfaces/guards/IGuard.sol": "8c5ddff9f4b442e4ec97dc8cb93135b5e8e0b81f9424a53a64a3bd5b0e5b41cf",
+          "contracts/interfaces/guards/ITxTrackingGuard.sol": "73613b56664eeb9b9d336db5ada5ea5130fa5fb9fa8027839459b78b31a92814",
+          "contracts/interfaces/IGovernance.sol": "3cd35326ae8bf5cf5bf2fe3060096eb7e354d2cc5182f022052d010766a6305b",
+          "contracts/interfaces/IHasDaoInfo.sol": "7f5ed018da2cd2729378640dae32a1115f802bf7f90c6249b078e3c07f86a87a",
+          "contracts/interfaces/IHasFeeInfo.sol": "437d5b4c4eb68941b4706ac6dbe7084c949107d6e1c2d3340e038f6282d87516",
+          "contracts/interfaces/IHasGuardInfo.sol": "3d7467abc0eb8ea4ea082b034049ac0f4b39659b277df0d3de5ae3cdf0e492ff",
+          "contracts/interfaces/IHasOwnable.sol": "1a048c5327e8ddfe0b54087e1b06598f88f44cb643919840f7b73c72c709dbd5",
+          "contracts/interfaces/IHasPausable.sol": "d0f5328562859d131ec7e4d7411f5bac0fa4e39a1de4b86ee59c3b87c60a6012",
+          "contracts/interfaces/IHasSupportedAsset.sol": "cc856a040644e274530037325aaebd361eaca6f611af8c50af7b5c7993c642f6",
+          "contracts/interfaces/IManaged.sol": "0dec84ffeab231b6cfbf1ac4a3cbbbcf75a3ab37010ad9c0f47fae740a8d287b",
+          "contracts/interfaces/IPoolFactory.sol": "6dda4eb30d910169e70a4e1bc56de5e73bf9f7848e9b60077af4869512cafba3",
+          "contracts/interfaces/IPoolLogic.sol": "f981c2e8637c69de3322150d275bf857257eb0646506c01adc411377294b6503",
+          "contracts/interfaces/IPoolManagerLogic.sol": "5042d36b8ec4d9d9314e0293a7f8df26194a3d470a6c30561030e5cb77a9d760",
+          "contracts/interfaces/IValueManipulationCheck.sol": "d4bf8a7d204bf472002ccd852f341f7860b2eb053d3cbf4435db3c3e9454e509",
+          "contracts/PoolLogic.sol": "768d759b8ab5673be2152a7b00c4af8e0d092d536a105eb8237c53056545c7c3",
+          "contracts/utils/AddressHelper.sol": "19232dba96640333fa74eac1401a84962129b7dbbd20490aa70010a339be2244",
+          "contracts/utils/dytm/DytmParamStructs.sol": "44823306a5912d104e01878e75e7bdebb2b12c2fdd22595e5945d4bad6a90c69",
+          "contracts/utils/PoolLogicLib.sol": "b16f03cac64ff28e81d54fe1fabf13c232f5dcf562203930e69b82369a81391b"
+        },
+        "chainId": 10,
+        "address": "0xa2ffe6ed599e8f7aac8047f5ee0de3d83de1b320"
+      },
+      "abi": [
+        {
+          "name": "Approval",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "owner",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "spender",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "value",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Deposit",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "fundAddress",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "investor",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "assetDeposited",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "amountDeposited",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "valueDeposited",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "fundTokensReceived",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalInvestorFundTokens",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "fundValue",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalSupply",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "time",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "EntryFeeMinted",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "recipient",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "entryFeeAmount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "ExitFeeMinted",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "recipient",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "exitFeeAmount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "ManagerFeeMinted",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "pool",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "manager",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "available",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "daoFee",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "managerFee",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "tokenPriceAtLastFeeMint",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "PoolManagerLogicSet",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "poolManagerLogic",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "from",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "PoolPrivacyUpdated",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "isPoolPrivate",
+              "type": "bool",
+              "indexed": false,
+              "internalType": "bool"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "ReferralFeeMinted",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "referrer",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "TransactionExecuted",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "pool",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "manager",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "transactionType",
+              "type": "uint16",
+              "indexed": false,
+              "internalType": "uint16"
+            },
+            {
+              "name": "time",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Transfer",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "from",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "value",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Withdrawal",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "fundAddress",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "investor",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "valueWithdrawn",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "fundTokensWithdrawn",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalInvestorFundTokens",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "fundValue",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalSupply",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "withdrawnAssets",
+              "type": "tuple[]",
+              "indexed": false,
+              "components": [
+                {
+                  "name": "asset",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "externalWithdrawProcessed",
+                  "type": "bool",
+                  "internalType": "bool"
+                }
+              ],
+              "internalType": "struct PoolLogic.WithdrawnAsset[]"
+            },
+            {
+              "name": "time",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "allowance",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "owner",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "spender",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "approve",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "spender",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "balanceOf",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "account",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "calculateAvailableManagerFee",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_fundValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "fee",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "creationTime",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "creator",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "decimals",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint8",
+              "internalType": "uint8"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "decreaseAllowance",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "spender",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "subtractedValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "deposit",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_asset",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "liquidityMinted",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "depositForWithCustomCooldown",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_recipient",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_asset",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_cooldown",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_referrer",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "liquidityMinted",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "execTransaction",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "data",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "success",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "execTransactions",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "txs",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "to",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "data",
+                  "type": "bytes",
+                  "internalType": "bytes"
+                }
+              ],
+              "internalType": "struct PoolLogic.TxToExecute[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "executeOperation",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "assets",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "amounts",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            },
+            {
+              "name": "premiums",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            },
+            {
+              "name": "initiator",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "params",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "success",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "factory",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getExitRemainingCooldown",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_depositor",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "remaining",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getFundSummary",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "name": "name",
+                  "type": "string",
+                  "internalType": "string"
+                },
+                {
+                  "name": "totalSupply",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "totalFundValue",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "manager",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "managerName",
+                  "type": "string",
+                  "internalType": "string"
+                },
+                {
+                  "name": "creationTime",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "privatePool",
+                  "type": "bool",
+                  "internalType": "bool"
+                },
+                {
+                  "name": "performanceFeeNumerator",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "managerFeeNumerator",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "managerFeeDenominator",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "exitFeeNumerator",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "exitFeeDenominator",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "entryFeeNumerator",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "internalType": "struct PoolLogic.FundSummary"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "increaseAllowance",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "spender",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "addedValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "initialize",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_factory",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_privatePool",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "_fundName",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "_fundSymbol",
+              "type": "string",
+              "internalType": "string"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "lastDeposit",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "lastExitCooldown",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "lastFeeMintTime",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "lastWhitelistTransfer",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "mintManagerFee",
+          "type": "function",
+          "inputs": [],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "name",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "string",
+              "internalType": "string"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "onDelegationCallback",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "data",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "onERC721Received",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "operator",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "data",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "magicSelector",
+              "type": "bytes4",
+              "internalType": "bytes4"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "poolManagerLogic",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "privatePool",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "setPoolManagerLogic",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_poolManagerLogic",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "setPoolPrivate",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_privatePool",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "symbol",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "string",
+              "internalType": "string"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "tokenPrice",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "price",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "tokenPriceAtLastFeeMint",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "tokenPriceWithoutManagerFee",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "price",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "totalSupply",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "transfer",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "recipient",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "transferFrom",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "sender",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "recipient",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "withdraw",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_fundTokenAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "withdrawSafe",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_fundTokenAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_complexAssetsData",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "supportedAsset",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "withdrawData",
+                  "type": "bytes",
+                  "internalType": "bytes"
+                },
+                {
+                  "name": "slippageTolerance",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "internalType": "struct IPoolLogic.ComplexAsset[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "withdrawTo",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_recipient",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_fundTokenAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "withdrawToSafe",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_recipient",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_fundTokenAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_complexAssetsData",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "supportedAsset",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "withdrawData",
+                  "type": "bytes",
+                  "internalType": "bytes"
+                },
+                {
+                  "name": "slippageTolerance",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "internalType": "struct IPoolLogic.ComplexAsset[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        }
+      ],
+      "proxyAbi": [
+        {
+          "name": "Upgraded",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "implementation",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "type": "fallback",
+          "stateMutability": "payable"
+        },
+        {
+          "name": "initialize",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_factory",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_data",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "_proxyType",
+              "type": "uint8",
+              "internalType": "uint8"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "payable"
+        },
+        {
+          "type": "receive",
+          "stateMutability": "payable"
+        }
+      ],
+      "functionDecisions": [
+        {
+          "signature": "allowance(address,address)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only allowance metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "approve(address,uint256)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "ERC20 share allowance management retained in ABI but not admitted in this fund deposit/redemption slice; does not grant any allowance automatically."
+        },
+        {
+          "signature": "balanceOf(address)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only balanceOf metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "calculateAvailableManagerFee(uint256)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only calculateAvailableManagerFee metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "creationTime()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only creationTime metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "creator()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only creator metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "decimals()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only decimals metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "decreaseAllowance(address,uint256)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "ERC20 share allowance management retained in ABI but not admitted in this fund deposit/redemption slice; does not grant any allowance automatically."
+        },
+        {
+          "signature": "deposit(address,uint256)",
+          "stateMutability": "nonpayable",
+          "selected": true,
+          "reason": "Ordinary caller-funded deposit of an enabled asset into this managed pool; subject to private-pool membership, allowance, pause and valuation checks. No withdrawal or executor capability is activated."
+        },
+        {
+          "signature": "depositForWithCustomCooldown(address,address,uint256,uint256,address)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Restricted to factory customCooldownWhitelist senders; privileged integration deposit path not ordinary deposit."
+        },
+        {
+          "signature": "execTransaction(address,bytes)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Opaque external target/calldata executor or executor batch excluded; manager/guard checks do not expand existing runtime execution scope."
+        },
+        {
+          "signature": "execTransactions((address,bytes)[])",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Opaque external target/calldata executor or executor batch excluded; manager/guard checks do not expand existing runtime execution scope."
+        },
+        {
+          "signature": "executeOperation(address[],uint256[],uint256[],address,bytes)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Protocol/flashloan/delegation/NFT callback entrypoint, not an ordinary depositor action."
+        },
+        {
+          "signature": "factory()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only factory metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "getExitRemainingCooldown(address)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getExitRemainingCooldown metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "getFundSummary()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getFundSummary metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "increaseAllowance(address,uint256)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "ERC20 share allowance management retained in ABI but not admitted in this fund deposit/redemption slice; does not grant any allowance automatically."
+        },
+        {
+          "signature": "initialize(address,bool,string,string)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Deployment/upgrade initialization entrypoint, not ordinary user fund subscription or withdrawal."
+        },
+        {
+          "signature": "lastDeposit(address)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only lastDeposit metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "lastExitCooldown(address)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only lastExitCooldown metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "lastFeeMintTime()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only lastFeeMintTime metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "lastWhitelistTransfer(address)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only lastWhitelistTransfer metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "mintManagerFee()",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Public fee-crystallization maintenance entrypoint mints manager/DAO fees; not a user deposit/withdraw operation."
+        },
+        {
+          "signature": "name()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only name metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "onDelegationCallback(bytes)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Protocol/flashloan/delegation/NFT callback entrypoint, not an ordinary depositor action."
+        },
+        {
+          "signature": "onERC721Received(address,address,uint256,bytes)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Protocol/flashloan/delegation/NFT callback entrypoint, not an ordinary depositor action."
+        },
+        {
+          "signature": "poolManagerLogic()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only poolManagerLogic metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "privatePool()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only privatePool metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "setPoolManagerLogic(address)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Privileged configuration/ownership action setPoolManagerLogic; owner, factory or pool-manager authorized surface, not ordinary investor action."
+        },
+        {
+          "signature": "setPoolPrivate(bool)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Privileged configuration/ownership action setPoolPrivate; owner, factory or pool-manager authorized surface, not ordinary investor action."
+        },
+        {
+          "signature": "symbol()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only symbol metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "tokenPrice()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only tokenPrice metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "tokenPriceAtLastFeeMint()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only tokenPriceAtLastFeeMint metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "tokenPriceWithoutManagerFee()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only tokenPriceWithoutManagerFee metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "totalSupply()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only totalSupply metadata/quote/status endpoint retained in complete ABI; not activated as a transaction capability."
+        },
+        {
+          "signature": "transfer(address,uint256)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "ERC20 share transfer (allowlist restricted for Superstate) is outside selected fund subscription/redemption operations."
+        },
+        {
+          "signature": "transferFrom(address,address,uint256)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "ERC20 share transfer (allowlist restricted for Superstate) is outside selected fund subscription/redemption operations."
+        },
+        {
+          "signature": "withdraw(uint256)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Source explicitly deprecates this withdrawal overload because it lacks high-slippage protection. Not admitted; the safe overloads are also excluded pending exact asset-guard boundary review."
+        },
+        {
+          "signature": "withdrawSafe(uint256,(address,bytes,uint256)[])",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Opaque/unknown-guard boundary: tuple withdrawData is forwarded to registered complex asset guards that return executable target/calldata transactions. Exact current supported-assets inventory and applicable guard implementation bindings for this pool were not established, so user-selected arbitrary execution hidden in these bytes has not been ruled out. Excluded; generic registered-guard checks are insufficient."
+        },
+        {
+          "signature": "withdrawTo(address,uint256)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Source explicitly deprecates this withdrawal overload because it lacks high-slippage protection. Not admitted; the safe overloads are also excluded pending exact asset-guard boundary review."
+        },
+        {
+          "signature": "withdrawToSafe(address,uint256,(address,bytes,uint256)[])",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Opaque/unknown-guard boundary: tuple withdrawData is forwarded to registered complex asset guards that return executable target/calldata transactions. Exact current supported-assets inventory and applicable guard implementation bindings for this pool were not established, so user-selected arbitrary execution hidden in these bytes has not been ruled out. Excluded; generic registered-guard checks are insufficient."
+        },
+        {
+          "signature": "initialize(address,bytes,uint8)",
+          "stateMutability": "payable",
+          "selected": false,
+          "reason": "Deployment/upgrade initialization entrypoint, not ordinary user fund subscription or withdrawal."
+        }
+      ],
+      "selectedFunctions": [
+        {
+          "abi": {
+            "name": "deposit",
+            "type": "function",
+            "inputs": [
+              {
+                "name": "_asset",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256",
+                "internalType": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "liquidityMinted",
+                "type": "uint256",
+                "internalType": "uint256"
+              }
+            ],
+            "stateMutability": "nonpayable"
+          },
+          "capabilityId": "dhedge-managedpool:v1:10:0xa2ffe6ed599e8f7aac8047f5ee0de3d83de1b320:deposit",
+          "type": "contract_call",
+          "chainId": 10,
+          "contract": "0xa2ffe6ed599e8f7aac8047f5ee0de3d83de1b320",
+          "functionName": "deposit",
+          "signature": "deposit(address,uint256)",
+          "status": "active",
+          "provenance": {
+            "sourceRef": "https://sourcify.dev/server/v2/contract/10/0x50e8e2DB93b04827D7fDFeFb5037CC9485eDE388?fields=abi,compilation,sources,deployment,proxyResolution",
+            "status": "verified",
+            "verifiedAt": "2026-10-22"
+          },
+          "protocol": "dHEDGE",
+          "operation": "deposit",
+          "label": "Deposit enabled asset",
+          "warnings": [
+            "dHEDGE is now Chamber, the same protocol/vault infrastructure, not a separate new protocol. This capability is only the Ethereum Savings Account managed vault on Optimism (chain 10), not every factory-created pool.",
+            "Upgradeable custom proxy resolves factory.getLogic(2); official deployment manifest and verified source bind the recorded PoolLogic implementation. This is source/deployment inventory evidence, not a fresh RPC/runtime implementation attestation or successful execution guarantee.",
+            "Deposit requires prior token allowance, a currently enabled deposit asset, valid price, minimum deposit/supply rules and unpaused factory/pool. A manager may make the pool private; then membership authorization is required. Catalog admission does not bypass restrictions.",
+            "Withdrawals consume caller-owned shares and distribute proportional supported portfolio assets, not necessarily the original deposit token. Fees, exit cooldown/early-exit allocation, same-block restrictions, valuation checks, and available downstream liquidity apply.",
+            "Only deposit is admitted. withdrawSafe/withdrawToSafe remain excluded because the exact supported-assets and registered guard implementation bindings were not established; their bytes interpretation may hide router/target/calldata choices. No claim of a closed execution boundary is made. Unsafe legacy withdrawals are also excluded.",
+            "Official app displays about $59.6K managed for this vault at review; this UI figure is not protocol TVL, an audited valuation or DAU/MAU. No users/activity count, liquidity guarantee or financial-safety claim is made."
+          ]
+        }
+      ],
+      "sourceSemantics": {
+        "deposit": [
+          "function deposit(address _asset, uint256 _amount) external returns (uint256 liquidityMinted) {\n    return _depositFor(msg.sender, _asset, _amount, _exitCooldown(), address(0));\n  }"
+        ],
+        "_depositFor": [
+          "function _depositFor(\n    address _recipient,\n    address _asset,\n    uint256 _amount,\n    uint256 _cooldown,\n    address _referrer\n  ) private nonReentrant whenNotFactoryPaused whenNotPaused returns (uint256 liquidityMinted) {\n    address manager = _manager();\n    require(_recipient == manager || !privatePool || _isMemberAllowed(_recipient), \"dh7\");\n\n    require(IPoolManagerLogic(poolManagerLogic).isDepositAsset(_asset), \"dh8\");\n\n    // Checks that the `_asset` is not a ERC721 token.\n    // As per ERC721 spec, a compliant contract must implement the ERC165 interface.\n    // The interface id for IERC721 is 0x80ac58cd as per <https://ethtools.com/interface-database/ERC721>\n    // Also, the `supportsInterface` function should only consume at most 30_000 gas as per ERC165 standard.\n    {\n      // If the asset supports IERC165, then it should not support IERC721.\n      (bool success, bytes memory data) = _asset.staticcall{gas: 30_000}(\n        abi.encodeWithSelector(IERC165Upgradeable.supportsInterface.selector, bytes4(0x80ac58cd))\n      );\n\n      // Either the call to `supportsInterface` should revert or the IERC721 interface should not be supported.\n      require(!success || !abi.decode(data, (bool)), \"dh9\");\n    }\n\n    DepositExecution memory execution;\n    // Check oracle price freshness during fund value calculation (reverts if stale when assetMaxPriceAge > 0)\n    execution.fundValue = _mintManagerFee({_checkPrice: true});\n\n    _asset.tryAssemblyCall(\n      abi.encodeWithSelector(IERC20Upgradeable.transferFrom.selector, msg.sender, address(this), _amount)\n    );\n\n    execution.usdAmount = _assetValue(_asset, _amount);\n\n    PoolLogicLib.LiquidityMintTo memory liquidityMintTo = PoolLogicLib.computeLiquidityMintTo({\n      _totalSupply: totalSupply(),\n      _depositValue: execution.usdAmount,\n      _totalValue: execution.fundValue,\n      _poolManagerLogic: poolManagerLogic,\n      _poolFactory: factory,\n      _referrer: _referrer\n    });\n\n    _checkValueManipulation(execution.fundValue, execution.fundValue.add(execution.usdAmount));\n    _checkOperationType(IValueManipulationCheck.OperationType.Deposit);\n\n    {\n      // Stack too deep fix: local copy brings _recipient closer on the stack for PoolLogicLib.calculateCooldown\n      address recipient = _recipient;\n      lastExitCooldown[recipient] = PoolLogicLib.calculateCooldown({\n        _currentBalance: balanceOf(recipient),\n        _liquidityMinted: liquidityMintTo.recipient,\n        _newCooldown: _cooldown,\n        _lastCooldown: lastExitCooldown[recipient],\n        _lastDepositTime: lastDeposit[recipient],\n        _blockTimestamp: block.timestamp\n      });\n      lastDeposit[recipient] = block.timestamp;\n    }\n\n    // Note: We are making it impossible for someone to mint liquidity < 100_000.\n    // This is so that we can mitigate the inflation attack.\n    require(liquidityMintTo.recipient >= 100_000, \"dh10\");\n\n    _mint(_recipient, liquidityMintTo.recipient);\n\n    if (liquidityMintTo.manager > 0) {\n      _mint(manager, liquidityMintTo.manager);\n\n      emit EntryFeeMinted(manager, liquidityMintTo.manager);\n    }\n\n    if (liquidityMintTo.dao > 0) {\n      address dao = IHasDaoInfo(factory).daoAddress();\n      _mint(dao, liquidityMintTo.dao);\n\n      emit EntryFeeMinted(dao, liquidityMintTo.dao);\n    }\n\n    if (liquidityMintTo.referrer > 0) {\n      _mint(_referrer, liquidityMintTo.referrer);\n\n      emit ReferralFeeMinted(_referrer, liquidityMintTo.referrer);\n    }\n\n    uint256 balance = balanceOf(_recipient);\n    uint256 fundValueAfter = execution.fundValue.add(execution.usdAmount);\n    uint256 totalSupplyAfter = totalSupply();\n\n    require(\n      balance.mul(_tokenPrice(fundValueAfter, totalSupplyAfter)).div(10 ** 18) >=\n        IPoolManagerLogic(poolManagerLogic).minDepositUSD(),\n      \"dh25\"\n    );\n\n    emit Deposit(\n      address(this),\n      _recipient,\n      _asset,\n      _amount,\n      execution.usdAmount,\n      liquidityMintTo.recipient,\n      balance,\n      fundValueAfter,\n      totalSupplyAfter,\n      block.timestamp\n    );\n\n    _emitFactoryEvent();\n\n    return liquidityMintTo.recipient;\n  }"
+        ],
+        "withdraw": [
+          "function withdraw(uint256 _fundTokenAmount) external {\n    _withdrawTo(\n      msg.sender,\n      _fundTokenAmount,\n      new IPoolLogic.ComplexAsset[](IHasSupportedAsset(poolManagerLogic).getSupportedAssets().length)\n    );\n  }"
+        ],
+        "withdrawSafe": [
+          "function withdrawSafe(uint256 _fundTokenAmount, IPoolLogic.ComplexAsset[] memory _complexAssetsData) external {\n    _withdrawTo(msg.sender, _fundTokenAmount, _complexAssetsData);\n  }"
+        ],
+        "withdrawToSafe": [
+          "function withdrawToSafe(\n    address _recipient,\n    uint256 _fundTokenAmount,\n    IPoolLogic.ComplexAsset[] memory _complexAssetsData\n  ) external {\n    _withdrawTo(_recipient, _fundTokenAmount, _complexAssetsData);\n  }"
+        ],
+        "_withdrawTo": [
+          "function _withdrawTo(\n    address _recipient,\n    uint256 _fundTokenAmount,\n    IPoolLogic.ComplexAsset[] memory _complexAssetsData\n  ) internal nonReentrant whenNotFactoryPaused whenNotPaused {\n    require(lastDeposit[msg.sender] < block.timestamp, \"dh11\");\n    require(balanceOf(msg.sender) >= _fundTokenAmount, \"dh12\");\n\n    WithdrawExecution memory execution;\n    execution.fundValue = _mintManagerFee({_checkPrice: false});\n\n    PoolLogicLib.PoolTokensAllocation memory tokens = PoolLogicLib.computePoolTokensAllocation({\n      _redeemAmount: _fundTokenAmount,\n      _poolManagerLogic: poolManagerLogic,\n      _poolFactory: factory\n    });\n\n    execution.supplyAfterMint = totalSupply();\n    execution.supplyAfterMintAndBurn = execution.supplyAfterMint.sub(tokens.toBurn);\n\n    // Check value manipulation: expected value after = fundValue - withdrawnValue\n    // withdrawnValue = fundValue * tokens.toGetPortionFrom / totalSupply\n    _checkValueManipulation(\n      execution.fundValue,\n      execution.fundValue.sub(execution.fundValue.mul(tokens.toGetPortionFrom).div(execution.supplyAfterMint))\n    );\n    _checkOperationType(IValueManipulationCheck.OperationType.Withdraw);\n\n    // Calculating how much pool token supply will be left after withdrawal and\n    // whether or not this satisfies the min supply (100_000) check.\n    // If the user is redeeming all the shares then this check passes.\n    // Otherwise, they might have to reduce the amount to be withdrawn.\n    require(execution.supplyAfterMintAndBurn >= 100_000 || execution.supplyAfterMintAndBurn == 0, \"dh10\");\n\n    // calculate the proportion\n    uint256 portion = tokens.toGetPortionFrom.mul(10 ** 18).div(execution.supplyAfterMint);\n\n    _burn(msg.sender, tokens.toBurn);\n\n    if (tokens.toTransferManager > 0) {\n      address manager = _manager();\n      require(transfer(manager, tokens.toTransferManager), \"dh14\");\n\n      emit ExitFeeMinted(manager, tokens.toTransferManager);\n    }\n\n    if (tokens.toTransferDao > 0) {\n      address dao = IHasDaoInfo(factory).daoAddress();\n      require(transfer(dao, tokens.toTransferDao), \"dh14\");\n\n      emit ExitFeeMinted(dao, tokens.toTransferDao);\n    }\n\n    if (execution.supplyAfterMintAndBurn == 0) {\n      tokenPriceAtLastFeeMint = 1e18;\n    }\n\n    IHasSupportedAsset.Asset[] memory supportedAssets = IHasSupportedAsset(poolManagerLogic).getSupportedAssets();\n    WithdrawnAsset[] memory withdrawnAssets = new WithdrawnAsset[](supportedAssets.length);\n    uint256 index = 0;\n\n    for (uint256 i = 0; i < supportedAssets.length; i++) {\n      (address asset, uint256 portionOfAssetBalance, bool externalWithdrawProcessed) = _withdrawProcessing(\n        supportedAssets[i].asset,\n        _recipient,\n        portion,\n        _complexAssetsData[i]\n      );\n\n      if (portionOfAssetBalance > 0) {\n        require(asset != address(0), \"dh15\");\n        // Ignoring return value for transfer as want to transfer no matter what happened\n        asset.tryAssemblyCall(\n          abi.encodeWithSelector(IERC20Upgradeable.transfer.selector, _recipient, portionOfAssetBalance)\n        );\n      }\n\n      if (externalWithdrawProcessed || portionOfAssetBalance > 0) {\n        withdrawnAssets[index] = WithdrawnAsset({\n          asset: asset,\n          amount: portionOfAssetBalance,\n          externalWithdrawProcessed: externalWithdrawProcessed\n        });\n        index++;\n      }\n    }\n\n    // Reduce length for withdrawnAssets to remove the empty items\n    uint256 reduceLength = supportedAssets.length.sub(index);\n    assembly {\n      mstore(withdrawnAssets, sub(mload(withdrawnAssets), reduceLength))\n    }\n\n    execution.valueWithdrawn = portion.mul(execution.fundValue).div(10 ** 18);\n\n    // Invariant state check: actual difference between total vault value before and after withdrawal can not be more than value of portion withdrawn,\n    // i.e. value of assets which actually left the vault can not be more than value of portion withdrawn.\n    require(execution.fundValue.sub(_totalValue()) <= execution.valueWithdrawn.add(1e15), \"dh16\");\n\n    // Extra invariant for total supply after withdrawal. Could be an overkill, may consider removing if running into contract size issues.\n    require(execution.supplyAfterMintAndBurn == totalSupply(), \"dh17\");\n\n    emit Withdrawal(\n      address(this),\n      _recipient,\n      execution.valueWithdrawn,\n      _fundTokenAmount,\n      balanceOf(_recipient),\n      execution.fundValue.sub(execution.valueWithdrawn),\n      totalSupply(),\n      withdrawnAssets,\n      block.timestamp\n    );\n    _emitFactoryEvent();\n  }"
+        ],
+        "_withdrawProcessing": [
+          "function _withdrawProcessing(\n    address _asset,\n    address _to,\n    uint256 _portion,\n    IPoolLogic.ComplexAsset memory _complexAssetData\n  ) internal returns (address withdrawAsset, uint256 withdrawBalance, bool externalWithdrawProcessed) {\n    WithdrawProcessing memory params;\n\n    params.guard = IHasGuardInfo(factory).getAssetGuard(_asset);\n    require(params.guard != address(0), \"dh18\");\n\n    params.portionBalance = IAssetGuard(params.guard).getBalance(address(this), _asset).mul(_portion).div(10 ** 18);\n    params.expectedWithdrawValue = _assetValue(_asset, params.portionBalance);\n\n    IAssetGuard.MultiTransaction[] memory transactions;\n\n    if (_complexAssetData.withdrawData.length > 0) {\n      require(_asset == _complexAssetData.supportedAsset, \"dh19\");\n\n      (withdrawAsset, withdrawBalance, transactions) = IComplexAssetGuard(params.guard).withdrawProcessing(\n        address(this),\n        _asset,\n        _portion,\n        _to,\n        _complexAssetData.withdrawData\n      );\n    } else {\n      (withdrawAsset, withdrawBalance, transactions) = IAssetGuard(params.guard).withdrawProcessing(\n        address(this),\n        _asset,\n        _portion,\n        _to\n      );\n    }\n\n    uint256 txCount = transactions.length;\n    if (txCount > 0) {\n      uint256 assetBalanceBefore;\n      if (withdrawAsset != address(0)) {\n        assetBalanceBefore = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));\n      }\n      // In case of withdraw from aave position with debt, this loop is where flash loan starts and finishes its execution\n      for (uint256 i = 0; i < txCount; i++) {\n        externalWithdrawProcessed = transactions[i].to.tryAssemblyCall(transactions[i].txData);\n      }\n      // In case of withdraw from aave position with debt, remaining withdrawAsset gets added here\n      if (withdrawAsset != address(0)) {\n        // Get any balance increase after withdraw processing and add it to the withdraw balance\n        uint256 assetBalanceAfter = IERC20Upgradeable(withdrawAsset).balanceOf(address(this));\n        withdrawBalance = withdrawBalance.add(assetBalanceAfter.sub(assetBalanceBefore));\n      }\n    }\n\n    // Net slippage check: ensures that the actual value of tokens the user receives\n    // is not less than the expected value, corrected by allowed tolerance.\n    // For leveraged positions (e.g. Aave), swap slippage is amplified by leverage ratio,\n    // so this tolerance should account for that amplification.\n    if (_complexAssetData.slippageTolerance != 0 && withdrawAsset != address(0)) {\n      require(\n        _assetValue(withdrawAsset, withdrawBalance) >=\n          params.expectedWithdrawValue.mul(10_000 - _complexAssetData.slippageTolerance).div(10_000),\n        \"dh26\"\n      );\n    }\n\n    return (withdrawAsset, withdrawBalance, externalWithdrawProcessed);\n  }"
+        ],
+        "depositForWithCustomCooldown": [
+          "function depositForWithCustomCooldown(\n    address _recipient,\n    address _asset,\n    uint256 _amount,\n    uint256 _cooldown,\n    address _referrer\n  ) external returns (uint256 liquidityMinted) {\n    require(IPoolFactory(factory).customCooldownWhitelist(msg.sender), \"dh5\");\n    require(_cooldown >= 5 minutes && _cooldown <= _exitCooldown(), \"dh6\");\n\n    return _depositFor(_recipient, _asset, _amount, _cooldown, _referrer);\n  }"
+        ]
+      },
+      "proxySourceSemantics": {
+        "contracts/upgradability/HasLogic.sol": "//\n//        __  __    __  ________  _______    ______   ________\n//       /  |/  |  /  |/        |/       \\  /      \\ /        |\n//   ____$$ |$$ |  $$ |$$$$$$$$/ $$$$$$$  |/$$$$$$  |$$$$$$$$/\n//  /    $$ |$$ |__$$ |$$ |__    $$ |  $$ |$$ | _$$/ $$ |__\n// /$$$$$$$ |$$    $$ |$$    |   $$ |  $$ |$$ |/    |$$    |\n// $$ |  $$ |$$$$$$$$ |$$$$$/    $$ |  $$ |$$ |$$$$ |$$$$$/\n// $$ \\__$$ |$$ |  $$ |$$ |_____ $$ |__$$ |$$ \\__$$ |$$ |_____\n// $$    $$ |$$ |  $$ |$$       |$$    $$/ $$    $$/ $$       |\n//  $$$$$$$/ $$/   $$/ $$$$$$$$/ $$$$$$$/   $$$$$$/  $$$$$$$$/\n//\n// dHEDGE DAO - https://dhedge.org\n//\n// Copyright (c) 2021 dHEDGE DAO\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in all\n// copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n//\n// SPDX-License-Identifier: MIT\n\npragma solidity 0.7.6;\n\ninterface HasLogic {\n  function getLogic(uint8 _proxyType) external view returns (address);\n}\n",
+        "contracts/upgradability/BaseUpgradeabilityProxy.sol": "// SPDX-License-Identifier: MIT\npragma solidity 0.7.6;\n\nimport \"./Proxy.sol\";\nimport \"./Address.sol\";\nimport \"./HasLogic.sol\";\n\n/**\n * @title BaseUpgradeabilityProxy\n * @dev This contract implements a proxy that allows to change the\n * implementation address to which it will delegate.\n * Such a change is called an implementation upgrade.\n */\ncontract BaseUpgradeabilityProxy is Proxy {\n  /**\n   * @dev Emitted when the implementation is upgraded.\n   * @param implementation Address of the new implementation.\n   */\n  event Upgraded(address indexed implementation);\n\n  /**\n   * @dev Storage slot with the address of the current implementation.\n   * This is the keccak-256 hash of \"eip1967.proxy.implementation\" subtracted by 1, and is\n   * validated in the constructor.\n   */\n  bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;\n\n  /**\n   * @dev Storing type of the proxy, 1 for managerLogic, 2 for pool.\n   */\n  bytes32 internal constant PROXY_TYPE = 0x1000000000000000000000000000000000000000000000000000000000000000;\n\n  /**\n   * @notice Returns the current implementation.\n   * @return impl Address of the current implementation\n   */\n  function _implementation() internal view override returns (address) {\n    address factory;\n    bytes32 slot = IMPLEMENTATION_SLOT;\n    assembly {\n      factory := sload(slot)\n    }\n\n    // Begin custom modification\n    if (factory == address(0x0)) return address(0x0); // If factory not initialized return empty\n\n    return HasLogic(factory).getLogic(_proxyType());\n  }\n\n  /// @notice Return the proxy type.\n  /// @return proxyType Return type of the proxy.\n  function _proxyType() internal view returns (uint8 proxyType) {\n    bytes32 slot = PROXY_TYPE;\n    assembly {\n      proxyType := sload(slot)\n    }\n  }\n\n  /**\n   * @notice Upgrades the proxy to a new implementation.\n   * @param newImplementation Address of the new implementation.\n   */\n  function _upgradeTo(address newImplementation) internal {\n    _setImplementation(newImplementation);\n    emit Upgraded(newImplementation);\n  }\n\n  /**\n   * @notice Sets the implementation address of the proxy.\n   * @param newImplementation Address of the new implementation.\n   */\n  function _setImplementation(address newImplementation) internal {\n    require(OpenZeppelinUpgradesAddress.isContract(newImplementation), \"Cannot set implementation to EOA\");\n\n    bytes32 slot = IMPLEMENTATION_SLOT;\n\n    assembly {\n      sstore(slot, newImplementation)\n    }\n  }\n\n  /**\n   * @notice Sets type of the proxy.\n   * @param proxyType Type of the proxy.\n   */\n  function _setProxyType(uint8 proxyType) internal {\n    bytes32 slot = PROXY_TYPE;\n\n    assembly {\n      sstore(slot, proxyType)\n    }\n  }\n}\n",
+        "contracts/upgradability/InitializableUpgradeabilityProxy.sol": "// SPDX-License-Identifier: MIT\npragma solidity 0.7.6;\n\nimport \"./BaseUpgradeabilityProxy.sol\";\nimport \"../utils/AddressHelper.sol\";\n\n/**\n * @title InitializableUpgradeabilityProxy\n * @dev Extends BaseUpgradeabilityProxy with an initializer for initializing\n * implementation and init data.\n */\ncontract InitializableUpgradeabilityProxy is BaseUpgradeabilityProxy {\n  using AddressHelper for address;\n\n  /**\n   * @dev Contract initializer.\n   * @param _factory Address of the factory containing the implementation.\n   * @param _data Data to send as msg.data to the implementation to initialize the proxied contract.\n   * It should include the signature and the parameters of the function to be called, as described in\n   * https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.\n   * This parameter is optional, if no data is given the initialization call to proxied contract will be skipped.\n   */\n  function initialize(\n    address _factory,\n    bytes memory _data,\n    uint8 _proxyType\n  ) public payable {\n    require(_implementation() == address(0), \"Impl not zero\");\n    assert(IMPLEMENTATION_SLOT == bytes32(uint256(keccak256(\"eip1967.proxy.implementation\")) - 1));\n    _setImplementation(_factory);\n    _setProxyType(_proxyType);\n    if (_data.length > 0) {\n      _implementation().tryAssemblyDelegateCall(_data);\n    }\n  }\n}\n"
+      }
+    }
+  ],
+  "sourceRefs": [
+    "https://docs.chamberfi.com/introduction/dhedge-to-chamber.md",
+    "https://chamberfi.com/vault/0xa2ffe6ed599e8f7aac8047f5ee0de3d83de1b320",
+    "https://docs.chamberfi.com/build/contract-addresses",
+    "https://raw.githubusercontent.com/dhedge/V2-Public/master/publish/ovm/prod/versions.json",
+    "https://sourcify.dev/server/v2/contract/10/0xa2ffe6ed599e8f7aac8047f5ee0de3d83de1b320?fields=abi,compilation,proxyResolution,deployment",
+    "https://sourcify.dev/server/v2/contract/10/0x50e8e2DB93b04827D7fDFeFb5037CC9485eDE388?fields=abi,compilation,sources,deployment,proxyResolution"
+  ],
+  "warnings": [
+    "dHEDGE is now Chamber, the same protocol/vault infrastructure, not a separate new protocol. This capability is only the Ethereum Savings Account managed vault on Optimism (chain 10), not every factory-created pool.",
+    "Upgradeable custom proxy resolves factory.getLogic(2); official deployment manifest and verified source bind the recorded PoolLogic implementation. This is source/deployment inventory evidence, not a fresh RPC/runtime implementation attestation or successful execution guarantee.",
+    "Deposit requires prior token allowance, a currently enabled deposit asset, valid price, minimum deposit/supply rules and unpaused factory/pool. A manager may make the pool private; then membership authorization is required. Catalog admission does not bypass restrictions.",
+    "Withdrawals consume caller-owned shares and distribute proportional supported portfolio assets, not necessarily the original deposit token. Fees, exit cooldown/early-exit allocation, same-block restrictions, valuation checks, and available downstream liquidity apply.",
+    "Only deposit is admitted. withdrawSafe/withdrawToSafe remain excluded because the exact supported-assets and registered guard implementation bindings were not established; their bytes interpretation may hide router/target/calldata choices. No claim of a closed execution boundary is made. Unsafe legacy withdrawals are also excluded.",
+    "Official app displays about $59.6K managed for this vault at review; this UI figure is not protocol TVL, an audited valuation or DAU/MAU. No users/activity count, liquidity guarantee or financial-safety claim is made."
+  ],
+  "scope": "One live managed pool; ordinary deposit only. Both safe withdrawal overloads are unadmitted because current exact supported assets, guard implementation bindings and withdrawData interpretation were not established. No unsafe legacy withdrawal substitute, new runtime nested executor scope, tests, smoke transactions, RPC calls or fresh runtime identity assertion."
+}

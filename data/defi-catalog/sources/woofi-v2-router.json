@@ -1,0 +1,717 @@
+{
+  "schemaVersion": 1,
+  "chainId": 137,
+  "address": "0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7",
+  "protocol": "woofi-v2",
+  "contractName": "WooRouterV2",
+  "reviewedAt": "2026-10-16",
+  "deploymentEvidence": {
+    "sourceRef": "https://learn.woo.org/dev-docs/references/readme/polygon-pos",
+    "verifiedAt": "2026-10-16",
+    "chainId": 137,
+    "address": "0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7",
+    "sourceType": "official Polygon PoS deployment table, independently corroborated by exact-address verification services",
+    "deploymentTransaction": "0xae0c145b1db1287e01074f0ad9c3efc15008a2adecf97b9307191a53a9aeb563",
+    "deploymentBlock": "53977227",
+    "deployer": "0xe86e40cD910bd7B36EEe4eac5D8968ec23aAc427",
+    "reportedProxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "corroboratingRefs": [
+      "https://polygonscan.com/address/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7#code",
+      "https://sourcify.dev/server/v2/contract/137/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7?fields=all"
+    ],
+    "evidence": "Official WOO Polygon PoS Swap table identifies this exact address as WooRouterV2. PolygonScan independently labels it WOOFi: Woo Router V2 and reports exact verified source named WooRouterV2. Sourcify v2 binds chain 137 and this address to contracts/WooRouterV2.sol:WooRouterV2, deployment transaction/block and direct non-proxy resolution.",
+    "constructorArguments": {
+      "encodedSuffix": "0x0000000000000000000000000d500b1d8e8ef31e21c99d1db9a6444d3adf12700000000000000000000000007081a38158bd050ae4a86e38e0225bc281887d7e",
+      "WETH": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+      "initialPool": "0x7081a38158bd050ae4a86e38e0225bc281887d7e"
+    },
+    "documentedPool": "0x5520385bFcf07Ec87C4c53A7d8d65595Dff69FA4",
+    "limitations": [
+      "Official documentation retrieved successfully through its .md alternate; PolygonScan and Sourcify were independently reachable.",
+      "Constructor pool and current official documented WooPPv2 address differ. setPool is owner-mutable; neither constructor data nor the deployment table proves the router currently points to either address. No live storage/RPC or dependent pool implementation check was made.",
+      "Source verification records are deployment/ABI evidence, not independent live runtime-bytecode, funding, liquidity or successful execution attestations."
+    ]
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/137/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7?fields=all",
+    "verifiedAt": "2026-10-16",
+    "chainId": 137,
+    "address": "0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7",
+    "sourceType": "exact-address Sourcify v2 full ABI and verified source, independent of official deployment documentation",
+    "sourcifyMatchId": "9768288",
+    "sourcifyVerifiedAt": "2025-11-03T20:20:45Z",
+    "reportedMatch": "exact_match",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "compiler": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.14+commit.80d49f37",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 20000,
+          "enabled": true
+        },
+        "evmVersion": "london",
+        "remappings": []
+      },
+      "name": "WooRouterV2",
+      "fullyQualifiedName": "contracts/WooRouterV2.sol:WooRouterV2"
+    },
+    "sourceFile": "contracts/WooRouterV2.sol",
+    "metadataSourceKeccak256": "0x555b40a0e7a38f2fc4af6d2f02644ea3e63918026a0676a73735f3467681fdee",
+    "verifiedSourceSha256": "6407423d3563b7ec9c06122c26858a27b8a8462e90f7b03671b08bca00bf7bec",
+    "officialPinnedCommit": "fe978e614a27be0de7cd01278aab356da5a69763",
+    "officialPinnedSourceRef": "https://raw.githubusercontent.com/woonetwork/WooPoolV2/fe978e614a27be0de7cd01278aab356da5a69763/contracts/WooRouterV2.sol",
+    "officialSourceComparison": "Full UTF-8 router source at the pinned official commit is byte-for-byte identical to contracts/WooRouterV2.sol.content in this chain/address Sourcify record.",
+    "evidence": "The full ABI below is the exact Sourcify abi array for chain 137 and this address, retaining constructor, events, receive and all fifteen function entries. No generic fork or current-main ABI was substituted. Creation/runtime exact_match and non-proxy status are service-reported evidence, not a fresh independent runtime attestation. The deployed older native-value behavior is retained; later repository fixes are not assumed deployed."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_weth",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_pool",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "OwnershipTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "WooPoolChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newPool",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "WooRouterSwap",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "swapType",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "enum IWooRouterV2.SwapType"
+        },
+        {
+          "name": "fromToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "toToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "fromAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "toAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "rebateTo",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "WETH",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "externalSwap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "approveTarget",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "swapTarget",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "fromToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "toToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "fromAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minToAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address payable"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "realToAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "inCaseTokenGotStuck",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "stuckToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "inCaseTokensGotStuck",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "stuckTokens",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "isWhitelisted",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "querySwap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "fromToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "toToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "fromAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "toAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quoteToken",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "renounceOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setPool",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newPool",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setWhitelisted",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "whitelisted",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "fromToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "toToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "fromAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minToAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address payable"
+        },
+        {
+          "name": "rebateTo",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "realToAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "transferOwnership",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "tryQuerySwap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "fromToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "toToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "fromAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "toAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "wooPool",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IWooPPV2"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "WETH",
+      "signature": "WETH()",
+      "selector": "0xad5c4648",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only immutable wrapped-native token getter; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "externalSwap",
+      "signature": "externalSwap(address,address,address,address,uint256,uint256,address,bytes)",
+      "selector": "0x199b83fa",
+      "stateMutability": "payable",
+      "decision": "excluded",
+      "reason": "Exclude opaque external execution: caller chooses approveTarget, swapTarget and arbitrary bytes data. The owner whitelist does not provide existing nested-call authorization, and canonical outer ABI validation cannot authorize that payload."
+    },
+    {
+      "functionName": "inCaseTokenGotStuck",
+      "signature": "inCaseTokenGotStuck(address)",
+      "selector": "0xe1a4e72a",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude owner-only recovery of the entire router native/token balance to the owner; not an ordinary user swap."
+    },
+    {
+      "functionName": "inCaseTokensGotStuck",
+      "signature": "inCaseTokensGotStuck(address[])",
+      "selector": "0x81958015",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude owner-only batch recovery of entire router native/token balances; not an ordinary user swap."
+    },
+    {
+      "functionName": "isWhitelisted",
+      "signature": "isWhitelisted(address)",
+      "selector": "0x3af32abf",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only external-executor whitelist getter; does not authorize externalSwap or add a read API."
+    },
+    {
+      "functionName": "owner",
+      "signature": "owner()",
+      "selector": "0x8da5cb5b",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only ownership getter; not a transaction capability."
+    },
+    {
+      "functionName": "querySwap",
+      "signature": "querySwap(address,address,uint256)",
+      "selector": "0xe94803f4",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only quote delegated to configured wooPool; no read API or executable quote guarantee is added."
+    },
+    {
+      "functionName": "quoteToken",
+      "signature": "quoteToken()",
+      "selector": "0x217a4b70",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only configured quote-token getter; not a transaction capability."
+    },
+    {
+      "functionName": "renounceOwnership",
+      "signature": "renounceOwnership()",
+      "selector": "0x715018a6",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude privileged ownership administration; not an ordinary user swap."
+    },
+    {
+      "functionName": "setPool",
+      "signature": "setPool(address)",
+      "selector": "0x4437152a",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude owner-only replacement of wooPool and quoteToken configuration; changes swap dependency and is not ordinary user execution."
+    },
+    {
+      "functionName": "setWhitelisted",
+      "signature": "setWhitelisted(address,bool)",
+      "selector": "0x9281aa0b",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude owner-only external-executor whitelist administration; no capability to configure arbitrary execution targets."
+    },
+    {
+      "functionName": "swap",
+      "signature": "swap(address,address,uint256,uint256,address,address)",
+      "selector": "0x7dc20382",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Admit explicit exact-input swap with fromToken, toToken, fromAmount, minToAmount, recipient and rebate recipient through the router-configured wooPool. There is no caller-selected executor or opaque bytes payload. Router funds the configured pool from the caller in the same call; no raw-pool prefunding capability is admitted. Owner can change pool configuration; this is not an immutable pool identity attestation."
+    },
+    {
+      "functionName": "transferOwnership",
+      "signature": "transferOwnership(address)",
+      "selector": "0xf2fde38b",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude owner-only transfer of router administrative control; not an ordinary user swap."
+    },
+    {
+      "functionName": "tryQuerySwap",
+      "signature": "tryQuerySwap(address,address,uint256)",
+      "selector": "0x9d82e123",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only quote helper delegated to configured wooPool; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "wooPool",
+      "signature": "wooPool()",
+      "selector": "0xa7394603",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only configured pool getter; no transaction capability or current configuration attestation is added."
+    }
+  ],
+  "nonFunctionEntries": [
+    {
+      "type": "constructor",
+      "name": null,
+      "reason": "Not an ABI function: deployment-only constructor, emitted event, or native receive restricted to WETH/whitelisted senders; no capability is created."
+    },
+    {
+      "type": "event",
+      "name": "OwnershipTransferred",
+      "reason": "Not an ABI function: deployment-only constructor, emitted event, or native receive restricted to WETH/whitelisted senders; no capability is created."
+    },
+    {
+      "type": "event",
+      "name": "WooPoolChanged",
+      "reason": "Not an ABI function: deployment-only constructor, emitted event, or native receive restricted to WETH/whitelisted senders; no capability is created."
+    },
+    {
+      "type": "event",
+      "name": "WooRouterSwap",
+      "reason": "Not an ABI function: deployment-only constructor, emitted event, or native receive restricted to WETH/whitelisted senders; no capability is created."
+    },
+    {
+      "type": "receive",
+      "name": null,
+      "reason": "Not an ABI function: deployment-only constructor, emitted event, or native receive restricted to WETH/whitelisted senders; no capability is created."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "woofi-v2:v2:137:0x4c4af8dbc524681930a27b2f1af5bcc8062e6fb7:swap",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7",
+      "functionName": "swap",
+      "signature": "swap(address,address,uint256,uint256,address,address)",
+      "abi": {
+        "name": "swap",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "fromToken",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "toToken",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "fromAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minToAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address payable"
+          },
+          {
+            "name": "rebateTo",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "realToAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment: https://learn.woo.org/dev-docs/references/readme/polygon-pos ; exact deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7?fields=all ; explorer: https://polygonscan.com/address/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7#code ; identical official source: https://raw.githubusercontent.com/woonetwork/WooPoolV2/fe978e614a27be0de7cd01278aab356da5a69763/contracts/WooRouterV2.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "woofi-v2",
+      "label": "WOOFi V2 explicit pool swap",
+      "operation": "swap",
+      "warnings": [
+        "Caller chooses input/output tokens, exact input amount, minimum output, recipient and rebate recipient. No deadline parameter exists; minimum output is not a freshness guarantee.",
+        "This payable function uses 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE as native POL placeholder; WETH is the immutable Polygon wrapped-native token 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270, historically named WMATIC and now WPOL.",
+        "For native input the deployed router only requires fromAmount <= msg.value, wraps ALL msg.value, and transfers only fromAmount to the pool. Excess wrapped native stays in the router with no automatic refund and is owner-recoverable. For ERC20 input, attached native value is not consumed/refunded by swap and can remain stuck. Callers should send exactly fromAmount for native input and zero native value for ERC20 input; no new runtime enforcement is claimed.",
+        "ERC20 input requires caller balance and allowance to this exact router; transferFrom sends the explicit fromAmount directly to the configured pool atomically before its swap. Do not separately pre-transfer funds to a raw pool or assume prefunding is authorized or protected by this capability.",
+        "wooPool is fixed by router storage for this call, not selected in calldata, but the owner can replace it through setPool. This direct router is not a proxy; that does not freeze pool implementation, pool administration, oracle, fees, rebate configuration or dependent behavior. Current pool/dependency configuration and upgradeability are not attested.",
+        "Native output unwraps and forwards exactly the amount returned by the pool, not the entire router wrapped-native balance. Token output accounting and minimum checks depend on the configured pool; transfer-tax, rebasing or other nonstandard token behavior can revert or affect net recipient amounts and is not guaranteed supported.",
+        "Balances, token allowances, gas, pool liquidity, oracle prices, slippage and execution success are not established by source/ABI admission. Capability metadata grants no authority and bypasses no independent permission, pause or execution policy."
+      ]
+    }
+  ],
+  "reviewSummary": {
+    "abiFunctionCount": 15,
+    "selectedCount": 1,
+    "excludedCount": 14,
+    "scope": "Only the ordinary explicit swap is selected. No arbitrary externalSwap, raw pool prefunding, administration, read API, signature flow or new execution controls are admitted."
+  }
+}

@@ -421,6 +421,13 @@ async function seedUserAndKey(prisma: PrismaClient, label: string) {
       email: `${socialId}@example.com`,
     },
   });
+  const wallet = await prisma.userWallet.create({
+    data: {
+      userId: user.id,
+      walletAddress: `0x${createHash('sha256').update(`${socialId}-wallet`).digest('hex').slice(0, 40)}`,
+      status: 'active',
+    },
+  });
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const argon2 = require('argon2') as typeof import('argon2');
   const rawKey = `sk_${createHash('sha256').update(socialId).digest('hex')}`;
@@ -433,6 +440,7 @@ async function seedUserAndKey(prisma: PrismaClient, label: string) {
   const key = await prisma.apiKey.create({
     data: {
       userId: user.id,
+      walletId: wallet.id,
       apiKeyHash: hash,
       keyPrefix: rawKey.slice(0, 27),
       name: `conc-${label}`,
@@ -453,6 +461,7 @@ async function cleanupAll(prisma: PrismaClient) {
   await prisma.withdrawalPolicy.deleteMany().catch(() => undefined);
   await prisma.apiKeyEvent.deleteMany().catch(() => undefined);
   await prisma.apiKey.deleteMany().catch(() => undefined);
+  await prisma.userWallet.deleteMany().catch(() => undefined);
   await prisma.user.deleteMany().catch(() => undefined);
 }
 

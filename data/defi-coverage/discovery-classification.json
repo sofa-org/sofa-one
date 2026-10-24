@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "classificationId": "defillama-2026-10-04-api-roster-seven-chain-discovery-v1",
+  "retrievedAtUtc": null,
+  "localReportedCaptureDate": "2026-10-04",
+  "captureTimezone": null,
+  "captureTimeEvidence": "Exact original UTC retrieval time was not recorded. Parent verified these artifacts existed at 2026-10-03T16:59:58Z; this is an upper bound for artifact existence, not the API capture time. Filesystem display timestamps are local and timezone is unverified.",
+  "sourceSnapshot": "market-snapshot.json",
+  "sourceScope": {
+    "rosterEndpoint": "https://api.llama.fi/protocols",
+    "targetChains": [
+      {
+        "id": "ethereum",
+        "providerName": "Ethereum"
+      },
+      {
+        "id": "base",
+        "providerName": "Base"
+      },
+      {
+        "id": "arbitrum",
+        "providerName": "Arbitrum"
+      },
+      {
+        "id": "optimism",
+        "providerName": "OP Mainnet"
+      },
+      {
+        "id": "polygon",
+        "providerName": "Polygon"
+      },
+      {
+        "id": "bsc",
+        "providerName": "BSC"
+      },
+      {
+        "id": "monad",
+        "providerName": "Monad"
+      }
+    ],
+    "enumerationComplete": false,
+    "enumerationMeaning": "Complete only as a frozen capture of the returned DeFiLlama roster; not asserted complete for the seven-chain DeFi market. Entire 8,476-row API roster retained before ranking.",
+    "metricEndpointsCaptured": [
+      "dexs",
+      "fees",
+      "options"
+    ],
+    "notCaptured": [
+      "complete 90-day protocol-family-compatible activity by target chain",
+      "per-protocol per-chain TVL",
+      "complete lending, yield/vault, staking/restaking, bridge and perpetual category usage metrics",
+      "verified canonical user-facing product mapping"
+    ]
+  },
+  "classificationRules": {
+    "activityWindowDays": 90,
+    "activityRequirement": "Only affirmative, product- and chain-attributed, category-compatible positive metric dated within 90 days may establish observed activity during the 90-day interval.",
+    "thirtyDayHandling": "Report observed 30-day metrics separately. Positive 30-day observation is evidence activity occurred within the 90-day window but is not a 90-day total or separate 90-day measurement.",
+    "zeroHandling": "A numeric zero is retained as a numeric observation; it never establishes inactivity alone unless category, chain, product attribution and completeness of the 90-day observation are demonstrated.",
+    "missingHandling": "Missing metrics, chain attribution, product identity, category compatibility, or source response are UNKNOWN and retained conservatively. Failure is never converted to zero.",
+    "tvlHandling": "USD 1,000,000 TVL is a prioritization threshold only; it is neither activity evidence nor a denominator exclusion.",
+    "lineageHandling": "Preserve DeFiLlama source IDs, slugs, parentProtocol and linkedProtocols. Do not merge parents, child products, aliases or versions without verified canonical identity evidence.",
+    "coverageClaim": "No universal 90% claim unless market enumeration and identity/category attribution are independently established complete. Workflow completeness is a separate offline report."
+  },
+  "frozenRoster": {
+    "sourceResponseRecordCount": 8476,
+    "sourceResponseCanonicalJsonSha256": "52b4d6520aff303d80bcc57977d2651600fc4c18b0890caadc57f4879452c735",
+    "protocolUniverseCanonicalJsonSha256": "7fc3a4de44a3eebc1354aa57736cb72b48b21321c766d3c9a31e9eeea47c9b24",
+    "sourceRecords": "All source roster rows with identifiers and lineage are preserved in market-snapshot.json protocolUniverse; source record counts are not a count of unique canonical products."
+  },
+  "observations": {
+    "metricEndpointRowsByChainAndCategory": {
+      "ethereum": {
+        "dexs": 170,
+        "fees": 621,
+        "options": 8
+      },
+      "base": {
+        "dexs": 184,
+        "fees": 483,
+        "options": 9
+      },
+      "arbitrum": {
+        "dexs": 151,
+        "fees": 393,
+        "options": 15
+      },
+      "optimism": {
+        "dexs": 68,
+        "fees": 205,
+        "options": 2
+      },
+      "polygon": {
+        "dexs": 134,
+        "fees": 243,
+        "options": 1
+      },
+      "bsc": {
+        "dexs": 181,
+        "fees": 337,
+        "options": 1
+      },
+      "monad": {
+        "dexs": 60,
+        "fees": 134,
+        "options": null
+      }
+    },
+    "distinctSourceMetricIds": 1324,
+    "metricIdsMatchingRosterByStringId": 1317,
+    "metricIdsNotMatchedToRoster": 7,
+    "positiveObserved30DayMetricRows": 2159,
+    "numericZeroObserved30DayMetricRows": 872,
+    "scopeChainClassificationOfRosterRows": {
+      "someTargetChainListedOrProviderChainMatched": 3497,
+      "chainIdentityUnknown": 1281,
+      "noTargetChainEvidenceInRosterFields": 3698
+    },
+    "active90Day": {
+      "observedActiveCount": null,
+      "reason": "No captured metric row supplies a uniform compatible 90-day observation plus verified canonical product and target-chain attribution."
+    },
+    "observedInactive90Day": {
+      "count": 0,
+      "meaning": "None classified; this does not mean there are zero inactive products."
+    },
+    "unresolvedConservativeDenominator": {
+      "count": null,
+      "meaning": "All 8,476 frozen roster rows remain unclassified for coverage until canonical product, target-chain, category, and affirmative 90-day evidence are reconciled; counts above are field-level observations and not disjoint products."
+    }
+  },
+  "metricEvidencePolicy": {
+    "metricRowSource": "market-snapshot.json observedMetricRows; each row keeps source ID, chain, source category, 30-day value (including null or numeric zero), 7-day and 24-hour values, and comparison value where returned.",
+    "fees": "Fees are not treated as literal user transaction counts or universal usage; category-specific methodology must be validated before using as affirmative activity evidence.",
+    "chainTVL": "The roster may report aggregate TVL and chain list. Aggregate Multi-Chain TVL is not attributed to a target chain.",
+    "responseErrors": "Monad options HTTP 500 is unavailable/unknown; see market-snapshot.json fetchErrors."
+  },
+  "coverageStatus": "UNKNOWN_INCOMPLETE_ENUMERATION_AND_ATTRIBUTION",
+  "notAnAdmission": "This discovery classification does not verify official deployment addresses, ABI/function selectors, supported workflows, or authorize runtime capabilities."
+}

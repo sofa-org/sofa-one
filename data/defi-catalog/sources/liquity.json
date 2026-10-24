@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "liquity-v2",
+      "familyVersion": "v2-weth",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x372abd1810eaf23cb9d941bbe7596dfb2c46bc65",
+          "status": "inactive",
+          "contractName": "Liquity V2 WETH BorrowerOperations",
+          "sourceRefs": [
+            "liquity-v2-mainnet-addresses",
+            "liquity-borrower-operations"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "openTrove",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "_owner",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "_ownerIndex",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_collAmount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_boldAmount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_upperHint",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_lowerHint",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_annualInterestRate",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_maxUpfrontFee",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_addManager",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "_removeManager",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "_receiver",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "liquity-borrower-operations"
+            },
+            {
+              "type": "function",
+              "name": "addColl",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "_troveId",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_collAmount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "liquity-borrower-operations"
+            },
+            {
+              "type": "function",
+              "name": "withdrawColl",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "_troveId",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_amount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "liquity-borrower-operations"
+            },
+            {
+              "type": "function",
+              "name": "withdrawBold",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "_troveId",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_amount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_maxUpfrontFee",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "liquity-borrower-operations"
+            },
+            {
+              "type": "function",
+              "name": "repayBold",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "_troveId",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_amount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "liquity-borrower-operations"
+            },
+            {
+              "type": "function",
+              "name": "adjustTrove",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "_troveId",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_collChange",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_isCollIncrease",
+                  "type": "bool",
+                  "internalType": "bool"
+                },
+                {
+                  "name": "_boldChange",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_isDebtIncrease",
+                  "type": "bool",
+                  "internalType": "bool"
+                },
+                {
+                  "name": "_maxUpfrontFee",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "liquity-borrower-operations"
+            },
+            {
+              "type": "function",
+              "name": "closeTrove",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "_troveId",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "liquity-borrower-operations"
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0x5721cbbd64fc7ae3ef44a0a3f9a790a9264cf9bf",
+          "status": "inactive",
+          "contractName": "Liquity V2 WETH StabilityPool",
+          "sourceRefs": [
+            "liquity-v2-mainnet-addresses",
+            "liquity-stability-pool"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "provideToSP",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "_amount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "_doClaim",
+                  "type": "bool",
+                  "internalType": "bool"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "liquity-stability-pool"
+            },
+            {
+              "type": "function",
+              "name": "withdrawFromSP",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "_amount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "doClaim",
+                  "type": "bool",
+                  "internalType": "bool"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "liquity-stability-pool"
+            },
+            {
+              "type": "function",
+              "name": "claimAllCollGains",
+              "stateMutability": "nonpayable",
+              "inputs": [],
+              "outputs": [],
+              "sourceId": "liquity-stability-pool"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "liquity-v2-mainnet-addresses",
+      "url": "https://raw.githubusercontent.com/liquity/bold/d262669ef3c4d37bf0544df3bb2624c07b8a5ee0/contracts/addresses/1.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official Liquity BOLD repository chain-1 address table identifies WETH branch BorrowerOperations and StabilityPool, plus WETH collateral and BOLD token metadata. Only the two stated contract targets are catalogued."
+    },
+    {
+      "sourceId": "liquity-borrower-operations",
+      "url": "https://github.com/liquity/bold/tree/d262669ef3c4d37bf0544df3bb2624c07b8a5ee0/contracts/src",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official commit d262669ef3c4d37bf0544df3bb2624c07b8a5ee0 contracts/src/Interfaces/IBorrowerOperations.sol declares the selected ABI; contracts/src/BorrowerOperations.sol implements the named methods. Full selected ABI entries preserve Solidity parameter names and primitive internalTypes. This interface/source mapping is not runtime code, market-population, or funded-execution certification."
+    },
+    {
+      "sourceId": "liquity-stability-pool",
+      "url": "https://github.com/liquity/bold/tree/d262669ef3c4d37bf0544df3bb2624c07b8a5ee0/contracts/src",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official commit d262669ef3c4d37bf0544df3bb2624c07b8a5ee0 contracts/src/Interfaces/IStabilityPool.sol declares the selected ABI; contracts/src/StabilityPool.sol implements the named methods. Full selected ABI entries preserve Solidity parameter names and primitive internalTypes. This interface/source mapping is not runtime code, market-population, or funded-execution certification."
+    }
+  ]
+}

@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "chainId": 56,
+  "address": "0x158Da805682BdC8ee32d52833aD41E74bb951E59",
+  "protocol": "alpaca-vault",
+  "contractName": "Legacy Alpaca AF1.0 ibUSDT lending vault proxy",
+  "reviewedAt": "2026-10-17",
+  "admissionStatus": "blocked",
+  "admissionBlocker": "The exact attributed ibUSDT proxy reports implementation 0x7684966f3A3d679939622eF0260EC9A20318e981. No deployment-applicable implementation ABI/source could be retrieved or bound: Sourcify returns 404 and BscScan's address-bound readContract endpoint explicitly reports no matching Contract ABI or SourceCode. The pinned official repository contains no occurrence of this implementation address. The full proxy administration ABI below is NOT a lending implementation ABI and does not establish deposit/withdraw availability. No capabilities are admitted.",
+  "deploymentEvidence": {
+    "sourceRef": "https://github.com/alpaca-finance/bsc-alpaca-contract/blob/1e988886e21a2e79106d85d3eb16ef55f4fcc834/.mainnet.json",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0x158Da805682BdC8ee32d52833aD41E74bb951E59",
+    "sourceType": "Pinned official BSC mainnet deployment configuration plus exact-chain/address proxy verification",
+    "evidence": "Vaults entry named Interest Bearing USDT, symbol ibUSDT, binds this address, deployment block 7732507, base token, debt token and configuration. Official hardhat.config.ts maps mainnet to BSC_MAINNET_RPC; the exact-address Sourcify chain-56 record corroborates the proxy deployment identity. This is the legacy ordinary lending vault, not an AF2.0 Money Market or leveraged-worker admission.",
+    "deploymentBlock": 7732507,
+    "documentedBaseToken": "0x55d398326f99059ff775485246999027b3197955",
+    "documentedDebtToken": "0x3B4fBB2b8536AB144048aBaFdd27eaF52f0fa4DC",
+    "documentedConfig": "0x709b102EF4b605197C75CfEA45F455A4e7ce065B",
+    "documentedInterestModel": "0x0267231E83F0d0518bE27CC0E0FE398E9e5468cC",
+    "proxyType": "EIP-1967 transparent administrative upgradeability proxy",
+    "reportedProxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        { "address": "0x7684966f3A3d679939622eF0260EC9A20318e981" }
+      ]
+    },
+    "implementation": "0x7684966f3A3d679939622eF0260EC9A20318e981",
+    "corroboratingRefs": [
+      "https://raw.githubusercontent.com/alpaca-finance/bsc-alpaca-contract/1e988886e21a2e79106d85d3eb16ef55f4fcc834/hardhat.config.ts",
+      "https://sourcify.dev/server/v2/contract/56/0x158Da805682BdC8ee32d52833aD41E74bb951E59?fields=all"
+    ],
+    "limitations": [
+      "Sourcify proxyResolution is an evidence-service observation, not an independent current storage, bytecode or implementation-persistence attestation.",
+      "The proxy record has runtimeMatch match rather than exact_match, creationMatch null and no deployment transaction metadata. Its verified proxy source has different compiler metadata and constructor details; it is not evidence of the actual original initializer arguments or initial implementation.",
+      "Official .mainnet.json identifies historical dependency addresses, not current stored token, config, owner, administrator, rates, reserve settings, liquidity or shutdown configuration.",
+      "The official repository main snapshot is dated 2024-07-08 and cannot by itself establish the interface of the different implementation reported at review."
+    ]
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x158Da805682BdC8ee32d52833aD41E74bb951E59?fields=all",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0x158Da805682BdC8ee32d52833aD41E74bb951E59",
+    "sourceType": "Exact-address verified proxy administration ABI ONLY; implementation ABI unavailable",
+    "abiScope": "proxy-administration-only",
+    "implementationAbiStatus": "unavailable",
+    "implementation": "0x7684966f3A3d679939622eF0260EC9A20318e981",
+    "sourcifyMatchId": "52321140",
+    "sourcifyVerifiedAt": "2026-09-25T14:32:20Z",
+    "reportedCreationMatch": null,
+    "reportedRuntimeMatch": "match",
+    "evidence": "Top-level abi preserves the entire returned proxy ABI: constructor, two events, fallback, five administrative functions and receive. Every function in this ABI is individually excluded below. This is intentionally NOT represented as a complete lending interface. The applicable implementation ABI and its full function inventory are unknown; no generic Vault.sol, IVault, fork, old implementation or inferred selector ABI is substituted.",
+    "attempts": [
+      {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x7684966f3A3d679939622eF0260EC9A20318e981?fields=all",
+        "result": "HTTP 404; lowercase address request also HTTP 404"
+      },
+      {
+        "sourceRef": "https://repo.sourcify.dev/contracts/full_match/56/0x7684966f3A3d679939622eF0260EC9A20318e981/metadata.json",
+        "result": "HTTP 404; partial_match alternative also HTTP 404"
+      },
+      {
+        "sourceRef": "https://bscscan.com/readContract?m=normal&a=0x7684966f3A3d679939622eF0260EC9A20318e981&v=0x7684966f3A3d679939622eF0260EC9A20318e981",
+        "result": "Retrieved page explicitly states: Sorry, we were unable to locate a matching Contract ABI or SourceCode for this contract."
+      },
+      {
+        "sourceRef": "https://bscscan.com/readContract?m=normal&a=0x158Da805682BdC8ee32d52833aD41E74bb951E59&v=0x7684966f3A3d679939622eF0260EC9A20318e981",
+        "result": "Proxy-address request with resolved implementation independently returns the same missing ABI/source message"
+      },
+      {
+        "sourceRef": "https://bscscan.com/address/0x7684966f3A3d679939622eF0260EC9A20318e981#code",
+        "result": "Static retrieval HTTP 403; browser access remained at Cloudflare human-verification challenge"
+      },
+      {
+        "sourceRef": "https://api.etherscan.io/v2/api?chainid=56&module=contract&action=getsourcecode&address=0x7684966f3A3d679939622eF0260EC9A20318e981",
+        "result": "NOTOK: Missing/Invalid API Key; legacy api.bscscan.com API redirects to Etherscan documentation"
+      },
+      {
+        "sourceRef": "https://github.com/alpaca-finance/bsc-alpaca-contract/tree/1e988886e21a2e79106d85d3eb16ef55f4fcc834",
+        "result": "Downloaded official pinned repository archive and searched its text artifacts: no occurrence of reported implementation address. Official .openzeppelin/bsc.json and .openzeppelin/mainnet.json contain no matching implementation identity. Existing upgrade script targets ibBUSD/VaultAip29, not this reported ibUSDT implementation. Official organization repository listing shows no newer contract repository push that supplies this missing binding."
+      }
+    ],
+    "requiredEvidenceToUnblock": "A trustworthy address-bound verified ABI/source for BSC implementation 0x7684966f3A3d679939622eF0260EC9A20318e981, or an official exact-implementation deployment/build artifact with reliable binding to the attributed proxy. An old Vault interface or a successful UI retrieval alone would not satisfy this prerequisite."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        { "name": "_logic", "type": "address", "internalType": "address" },
+        { "name": "_admin", "type": "address", "internalType": "address" }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "AdminChanged",
+      "type": "event",
+      "inputs": [
+        { "name": "previousAdmin", "type": "address", "indexed": false, "internalType": "address" },
+        { "name": "newAdmin", "type": "address", "indexed": false, "internalType": "address" }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Upgraded",
+      "type": "event",
+      "inputs": [
+        { "name": "implementation", "type": "address", "indexed": true, "internalType": "address" }
+      ],
+      "anonymous": false
+    },
+    { "type": "fallback", "stateMutability": "payable" },
+    {
+      "name": "admin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "changeAdmin",
+      "type": "function",
+      "inputs": [{ "name": "newAdmin", "type": "address", "internalType": "address" }],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "implementation",
+      "type": "function",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "upgradeTo",
+      "type": "function",
+      "inputs": [{ "name": "newImplementation", "type": "address", "internalType": "address" }],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "upgradeToAndCall",
+      "type": "function",
+      "inputs": [
+        { "name": "newImplementation", "type": "address", "internalType": "address" },
+        { "name": "data", "type": "bytes", "internalType": "bytes" }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    { "type": "receive", "stateMutability": "payable" }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "admin",
+      "signature": "admin()",
+      "decision": "excluded",
+      "reason": "Transparent-proxy privileged administrative introspection; nonpayable ABI entry dispatches only for proxy admin, not an ordinary lender transaction or public read API."
+    },
+    {
+      "functionName": "changeAdmin",
+      "signature": "changeAdmin(address)",
+      "decision": "excluded",
+      "reason": "Changes privileged proxy administrator; not an ordinary lender entry/exit."
+    },
+    {
+      "functionName": "implementation",
+      "signature": "implementation()",
+      "decision": "excluded",
+      "reason": "Transparent-proxy privileged implementation introspection; nonpayable ABI entry is admin-gated, not an ordinary lender transaction or public read API."
+    },
+    {
+      "functionName": "upgradeTo",
+      "signature": "upgradeTo(address)",
+      "decision": "excluded",
+      "reason": "Administrative implementation upgrade replaces execution logic; never an ordinary lender operation."
+    },
+    {
+      "functionName": "upgradeToAndCall",
+      "signature": "upgradeToAndCall(address,bytes)",
+      "decision": "excluded",
+      "reason": "Privileged upgrade plus opaque delegatecall bytes; grants implementation replacement and arbitrary initialization/execution rather than ordinary lending."
+    }
+  ],
+  "selectedFunctions": [],
+  "inventorySummary": {
+    "abiScope": "proxy-administration-only",
+    "proxyFunctionsReviewed": 5,
+    "admittedFunctions": 0,
+    "excludedProxyFunctions": 5,
+    "implementationFunctionsReviewed": 0,
+    "implementationFunctionCount": null,
+    "completeLendingInventoryAvailable": false,
+    "note": "Constructor, fallback and receive do not create capabilities. Five proxy decisions must not be mistaken for a complete lending-vault implementation review."
+  },
+  "unadmittedCandidates": [
+    {
+      "functionName": "deposit",
+      "signature": "deposit(uint256)",
+      "status": "blocked",
+      "reason": "Ordinary lender entry in historical official Vault.sol, but neither its continued existence nor its current semantics/ABI is bound to the reported implementation. Not admitted."
+    },
+    {
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256)",
+      "status": "blocked",
+      "reason": "Ordinary lender exit in historical official Vault.sol, but neither its continued existence nor its current semantics/ABI is bound to the reported implementation. Not admitted."
+    }
+  ],
+  "excludedSurfacePolicy": [
+    "No work/worker/strategy bytes, leveraged-position opening or management, requestFunds callback, arbitrary executor, multicall or fallback execution capability is selected.",
+    "No kill/liquidator operation, administrative configuration, ownership change, initialization, migration or upgrade capability is selected.",
+    "No ERC20 approval/transfer or permit/signature capability is selected. The missing implementation ABI prevents an honest per-function inventory of these possible implementation surfaces; category exclusions do not assert their current ABI presence."
+  ],
+  "historicalLendingModel": {
+    "sourceRef": "https://github.com/alpaca-finance/bsc-alpaca-contract/blob/1e988886e21a2e79106d85d3eb16ef55f4fcc834/solidity/contracts/6/protocol/Vault.sol",
+    "scope": "Historical official source context ONLY; expressly not bound to the reported deployed implementation and not used as ABI evidence",
+    "risksAndLimitations": [
+      "Historical totalToken includes cash plus vaultDebtVal minus reservePool. Borrower debt and accrued interest are not immediately withdrawable cash: utilization, borrower repayment, liquidation losses, reserves and available USDT can constrain exits. No current balance, solvency, interest rate or redemption readiness is attested.",
+      "Historical deposit pulls configured ERC20 tokens from msg.sender and mints ib shares to msg.sender; withdraw burns the caller's shares and transfers assets to that caller. There is no receiver argument. Third-party funding or share staking/unstaking is not included, and token approval is a separate unadmitted operation.",
+      "Historical deposit is payable only to support configured wrapped-native vaults; nonzero native value requires token == configured wrapped-native token and amount == msg.value. The official ibUSDT base token is BSC USDT, not BNB/WBNB: an ordinary historical USDT deposit uses ERC20 allowance and zero native value; historical withdraw is nonpayable. Current behavior remains unestablished.",
+      "Historical share and asset conversion divides with integer rounding, has a minimum remaining total-share-supply constraint, and offers no caller-set min-shares, min-assets, max-input or deadline. There is no explicit lender cooldown in the examined historical deposit/withdraw bodies; current implementation or shutdown restrictions remain unknown.",
+      "Historical interest accrual reads configurable interest-rate and reserve settings. Configured token behavior, config contract, reserves, and administrative changes can affect accounting or revert execution. The whitelisted contract-caller restriction in historical Vault.sol applies to work, not the examined ordinary deposit/withdraw bodies; this does not establish caller compatibility of the unknown current implementation."
+    ]
+  },
+  "frontendReference": {
+    "officialUrl": "https://app.alpacafinance.org/",
+    "referenceUrl": "https://web.archive.org/web/20250502105401id_/https://app.alpacafinance.org/",
+    "referenceStatus": "archived",
+    "verifiedAt": "2026-10-17",
+    "officialAttributionRef": "https://web.archive.org/web/20250604073944id_/https://www.alpacafinance.org/",
+    "evidence": "Retrieved archived official homepage links Launch AF1.0 to app.alpacafinance.org and links the same official GitHub repository. Archived AF1.0 application returns Alpaca Finance metadata. Use the archive as the frontend reference; live app retrieval failed to connect and no currently usable frontend is claimed.",
+    "liveRetrievalStatus": "failed",
+    "liveRetrievalResult": "Unable to connect; official docs retrieval also failed to connect. No known parked domain is advertised as a working frontend."
+  },
+  "lifecycleEvidence": {
+    "officialAnnouncementRef": "https://medium.com/alpaca-finance/alpaca-finance-wind-down-announcement-c449f619071d",
+    "officialRetrievalStatus": "failed-http-410",
+    "preservedAnnouncementRef": "https://xangle.io/assets/ALPACA/blog/683502c1f76055806e7896cf",
+    "evidence": "Xangle preserves the Alpaca Finance Wind-Down Announcement and explicitly attributes its original publication to the official Alpaca Finance Medium post. Retrieved serialized article content announces sunsetting all products and commits to keeping the frontend running through 31 December 2025 for withdrawals. This is a legacy/shutdown candidate as of review, not evidence of a currently supported or economically safe lending service.",
+    "limitations": [
+      "The frontend-support date has passed; no current frontend, maintenance, deposit enablement, exit availability or implementation semantics is inferred from the historical announcement.",
+      "Shutdown status does not justify substituting an old ABI, bypassing proxy binding, granting opaque worker execution or treating deposits as currently available."
+    ]
+  }
+}

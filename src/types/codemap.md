@@ -37,6 +37,8 @@ Contains one production file: `express.d.ts`.
 | `Express.Request.openfortUserId` | `string?` | Openfort IAM user id from the validated session. |
 | `Express.Request.openfortEmail` | `string?` | Email from the validated Openfort session. |
 | `Express.Request.openfortSession` | `unknown?` | Raw Openfort session payload (opaque). |
+| Express.Request.appSession | AppSession with User, optional | Current cookie-authenticated application session. |
+| Express.Request.appSessionCsrfToken | string, optional | Cookie-derived CSRF returned in session introspection. |
 
 ## Flow
 
@@ -45,15 +47,14 @@ Contains one production file: `express.d.ts`.
    to `request.requestId`, echoes it in the `X-Request-Id` response header, and seeds
    `RequestContextService` (AsyncLocalStorage) with `{ requestId, clientIp }`.
 2. Depending on the route's guard, one of the auth guards populates the request:
-   - `OpenfortUserGuard` / `EitherAuthGuard` (Openfort IAM path) set
-     `request.openfortUserId`, `request.openfortEmail`, `request.openfortSession`,
-     and `request.user` (the resolved `User` row).
-   - `ApiKeyAuthGuard` / `EitherAuthGuard` (API-key path) set `request.apiKeyRecord`
+   - AppSessionGuard sets request.user, request.appSession and request.appSessionCsrfToken.
+   - OpenfortAuthGuard adds provider identity/access-token context only for explicit login exchange and wallet proof.
+   - `ApiKeyAuthGuard` (API-key path) sets `request.apiKeyRecord`
      and `request.user` (from `keyRecord.user`).
 3. Downstream consumers read these fields:
    - `CurrentUserDecorator` reads `request.user`.
    - `StepUpGuard` reads `request.user?.id`.
-   - `ApiKeyOnlyGuard` / `ApiKeyPermissionGuard` / `ApiKeyThrottlerGuard` read
+   - `ApiKeyPermissionGuard` / `ApiKeyThrottlerGuard` read
      `request.apiKeyRecord`.
    - `HttpExceptionFilter` reads `request.requestId` for error correlation.
    - Controllers (e.g. `WalletController.sign`) pass `req.apiKeyRecord` into services.
@@ -62,10 +63,8 @@ Contains one production file: `express.d.ts`.
 
 - **`src/common/middleware/request-id.middleware.ts`** — writes `request.requestId`;
   pairs with `RequestContextService` for AsyncLocalStorage-based logging context.
-- **`src/common/guards/openfort-user.guard.ts`**, **`either-auth.guard.ts`**,
-  **`api-key-auth.guard.ts`** — write `request.user`, `request.apiKeyRecord`, and the
-  `openfort*` fields.
-- **`src/common/guards/api-key-only.guard.ts`**, **`api-key-permission.guard.ts`**,
+- AppSessionGuard sets local session/user context; OpenfortAuthGuard sets explicit provider proof context; ApiKeyAuthGuard sets public key/user context.
+- **`src/common/guards/api-key-permission.guard.ts`**,
   **`api-key-throttler.guard.ts`** — read `request.apiKeyRecord`.
 - **`src/common/guards/step-up.guard.ts`** — reads `request.user?.id`.
 - **`src/common/decorators/current-user.decorator.ts`** — reads `request.user`.

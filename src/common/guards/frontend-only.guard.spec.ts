@@ -1,14 +1,16 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, type ExecutionContext } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { FrontendOnlyGuard } from './frontend-only.guard';
 
-function contextWithHeaders(headers: Record<string, string | undefined>) {
-  return {
+function contextWithHeaders(headers: Record<string, string | undefined>, method = 'POST') {
+  // Only the HTTP request and guard metadata are exercised by this context.
+  const context = {
     getHandler: jest.fn(),
     getClass: jest.fn(),
-    switchToHttp: () => ({ getRequest: () => ({ headers }) }),
-  } as any;
+    switchToHttp: () => ({ getRequest: () => ({ headers, method }) }),
+  } as unknown as ExecutionContext;
+  return context;
 }
 
 function createGuard({
@@ -64,6 +66,20 @@ describe('FrontendOnlyGuard', () => {
     expect(() =>
       guard.canActivate(contextWithHeaders({ referer: 'https://app.example.com/dashboard' })),
     ).toThrow(ForbiddenException);
+  });
+
+  it.each(['GET', 'HEAD'])('allows trusted Referer for production %s reads without Origin', (method) => {
+    const guard = createGuard({ corsOrigin: 'https://app.example.com', nodeEnv: 'production' });
+    expect(guard.canActivate(contextWithHeaders({ referer: 'https://app.example.com/dashboard' }, method))).toBe(true);
+    expect(() => guard.canActivate(contextWithHeaders({ referer: 'https://app.example.com.evil.test/' }, method))).toThrow(ForbiddenException);
+  });
+
+  it('requires a single trusted Origin for cookie mutations even outside production', () => {
+    const guard = createGuard();
+    for (const headers of [{}, { origin: ['https://app.example.com'] }, { origin: 'https://evil.example.com' }]) {
+      expect(() => guard.assertTrustedOrigin({ headers })).toThrow(ForbiddenException);
+    }
+    guard.assertTrustedOrigin({ headers: { origin: 'https://app.example.com' } });
   });
 
   it('allows configured origin in production', () => {

@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "compound-iii",
+      "familyVersion": "v3-comet@f766f515",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xc3d688b66703497daa19211eedff47f25384cdc3",
+          "status": "inactive",
+          "contractName": "Comet USDC",
+          "sourceRefs": [
+            "compound-comet-implementation",
+            "compound-comet-main-interface",
+            "compound-comet-usdc-mainnet-role"
+          ],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "inputs": [
+                { "internalType": "address", "name": "from", "type": "address" },
+                { "internalType": "address", "name": "dst", "type": "address" },
+                { "internalType": "address", "name": "asset", "type": "address" },
+                { "internalType": "uint256", "name": "amount", "type": "uint256" }
+              ],
+              "name": "supplyFrom",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "sourceRefs": [
+                "compound-comet-implementation",
+                "compound-comet-main-interface",
+                "compound-comet-usdc-mainnet-role"
+              ]
+            },
+            {
+              "status": "inactive",
+              "inputs": [
+                { "internalType": "address", "name": "src", "type": "address" },
+                { "internalType": "address", "name": "to", "type": "address" },
+                { "internalType": "address", "name": "asset", "type": "address" },
+                { "internalType": "uint256", "name": "amount", "type": "uint256" }
+              ],
+              "name": "withdrawFrom",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "sourceRefs": [
+                "compound-comet-implementation",
+                "compound-comet-main-interface",
+                "compound-comet-usdc-mainnet-role"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "compound-comet-implementation",
+      "url": "https://github.com/compound-finance/comet/blob/f766f51583c23acc33b2a7824654ef2029a96804/contracts/CometWithExtendedAssetList.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official compound-finance/comet commit f766f51583c23acc33b2a7824654ef2029a96804, implementation blob 3490e984d133789aa1afe2e8f7e37a11d2512396. supplyFrom forwards caller identity as the account/caller and passes caller-selected from, dst, asset, and amount into supplyInternal (implementation lines 729–731); the shared path enforces pause and hasPermission(from, msg.sender), and permits the base asset or collateral through fixed internal token branches (737–749). withdrawFrom similarly passes caller identity plus caller-selected src, to, asset, and amount into withdrawInternal (951–953), which enforces pause and hasPermission(src, msg.sender) and uses the fixed base-asset/collateral branches (959–971). Delegated Comet permission may be required; this platform admission does not create it or impose a from/src-to-caller restriction. This source establishes the pinned declaration/body semantics, not current proxy/runtime identity or funded execution."
+    },
+    {
+      "sourceId": "compound-comet-main-interface",
+      "url": "https://github.com/compound-finance/comet/blob/f766f51583c23acc33b2a7824654ef2029a96804/contracts/CometMainInterface.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official interface at commit f766f51583c23acc33b2a7824654ef2029a96804, blob 5347b22f73d010017a1162579d1fd8bad13f8328. Selected declarations are supplyFrom(address,address,address,uint256) and withdrawFrom(address,address,address,uint256), both nonpayable with no outputs. The full ABI names and canonical Solidity ABI types are recorded exactly; uint is canonicalized as uint256."
+    },
+    {
+      "sourceId": "compound-comet-usdc-mainnet-role",
+      "url": "https://github.com/compound-finance/comet/blob/f766f51583c23acc33b2a7824654ef2029a96804/deployments/mainnet/usdc/roots.json",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official deployment role record at commit f766f51583c23acc33b2a7824654ef2029a96804, blob 8cdf987c178cd0ba8af8286a4089b70c11bbcf24, maps Comet to the Ethereum USDC target address in this candidate. This dated declaration is not a claim about current proxy/runtime identity or financial state."
+    }
+  ],
+  "unresolved": []
+}

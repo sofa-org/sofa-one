@@ -13,7 +13,7 @@ const routeSections = [
   {
     label: "Sign",
     href: "#sign",
-    description: "Message and typed-data signatures",
+    description: "Approved EOA typed-data signatures",
   },
   {
     label: "Send",
@@ -33,15 +33,14 @@ function getNetworkEnvironment(chainName: string) {
 
 const fieldRows = {
   sign: [
-    ["type", "string", "Yes", "message | typed_data"],
-    ["executionMode", "string", "No", "session_key (default) returns a Calibur wrapped signature; eoa returns a plain EOA signature."],
-    ["chainId", "integer", "Cond.", "Required for message. Optional for typed_data when typedData.domain.chainId is present; if provided, both values must match."],
-    ["message", "string | object", "Cond.", "Required for message. Non-empty text or { raw: \"0x...\" } with even-length hex bytes."],
-    ["typedData", "object", "Cond.", "Required for typed_data. Must include domain.chainId, types, primaryType, and message."],
+    ["type", "string", "Yes", "typed_data only; message and raw hash signing are not supported."],
+    ["executionMode", "string", "No", "eoa only (default). Public signing does not accept session_key."],
+    ["chainId", "integer", "No", "Inferred from typedData.domain.chainId when omitted; if provided, both values must match."],
+    ["typedData", "object", "Yes", "Exact supported Polygon ClobAuth, CLOB V2 single-order, or DepositWallet Batch schema, with domain.chainId, types, primaryType, and message."],
   ],
   send: [
     ["chainId", "integer", "Yes", "Supported chain ID. Must be authorized for the user's EOA."],
-    ["executionMode", "string", "No", "session_key (default) executes through Calibur UserOp; eoa executes directly from the backend EOA."],
+    ["executionMode", "string", "No", "session_key (default) executes from the user wallet through Calibur UserOp; eoa executes directly from the TEE signer."],
     ["sponsorship", "string", "No", "required | none. Only applies to session_key UserOps; defaults to none."],
     ["interactions", "array", "Yes", "At least one contract interaction."],
     ["└ to", "string", "Yes", "Target Ethereum address."],
@@ -50,7 +49,7 @@ const fieldRows = {
     ["idempotencyKey", "string", "Yes", "Max 64 characters: letters, numbers, _ and -."],
   ],
   status: [
-    ["transactionId", "path", "Yes", "SOFA ONE transaction UUID returned by /v1/transactions/send."],
+    ["transactionId", "path", "Yes", "SOFA ONE transaction UUID returned by /v1/transactions."],
   ],
 };
 
@@ -153,12 +152,29 @@ export default function APIDocsPage() {
   -H "Content-Type: application/json" \\
   -H "User-Agent: my-service/1.0" \\
   -d '{
-    "type": "message",
-    "chainId": 84532,
-    "executionMode": "session_key",
-    "message": "Hello, SOFA ONE!"
+    "type": "typed_data",
+    "chainId": 137,
+    "executionMode": "eoa",
+    "typedData": {
+      "domain": { "name": "ClobAuthDomain", "version": "1", "chainId": 137 },
+      "types": {
+        "ClobAuth": [
+          { "name": "address", "type": "address" },
+          { "name": "timestamp", "type": "string" },
+          { "name": "nonce", "type": "uint256" },
+          { "name": "message", "type": "string" }
+        ]
+      },
+      "primaryType": "ClobAuth",
+      "message": {
+        "address": "<selected wallet signerAddress>",
+        "timestamp": "<current Unix seconds as canonical decimal string>",
+        "nonce": 0,
+        "message": "This message attests that I control the given wallet"
+      }
+    }
   }'`;
-  const sendExample = `curl -X POST ${apiBaseUrl}/v1/transactions/send \\
+  const sendExample = `curl -X POST ${apiBaseUrl}/v1/transactions \\
   -H "X-API-Key: sk_your_key_here" \\
   -H "Content-Type: application/json" \\
   -H "User-Agent: my-service/1.0" \\
@@ -180,7 +196,7 @@ export default function APIDocsPage() {
   return (
     <DashboardPage
       title="API Documentation"
-      description="Sign messages and submit contract interactions from your SOFA ONE backend wallet. Private keys stay inside Openfort TEE infrastructure and are never returned to clients."
+      description="Sign approved typed data and submit contract interactions from your backend. Private keys stay inside Openfort TEE infrastructure and are never returned to clients."
       tags={
         <>
           <span className="rounded-full bg-brand-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-accent">
@@ -215,12 +231,26 @@ export default function APIDocsPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">Authentication</p>
               <p className="mt-2 text-sm leading-6 text-brand-muted">
-                Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. POST JSON requests also use <code>Content-Type: application/json</code>. Optional <code>User-Agent</code> is a spoofable signal, not authentication; it may be recorded/saved for security audit and anomaly detection and compared exactly with prior context. curl/SDK/deployment changes can change it. Keep it stable and treat changes as security events, but never rely on its secrecy. Under high-risk key permission/risk checks, a single UA/IP context change may alert or freeze a key. If frozen, never disclose the key: create a replacement in Dashboard, update your backend secret, revoke the old key, and follow the existing recovery process. UA is not required on every endpoint. Openfort IAM bearer tokens are only accepted by frontend-only dashboard endpoints.
+                Use <code className="rounded bg-brand-accent/10 px-1.5 py-0.5 font-mono text-xs text-brand-accent">X-API-Key</code> for public API requests. Each key is permanently bound to the wallet selected when it was created; the request cannot switch to another wallet. Create a separate key for each wallet you use. POST JSON requests also use <code>Content-Type: application/json</code>. Optional <code>User-Agent</code> is a spoofable signal, not authentication; it may be recorded/saved for security audit and anomaly detection and compared exactly with prior context. curl/SDK/deployment changes can change it. Keep it stable and treat changes as security events, but never rely on its secrecy. Under high-risk key permission/risk checks, a single UA/IP context change may alert or freeze a key. If frozen, never disclose the key: create a replacement in Dashboard, update your backend secret, revoke the old key, and follow the existing recovery process. UA is not required on every endpoint. Dashboard access uses SOFA session cookies; Openfort bearer identity is used only for login exchange and fresh wallet authorization. Neither substitutes for a public API key.
               </p>
             </div>
             <CopyButton text={apiKeyHeader} className="w-fit shrink-0" />
           </div>
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-brand-border bg-white p-5 text-sm leading-6 text-brand-muted shadow-sm">
+        <h2 className="mb-2 font-semibold text-brand-text">Wallet Address and Signer Address</h2>
+        <p>
+          Wallet projections and signing responses use <code>walletAddress</code> for your selected user wallet,
+          unchanged by EIP-7702 delegation to Calibur, and <code>signerAddress</code> for the TEE-managed EOA.
+          A signer address alone does not establish authorization; per-network status and existing live policies still apply.
+        </p>
+        <p className="mt-2">
+          Breaking response change: <code>signerAddress</code> replaces <code>agentWalletAddress</code> without an alias.
+          Signing responses no longer duplicate the signer into <code>walletAddress</code>; use <code>signerAddress</code> for signature recovery and ClobAuth.
+          Transaction status/history and signing-request audit addresses remain exactly as recorded, not reinterpreted as the current user wallet.
+        </p>
       </section>
 
       <section className="rounded-2xl border border-brand-border bg-white p-5 shadow-sm">
@@ -300,7 +330,7 @@ export default function APIDocsPage() {
               Check a transaction from your backend
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-muted">
-              After calling <span className="font-mono text-brand-text">/v1/transactions/send</span>, store the
+              After calling <span className="font-mono text-brand-text">/v1/transactions</span>, store the
               returned transaction ID and poll the safe status endpoint. The response omits calldata and request
               hashes, so it is safe for backend logs and customer support tooling.
             </p>
@@ -314,7 +344,7 @@ export default function APIDocsPage() {
       <div className="space-y-8">
         <EndpointCard id="sign" path="/v1/wallets/sign">
           <p className="text-sm leading-6 text-brand-muted">
-            Sign a message or EIP-712 typed data through either the authorized backend agent signer (<code>executionMode: &quot;session_key&quot;</code>, default) or the user&apos;s backend EOA (<code>executionMode: &quot;eoa&quot;</code>). Session-key signatures are Calibur wrapped signatures; EOA signatures are plain EOA signatures. Raw hash signing is disabled for safety and no transaction is broadcast.
+            Sign only approved Polygon EIP-712 typed data: exact Polymarket ClobAuth bootstrap, CLOB V2 single orders, or verified DepositWallet Batch payloads. All use the TEE signer&apos;s plain EOA signature (<code>executionMode: &quot;eoa&quot;</code>, default). Message, raw hash, and session-key signing are not supported; no transaction is broadcast. Each lane requires <code>canSign</code>, <code>canUseEoaExecution</code>, its active capability grant, and all independent policy checks. For ClobAuth, set <code>message.address</code> to <code>signerAddress</code> from <code>GET /v1/wallets</code>, not <code>walletAddress</code>; supply the current canonical Unix timestamp (±300 seconds).
           </p>
 
           <div className="space-y-3">
@@ -331,16 +361,17 @@ export default function APIDocsPage() {
               <CodeBlock>{`{
   "signature": "0x5d99b6f7...",
   "walletAddress": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-  "type": "message",
-  "executionMode": "session_key"
+  "signerAddress": "0x1111111111111111111111111111111111111111",
+  "type": "typed_data",
+  "executionMode": "eoa"
 }`}</CodeBlock>
             </div>
           </div>
         </EndpointCard>
 
-        <EndpointCard id="send" path="/v1/transactions/send">
+        <EndpointCard id="send" path="/v1/transactions">
           <p className="text-sm leading-6 text-brand-muted">
-            Submit one or more contract interactions using an API key. By default, <code>executionMode: &quot;session_key&quot;</code> executes from the user&apos;s EIP-7702 delegated EOA via the authorized backend agent signer and Calibur UserOp. Use <code>executionMode: &quot;eoa&quot;</code> to execute directly from the user&apos;s backend EOA. Set <code>sponsorship: &quot;required&quot;</code> only when a paymaster policy is configured; otherwise keep the default <code>&quot;none&quot;</code>. Openfort IAM bearer tokens are not accepted here.
+            Submit one or more contract interactions using an API key. By default, <code>executionMode: &quot;session_key&quot;</code> executes from the user&apos;s EIP-7702 delegated wallet via the chain-authorized TEE signer and Calibur UserOp. Use <code>executionMode: &quot;eoa&quot;</code> to execute directly from the TEE signer&apos;s EOA, not the user wallet. Set <code>sponsorship: &quot;required&quot;</code> only when a paymaster policy is configured; otherwise keep the default <code>&quot;none&quot;</code>. Openfort IAM bearer tokens are not accepted here.
           </p>
 
           <div className="space-y-3">
@@ -372,7 +403,7 @@ export default function APIDocsPage() {
 
         <EndpointCard id="status" path="/v1/transactions/:id" method="GET">
           <p className="text-sm leading-6 text-brand-muted">
-            Query a safe status view for transactions created through the public send endpoint. The response excludes calldata, request hashes, and interaction hashes.
+            Query a safe status view for transactions created through the public send endpoint. The response excludes calldata, request hashes, and interaction hashes. Its <code>walletAddress</code> remains the persisted execution address: the user wallet for session-key execution or the TEE signer for EOA execution, not a current wallet identity projection.
           </p>
 
           <div className="space-y-3">
@@ -421,7 +452,7 @@ export default function APIDocsPage() {
   "message": "Invalid API key",
   "requestId": "req_...",
   "timestamp": "2026-04-20T10:35:00.000Z",
-  "path": "/v1/transactions/send"
+  "path": "/v1/transactions"
 }`}</CodeBlock>
           <p className="mt-3 text-sm leading-6 text-brand-muted">
             Validation failures use <span className="font-mono text-brand-text">VALIDATION_ERROR</span> and include a <span className="font-mono text-brand-text">details</span> array. Common codes include <span className="font-mono text-brand-text">API_KEY_REQUIRED</span>, <span className="font-mono text-brand-text">INVALID_API_KEY</span>, <span className="font-mono text-brand-text">CHAIN_NOT_SUPPORTED</span>, <span className="font-mono text-brand-text">IP_NOT_ALLOWED</span>, and <span className="font-mono text-brand-text">IDEMPOTENCY_CONFLICT</span>.

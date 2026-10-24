@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "maple-pool-v2",
+      "familyVersion": "maple-pool-v2@9f177bf3",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b",
+          "status": "inactive",
+          "contractName": "MaplePool",
+          "sourceRefs": [
+            "maple-official-pool-map",
+            "maple-official-sdk-abi",
+            "maple-etherscan-usdc",
+            "maple-etherscan-usdt"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets_",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver_",
+                  "type": "address"
+                }
+              ],
+              "name": "deposit",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares_",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "maple-official-pool-map",
+                "maple-official-sdk-abi",
+                "maple-etherscan-usdc",
+                "maple-etherscan-usdt"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares_",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver_",
+                  "type": "address"
+                }
+              ],
+              "name": "mint",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets_",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "maple-official-pool-map",
+                "maple-official-sdk-abi",
+                "maple-etherscan-usdc",
+                "maple-etherscan-usdt"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares_",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "owner_",
+                  "type": "address"
+                }
+              ],
+              "name": "requestRedeem",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "escrowedShares_",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "maple-official-pool-map",
+                "maple-official-sdk-abi",
+                "maple-etherscan-usdc",
+                "maple-etherscan-usdt"
+              ]
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d",
+          "status": "inactive",
+          "contractName": "MaplePool",
+          "sourceRefs": [
+            "maple-official-pool-map",
+            "maple-official-sdk-abi",
+            "maple-etherscan-usdc",
+            "maple-etherscan-usdt"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets_",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver_",
+                  "type": "address"
+                }
+              ],
+              "name": "deposit",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares_",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "maple-official-pool-map",
+                "maple-official-sdk-abi",
+                "maple-etherscan-usdc",
+                "maple-etherscan-usdt"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares_",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver_",
+                  "type": "address"
+                }
+              ],
+              "name": "mint",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets_",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "maple-official-pool-map",
+                "maple-official-sdk-abi",
+                "maple-etherscan-usdc",
+                "maple-etherscan-usdt"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares_",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "owner_",
+                  "type": "address"
+                }
+              ],
+              "name": "requestRedeem",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "escrowedShares_",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "maple-official-pool-map",
+                "maple-official-sdk-abi",
+                "maple-etherscan-usdc",
+                "maple-etherscan-usdt"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "maple-official-pool-map",
+      "url": "https://docs.maple.finance/integrate/ethereum-mainnet/frontend-integration",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Official Maple Ethereum mainnet integration page lists syrupUSDC 0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b and syrupUSDT 0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d as PoolV2 targets; listed router is a different address. This dated role map is not current runtime identity."
+    },
+    {
+      "sourceId": "maple-official-sdk-abi",
+      "url": "https://github.com/maple-labs/maple-js/blob/3d1d9fdf061d2d57de52808759ee1b9b8bc864ad/src/abis/PoolV2Pool.abi.json",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Full pinned SDK PoolV2 ABI independently matches the selected named function entries for both exact targets. SDK ABI corroborates ABI shape; it is not contract compiler output or address identity evidence."
+    },
+    {
+      "sourceId": "maple-etherscan-usdc",
+      "url": "https://etherscan.io/address/0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b#code",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Etherscan verified MaplePool source and ABI for exact syrupUSDC address; inspected deposit/mint/requestRedeem implementation bodies and fixed manager/asset paths. Retained source SHA-256 9f177bf35f38c6e3cee9d4c3ef23ddbb2708ad4f9b28a11a17c44484eb96d96f; HTML SHA-256 824032f02bc0d3f15e894425af56277658a6da76fb435bb939eab0cce00fa633. Page date 2026-10-05 UTC. Source role and page association do not establish present runtime/storage identity or financial outcomes."
+    },
+    {
+      "sourceId": "maple-etherscan-usdt",
+      "url": "https://etherscan.io/address/0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d#code",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Etherscan verified MaplePool source and ABI for exact syrupUSDT address; inspected deposit/mint/requestRedeem implementation bodies and fixed manager/asset paths. Retained source SHA-256 9f177bf35f38c6e3cee9d4c3ef23ddbb2708ad4f9b28a11a17c44484eb96d96f; HTML SHA-256 bbd795d1fb7ae779bc2a56b2c504b63b912685818fdd4aea48c52f7c09130ce4. Page date 2026-10-05 UTC. Source role and page association do not establish present runtime/storage identity or financial outcomes."
+    }
+  ],
+  "unresolved": []
+}

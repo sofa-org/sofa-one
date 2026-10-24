@@ -1,0 +1,34 @@
+import { hashDomain, keccak256, encodeAbiParameters, toBytes, toHex, concat } from 'viem';
+import { POLYMARKET_ORDER_TYPE, type ValidatedPolymarketOrder } from './polymarket-clob-order';
+
+const ORDER_TYPES = ['bytes32','uint256','address','address','uint256','uint256','uint256','uint8','uint8','uint256','bytes32','bytes32'] as const;
+const DOMAIN_FIELDS = [{name:'name',type:'string'},{name:'version',type:'string'},{name:'chainId',type:'uint256'},{name:'verifyingContract',type:'address'}] as const;
+const ORDER_TYPE_HASH = keccak256(toHex(POLYMARKET_ORDER_TYPE));
+
+function assertSignature(signature: `0x${string}`): void {
+  if (!/^0x[0-9a-fA-F]{130}$/.test(signature)) throw new Error('Expected a 65-byte signature');
+  const v = Number.parseInt(signature.slice(-2), 16);
+  if (v !== 27 && v !== 28) throw new Error('Expected a canonical signature recovery value');
+}
+
+/** Build the Poly1271 envelope from a canonical v=27/28 signature over TypedDataSign. */
+export function buildPolymarketPoly1271Envelope(payload: ValidatedPolymarketOrder, signature: `0x${string}`): `0x${string}` {
+  assertSignature(signature);
+  const contentsHash = contentsHashFor(payload);
+  const appDomain = hashDomain({ domain:payload.domain, types:{EIP712Domain:DOMAIN_FIELDS} } as any);
+  const typeBytes = toBytes(POLYMARKET_ORDER_TYPE);
+  if (typeBytes.length > 65535) throw new Error('Order type is too long');
+  const length = new Uint8Array([typeBytes.length >> 8, typeBytes.length & 255]);
+  return concat([signature, appDomain, contentsHash, toHex(typeBytes), toHex(length)]) as `0x${string}`;
+}
+
+export function polymarketOrderContentsHash(payload: ValidatedPolymarketOrder): `0x${string}` {
+  return contentsHashFor(payload);
+}
+
+function contentsHashFor(payload: ValidatedPolymarketOrder): `0x${string}` {
+  const o = payload.message.contents as Record<string, any>;
+  return keccak256(encodeAbiParameters(ORDER_TYPES.map((type) => ({type})) as any, [ORDER_TYPE_HASH, BigInt(o.salt), o.maker, o.signer, BigInt(o.tokenId), BigInt(o.makerAmount), BigInt(o.takerAmount), o.side, o.signatureType, BigInt(o.timestamp), o.metadata, o.builder]));
+}
+
+export { POLYMARKET_ORDER_TYPE };

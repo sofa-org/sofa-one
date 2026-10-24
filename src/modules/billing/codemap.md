@@ -13,12 +13,12 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
 | File                                | Responsibility                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `billing.module.ts`                 | Nest module wiring: imports `PrismaModule`, `SecurityEventModule`, and `ScheduleModule.forRoot()`; registers 3 controllers + 10 providers, exports the services consumed by other modules.                                                                                                                                                                                                                                                                                                                                        |
-| `billing.controller.ts`             | Frontend-only dashboard routes under `v1/billing` (plans, plan change, summary, invoices, checkout, subscription-checkout, reconcile).                                                                                                                                                                                                                                                                                                                                                                                            |
+| `billing.controller.ts`             | Frontend-only dashboard routes under `billing` (plans, plan change, summary, invoices, checkout, subscription-checkout, reconcile).                                                                                                                                                                                                                                                                                                                                                                                            |
 | `billing.service.ts`                | Core service: plan catalog seeding/validation, plan assignment, usage recording + API-call quota, outbound metering (legacy + receipt-confirmed), summary aggregation, invoice list/get/finalize, and the shared billing-period lock seam.                                                                                                                                                                                                                                                                                        |
 | `billing-calculator.ts`             | Pure pricing calculator: `PLANS` config, `STANDARD_OUTBOUND_TIERS`, `calculateInvoiceTotals` / `calculateOutboundOverage`.                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `billing-catalog.ts`                | Human-facing plan marketing copy (`description`/`features`) keyed by `PlanId`; no monetary values.                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `billing-pricing.ts`                | Pure deterministic USDC/USDT → microdollar pricing boundary (`evaluatePricing`, `TOKEN_PRICES`) with structured `quarantined` results.                                                                                                                                                                                                                                                                                                                                                                                            |
-| `billing-entitlement.service.ts`    | Read-only plan/quota façade: `getEntitlements`, `getPlanForPeriod`, and legacy transaction-aware activation guard.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `billing-entitlement.service.ts`    | Read-only plan/quota façade: `getEntitlements` and `getPlanForPeriod`.                                                                                                                                                                                                                                                                                                                                                                                    |
 | `billing-wallet-lifecycle.service.ts` | Account-row serialized wallet reservation/activation quota and monthly peak/carry evidence; provider work is outside transactions. |
 | `billing-worker.service.ts`         | Gated 5-minute `@Interval` worker (`BILLING_WORKER_ENABLED`, default off; exposes no route): drains receipt reconciliation per account/period, runs invoice finalization catch-up, materializes due recurring periods, resumes pending/confirming USDC claims, retries deferred Stripe renewal events, and recovers interrupted pending checkouts. Reuses the existing evidence-backed services. Maintains a non-sensitive `BillingWorkerHeartbeat` lifecycle row (`starting`→`running`→`healthy`/`failed`) for health readiness. |
 | `billing-reconciliation.service.ts` | Receipt-confirmed outbound reconciliation: scans `Transaction` rows, fetches sanitized receipts via Openfort, appends `posted`/`quarantined` ledger events, records run summaries with completion markers.                                                                                                                                                                                                                                                                                                                        |
@@ -135,8 +135,8 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
 
 ### Controller wiring
 
-- `BillingController` (`v1/billing`, all routes `@FrontendOnly()` +
-  `OpenfortUserGuard` + `FrontendOnlyGuard`, user id from `@CurrentUser('id')`):
+- `BillingController` (`billing`, all routes `@FrontendOnly()` +
+  AppSessionGuard + FrontendOnlyGuard, with local MFA cookie/unsafe CSRF and user id from CurrentUser):
   - `GET /plans` → `billingService.getPlans`
   - `POST /plan` → `billingService.assignPlan(userId, body.planCode)`
   - `GET /summary?period=` → `billingService.getSummary`
@@ -150,10 +150,10 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
   - `POST /invoices/:id/checkout` → `stripePaymentService.createCheckoutSession`
   - `POST /invoices/:id/subscription-checkout` → `stripePaymentService.createSubscriptionCheckout(userId, id, body.planVersionId)`
   - `POST /reconcile` → `reconciliationService.reconcile(userId, { limit })`
-- `StripeWebhookController` (`POST v1/billing/webhooks/stripe`): `@Public()`,
+- `StripeWebhookController` (`POST billing/webhooks/stripe`): `@Public()`,
   `@SkipThrottle({ short, medium })`, verifies the signature from `req.rawBody`
   (never re-parsed) → `stripeWebhookService.handleWebhook`.
-- `UsdcPaymentController` (`v1/billing/invoices/:id/usdc`, dashboard guards):
+- `UsdcPaymentController` (`billing/invoices/:id/usdc`, dashboard guards):
   - `POST /quote` → `usdcPaymentService.quote(userId, id, body.chainId)`
   - `POST /claim` → `usdcPaymentService.claim(userId, id, body)` with a tight
     route throttle (`5/60s`, `20/3600s`) to bound RPC amplification.
@@ -164,7 +164,7 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
 ### Plans
 
 ```
-GET /v1/billing/plans
+GET /billing/plans
   → ensureAccount (lazy BillingAccount create, P2002-tolerant)
   → ensurePlanVersions (seed catalog from PLANS + PLAN_CATALOG)
   → ensureDefaultAssignment (current-month Free assignment if none ≤ now)
@@ -172,7 +172,7 @@ GET /v1/billing/plans
     assignment never overrides); future assignment exposed as scheduledPlan
   → validatePlanVersion on every persisted row (fail closed)
 
-POST /v1/billing/plan { planCode }
+POST /billing/plan { planCode }
   → isOwnPlanCode whitelist check (no DB calls on unknown code)
   → ensurePlanVersions + validatePlanVersion + assertPlanFinalizable
   → effective period = next UTC month (never client-supplied)
@@ -219,7 +219,7 @@ Outbound transfer (receipt-confirmed) → BillingReconciliationService
 ### Invoices
 
 ```
-GET /v1/billing/summary?period=YYYY-MM
+GET /billing/summary?period=YYYY-MM
   → ensureAccount/planVersions/defaultAssignment; resolve fee anchor
     (`resolveUsagePlanVersion`) and period entitlement (`resolvePlanVersion`)
   → prepare wallet evidence separately under account-row lock; read persisted
@@ -231,10 +231,10 @@ GET /v1/billing/summary?period=YYYY-MM
     wallet count for the UTC period; missing historical evidence conflicts/fails closed
   → calculateInvoiceTotals → decimal-string BillingSummaryDto + tier breakdown
 
-GET /v1/billing/invoices, GET /v1/billing/invoices/:id
+GET /billing/invoices, GET /billing/invoices/:id
   → account-scoped paginated list / single invoice (NotFound if not owned)
 
-GET /v1/billing/invoices/:id/payment-status (BILL-018)
+GET /billing/invoices/:id/payment-status (BILL-018)
   → ownership-scoped read-only recovery: active pending/confirming attempt,
     wallet reservation, and ALL unresolved needs_review/reorged attempts
     (oldest first) with blockingReasons — never latest-pending-only;
@@ -260,7 +260,7 @@ finalizeInvoice (service-internal, no route)
 ### Reconciliation
 
 ```
-POST /v1/billing/reconcile { limit ≤ 200 }
+POST /billing/reconcile { limit ≤ 200 }
   → withBillingPeriodLock: create running BillingReconciliationRun
   → selectCandidates: non-confirmed (submitting/pending/unknown) first, then
     confirmed fill, both (createdAt, id) asc, bounded by limit
@@ -278,7 +278,7 @@ POST /v1/billing/reconcile { limit ≤ 200 }
 ### Stripe rail
 
 ```
-POST /v1/billing/invoices/:id/checkout (one-time, mode 'payment')
+POST /billing/invoices/:id/checkout (one-time, mode 'payment')
   → stripeClientProvider (null when STRIPE_SECRET_KEY unset → 503)
   → assertCheckoutEligible (finalized, unpaid, USD, positive, cent-aligned)
   → reuse valid pending attempt (TTL 24h) or createPendingAttemptOrReuseInFlight
@@ -290,7 +290,7 @@ POST /v1/billing/invoices/:id/checkout (one-time, mode 'payment')
     metadata { invoiceId, attemptId, period }, client_reference_id = invoiceId
   → persist session/PI ids + checkoutUrl; failure marks attempt failed (CAS)
 
-POST /v1/billing/invoices/:id/subscription-checkout { planVersionId } (recurring)
+POST /billing/invoices/:id/subscription-checkout { planVersionId } (recurring)
   → assertCheckoutEligible; selected plan version must EXACTLY match the owned
     invoice plan and the invoice total must equal the finite, positive,
     cent-aligned fixed fee (a dynamic/overage invoice is rejected)
@@ -301,7 +301,7 @@ POST /v1/billing/invoices/:id/subscription-checkout { planVersionId } (recurring
     persists stripeSubscriptionId and bootstraps the account subscription mirror
     (status 'incomplete' until webhooks confirm)
 
-POST /v1/billing/webhooks/stripe (signed, raw body; 13 processed event types)
+POST /billing/webhooks/stripe (signed, raw body; 13 processed event types)
   → constructEventAsync; unknown event type → record ignored, 2xx
   → processKnownEvent in one transaction: insert StripeWebhookEvent (unique
     event id = atomic idempotency), findAttemptForEvent (persisted object id →
@@ -348,7 +348,7 @@ Worker recovery (BillingWorkerService, gated by BILLING_WORKER_ENABLED)
 ### USDC rail
 
 ```
-POST /v1/billing/invoices/:id/usdc/quote { chainId? }
+POST /billing/invoices/:id/usdc/quote { chainId? }
   → assertEnabled (BILLING_USDC_ENABLED); loadOwnedInvoice; assertInvoiceEligible
   → resolveChain (allowlist 1/11155111/8453/84532 + configured treasury/RPC; default chain
     or Base Sepolia); canonical token from SUPPORTED_CHAINS; expected payer =
@@ -360,13 +360,13 @@ POST /v1/billing/invoices/:id/usdc/quote { chainId? }
     is the CURRENT remaining balance (`totalMicros - allocatedMicros`) once a
     fixed-fee renewal has allocated coverage, and the full total otherwise
 
-POST /v1/billing/invoices/:id/usdc/cancel { paymentAttemptId } (BILL-003)
+POST /billing/invoices/:id/usdc/cancel { paymentAttemptId } (BILL-003)
   → ownership-scoped; period → attempt FOR UPDATE → invoice FOR UPDATE
   → only pending + unreserved + fully evidence-free USDC may CAS to cancelled
     (cancelledAt + cancelReason=user_requested); confirming/reserved/evidence/
     other terminals fail closed; already-cancelled idempotent; no RPC/settlement
 
-POST /v1/billing/invoices/:id/usdc/claim { paymentAttemptId, txHash }
+POST /billing/invoices/:id/usdc/claim { paymentAttemptId, txHash }
   → assertSnapshotComplete (every snapshot field present + consistent with
     current config/allowlist — fail closed)
   → canonicalize txHash; terminal states returned as-is; evidence-conflict →
@@ -451,9 +451,9 @@ BILLING_WORKER_ENABLED)
   checkout-retry lease columns, the unique `stripeInvoiceId` renewal mapping,
   `stripeChargeKind`, and the canonical `submittedTxHash`/`nextCheckAt` USDC
   recovery columns.
-- **Security scope.** All `v1/billing` dashboard routes are intentionally
+- **Security scope.** All `billing` dashboard routes are intentionally
   omitted from `openapi.yaml` (public spec is API-key-only) and require an
-  Openfort IAM bearer token plus `FrontendOnlyGuard` origin/referer checks.
+  full-MFA local application cookie plus FrontendOnlyGuard and unsafe-request Origin/CSRF.
   The Stripe webhook is the only public route in the module — it is
   signature-verified from the raw body, `@Public()`, and exempt from
   throttling so Stripe retries are never rate-limited. Reconciliation and

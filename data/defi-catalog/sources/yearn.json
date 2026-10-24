@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "yearn-tokenized-strategy",
+      "familyVersion": "tokenized-strategy-v3.0.4",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x074134A2784F4F66b6ceD6F68849382990Ff3215",
+          "contractName": "Yearn TokenizedStrategy USDC 3.0.4",
+          "sourceRefs": [
+            "yearn-ydaemon-vault-index",
+            "yearn-ydaemon-data-services-docs",
+            "yearn-tokenized-strategy-v3.0.4-source"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "assets",
+                  "type": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address"
+                },
+                {
+                  "name": "maxLoss",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "name": "receiver",
+                  "type": "address"
+                },
+                {
+                  "name": "owner",
+                  "type": "address"
+                },
+                {
+                  "name": "maxLoss",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "yearn-ydaemon-vault-index",
+      "url": "https://ydaemon.yearn.fi/1/vaults/all",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official Yearn yDaemon indexer endpoint. Prior independently observed HTTP 200 page contained exact Ethereum address 0x074134A2784F4F66b6ceD6F68849382990Ff3215, version 3.0.4, kind SingleStrategy, USDC asset 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, endorsed=true, isRetired=false, isHidden=false, isPool=false. Fresh bounded GET at 2026-10-04T00:26Z returned HTTP 200 with 200 array entries but did not contain this address. Default page may be limited; this mutable index snapshot does not establish current membership/population completeness or on-chain safety."
+    },
+    {
+      "sourceId": "yearn-ydaemon-data-services-docs",
+      "url": "https://github.com/yearn/yearn-devdocs/blob/92e3a04de8ae91bbb6c0d16aa20fdf8b5688e524/docs/developers/data-services/ydaemon.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official pinned Yearn developer documentation describes yDaemon as legacy REST/indexer data and recommends Kong; index metadata is not immutable on-chain evidence."
+    },
+    {
+      "sourceId": "yearn-tokenized-strategy-v3.0.4-source",
+      "url": "https://raw.githubusercontent.com/yearn/tokenized-strategy/v3.0.4/src/TokenizedStrategy.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official TokenizedStrategy v3.0.4 tagged source; API_VERSION is 3.0.4. ABI functions transcribed as exact single-strategy API signatures; tag is a mutable label and source version match does not prove this address runtime code, current deployment, liquidity, or financial safety."
+    }
+  ],
+  "unresolved": []
+}

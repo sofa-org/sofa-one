@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "hashflow",
+      "familyVersion": "rfq-v1@e41cfaad",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x55084eE0fEf03f14a305cd24286359A35D735151",
+          "status": "inactive",
+          "contractName": "Hashflow Ethereum Router",
+          "sourceRefs": [
+            "hashflow-official-router-deployment",
+            "hashflow-sourcify-router-abi"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "tradeRFQT",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "quote",
+                  "type": "tuple",
+                  "internalType": "struct IQuote.RFQTQuote",
+                  "components": [
+                    { "name": "pool", "type": "address", "internalType": "address" },
+                    { "name": "externalAccount", "type": "address", "internalType": "address" },
+                    { "name": "trader", "type": "address", "internalType": "address" },
+                    { "name": "effectiveTrader", "type": "address", "internalType": "address" },
+                    { "name": "baseToken", "type": "address", "internalType": "address" },
+                    { "name": "quoteToken", "type": "address", "internalType": "address" },
+                    { "name": "effectiveBaseTokenAmount", "type": "uint256", "internalType": "uint256" },
+                    { "name": "baseTokenAmount", "type": "uint256", "internalType": "uint256" },
+                    { "name": "quoteTokenAmount", "type": "uint256", "internalType": "uint256" },
+                    { "name": "quoteExpiry", "type": "uint256", "internalType": "uint256" },
+                    { "name": "nonce", "type": "uint256", "internalType": "uint256" },
+                    { "name": "txid", "type": "bytes32", "internalType": "bytes32" },
+                    { "name": "signature", "type": "bytes", "internalType": "bytes" }
+                  ]
+                }
+              ],
+              "outputs": [],
+              "sourceId": "hashflow-sourcify-router-abi"
+            },
+            {
+              "type": "function",
+              "name": "tradeRFQM",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "quote",
+                  "type": "tuple",
+                  "internalType": "struct IQuote.RFQMQuote",
+                  "components": [
+                    { "name": "pool", "type": "address", "internalType": "address" },
+                    { "name": "externalAccount", "type": "address", "internalType": "address" },
+                    { "name": "trader", "type": "address", "internalType": "address" },
+                    { "name": "baseToken", "type": "address", "internalType": "address" },
+                    { "name": "quoteToken", "type": "address", "internalType": "address" },
+                    { "name": "baseTokenAmount", "type": "uint256", "internalType": "uint256" },
+                    { "name": "quoteTokenAmount", "type": "uint256", "internalType": "uint256" },
+                    { "name": "quoteExpiry", "type": "uint256", "internalType": "uint256" },
+                    { "name": "txid", "type": "bytes32", "internalType": "bytes32" },
+                    { "name": "takerSignature", "type": "bytes", "internalType": "bytes" },
+                    { "name": "makerSignature", "type": "bytes", "internalType": "bytes" }
+                  ]
+                }
+              ],
+              "outputs": [],
+              "sourceId": "hashflow-sourcify-router-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "hashflow-official-router-deployment",
+      "url": "https://github.com/hashflownetwork/x-protocol/blob/e41cfaadac7d9bacfa368be904a93bd98b5a2df6/evm/deployed-contracts/IHashflowRouter.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official Hashflow x-protocol main commit e41cfaadac7d9bacfa368be904a93bd98b5a2df6 lists the Ethereum router 0x55084eE0fEf03f14a305cd24286359A35D735151 and deployment transaction 0x89ded8a7efaec848cc4230e160dbfdb262008d43276b75d0647d2f96938aefb1. This is dated source deployment-role evidence, not current runtime or funded-execution proof."
+    },
+    {
+      "sourceId": "hashflow-sourcify-router-abi",
+      "url": "https://sourcify.dev/server/v2/contract/1/0x55084eE0fEf03f14a305cd24286359A35D735151?fields=all",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Sourcify exact match 1986288, verified 2024-08-08, HashflowRouter.sol: full selected tradeRFQT and tradeRFQM ABI including exact tuple component names, order, primitive internalTypes, mutability, and no outputs. Only the two ordinary signed RFQ trade entrypoints are selected."
+    }
+  ]
+}

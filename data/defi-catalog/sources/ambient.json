@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "families": [{
+    "familyId": "ambient",
+    "familyVersion": "coldpath-v1",
+    "chains": [{
+      "chainId": 1,
+      "status": "inactive",
+      "contracts": [{
+        "address": "0xAaAaAAAaA24eEeb8d57D431224f73832bC34f688",
+        "status": "inactive",
+        "contractName": "Ambient CrocSwapDex",
+        "functions": [{
+          "capabilityId": "ambient:coldpath-v1:1:0xaaaaaaaaa24eeeb8d57d431224f73832bc34f688:user-cmd",
+          "type": "contract_call",
+          "chainId": 1,
+          "contract": "0xAaAaAAAaA24eEeb8d57D431224f73832bC34f688",
+          "functionName": "userCmd",
+          "signature": "userCmd(uint16,bytes)",
+          "abi": {"type":"function","name":"userCmd","stateMutability":"payable","inputs":[{"name":"callpath","type":"uint16","internalType":"uint16"},{"name":"cmd","type":"bytes","internalType":"bytes"}],"outputs":[{"name":"","type":"bytes","internalType":"bytes"}]},
+          "status": "inactive",
+          "provenance": {"sourceRef":"ambient-target-sourcify-abi","verifiedAt":"2026-10-04","status":"candidate"},
+          "label": "Ambient cold-path swap and LP mint/burn",
+          "protocol": "Ambient",
+          "operation": "swap-and-lp-mint-burn",
+          "warnings": ["Ambient cold-path execution delegates to governable sidecars and external-conduit callbacks; caller-selected conduit counterparties and assets carry asset-loss risk.", "No funded execution, pool eligibility, or liquidity is certified."],
+          "executionScope": {"kind":"ambient-coldpath-v1","callpathArgIndex":0,"bytesArgIndex":1}
+        }]
+      }]
+    }]
+  }],
+  "unresolved": [],
+  "sources": [
+    {"sourceId":"ambient-official-deployments","url":"https://docs.ambient.finance/developers/deployed-contracts.md","retrievedAtUtc":"2026-10-04","evidence":"Official Ambient deployed-contracts documentation lists CrocSwapDex at 0xAaAaAAAaA24eEeb8d57D431224f73832bC34f688 under Mainnet. Deployment/source identity is not runtime bytecode evidence."},
+    {"sourceId":"ambient-target-sourcify-abi","url":"https://sourcify.dev/server/v2/contract/1/0xAaAaAAAaA24eEeb8d57D431224f73832bC34f688?fields=abi","retrievedAtUtc":"2026-10-04","evidence":"Address-specific Sourcify record reports exact_match, verifiedAt 2024-08-08T14:29:27Z, chainId 1 and the requested address. Selected declaration is payable userCmd(uint16 callpath,bytes cmd) returns unnamed bytes."},
+    {"sourceId":"ambient-coldpath-grammar","url":"https://docs.ambient.finance/developers/dex-contract-interface/swaps.md","retrievedAtUtc":"2026-10-04","evidence":"Official Ambient swap documentation describes userCmd callpath 1, its encoded swap parameters, and notes hot-path swaps are closed on Ethereum. The separately reviewed path-2 LP codes remain limited to the explicit fixture grammar; no all-command or pool-coverage claim is made."}
+  ]
+}

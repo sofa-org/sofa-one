@@ -31,7 +31,7 @@ The directory is deliberately **dependency-light at the leaf level** (many submo
 ## Design/Patterns
 
 - **Metadata-driven access control.** Decorators only stamp metadata (`SetMetadata(KEY, value)`); guards read it at request time via `Reflector.getAllAndOverride(KEY, [handler, class])`. Enforcement is always delegated to guards/services — decorators carry no business logic. Metadata keys are exported constants to avoid string duplication.
-- **Three distinct auth models kept separate.** `OpenfortUserGuard` (dashboard, IAM-bearer only), `ApiKeyAuthGuard` (public API-key routes, `X-API-Key` only), and `EitherAuthGuard` (legacy dual-auth, currently unused in production controllers). Public routes must never accept IAM tokens; dashboard routes must never accept API keys.
+- **Separate audiences**: AppSessionGuard resolves local dashboard cookies/MFA; ApiKeyAuthGuard accepts only public X-API-Key. OpenfortAuthGuard proves identity only for login exchange and fresh wallet authorization.
 - **Prefix-candidate + Argon2 verification.** API keys are stored as Argon2id hashes; lookup uses the 27-char (and legacy 11-char) prefix as a *non-unique hint*, then verifies **every** candidate hash to avoid prefix collisions and legacy false negatives.
 - **Defense in depth.** Permissions are enforced at the guard layer *and* re-checked in services; step-up state is marked on the request (`request.stepUpVerified`) so downstream services can enforce per-user policy; error messages are sanitized at multiple boundaries.
 - **Fail-closed everywhere.** Unknown chains throw `BadRequestException`; unparseable IPs/CIDRs return `false`; Redis throttling falls back to in-memory (never fail-open); billing metering blocks the request (503) if it cannot persist.
@@ -45,8 +45,8 @@ The directory is deliberately **dependency-light at the leaf level** (many submo
 2. **Global rate limiting.** `ApiKeyThrottlerGuard` (APP_GUARD) buckets by API-key prefix when present, else by client IP, using `ResilientThrottlerStorage` (`short` 20/10s, `medium` 100/60s).
 3. **Authentication + authorization.** Guards run per-route:
    - Public API-key routes (`sign`, `send`, `getStatus`): `ApiKeyAuthGuard` (prefix lookup → Argon2 verify → frozen key/user rejection → IP allowlist → suspicious-usage freeze → durable billing metering) then `ApiKeyPermissionGuard` (`canSign`/`canSendTransaction`/`canReadTransactionStatus`).
-   - Dashboard routes: `OpenfortUserGuard` + `FrontendOnlyGuard` (origin/referer allowlist); sensitive routes add `StepUpGuard` (`X-Step-Up-Token` proof, purpose `totp_mfa`).
-   - Auth routes: `OpenfortAuthGuard` (session verification only); `@Public()` bypasses auth on health/Stripe webhook.
+   - Dashboard routes: AppSessionGuard + FrontendOnlyGuard; unsafe requests require trusted Origin/CSRF and sensitive methods add exact-session StepUpGuard.
+   - Auth routes use per-method guards; pending MFA is explicitly allowlisted only for bootstrap. Health/Stripe public behavior remains unchanged.
 4. **Domain resolution.** Services resolve chains via `getSupportedChain`/`isMonadChain`, gate agent operations on `AgentStatus.Registered`, derive API-key prefixes, and use Calibur helpers for session-key signing/verification.
 5. **Error handling.** Any thrown exception reaches the global `HttpExceptionFilter`, which derives status, resolves a stable `code` (`resolveApiErrorCode` fallback), sanitizes the message, logs 5xx with request context, and returns the standardized envelope `{ statusCode, code, message, details?, requestId, timestamp, path }`.
 
@@ -57,7 +57,7 @@ The directory is deliberately **dependency-light at the leaf level** (many submo
 - **Upstream service dependencies (guards/filter):** `OpenfortService` (`src/core/openfort`), `PrismaService` (`src/core/database`), `SecurityEventService` (`src/modules/security-events`), `BillingService` (`src/modules/billing`), `StepUpService` (`src/modules/step-up`), `ConfigService`.
 - **Leaf-module consumers:** `chains` → openfort/wallet/transactions/session-key/billing/config; `agent` → auth/wallet/transactions services; `api-key` → api-key service + auth guards; `calibur` → openfort/session-key/wallet/transactions; `errors` → `HttpExceptionFilter` + openfort service; `utils` → guards, filters, wallet/transactions, security-events, billing.
 - **Public wire contract:** the `code` string emitted by the filter is consumed by the SPA in `frontend/src/lib/api.ts` (`ApiError.code`, `hasApiErrorCode`); `requestId` is surfaced for user support.
-- **Access-control split:** public API-key routes are documented in `openapi.yaml`; frontend-only routes are intentionally omitted and require IAM bearer + origin/referer checks. API-key management is never callable by API keys.
+- **Access-control split**: public API-key routes are documented in OpenAPI; dashboard cookie/CSRF routes remain omitted, and API keys cannot manage keys.
 
 ## Constraints
 
@@ -67,4 +67,3 @@ The directory is deliberately **dependency-light at the leaf level** (many submo
 - **High-blast-radius registries.** Adding a chain to `chains/` immediately makes it valid for env/DTO validation and all downstream services — changes must be reviewed against every consumer.
 - **Do not add `FrontendOnlyGuard` to public API routes**, and do not make API-key management callable by API keys.
 - **Leaf modules must stay pure** — introducing DI/I/O into `agent`, `api-key`, `chains`, `errors`, `utils`, or `calibur` would break their import-anywhere property.
-- **`EitherAuthGuard` and `ApiKeyOnlyGuard` are currently unused in production controllers** (referenced only by specs); retained for compatibility.

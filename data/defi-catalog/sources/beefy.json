@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "beefy-standard",
+      "familyVersion": "standard-client@97385b9a832316d78a4c595319352726d5a322a7",
+      "contracts": [
+        {
+          "chainId": 8453,
+          "address": "0x01F1A592B0b757B2931bbcCf28227cdC1e892dde",
+          "contractName": "Beefy Morpho Base Steakhouse Prime EURC",
+          "sourceRefs": ["beefy-vaults-api", "beefy-standard-vault-client"],
+          "abiFunctions": [
+            {"type":"function","name":"deposit","stateMutability":"nonpayable","inputs":[{"name":"_amount","type":"uint256","internalType":"uint256"}],"outputs":[]},
+            {"type":"function","name":"depositAll","stateMutability":"nonpayable","inputs":[],"outputs":[]},
+            {"type":"function","name":"withdraw","stateMutability":"nonpayable","inputs":[{"name":"_shares","type":"uint256","internalType":"uint256"}],"outputs":[]},
+            {"type":"function","name":"withdrawAll","stateMutability":"nonpayable","inputs":[],"outputs":[]}
+          ]
+        },
+        {
+          "chainId": 8453,
+          "address": "0x028baCa249B33d24FC32ac01d6531F6be0061c8E",
+          "contractName": "Beefy Aerodrome WETH LCAP",
+          "sourceRefs": ["beefy-vaults-api", "beefy-standard-vault-client"],
+          "abiFunctions": [
+            {"type":"function","name":"deposit","stateMutability":"nonpayable","inputs":[{"name":"_amount","type":"uint256","internalType":"uint256"}],"outputs":[]},
+            {"type":"function","name":"depositAll","stateMutability":"nonpayable","inputs":[],"outputs":[]},
+            {"type":"function","name":"withdraw","stateMutability":"nonpayable","inputs":[{"name":"_shares","type":"uint256","internalType":"uint256"}],"outputs":[]},
+            {"type":"function","name":"withdrawAll","stateMutability":"nonpayable","inputs":[],"outputs":[]}
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {"sourceId":"beefy-vaults-api","url":"https://api.beefy.finance/vaults","retrievedAtUtc":"2026-10-04","evidence":"Official Beefy vaults API snapshot (HTTP 200, ETag W/\"4c6969-bDJQibIEUED8r3QxK1nbhcqQvis\", fetched 2026-10-04 08:04:36 GMT) explicitly lists both Base vaults as active standard vaults and binds the stated earnContractAddress to the vault. Metadata is mutable and is not runtime-code or funded-execution verification."},
+    {"sourceId":"beefy-standard-vault-client","url":"https://github.com/beefyfinance/beefy-v2/tree/97385b9a832316d78a4c595319352726d5a322a7","retrievedAtUtc":"2026-10-04","evidence":"Pinned official Beefy client commit. StandardVaultType binds contractAddress to earnContractAddress and uses StandardVaultAbi; its four exposed calls are deposit(uint256), depositAll(), withdraw(uint256), and withdrawAll(), all nonpayable with no outputs. This client ABI and type mapping do not independently prove deployed implementation correspondence."}
+  ],
+  "unresolved": []
+}

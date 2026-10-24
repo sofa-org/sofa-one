@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Bima",
+  "observedAt": "2026-10-24",
+  "decision": "not-admitted-unbound-current-product",
+  "reason": "No exact maintained supported-chain USBD financial deployment could be attributed from current primary materials. This is not a blanket protocol shutdown claim.",
+  "evidence": [
+    {
+      "sourceRef": "https://docs.bima.money/introduction/welcome-to-bima.md",
+      "observation": "Current docs describe structured institutional financing using Accountable vaults and FalconX prime-broker capital, not USBD/sUSBD lending/staking deployment."
+    },
+    {
+      "sourceRef": "https://docs.bima.money/operations-and-governance/contract-addresses.md",
+      "observation": "Coming soon. Canonical addresses for each monthly vault will be published here; warns never send funds to addresses not verified on this page."
+    },
+    {
+      "sourceRef": "https://www.bima.money/credit-marketplace",
+      "observation": "Current official application displays 0 vaults and deposit BTC/borrow USDC collar product."
+    },
+    {
+      "sourceRef": "https://docs.bima.money/yield-with-usbd-+-susbd",
+      "observation": "Legacy USBD/sUSBD route returns page not found, which alone would not establish shutdown."
+    }
+  ],
+  "limitations": [
+    "Stale website meta text still refers to USBD; this does not resolve conflict with current body/docs or bind maintained exact deployment.",
+    "No source ABI is substituted from historical CDP or generic token interface."
+  ]
+}

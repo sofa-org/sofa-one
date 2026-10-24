@@ -7,20 +7,18 @@ import {
   Loader2,
   Smartphone,
 } from 'lucide-react';
-import { useUser } from '@openfort/react';
+import { useAppSession } from './AppSessionProvider';
 import { CopyButton } from '@/components/CopyButton';
 import {
   enableTotpAuth,
   getApiErrorMessage,
   getMfaStatusAuth,
   setupTotpAuth,
-  syncSession,
   verifyTotpAuth,
   type MfaStatusResponse,
   type TotpSetupResponse,
 } from '@/lib/api';
 import {
-  getDashboardStepUpToken,
   storeDashboardStepUpProof,
 } from '@/pages/dashboard/step-up-session';
 
@@ -53,7 +51,10 @@ function createAuthenticatorQrCodeDataUrl(otpauthUrl: string) {
 }
 
 export default function DashboardStepUpGate({ children }: { children: React.ReactNode }) {
-  const { getAccessToken, isAuthenticated, isLoading: authLoading } = useUser();
+  const { session, refresh, signOut } = useAppSession();
+  const sessionId = session?.sessionId;
+  const serverMfaVerified = useRef(session?.mfaVerified ?? false);
+  serverMfaVerified.current = session?.mfaVerified ?? false;
   const authenticatorInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const recoveryCodeInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const continueButtonRef = useRef<HTMLButtonElement>(null);
@@ -72,16 +73,14 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
   const [proofReady, setProofReady] = useState(false);
   const [authenticatorQrCodeUrl, setAuthenticatorQrCodeUrl] = useState('');
 
-  const getToken = useCallback(async () => {
-    const token = await getAccessToken();
-    if (!token) {
-      throw new Error('Openfort session is not ready. Refresh and sign in again.');
-    }
-    return token;
-  }, [getAccessToken]);
 
   const bootstrap = useCallback(async () => {
-    if (authLoading || !isAuthenticated) return;
+    if (!sessionId) return;
+    if (serverMfaVerified.current) {
+      setStage('ready');
+      setIsBootstrapping(false);
+      return;
+    }
 
     setIsBootstrapping(true);
     setStatusError(null);
@@ -91,15 +90,14 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
     setSetupData(null);
 
     try {
-      await syncSession(getToken);
-      const status = await getMfaStatusAuth(getToken);
+      const status = await getMfaStatusAuth();
       setMfaStatus(status);
 
       if (status.enabled) {
         setStage('verify');
         setSetupData(null);
       } else {
-        const setup = await setupTotpAuth(getToken);
+        const setup = await setupTotpAuth();
         setSetupData(setup);
         setRecoveryCodes([]);
         setProofReady(false);
@@ -111,17 +109,11 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
     } finally {
       setIsBootstrapping(false);
     }
-  }, [authLoading, getToken, isAuthenticated]);
+  }, [sessionId]);
 
   useEffect(() => {
-    if (getDashboardStepUpToken()) {
-      setStage('ready');
-      return;
-    }
-
-    if (authLoading) return;
     void bootstrap();
-  }, [authLoading, bootstrap]);
+  }, [bootstrap]);
 
   useEffect(() => {
     if (stage === 'setup' || stage === 'verify' || (stage === 'recovery' && !proofReady)) {
@@ -198,8 +190,13 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
   const activeCode = verificationMode === 'recovery' ? recoveryCodeParts.join('-') : authenticatorCode;
 
   async function verifyCodeForAccess(codeValue: string) {
-    const verification = await verifyTotpAuth(getToken, codeValue);
-    storeDashboardStepUpProof(verification);
+    const verificationSessionId = sessionId;
+    const verification = await verifyTotpAuth(codeValue);
+    const snapshot = await refresh();
+    if (!snapshot?.mfaVerified || snapshot.sessionId !== verificationSessionId ||
+        !storeDashboardStepUpProof(verification, verificationSessionId ?? null)) {
+      throw new Error('MFA session upgrade could not be confirmed. Try again.');
+    }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -226,7 +223,7 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
 
     try {
       if (isSetupStage) {
-        const enabled = await enableTotpAuth(getToken, nextCode);
+        const enabled = await enableTotpAuth(nextCode);
         const codes = splitRecoveryCodes(enabled.recoveryCodes);
         setRecoveryCodes(codes);
         setStage('recovery');
@@ -240,7 +237,8 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
         }
       } else {
         await verifyCodeForAccess(nextCode);
-        setStage('ready');
+        if (stage === 'recovery') setProofReady(true);
+        else setStage('ready');
       }
 
       setAuthenticatorCode('');
@@ -252,7 +250,7 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
     }
   }
 
-  if (stage === 'ready') {
+  if (session?.mfaVerified && stage !== 'recovery') {
     return <>{children}</>;
   }
 
@@ -269,6 +267,10 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
     ) : (
       <KeyRound className="h-6 w-6" />
     );
+
+  async function handleSignOut() {
+    try { await signOut(); } catch (failure) { setFormError(getApiErrorMessage(failure)); }
+  }
 
   function handleAuthenticatorDigitChange(index: number, value: string) {
     const digit = value.replace(/\D/g, '').slice(-1);
@@ -557,6 +559,8 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
             Retry loading MFA status
           </button>
         )}
+        {formError && !showVerificationForm && <p role="alert" className="mt-4 text-sm text-red-700">{formError}</p>}
+        <button type="button" onClick={() => { void handleSignOut(); }} className="mt-5 w-full text-sm text-brand-muted underline">Sign out</button>
       </div>
     </div>
   );

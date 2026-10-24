@@ -82,6 +82,23 @@ npm run build
 - Set `TRUST_PROXY` to trusted proxy IP/CIDR values.
 - Use strong PostgreSQL/Redis credentials.
 - Run `npm run prisma:migrate:deploy` before starting new backend code.
+- Application-session cutover is coordinated, not mixed-version rolling deployment: drain old API instances, back up the database, apply `20261022000000_application_sessions`, regenerate Prisma Client, then deploy the matching backend and frontend. It deletes legacy unbound step-up proofs and adds a required session FK; users must complete MFA again. User, wallet, API-key and billing IDs are preserved.
+- Serve SPA/API same-site over HTTPS (same origin `/api` proxy or same-site subdomains). Session cookies use `SameSite=Lax`; unrelated cross-site deployments are unsupported. Preserve `Set-Cookie`, Origin/Referer and `X-CSRF-Token` through proxies; allow credentialed CORS for exact SPA origins, never `*`.
+- Production cookies are `__Host-sofa_session` with Secure/HttpOnly/Path=/ and no Domain. Do not rewrite Domain/Path in a way that violates the `__Host-` contract. Non-wallet dashboard pages need no wallet SDK/Shield configuration; email login and wallet controls still need their respective Openfort configuration.
+- PrismaService appends `-c timezone=UTC` to effective PostgreSQL startup options for every pooled connection. The installed adapter assumes UTC timestamptz results; keep this invariant when constructing independent clients. This does not rewrite persisted timestamps.
+- Capability-mode migrations require coordinated maintenance: stop all old API instances and
+  other API-key writers, apply the migration, and then start the new version. Never run mixed
+  old/new writers because old binaries do not preserve the mode invariant. This one-time
+  migration maps existing empty capability arrays to `all` (including formerly deliberate
+  empty selections, which are indistinguishable) and nonempty arrays to `custom` unchanged;
+  there is no recurring repair. Use the migration actually present in the release; do not
+  infer or hardcode its name.
+- Wallet-binding migrations require the same no-mixed-version discipline: drain and stop all
+  old application instances, back up the database, run `npm run prisma:generate` and
+  `npm run prisma:migrate:deploy`, then restart with the new application version. Do not
+  claim mixed-version rollout safety. Legacy keys bind only when the owner has exactly one
+  wallet row total (all statuses count); otherwise keys are revoked and retained unbound,
+  never rebound. Do not run this migration as a documentation step.
 - Confirm `OPENFORT_API_KEY` and `OPENFORT_WALLET_SECRET` are present only in backend secret storage.
 - Set `BILLING_WORKER_ENABLED=true` (required in production) when automatic billing reconciliation/finalization, USDC claim recovery, Stripe renewal retry, and pending-Checkout recovery are required; apply the additive worker-heartbeat migration first (see section 8).
 - If Stripe is configured, point the Stripe dashboard at `POST /v1/billing/webhooks/stripe` and set `STRIPE_WEBHOOK_SECRET`, `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL` (see section 9); both URLs must target the billing page because the backend appends the `success=1`/`canceled=1` return markers there.
@@ -100,6 +117,51 @@ The frontend is a static SPA. Common hosting options:
 - Nginx: use `try_files $uri /index.html;`.
 
 Backend CORS must allow the deployed frontend origin.
+
+### Public contract and signing catalog download
+
+`frontend/public/protocols.json` is generated from the reviewed contract catalog and supported signing capability IDs, with `{ contracts, sign }` per chain, and copied by
+Vite to `frontend/dist/protocols.json`. Serve it at **`GET /protocols.json` on the
+frontend origin**, without sign-in, API keys, cookies, or backend routing. The public
+`/protocols` page has a direct download link; third parties can fetch the JSON itself.
+Deploy the generated file with the rest of `frontend/dist`.
+
+For this exact path, the static host must:
+
+- Serve the actual file as `Content-Type: application/json`, or return 404 when it is
+  missing. Do not rewrite missing `/protocols.json` requests to `index.html` or a
+  sign-in page.
+- Return `Access-Control-Allow-Origin: *` for credential-free cross-origin GET
+  requests. Do not enable credentials or broaden backend API CORS to publish this file.
+- Allow public GET/HEAD access independently of dashboard authentication.
+
+No provider-specific production hosting configuration is checked into this repository;
+these response headers and fallback exceptions must be configured on the deployed
+static host/CDN. Vite's static-file serving alone does not configure production CORS.
+For the Nginx hosting option above, add an exact location alongside the SPA location
+(using the same `root` pointing at `frontend/dist`):
+
+```nginx
+location = /protocols.json {
+    try_files $uri =404;
+    default_type application/json;
+    add_header Access-Control-Allow-Origin "*" always;
+}
+
+location / {
+    try_files $uri /index.html;
+}
+```
+
+On S3/CloudFront, allow public object reads and configure an equivalent
+credential-free GET/HEAD CORS policy and response header for this object; ensure
+SPA error rewriting does not convert its missing-object response to HTML. On
+Vercel/Netlify, configure the same exact-path response header and preserve static
+file precedence with an explicit missing-file exclusion from SPA rewrites.
+
+The download is static public metadata, not an API-key grant or a guarantee of
+current authorization, unpaused availability, liquidity or execution success.
+Structured executor ABIs do not bypass runtime nested-execution scope checks.
 
 ## 8. Billing worker (optional, default off)
 

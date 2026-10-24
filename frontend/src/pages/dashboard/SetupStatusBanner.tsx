@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { CheckCircle2, ArrowRight } from 'lucide-react';
-import { getChainDisplayName, formatAgentStatus } from './wallet-helpers';
+import { formatChainName } from '@/lib/chains';
+import { formatAgentStatus } from './wallet-helpers';
 
 interface SetupStep {
   number: number;
@@ -34,7 +35,7 @@ export function SetupStatusBanner({
             <h2 className="font-serif text-xl font-bold text-brand-text">{setupStatus.title}</h2>
             <p className="mt-1 text-sm">{setupStatus.description}</p>
             <p className="mt-2 text-xs font-medium opacity-80">
-              Selected network: {getChainDisplayName(agentChainId)} · Status:{' '}
+              Selected network: {formatChainName(agentChainId)} · Status:{' '}
               {formatAgentStatus(selectedAuthorizationStatus)}
             </p>
           </div>

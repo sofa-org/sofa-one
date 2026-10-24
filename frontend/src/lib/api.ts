@@ -7,6 +7,26 @@ if (!_viteApiUrl && import.meta.env.PROD) {
 const API_BASE = _viteApiUrl ?? '/api';
 export const DEFAULT_CHAIN_ID = 84532;
 
+export interface AppSessionSnapshot {
+  sessionId: string;
+  userId: string;
+  email: string | null;
+  mfaVerified: boolean;
+  expiresAt: string;
+  csrfToken: string;
+}
+
+let sessionCsrfToken: string | null = null;
+let sessionUnauthorized: (() => void) | undefined;
+
+export function configureAppSessionTransport(
+  csrfToken: string | null,
+  onUnauthorized?: () => void,
+) {
+  sessionCsrfToken = csrfToken;
+  sessionUnauthorized = onUnauthorized;
+}
+
 export function getApiBaseUrlForDisplay(origin = window.location.origin) {
   const normalizedBase = API_BASE.replace(/\/$/, '');
   if (/^https?:\/\//i.test(normalizedBase)) return normalizedBase;
@@ -33,9 +53,11 @@ export interface WalletInfo {
   openfortAccountId?: string;
   isDefault?: boolean;
   provisioningStatus?: string | null;
+  /** User wallet identity; EIP-7702 delegation does not change this address. */
   walletAddress: string | null;
   status: string;
-  agentWalletAddress?: string | null;
+  /** TEE-managed EOA signer; presence alone does not establish chain authorization. */
+  signerAddress?: string | null;
   agentKeyHash?: string | null;
   chainAuthorizations: Array<{
     chainId: number;
@@ -45,17 +67,11 @@ export interface WalletInfo {
   }>;
 }
 
-export async function getDepositInfoAuth(
-  getToken: () => Promise<string | null>,
-  chainId: number,
-  walletId?: string,
-  signal?: AbortSignal,
-) {
-  const response = await authFetch<unknown>('/v1/wallets/deposit-info', getToken, {
-    method: 'POST', body: JSON.stringify({ chainId, ...(walletId ? { walletId } : {}) }), signal,
-  });
-  return response;
-}
+export async function getDepositInfoAuth(chainId: number,
+walletId?: string,
+signal?: AbortSignal,) { const query = new URLSearchParams({ chainId: String(chainId), ...(walletId ? { walletId } : {}) });
+const response = await authFetch<unknown>(`/wallets/deposits?${query}`, { signal });
+return response; }
 
 export interface AuthSessionResponse {
   userId: string;
@@ -67,6 +83,7 @@ export interface AuthSessionResponse {
 
 export interface RefreshApiKeyResponse {
   apiKey: string;
+  walletId: string;
 }
 
 export interface BalanceEntry {
@@ -110,23 +127,26 @@ export interface ListWithdrawalAddressesResponse {
   addresses: WithdrawalAddressRecord[];
 }
 
-export interface SignMessageRequest {
-  chainId: number;
-  type: 'message';
-  message: string;
-}
-
-export interface SignTypedDataRequest {
+export interface SignRequest {
+  walletId?: string;
   chainId?: number;
+  executionMode?: 'eoa';
   type: 'typed_data';
-  typedData: Record<string, unknown>;
+  typedData: {
+    domain: Record<string, unknown>;
+    types: Record<string, Array<{ name: string; type: string }>>;
+    primaryType: 'ClobAuth' | 'TypedDataSign' | 'Batch';
+    message: Record<string, unknown>;
+  };
 }
-
-export type SignRequest = SignMessageRequest | SignTypedDataRequest;
 
 export interface SignResponse {
   signature: string;
+  /** Selected user wallet, not the EOA that produced the signature. */
   walletAddress: string;
+  /** Actual TEE-managed EOA that produced the signature. */
+  signerAddress: string;
+  executionMode: 'eoa';
   type: SignRequest['type'];
 }
 
@@ -174,6 +194,7 @@ export interface SendTransactionResponse {
 
 export interface TransactionStatusResponse extends SendTransactionResponse {
   chainId: number;
+  /** Persisted execution address, not a current wallet identity projection. */
   walletAddress: string;
   failureReason: string | null;
   createdAt: string;
@@ -182,6 +203,8 @@ export interface TransactionStatusResponse extends SendTransactionResponse {
 
 export interface ApiKeyRecord {
   id: string;
+  /** Immutable wallet binding; null is reserved for unbound legacy keys. */
+  walletId: string | null;
   displayPrefix: string;
   name: string | null;
   revoked: boolean;
@@ -195,8 +218,8 @@ export interface ApiKeyRecord {
   lastUsedIp: string | null;
   lastUsedUserAgent: string | null;
   permissions: ApiKeyPermissions;
-  allowedContracts: string[];
-  allowedFunctionSelectors: string[];
+  capabilityMode: ApiKeyCapabilityMode;
+  allowedCapabilityIds: string[];
   dailySpendLimit: string | null;
   monthlySpendLimit: string | null;
 }
@@ -319,11 +342,14 @@ export interface ApiKeyPermissions {
 export interface CreateApiKeyResponse {
   rawKey: string;
   id: string;
+  walletId: string;
   displayPrefix: string;
   name: string;
   expiresAt: string;
   createdAt: string;
   permissions: ApiKeyPermissions;
+  capabilityMode: ApiKeyCapabilityMode;
+  allowedCapabilityIds: string[];
 }
 
 export interface ApiKeySpendLimits {
@@ -332,13 +358,65 @@ export interface ApiKeySpendLimits {
 }
 
 export interface CreateApiKeyRequest {
+  walletId: string;
   name: string;
   allowedIps?: string[];
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
+  capabilityMode?: ApiKeyCapabilityMode;
+  allowedCapabilityIds?: string[];
   spendLimits?: ApiKeySpendLimits;
   permissions?: Partial<ApiKeyPermissions>;
 }
+
+export interface DefiCapability {
+  capabilityId: string;
+  type: 'contract_call' | 'typed_data_sign';
+  chainId: number;
+  contract?: string;
+  functionSignature?: string;
+  label: string;
+  description: string;
+  status: 'active' | 'inactive' | 'paused';
+  policy: { ref: string; version: number };
+  protocol?: string;
+  operation?: string;
+  warnings?: string[];
+  provenance?: { sourceRef: string; verifiedAt: string; status: 'verified' | 'candidate' };
+}
+
+export interface DefiCapabilitiesResponse {
+  capabilities: DefiCapability[];
+}
+
+export interface DefiCapabilityBundle {
+  bundleId: string;
+  version: string;
+  label: string;
+  chainIds: number[];
+  capabilityIds: string[];
+  fingerprint: string;
+  warnings: string[];
+  limitations: string[];
+  available: boolean;
+  unavailableCapabilityIds: string[];
+}
+
+export interface DefiCapabilityBundlesResponse {
+  schemaVersion: 1;
+  currentCatalogManifestHash: string;
+  bundles: DefiCapabilityBundle[];
+}
+
+export interface UpdateApiKeyCapabilitiesResponse {
+  id: string;
+  capabilityMode: ApiKeyCapabilityMode;
+  allowedCapabilityIds: string[];
+}
+
+export type ApiKeyCapabilityMode = 'all' | 'custom';
+
+export type UpdateApiKeyCapabilitiesRequest =
+  | { capabilityMode: 'all' }
+  | { capabilityMode: 'custom'; allowedCapabilityIds: string[] };
 
 export interface StepUpChallengeResponse {
   challengeId: string;
@@ -423,7 +501,7 @@ export interface AssignBillingPlanRequest {
 }
 
 /**
- * POST /v1/billing/plan result. Server owns amount, effective dates, and kind.
+ * POST /billing/plan result. Server owns amount, effective dates, and kind.
  * - unchanged: already on the requested plan (idempotent)
  * - payment_required: upgrade charge created; pay before entitlements change
  * - scheduled: downgrade/lateral takes effect at the next UTC month boundary
@@ -599,7 +677,7 @@ export interface InvoicePaymentAttemptStatus {
 }
 
 /**
- * GET /v1/billing/invoices/:id/payment-status — read-only dashboard recovery.
+ * GET /billing/invoices/:id/payment-status — read-only dashboard recovery.
  * Surfaces active pending/confirming, wallet reservation, and every unresolved
  * needs_review/reorged attempt so a newer quote cannot hide earlier review.
  */
@@ -668,6 +746,10 @@ function friendlyErrorMessage(code: string, fallback: string) {
     case 'API_KEY_REQUIRED':
     case 'AUTHENTICATION_REQUIRED':
       return 'Authentication is required. Sign in again or provide a valid API key.';
+    case 'AUTH_PROVIDER_INVALID':
+      return 'Reconnect Openfort wallet controls by verifying your email again. Your SOFA session remains active.';
+    case 'AUTH_PROVIDER_UNAVAILABLE':
+      return 'Openfort identity verification is temporarily unavailable. Try again without signing out.';
     case 'CHAIN_NOT_SUPPORTED':
       return 'The selected chain is not supported.';
     case 'IDEMPOTENCY_CONFLICT':
@@ -741,31 +823,31 @@ async function readApiErrorBody(response: Response): Promise<ApiErrorBody> {
   return { message: text };
 }
 
-/**
- * Call an auth endpoint (uses Openfort IAM access token from getToken).
- */
-export async function authFetch<T>(
-  path: string,
-  getToken: () => Promise<string | null>,
-  options?: RequestInit,
-): Promise<T> {
-  const token = await getToken();
-  if (!token) {
-    throw new Error('Openfort session is not ready. Refresh and sign in again.');
+/** Dashboard requests authenticate exclusively with the HttpOnly app-session cookie. */
+async function sessionResponse(path: string, options?: RequestInit): Promise<Response> {
+  const requestCsrf = sessionCsrfToken;
+  const headers = new Headers(options?.headers);
+  if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+  const method = options?.method?.toUpperCase() ?? 'GET';
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && sessionCsrfToken) {
+    headers.set('X-CSRF-Token', sessionCsrfToken);
   }
-
-  const res = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...options?.headers,
-    },
+    credentials: 'include',
+    headers,
   });
-  if (!res.ok) {
-    await throwApiError(res);
+  if (!response.ok) {
+    const body = await readApiErrorBody(response);
+    if (response.status === 401 && body.code !== 'AUTH_PROVIDER_INVALID' &&
+        path !== '/auth/session' && requestCsrf === sessionCsrfToken) sessionUnauthorized?.();
+    throw new ApiError(response, body);
   }
-  return readJson<T>(res);
+  return response;
+}
+
+export async function authFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  return readJson<T>(await sessionResponse(path, options));
 }
 
 /**
@@ -788,90 +870,81 @@ export async function apiFetch<T>(path: string, apiKey: string, options?: Reques
 
 // --- Auth ---
 
-export async function syncSession(getToken: () => Promise<string | null>, signal?: AbortSignal) {
-  return authFetch<AuthSessionResponse>('/auth/session', getToken, { method: 'POST', signal });
-}
-
-/** @deprecated Use syncSession. */
-export const socialLogin = syncSession;
-
-export async function getMe(getToken: () => Promise<string | null>, signal?: AbortSignal) {
-  return authFetch<AuthSessionResponse>('/auth/me', getToken, { signal });
-}
-
-export async function refreshApiKey(getToken: () => Promise<string | null>, stepUpToken: string) {
-  return authFetch<RefreshApiKeyResponse>('/auth/refresh-api-key', getToken, {
+export async function exchangeAppSession(providerBearer: string) {
+  return authFetch<AppSessionSnapshot>('/auth/session', {
     method: 'POST',
+    headers: { Authorization: `Bearer ${providerBearer}` },
+    cache: 'no-store',
+  });
+}
+
+export async function getAppSession() {
+  return authFetch<AppSessionSnapshot>('/auth/session', { cache: 'no-store' });
+}
+
+export async function deleteAppSession() {
+  return authFetch<void>('/auth/session', { method: 'DELETE' });
+}
+
+export async function deleteAllAppSessions(stepUpToken: string) {
+  return authFetch<void>('/auth/sessions', {
+    method: 'DELETE',
     headers: { 'X-Step-Up-Token': stepUpToken },
   });
 }
 
+export async function getMe(signal?: AbortSignal) { return authFetch<AuthSessionResponse>('/auth/me', { signal }); }
+
+export async function refreshApiKey(stepUpToken: string,
+walletId: string,) { return authFetch<RefreshApiKeyResponse>('/api-keys/rotations', {
+  method: 'POST',
+  headers: { 'X-Step-Up-Token': stepUpToken },
+  body: JSON.stringify({ walletId }),
+}); }
+
 export async function authorizeEmbeddedWallet(
-  getToken: () => Promise<string | null>,
+  providerBearer: string,
   body: AuthorizeEmbeddedWalletRequest,
 ) {
-  return authFetch<AuthorizeEmbeddedWalletResponse>('/auth/embedded-wallet/authorize', getToken, {
+  return authFetch<AuthorizeEmbeddedWalletResponse>('/auth/embedded-wallet/authorize', {
     method: 'POST',
+    headers: { Authorization: `Bearer ${providerBearer}` },
     body: JSON.stringify(body),
   });
 }
 
-export async function markAgentRegistrationResult(
-  getToken: () => Promise<string | null>,
-  body: AgentRegistrationResultRequest,
-) {
-  return authFetch<AuthSessionResponse>('/auth/embedded-wallet/registration-result', getToken, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
-}
+export async function markAgentRegistrationResult(body: AgentRegistrationResultRequest,) { return authFetch<AuthSessionResponse>('/auth/embedded-wallet/registration-result', {
+  method: 'POST',
+  body: JSON.stringify(body),
+}); }
 
-export async function markAgentRegistrationTransaction(
-  getToken: () => Promise<string | null>,
-  body: AgentRegistrationTransactionRequest,
-) {
-  return authFetch<AuthSessionResponse>(
-    '/auth/embedded-wallet/registration-transaction',
-    getToken,
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-    },
-  );
-}
+export async function markAgentRegistrationTransaction(body: AgentRegistrationTransactionRequest,) { return authFetch<AuthSessionResponse>('/auth/embedded-wallet/registration-transaction', {
+  method: 'POST',
+  body: JSON.stringify(body),
+},); }
 
 // --- Dashboard MFA (TOTP) ---
 
-export async function getMfaStatusAuth(getToken: () => Promise<string | null>) {
-  return authFetch<MfaStatusResponse>('/v1/auth/mfa/status', getToken);
-}
+export async function getMfaStatusAuth() { return authFetch<MfaStatusResponse>('/auth/mfa/status'); }
 
-export async function setupTotpAuth(getToken: () => Promise<string | null>) {
-  return authFetch<TotpSetupResponse>('/v1/auth/mfa/totp/setup', getToken, {
-    method: 'POST',
-  });
-}
+export async function setupTotpAuth() { return authFetch<TotpSetupResponse>('/auth/mfa/totp/setup', {
+  method: 'POST',
+}); }
 
-export async function enableTotpAuth(getToken: () => Promise<string | null>, code: string) {
-  return authFetch<TotpEnableResponse>('/v1/auth/mfa/totp/enable', getToken, {
-    method: 'POST',
-    body: JSON.stringify({ code }),
-  });
-}
+export async function enableTotpAuth(code: string) { return authFetch<TotpEnableResponse>('/auth/mfa/totp/enable', {
+  method: 'POST',
+  body: JSON.stringify({ code }),
+}); }
 
-export async function verifyTotpAuth(getToken: () => Promise<string | null>, code: string) {
-  return authFetch<TotpVerifyResponse>('/v1/auth/mfa/totp/verify', getToken, {
-    method: 'POST',
-    body: JSON.stringify({ code }),
-  });
-}
+export async function verifyTotpAuth(code: string) { return authFetch<TotpVerifyResponse>('/auth/mfa/totp/verify', {
+  method: 'POST',
+  body: JSON.stringify({ code }),
+}); }
 
-export async function disableTotpAuth(getToken: () => Promise<string | null>, code: string) {
-  return authFetch<void>('/v1/auth/mfa/totp/disable', getToken, {
-    method: 'POST',
-    body: JSON.stringify({ code }),
-  });
-}
+export async function disableTotpAuth(code: string) { return authFetch<void>('/auth/mfa/totp/disable', {
+  method: 'POST',
+  body: JSON.stringify({ code }),
+}); }
 
 // --- Public API-key endpoints ---
 
@@ -883,7 +956,7 @@ export async function signWithApiKey(apiKey: string, body: SignRequest) {
 }
 
 export async function sendTransactionWithApiKey(apiKey: string, body: SendTransactionRequest) {
-  return apiFetch<SendTransactionResponse>('/v1/transactions/send', apiKey, {
+  return apiFetch<SendTransactionResponse>('/v1/transactions', apiKey, {
     method: 'POST',
     body: JSON.stringify(body),
   });
@@ -893,144 +966,92 @@ export async function getTransactionStatusWithApiKey(apiKey: string, transaction
   return apiFetch<TransactionStatusResponse>(`/v1/transactions/${transactionId}`, apiKey);
 }
 
-// --- Dashboard API (JWT-authenticated) ---
+// --- Dashboard API (cookie-authenticated) ---
 
-export async function listApiKeysAuth(getToken: () => Promise<string | null>) {
-  return authFetch<ApiKeyRecord[]>('/v1/api-keys', getToken);
-}
+export async function listApiKeysAuth() { return authFetch<ApiKeyRecord[]>('/api-keys'); }
 
-export async function createApiKeyAuth(
-  getToken: () => Promise<string | null>,
-  request: CreateApiKeyRequest,
-  stepUpToken?: string,
-) {
-  return authFetch<CreateApiKeyResponse>('/v1/api-keys', getToken, {
-    method: 'POST',
-    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
-    body: JSON.stringify(request),
-  });
-}
+export async function listDefiCapabilitiesAuth() { return authFetch<DefiCapabilitiesResponse>('/defi-capabilities'); }
 
-export async function revokeApiKeyAuth(
-  getToken: () => Promise<string | null>,
-  id: string,
-  stepUpToken?: string,
-) {
-  return authFetch<void>(`/v1/api-keys/${id}`, getToken, {
-    method: 'DELETE',
-    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
-  });
-}
+export async function listDefiCapabilityBundlesAuth() { return authFetch<DefiCapabilityBundlesResponse>('/defi-capability-bundles'); }
 
-export async function revokeAllApiKeysAuth(
-  getToken: () => Promise<string | null>,
-  stepUpToken?: string,
-) {
-  return authFetch<{ success: boolean; revokedCount: number }>('/v1/api-keys', getToken, {
-    method: 'DELETE',
-    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
-  });
-}
+export async function updateApiKeyCapabilitiesAuth(id: string,
+request: UpdateApiKeyCapabilitiesRequest,
+stepUpToken: string,) { return authFetch<UpdateApiKeyCapabilitiesResponse>(`/api-keys/${id}/capabilities`, {
+  method: 'PATCH',
+  headers: { 'X-Step-Up-Token': stepUpToken },
+  body: JSON.stringify(request),
+}); }
 
-export async function listSecurityNotificationsAuth(
-  getToken: () => Promise<string | null>,
-  params?: { unreadOnly?: boolean; limit?: number },
-  signal?: AbortSignal,
-) {
-  const query = new URLSearchParams();
-  if (params?.unreadOnly) query.set('unreadOnly', 'true');
-  if (params?.limit) query.set('limit', String(params.limit));
-  const qs = query.toString();
-  return authFetch<SecurityNotificationRecord[]>(
-    `/v1/security-notifications${qs ? `?${qs}` : ''}`,
-    getToken,
-    { signal },
-  );
-}
+export async function createApiKeyAuth(request: CreateApiKeyRequest,
+stepUpToken?: string,) { return authFetch<CreateApiKeyResponse>('/api-keys', {
+  method: 'POST',
+  headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+  body: JSON.stringify(request),
+}); }
 
-export async function markSecurityNotificationReadAuth(
-  getToken: () => Promise<string | null>,
-  notificationId: string,
-) {
-  return authFetch<{ success: boolean; updatedCount: number }>(
-    `/v1/security-notifications/${notificationId}/read`,
-    getToken,
-    { method: 'POST' },
-  );
-}
+export async function revokeApiKeyAuth(id: string,
+stepUpToken?: string,) { return authFetch<void>(`/api-keys/${id}`, {
+  method: 'DELETE',
+  headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+}); }
 
-export async function markAllSecurityNotificationsReadAuth(getToken: () => Promise<string | null>) {
-  return authFetch<{ success: boolean; updatedCount: number }>(
-    '/v1/security-notifications/read-all',
-    getToken,
-    { method: 'POST' },
-  );
-}
+export async function revokeAllApiKeysAuth(stepUpToken?: string,) { return authFetch<{ success: boolean; revokedCount: number }>('/api-keys', {
+  method: 'DELETE',
+  headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+}); }
 
-export async function withdrawAuth(
-  getToken: () => Promise<string | null>,
-  to: string,
-  amount: string,
-  token: WithdrawalToken,
-  chainId = DEFAULT_CHAIN_ID,
-  stepUpToken?: string,
-  walletId?: string,
-) {
-  return authFetch<WithdrawResponse>('/v1/wallets/withdraw', getToken, {
-    method: 'POST',
-    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
-    body: JSON.stringify({ chainId, to, amount, token, walletId, idempotencyKey: crypto.randomUUID() }),
-  });
-}
+export async function listSecurityNotificationsAuth(params?: { unreadOnly?: boolean; limit?: number },
+signal?: AbortSignal,) { const query = new URLSearchParams();
+if (params?.unreadOnly) query.set('unreadOnly', 'true');
+if (params?.limit) query.set('limit', String(params.limit));
+const qs = query.toString();
+return authFetch<SecurityNotificationRecord[]>(`/security-notifications${qs ? `?${qs}` : ''}`, { signal },); }
 
-export async function listWithdrawalAddressesAuth(
-  getToken: () => Promise<string | null>,
-  signal?: AbortSignal,
-  walletId?: string,
-) {
-  const query = walletId ? `?walletId=${encodeURIComponent(walletId)}` : '';
-  return authFetch<ListWithdrawalAddressesResponse>(`/v1/wallets/withdrawal-addresses${query}`, getToken, {
-    signal,
-  });
-}
+export async function markSecurityNotificationReadAuth(notificationId: string,) { return authFetch<{ success: boolean; updatedCount: number }>(`/security-notifications/${notificationId}/read`, { method: 'POST' },); }
 
-export async function addWithdrawalAddressAuth(
-  getToken: () => Promise<string | null>,
-  body: { address: string; label?: string },
-  stepUpToken?: string,
-) {
-  return authFetch<WithdrawalAddressRecord>('/v1/wallets/withdrawal-addresses', getToken, {
-    method: 'POST',
-    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
-    body: JSON.stringify(body),
-  });
-}
+export async function markAllSecurityNotificationsReadAuth() { return authFetch<{ success: boolean; updatedCount: number }>('/security-notifications/read-all', { method: 'POST' },); }
 
-export async function removeWithdrawalAddressAuth(
-  getToken: () => Promise<string | null>,
-  id: string,
-  stepUpToken?: string,
-) {
-  return authFetch<{ success: boolean }>(`/v1/wallets/withdrawal-addresses/${id}`, getToken, {
-    method: 'DELETE',
-    headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
-  });
-}
+export async function withdrawAuth(to: string,
+amount: string,
+token: WithdrawalToken,
+chainId = DEFAULT_CHAIN_ID,
+stepUpToken?: string,
+walletId?: string,
+idempotencyKey: string = crypto.randomUUID(),) { return authFetch<WithdrawResponse>('/wallets/withdrawals', {
+  method: 'POST',
+  headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+  body: JSON.stringify({ chainId, to, amount, token, walletId, idempotencyKey }),
+}); }
 
-export async function getBalancesAuth(
-  getToken: () => Promise<string | null>,
-  chainId = DEFAULT_CHAIN_ID,
-  signal?: AbortSignal,
-  walletId?: string,
-) {
-  const query = new URLSearchParams({ chainId: String(chainId) });
-  if (walletId) query.set('walletId', walletId);
-  return authFetch<BalancesResponse>(`/v1/wallets/balances?${query}`, getToken, {
-    signal,
-  });
-}
+export async function listWithdrawalAddressesAuth(signal?: AbortSignal,
+walletId?: string,) { const query = walletId ? `?walletId=${encodeURIComponent(walletId)}` : '';
+return authFetch<ListWithdrawalAddressesResponse>(`/wallets/withdrawal-addresses${query}`, {
+  signal,
+}); }
+
+export async function addWithdrawalAddressAuth(body: { address: string; label?: string },
+stepUpToken?: string,) { return authFetch<WithdrawalAddressRecord>('/wallets/withdrawal-addresses', {
+  method: 'POST',
+  headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+  body: JSON.stringify(body),
+}); }
+
+export async function removeWithdrawalAddressAuth(id: string,
+stepUpToken?: string,) { return authFetch<{ success: boolean }>(`/wallets/withdrawal-addresses/${id}`, {
+  method: 'DELETE',
+  headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+}); }
+
+export async function getBalancesAuth(chainId = DEFAULT_CHAIN_ID,
+signal?: AbortSignal,
+walletId?: string,) { const query = new URLSearchParams({ chainId: String(chainId) });
+if (walletId) query.set('walletId', walletId);
+return authFetch<BalancesResponse>(`/wallets/balances?${query}`, {
+  signal,
+}); }
 
 // --- Transaction & Signing Request History (dashboard-only) ---
+// Audit walletAddress values are the persisted execution/signing address, not current WalletInfo identity.
 
 export interface TransactionListItem {
   id: string;
@@ -1060,21 +1081,16 @@ export interface ListTransactionsParams {
   limit?: number;
 }
 
-export async function listTransactionsAuth(
-  getToken: () => Promise<string | null>,
-  params?: ListTransactionsParams,
-  signal?: AbortSignal,
-) {
-  const query = new URLSearchParams();
-  if (params?.status) query.set('status', params.status);
-  if (params?.chainId) query.set('chainId', String(params.chainId));
-  if (params?.page) query.set('page', String(params.page));
-  if (params?.limit) query.set('limit', String(params.limit));
-  const qs = query.toString();
-  return authFetch<ListTransactionsResponse>(`/v1/transactions${qs ? `?${qs}` : ''}`, getToken, {
-    signal,
-  });
-}
+export async function listTransactionsAuth(params?: ListTransactionsParams,
+signal?: AbortSignal,) { const query = new URLSearchParams();
+if (params?.status) query.set('status', params.status);
+if (params?.chainId) query.set('chainId', String(params.chainId));
+if (params?.page) query.set('page', String(params.page));
+if (params?.limit) query.set('limit', String(params.limit));
+const qs = query.toString();
+return authFetch<ListTransactionsResponse>(`/transactions${qs ? `?${qs}` : ''}`, {
+  signal,
+}); }
 
 export interface SigningRequestListItem {
   id: string;
@@ -1103,24 +1119,15 @@ export interface ListSigningRequestsParams {
   limit?: number;
 }
 
-export async function listSigningRequestsAuth(
-  getToken: () => Promise<string | null>,
-  params?: ListSigningRequestsParams,
-  signal?: AbortSignal,
-) {
-  const query = new URLSearchParams();
-  if (params?.type) query.set('type', params.type);
-  if (params?.status) query.set('status', params.status);
-  if (params?.chainId) query.set('chainId', String(params.chainId));
-  if (params?.page) query.set('page', String(params.page));
-  if (params?.limit) query.set('limit', String(params.limit));
-  const qs = query.toString();
-  return authFetch<ListSigningRequestsResponse>(
-    `/v1/wallets/signing-requests${qs ? `?${qs}` : ''}`,
-    getToken,
-    { signal },
-  );
-}
+export async function listSigningRequestsAuth(params?: ListSigningRequestsParams,
+signal?: AbortSignal,) { const query = new URLSearchParams();
+if (params?.type) query.set('type', params.type);
+if (params?.status) query.set('status', params.status);
+if (params?.chainId) query.set('chainId', String(params.chainId));
+if (params?.page) query.set('page', String(params.page));
+if (params?.limit) query.set('limit', String(params.limit));
+const qs = query.toString();
+return authFetch<ListSigningRequestsResponse>(`/wallets/signing-requests${qs ? `?${qs}` : ''}`, { signal },); }
 
 // --- Transaction & Signing Request Detail (dashboard-only) ---
 
@@ -1141,15 +1148,10 @@ export interface TransactionDetail {
   withdrawal: { to: string | null; amount: string | null; token: string | null } | null;
 }
 
-export async function getTransactionDetailAuth(
-  getToken: () => Promise<string | null>,
-  transactionId: string,
-  signal?: AbortSignal,
-) {
-  return authFetch<TransactionDetail>(`/v1/transactions/${transactionId}/detail`, getToken, {
-    signal,
-  });
-}
+export async function getTransactionDetailAuth(transactionId: string,
+signal?: AbortSignal,) { return authFetch<TransactionDetail>(`/transactions/${transactionId}/detail`, {
+  signal,
+}); }
 
 export interface SigningRequestDetail {
   id: string;
@@ -1164,37 +1166,18 @@ export interface SigningRequestDetail {
   completedAt: string | null;
 }
 
-export async function getSigningRequestDetailAuth(
-  getToken: () => Promise<string | null>,
-  signingRequestId: string,
-  signal?: AbortSignal,
-) {
-  return authFetch<SigningRequestDetail>(
-    `/v1/wallets/signing-requests/${signingRequestId}`,
-    getToken,
-    { signal },
-  );
-}
+export async function getSigningRequestDetailAuth(signingRequestId: string,
+signal?: AbortSignal,) { return authFetch<SigningRequestDetail>(`/wallets/signing-requests/${signingRequestId}`, { signal },); }
 
-export async function getBillingPlansAuth(
-  getToken: () => Promise<string | null>,
-  signal?: AbortSignal,
-) {
-  return authFetch<BillingPlanResponse>('/v1/billing/plans', getToken, { signal });
-}
+export async function getBillingPlansAuth(signal?: AbortSignal,) { return authFetch<BillingPlanResponse>('/billing/plans', { signal }); }
 
-export async function assignBillingPlanAuth(
-  getToken: () => Promise<string | null>,
-  planCode: string,
-) {
-  return authFetch<AssignBillingPlanResponse>('/v1/billing/plan', getToken, {
-    method: 'POST',
-    body: JSON.stringify({ planCode } satisfies AssignBillingPlanRequest),
-  });
-}
+export async function assignBillingPlanAuth(planCode: string,) { return authFetch<AssignBillingPlanResponse>('/billing/plan', {
+  method: 'POST',
+  body: JSON.stringify({ planCode } satisfies AssignBillingPlanRequest),
+}); }
 
 /**
- * POST /v1/billing/plan/cancel result. Cancels a pending scheduled plan change
+ * POST /billing/plan/cancel result. Cancels a pending scheduled plan change
  * (typically a downgrade) for the next UTC month. Optional fields are present
  * when the server still reports plan identity after cancel/no-op.
  * - canceled: a scheduled change was removed
@@ -1207,14 +1190,12 @@ export type CancelBillingPlanResponse = {
   planName?: string;
 };
 
-export async function cancelBillingPlanAuth(getToken: () => Promise<string | null>) {
-  return authFetch<CancelBillingPlanResponse>('/v1/billing/plan/cancel', getToken, {
-    method: 'POST',
-  });
-}
+export async function cancelBillingPlanAuth() { return authFetch<CancelBillingPlanResponse>('/billing/plan/cancel', {
+  method: 'POST',
+}); }
 
 /**
- * POST /v1/billing/plan/upgrade/cancel result. Cancels a pending unpaid plan
+ * POST /billing/plan/upgrade/cancel result. Cancels a pending unpaid plan
  * upgrade charge. Optional fields may identify the plan the user remains on.
  * - canceled: pending upgrade was removed
  * - unchanged: nothing was pending (idempotent)
@@ -1226,171 +1207,86 @@ export type CancelBillingPlanUpgradeResponse = {
   planName?: string;
 };
 
-export async function cancelBillingPlanUpgradeAuth(getToken: () => Promise<string | null>) {
-  return authFetch<CancelBillingPlanUpgradeResponse>('/v1/billing/plan/upgrade/cancel', getToken, {
-    method: 'POST',
-  });
-}
+export async function cancelBillingPlanUpgradeAuth() { return authFetch<CancelBillingPlanUpgradeResponse>('/billing/plan/upgrade/cancel', {
+  method: 'POST',
+}); }
 
-export async function getBillingSummaryAuth(
-  getToken: () => Promise<string | null>,
-  period: string,
-  signal?: AbortSignal,
-) {
-  return authFetch<BillingSummary>(
-    `/v1/billing/summary?period=${encodeURIComponent(period)}`,
-    getToken,
-    { signal },
-  );
-}
+export async function getBillingSummaryAuth(period: string,
+signal?: AbortSignal,) { return authFetch<BillingSummary>(`/billing/summary?period=${encodeURIComponent(period)}`, { signal },); }
 
 export interface ListBillingInvoicesParams {
   page?: number;
   limit?: number;
 }
 
-export async function listBillingInvoicesAuth(
-  getToken: () => Promise<string | null>,
-  params?: ListBillingInvoicesParams,
-  signal?: AbortSignal,
-) {
-  const query = new URLSearchParams();
-  if (params?.page) query.set('page', String(params.page));
-  if (params?.limit) query.set('limit', String(params.limit));
-  const qs = query.toString();
-  return authFetch<BillingInvoicesResponse>(`/v1/billing/invoices${qs ? `?${qs}` : ''}`, getToken, {
-    signal,
-  });
+export async function listBillingInvoicesAuth(params?: ListBillingInvoicesParams,
+signal?: AbortSignal,) { const query = new URLSearchParams();
+if (params?.page) query.set('page', String(params.page));
+if (params?.limit) query.set('limit', String(params.limit));
+const qs = query.toString();
+return authFetch<BillingInvoicesResponse>(`/billing/invoices${qs ? `?${qs}` : ''}`, {
+  signal,
+}); }
+
+export async function getBillingInvoiceAuth(invoiceId: string,
+signal?: AbortSignal,) { return authFetch<BillingInvoice>(`/billing/invoices/${invoiceId}`, { signal }); }
+
+export async function getBillingInvoicePdfAuth(invoiceId: string): Promise<Blob> {
+  return (await sessionResponse(`/billing/invoices/${invoiceId}/pdf`, {
+    headers: { Accept: 'application/pdf' },
+  })).blob();
 }
 
-export async function getBillingInvoiceAuth(
-  getToken: () => Promise<string | null>,
-  invoiceId: string,
-  signal?: AbortSignal,
-) {
-  return authFetch<BillingInvoice>(`/v1/billing/invoices/${invoiceId}`, getToken, { signal });
-}
+export async function createBillingCheckoutSessionAuth(invoiceId: string,
+signal?: AbortSignal,) { return authFetch<BillingCheckoutResponse>(`/billing/invoices/${invoiceId}/checkout`, {
+  method: 'POST',
+  signal,
+},); }
 
-export async function getBillingInvoicePdfAuth(
-  getToken: () => Promise<string | null>,
-  invoiceId: string,
-): Promise<Blob> {
-  const token = await getToken();
-  if (!token) {
-    throw new Error('Openfort session is not ready. Refresh and sign in again.');
-  }
+export async function createUsdcQuoteAuth(invoiceId: string,
+chainId?: number,
+signal?: AbortSignal,
+walletId?: string,) { const body: { chainId?: number; walletId?: string } = {};
+if (chainId !== undefined) body.chainId = chainId;
+if (walletId) body.walletId = walletId;
+return authFetch<UsdcQuoteResponse>(`/billing/invoices/${invoiceId}/usdc/quote`, {
+  method: 'POST',
+  body: JSON.stringify(body),
+  signal,
+}); }
 
-  const res = await fetch(`${API_BASE}/v1/billing/invoices/${invoiceId}/pdf`, {
-    headers: {
-      Accept: 'application/pdf',
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    let message = `Could not download invoice PDF (${res.status})`;
-    if (text.trim()) {
-      try {
-        const parsed = JSON.parse(text) as { message?: string };
-        if (parsed.message) message = parsed.message;
-      } catch {
-        // Keep the generic status message for non-JSON bodies.
-      }
-    }
-    throw new Error(message);
-  }
-
-  return res.blob();
-}
-
-export async function createBillingCheckoutSessionAuth(
-  getToken: () => Promise<string | null>,
-  invoiceId: string,
-  signal?: AbortSignal,
-) {
-  return authFetch<BillingCheckoutResponse>(
-    `/v1/billing/invoices/${invoiceId}/checkout`,
-    getToken,
-    {
-      method: 'POST',
-      signal,
-    },
-  );
-}
-
-export async function createUsdcQuoteAuth(
-  getToken: () => Promise<string | null>,
-  invoiceId: string,
-  chainId?: number,
-  signal?: AbortSignal,
-  walletId?: string,
-) {
-  const body: { chainId?: number; walletId?: string } = {};
-  if (chainId !== undefined) body.chainId = chainId;
-  if (walletId) body.walletId = walletId;
-  return authFetch<UsdcQuoteResponse>(`/v1/billing/invoices/${invoiceId}/usdc/quote`, getToken, {
-    method: 'POST',
-    body: JSON.stringify(body),
-    signal,
-  });
-}
-
-export async function createUsdcClaimAuth(
-  getToken: () => Promise<string | null>,
-  invoiceId: string,
-  paymentAttemptId: string,
-  txHash: string,
-  signal?: AbortSignal,
-) {
-  const body: UsdcClaimRequest = { paymentAttemptId, txHash };
-  return authFetch<UsdcClaimResponse>(`/v1/billing/invoices/${invoiceId}/usdc/claim`, getToken, {
-    method: 'POST',
-    body: JSON.stringify(body),
-    signal,
-  });
-}
+export async function createUsdcClaimAuth(invoiceId: string,
+paymentAttemptId: string,
+txHash: string,
+signal?: AbortSignal,) { const body: UsdcClaimRequest = { paymentAttemptId, txHash };
+return authFetch<UsdcClaimResponse>(`/billing/invoices/${invoiceId}/usdc/claim`, {
+  method: 'POST',
+  body: JSON.stringify(body),
+  signal,
+}); }
 
 /**
- * POST /v1/billing/invoices/:id/usdc/pay-from-wallet
+ * POST /billing/invoices/:id/usdc/pay-from-wallet
  * Body is paymentAttemptId only (server-bound quote facts). Requires step-up.
  */
-export async function payUsdcFromWalletAuth(
-  getToken: () => Promise<string | null>,
-  invoiceId: string,
-  paymentAttemptId: string,
-  stepUpToken?: string,
-  signal?: AbortSignal,
-) {
-  return authFetch<UsdcWalletPayResult>(
-    `/v1/billing/invoices/${invoiceId}/usdc/pay-from-wallet`,
-    getToken,
-    {
-      method: 'POST',
-      headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
-      body: JSON.stringify({ paymentAttemptId }),
-      signal,
-    },
-  );
-}
+export async function payUsdcFromWalletAuth(invoiceId: string,
+paymentAttemptId: string,
+stepUpToken?: string,
+signal?: AbortSignal,) { return authFetch<UsdcWalletPayResult>(`/billing/invoices/${invoiceId}/usdc/pay-from-wallet`, {
+  method: 'POST',
+  headers: stepUpToken ? { 'X-Step-Up-Token': stepUpToken } : undefined,
+  body: JSON.stringify({ paymentAttemptId }),
+  signal,
+},); }
 
 /**
- * GET /v1/billing/invoices/:id/usdc/payment-status?paymentAttemptId=
+ * GET /billing/invoices/:id/usdc/payment-status?paymentAttemptId=
  * Poll reserved wallet-payment state without step-up. Safe fields only.
  */
-export async function getUsdcPaymentStatusAuth(
-  getToken: () => Promise<string | null>,
-  invoiceId: string,
-  paymentAttemptId: string,
-  signal?: AbortSignal,
-) {
-  const query = new URLSearchParams({ paymentAttemptId });
-  return authFetch<UsdcWalletPayResult>(
-    `/v1/billing/invoices/${invoiceId}/usdc/payment-status?${query.toString()}`,
-    getToken,
-    { signal },
-  );
-}
+export async function getUsdcPaymentStatusAuth(invoiceId: string,
+paymentAttemptId: string,
+signal?: AbortSignal,) { const query = new URLSearchParams({ paymentAttemptId });
+return authFetch<UsdcWalletPayResult>(`/billing/invoices/${invoiceId}/usdc/payment-status?${query.toString()}`, { signal },); }
 
 /**
  * BILL-003: safe result of cancelling a clean evidence-free pending USDC quote.
@@ -1405,41 +1301,23 @@ export interface UsdcCancelResult {
 }
 
 /**
- * POST /v1/billing/invoices/:id/usdc/cancel
+ * POST /billing/invoices/:id/usdc/cancel
  * Body is paymentAttemptId only. Cancels only clean pending (unreserved,
  * evidence-free) USDC quotes. Confirming/reserved/evidence/review/terminal
  * return 409 USDC_CANCEL_NOT_ALLOWED (or related conflicts).
  */
-export async function cancelUsdcQuoteAuth(
-  getToken: () => Promise<string | null>,
-  invoiceId: string,
-  paymentAttemptId: string,
-  signal?: AbortSignal,
-) {
-  return authFetch<UsdcCancelResult>(
-    `/v1/billing/invoices/${invoiceId}/usdc/cancel`,
-    getToken,
-    {
-      method: 'POST',
-      body: JSON.stringify({ paymentAttemptId }),
-      signal,
-    },
-  );
-}
+export async function cancelUsdcQuoteAuth(invoiceId: string,
+paymentAttemptId: string,
+signal?: AbortSignal,) { return authFetch<UsdcCancelResult>(`/billing/invoices/${invoiceId}/usdc/cancel`, {
+  method: 'POST',
+  body: JSON.stringify({ paymentAttemptId }),
+  signal,
+},); }
 
 /**
- * GET /v1/billing/invoices/:id/payment-status
+ * GET /billing/invoices/:id/payment-status
  * Invoice-level read-only payment recovery (BILL-018). Never creates quotes
  * or attempts. Safe fields only — no hashes, receipts, or provider details.
  */
-export async function getInvoicePaymentStatusAuth(
-  getToken: () => Promise<string | null>,
-  invoiceId: string,
-  signal?: AbortSignal,
-) {
-  return authFetch<InvoicePaymentStatus>(
-    `/v1/billing/invoices/${invoiceId}/payment-status`,
-    getToken,
-    { signal },
-  );
-}
+export async function getInvoicePaymentStatusAuth(invoiceId: string,
+signal?: AbortSignal,) { return authFetch<InvoicePaymentStatus>(`/billing/invoices/${invoiceId}/payment-status`, { signal },); }

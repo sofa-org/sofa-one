@@ -1,0 +1,2036 @@
+{
+  "schemaVersion": 1,
+  "protocol": "mountain-wusdm",
+  "website": "https://docs.mountainprotocol.com/wind-down-documentation/ongoing-proof-of-reserves.md",
+  "websiteEvidence": {
+    "sourceRef": "https://docs.mountainprotocol.com/wind-down-documentation/ongoing-proof-of-reserves.md",
+    "verifiedAt": "2026-10-20",
+    "evidence": "Official Phase-3 reserve and wrapping instructions, preferred over historic yield-oriented landing page. Refers to direct wrapping at the exact Ethereum token and separate wrap/bridge resources; availability of those frontends was not tested."
+  },
+  "chainId": 1,
+  "address": "0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812",
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.mountainprotocol.com/legacy-docs/usdm-token.md",
+    "verifiedAt": "2026-10-20",
+    "chainId": 1,
+    "address": "0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812",
+    "additionalSourceRefs": [
+      "https://docs.mountainprotocol.com/wind-down-documentation/ongoing-proof-of-reserves.md",
+      "https://raw.githubusercontent.com/mountainprotocol/audits/a024026945c8fac46c40073439c8c830ae49c329/OpenZeppelin%20Mountain%20Protocol%20wUSDM%20-%20Audit%20Report%20Oct%202023.pdf",
+      "https://etherscan.io/address/0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812#code",
+      "https://sourcify.dev/server/v2/contract/1/0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812?fields=all"
+    ],
+    "deployment": {
+      "transactionHash": "0xc29aee0aadf06361d1c45f69da62960fd59ad8e7b284343b0b9e57f400efed8c",
+      "blockNumber": "18293692",
+      "transactionIndex": "128",
+      "deployer": "0xcd0C7d11a24be62f408F65aF466F744eD6A05530"
+    },
+    "proxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c",
+          "name": "wUSDM"
+        }
+      ]
+    },
+    "constructorArguments": {
+      "constructorArguments": "0x0000000000000000000000006cb6107f84c7559707af026c9ed83cfc5dcb72e900000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000044485cc95500000000000000000000000059d9356e565ab3a36dd77763fc0d87feaf85508c000000000000000000000000313d5b7efdcd84e8a52d425282b03860e9354d7400000000000000000000000000000000000000000000000000000000"
+    },
+    "decodedInitialization": {
+      "initialImplementation": "0x6cB6107F84c7559707aF026C9ED83CFC5dcb72E9",
+      "signature": "initialize(address,address)",
+      "selector": "0x485cc955",
+      "USDM": "0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C",
+      "owner": "0x313d5B7EfDcd84e8a52D425282B03860e9354d74"
+    },
+    "evidence": "Official legacy token page explicitly maps Ethereum wUSDM to this address; current official Phase-3 reserve guide independently links same token. Proxy deployment constructor initializes USDM/owner and refers to an INITIAL implementation different from source-service/explorer-reported current implementation. Review uses reported current implementation 0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c. No RPC or fresh storage/runtime check."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c?fields=all",
+    "verifiedAt": "2026-10-20",
+    "chainId": 1,
+    "address": "0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812",
+    "implementationAddress": "0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c",
+    "proxySourceRef": "https://sourcify.dev/server/v2/contract/1/0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812?fields=all",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.18+commit.87f61d96",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "paris",
+        "remappings": []
+      },
+      "name": "wUSDM",
+      "fullyQualifiedName": "contracts/wUSDM.sol:wUSDM"
+    },
+    "implementationDeployment": {
+      "transactionHash": "0x93e0db84d82891062a8180f0dcdd98614e7a3a48312947cbcf53be493656ce56",
+      "blockNumber": "18394371",
+      "transactionIndex": "90",
+      "deployer": "0xcd0C7d11a24be62f408F65aF466F744eD6A05530"
+    },
+    "matchId": "1997977",
+    "sourceServiceVerifiedAt": "2024-08-08T14:21:01Z",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "proxyReportedCreationMatch": "exact_match",
+    "proxyReportedRuntimeMatch": "exact_match",
+    "sourceFile": "contracts/wUSDM.sol",
+    "sourceSha256": "88d6cc3806fb24b4051ee6509f30460320723776b1ea105c51fa927580b6ffce",
+    "officialSourceRef": "https://raw.githubusercontent.com/mountainprotocol/tokens/78c6556badd1c8db2de24dbcf2adca60436d9543/contracts/wUSDM.sol",
+    "officialSourceSha256": "5ae7f8915737d2af680cd5e2517ad72d88dba299ff36caf90101d9c3451983f7",
+    "officialComparison": "Only difference against final official pinned wUSDM.sol is deployed uint256[49] __gap versus official uint256[48] __gap. No byte-for-byte equality claim. Official audit explicitly discloses deployment without N-01 storage-gap change; reviewed deployed source is authoritative. Future upgrades must preserve actual deployed layout. No whole-repository/dependency-byte identity claim.",
+    "auditSourceRef": "https://raw.githubusercontent.com/mountainprotocol/audits/a024026945c8fac46c40073439c8c830ae49c329/OpenZeppelin%20Mountain%20Protocol%20wUSDM%20-%20Audit%20Report%20Oct%202023.pdf",
+    "dependencySourceHashes": {
+      "contracts/wUSDM.sol": "88d6cc3806fb24b4051ee6509f30460320723776b1ea105c51fa927580b6ffce",
+      "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol": "db92fc1b515decad3a783b1422190877d2d70b907c6e36fb0998d9465aee42db",
+      "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol": "5fb301961e45cb482fe4e05646d2f529aa449fe0e90c6671475d6a32356fa2d4",
+      "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol": "357c8d1a0fb673fa10a884d6e27b383171ecc3eaf8dee8211de75f88ff77843d",
+      "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol": "a2c4e5c274a586f145d278293ae33198cd8f412ab7e6d26f2394c8949b32b24b",
+      "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol": "5c1ac829a429b0c2ca9b4c9ed8b78d412320e9175e45f088c4e9056ef95fbf21",
+      "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol": "fbf7ebc0f3c2cf5aef908ecce85e69af53db4e2c6652f61c8ac1e3f416c2fa99",
+      "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol": "04338003a3be8f5f38595048b591d80fdc147bf95cc7c6285e1e1a5f1afa2b47",
+      "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol": "c05b019a0b3bee8f3fac2da7c929f7d665b97d6d046aa35126615fff11205119",
+      "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol": "9619cf23b549a5126042a4e20b09a2eb12dc8c2975258e3b8cde79cc593b6926",
+      "@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol": "5b478023a1200e1364308ca06cdefec7cb7ab990a1cb904cbbdbaa7ba85076be",
+      "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol": "78a6bc84bbb417f0d8a6b12e181e0f783151774f4f0c054c5d3f920e70d69f8c",
+      "@openzeppelin/contracts-upgradeable/interfaces/IERC1967Upgradeable.sol": "167828e6f725b1d47d82bc912fd0f1c6ed0fb67a4e5e06a4d62e72b4a53e95cf",
+      "@openzeppelin/contracts-upgradeable/interfaces/IERC4626Upgradeable.sol": "e1583094222a3ef91ad54b38dfe8b017d8bc31a2be23a7ec0b065cafa24672b6",
+      "@openzeppelin/contracts-upgradeable/interfaces/IERC5267Upgradeable.sol": "6a0d92d0222dd70cdc073029b6fe979e03e65d9c9ea4f2b8ffb774e144d2a51e",
+      "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol": "36ae01d269ee0cf6622f33e3af4fe1d0ccaccfd372a21c4435cba78fe8f6aa03",
+      "@openzeppelin/contracts-upgradeable/proxy/beacon/IBeaconUpgradeable.sol": "e0ac7115916f0dce0a8e80769694736f3e674bdc5b2e5853964c82004b1e1cc5",
+      "@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol": "6d3fbd4566bc123db1ee6ba2a1b79544b572df9b9cc9be360ddb3244dd07c86b",
+      "@openzeppelin/contracts-upgradeable/utils/math/SignedMathUpgradeable.sol": "4f06981f993ea4a96e078c2036b5a42e1edade38996e5180171d5fe4be2f18fe",
+      "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol": "aefb3039d0aae994ad64c397dfa0bcc1ab6e675e2fd97b2fdfc0e7739def0b5b",
+      "@openzeppelin/contracts-upgradeable/interfaces/draft-IERC1822Upgradeable.sol": "a94576fd98585c07b2a9725f7c89c910a3a1909a03f49ec2df465327c6a0ffc3",
+      "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol": "ed30d96d25a360d320a807157db07b5bbb73392745ce8188b775787eb2d33fb9",
+      "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol": "fd84e5284eccc479268f0ef36b830019d4f7999ceb7959430d8d8d9e602dd4ef",
+      "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol": "a83249905cd172b5d9dc8564edbd0057078116cfbfebe0c6d4acf4e1246efe25",
+      "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol": "a39bc026ad6214e9ecd526bd4a1ddf9862d80bd4a9d0d031d9bafa4c3c147c0b",
+      "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol": "40dd5b14a370eea51ba94eb1b66a89638c6c54d86cc9f406599075c273e5e4c6",
+      "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol": "7cc3ca057bbe95ccf87967c1397b0fd038c7a3fdd9c8d2db24113784bf5697a9",
+      "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20PermitUpgradeable.sol": "cf0f8a5ee1c560ad1c5b0847a1531c5904cee45d0ec811cd83d0d95cbd5a333b",
+      "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol": "68bcca423fc72ec9625e219c9e36306c726a347e43f3711467c579bd3f6500c8"
+    },
+    "evidence": "Full exact-implementation ABI retained unchanged (67 entries, 48 functions); selected fragments come directly from it, not generic ERC-4626 or historic initial implementation. Proxy ABI retained separately (no function entries). Exact-chain/address source-service labels are recorded as reported, not fresh bytecode/runtime or financial guarantees."
+  },
+  "sourceSemantics": {
+    "lifecycle": {
+      "sourceRefs": [
+        "https://docs.mountainprotocol.com/wind-down-documentation/usdm-wind-down-overview.md",
+        "https://docs.mountainprotocol.com/wind-down-documentation/ongoing-proof-of-reserves.md",
+        "https://docs.mountainprotocol.com/wind-down-legal/terms-and-conditions.md",
+        "https://mountainprotocol.com/"
+      ],
+      "evidence": "Official notice disables issuer minting, ends rewards after 30-day Phase 1 and closes primary market at Phase 3 (2025-08-22 per legal terms/site). Phase-3 reserve guide states reserves moved as USDC into Ethereum Uniswap v4 wUSDM:USDC pool 0xd3d6e5a73a27081ddd95955f5ae2efbb063013e736f79431c3a31f2817898a35 and explicitly explains wrapping existing USDM before swapping. Therefore all four ordinary wrapper methods remain selected for conversion/redemption-oriented handling, not a renewed savings product; an exit-only unwrap claim would omit the officially documented wrap-to-USDC exit path. USDM minting disabled economically is not a code-level unconditional revert in ERC-4626 mint(). No live pool/balances/issuer-role state verified."
+    },
+    "assetBinding": "Proxy constructor data initializes both wUSDM.USDM and ERC4626._asset to 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C. Official Ethereum USDM mapping corroborates. Implementation has no ordinary asset setter; proxy upgrades can change logic/storage. USDM is 18 decimals; wUSDM inherits cached underlying decimals with zero offset.",
+    "wrapperFlow": "ERC4626 deposit/mint first SafeERC20.transferFrom initialized USDM from caller to proxy, then mint receiver shares. withdraw/redeem check max against owner shares, spend share allowance only when caller != owner, burn owner shares then SafeERC20.transfer underlying to receiver. No arbitrary target/calldata, user-defined callback, native payment, router or nested executor is accepted. Separate underlying-token calls are fixed by initialization.",
+    "accessAndPause": "wUSDM hook actually checks only USDM.isBlocked(from), not to despite doc-comment wording. On burns from=owner; on mints from=zero address. paused() = underlying paused OR local pause. Underlying transfer sender blocklist adds caller check when wrapping and proxy check when unwrapping; recipient is not checked. Neither local hook checks msg.sender independently on delegated unwrap. Mint/burn reject zero receiver/owner through ERC20; underlying transfer rejects zero receiver. Max functions and previews do not incorporate pause/blocklist/allowance.",
+    "rounding": "OZ 4.9 deployed dependency: shares=assets*(totalSupply+1)/(totalAssets+1), assets=shares*(totalAssets+1)/(totalSupply+1), decimalsOffset=0. deposit/redeem round down, mint/withdraw round up; convert getters round down. totalAssets is USDM.balanceOf(proxy), not USDC collateral. Direct donations and underlying multiplier/rebase changes affect rate; virtual shares/assets mitigate but do not prove manipulation immunity. No minimum shares/assets, maximum input shares/assets or deadline. Positive small deposit/redeem can return zero.",
+    "underlying": {
+      "proxyAddress": "0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C",
+      "reportedImplementationAddress": "0x7f2f92C4dbDa28d8CD7d046e005F65C0540F331e",
+      "proxySourceRef": "https://sourcify.dev/server/v2/contract/1/0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C?fields=proxyResolution,compilation",
+      "implementationSourceRef": "https://sourcify.dev/server/v2/contract/1/0x7f2f92C4dbDa28d8CD7d046e005F65C0540F331e?fields=compilation,sources",
+      "reportedCreationMatch": "exact_match",
+      "reportedRuntimeMatch": "exact_match",
+      "sourceSha256": "b571ed8884fd7b782043c4e5b4bbfe1cd5f6510b8d4063ae7ad0d4c3b3058efb",
+      "evidence": "Reviewed exact source-service-reported USDM implementation dependency. USDM.balanceOf=internalShares*rewardMultiplier/1e18; token transfer converts nominal assets to internal shares with floor(amount*1e18/rewardMultiplier), then moves those shares. Actual recipient delta can differ from nominal transfer/event/preview values; wrapper does not measure incoming/outgoing delta. Sender-only blocklist and USDM pause apply; admin may set multiplier >=1e18 (including decreases), oracle may increase, privileged roles manage mint/burn/blocklist/pause/upgrades. Economic no-new-mint/no-reward announcement is not evidence of current role revocation, fixed multiplier, or immutable underlying. No token capability admitted."
+    },
+    "proxyAndAudit": "ERC1967Proxy fallback delegates to implementation from EIP-1967 slot. UUPS upgrades are onlyProxy + UPGRADE_ROLE; role administrators may grant/revoke permissions. Source constructor disables implementation initializers; initialization sets proxy owner DEFAULT_ADMIN_ROLE. Audit final repository gap is 48 slots, deployed is 49; report says omitting N-01 is not a security risk only while layout is maintained on future upgrades. Audit is historical, not current upgrade, financial or runtime assurance.",
+    "exclusions": "All 30 read-only getters/quotes/interface helpers, 5 generic approval/transfer methods, permit, initialization, role changes, pause/unpause and upgrades excluded individually. Proxy constructor/events/fallback/receive create no capability. No USDC swap, bridge or issuer redemption is added.",
+    "legal": "Phase-3 terms effective 2025-08-22 discontinue primary platform/accounts and issuer redemption/backing/liquidity guarantees, retain U.S.-person/restricted-jurisdiction prohibitions and user compliance obligations. Docs have inconsistent historic phase-date text and broad backing language; the explicit Phase-3 legal effective date and current reserve methodology are recorded without claiming backing adequacy or legal eligibility."
+  },
+  "proxyAbi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_logic",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "AdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BeaconUpgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "beacon",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Upgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "fallback",
+      "stateMutability": "payable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "ERC2612ExpiredDeadline",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "blockTimestamp",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC2612InvalidSignature",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "wUSDMBlockedSender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "wUSDMPausedTransfers",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BeaconUpgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "beacon",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "EIP712DomainChanged",
+      "type": "event",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "name": "Initialized",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "uint8"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Paused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleAdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "previousAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "newAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleGranted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleRevoked",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Unpaused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Upgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DEFAULT_ADMIN_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "DOMAIN_SEPARATOR",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "PAUSE_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "UPGRADE_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "USDM",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IUSDM"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "asset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decreaseAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "subtractedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "eip712Domain",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "fields",
+          "type": "bytes1",
+          "internalType": "bytes1"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "chainId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "verifyingContract",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "salt",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "extensions",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getRoleAdmin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "grantRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "hasRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "increaseAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "addedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_USDM",
+          "type": "address",
+          "internalType": "contract IUSDM"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "maxDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "nonces",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "paused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "permit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "proxiableUUID",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "revokeRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "supportsInterface",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unpause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "upgradeTo",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "upgradeToAndCall",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "DEFAULT_ADMIN_ROLE",
+      "signature": "DEFAULT_ADMIN_ROLE()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only DEFAULT_ADMIN_ROLE getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "DOMAIN_SEPARATOR",
+      "signature": "DOMAIN_SEPARATOR()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only DOMAIN_SEPARATOR getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "PAUSE_ROLE",
+      "signature": "PAUSE_ROLE()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only PAUSE_ROLE getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "UPGRADE_ROLE",
+      "signature": "UPGRADE_ROLE()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only UPGRADE_ROLE getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "USDM",
+      "signature": "USDM()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only USDM getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "allowance",
+      "signature": "allowance(address,address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only allowance getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "approve",
+      "signature": "approve(address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Generic wUSDM spending-approval authority excluded; prerequisite allowances are independent, not granted by wrapper capabilities."
+    },
+    {
+      "functionName": "asset",
+      "signature": "asset()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only asset getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "balanceOf",
+      "signature": "balanceOf(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only balanceOf getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "convertToAssets",
+      "signature": "convertToAssets(uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only convertToAssets getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "convertToShares",
+      "signature": "convertToShares(uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only convertToShares getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "decimals",
+      "signature": "decimals()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only decimals getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "decreaseAllowance",
+      "signature": "decreaseAllowance(address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Generic wUSDM allowance-decrease authority excluded; no approval-management capability."
+    },
+    {
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary exact-USDM-input wrapping, funded by caller USDM allowance to the proxy, minting calculated wUSDM shares to receiver with floor rounding. Included for the officially documented Phase-3 USDM-to-wUSDM-to-USDC secondary-market exit, not renewed savings or issuer USDM minting. No minimum shares or deadline; positive input may mint zero shares."
+    },
+    {
+      "functionName": "eip712Domain",
+      "signature": "eip712Domain()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only eip712Domain getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "getRoleAdmin",
+      "signature": "getRoleAdmin(bytes32)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getRoleAdmin getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "grantRole",
+      "signature": "grantRole(bytes32,address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "DEFAULT_ADMIN_ROLE-controlled role authorization management excluded."
+    },
+    {
+      "functionName": "hasRole",
+      "signature": "hasRole(bytes32,address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only hasRole getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "increaseAllowance",
+      "signature": "increaseAllowance(address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Generic wUSDM allowance-increase authority excluded; no approval-management capability."
+    },
+    {
+      "functionName": "initialize",
+      "signature": "initialize(address,address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "One-time privileged proxy initialization binds USDM asset and administrator; excluded, not an ordinary wrapper action."
+    },
+    {
+      "functionName": "maxDeposit",
+      "signature": "maxDeposit(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only maximum returns uint256.max without accounting for underlying/wrapper pauses, blocklists or allowance; not an execution guarantee or transaction/read API capability."
+    },
+    {
+      "functionName": "maxMint",
+      "signature": "maxMint(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only maximum returns uint256.max without accounting for underlying/wrapper pauses, blocklists or allowance; not an execution guarantee or transaction/read API capability."
+    },
+    {
+      "functionName": "maxRedeem",
+      "signature": "maxRedeem(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only owner share balance does not incorporate pause/blocklist or delegated allowance; no transaction capability or read API."
+    },
+    {
+      "functionName": "maxWithdraw",
+      "signature": "maxWithdraw(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only owner balance conversion does not incorporate pause/blocklist or delegated allowance; no transaction capability or read API."
+    },
+    {
+      "functionName": "mint",
+      "signature": "mint(uint256,address)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary exact-wUSDM-share wrapping, spending caller USDM via proxy allowance with asset input rounded up. Wrapper share minting remains part of the documented Phase-3 wrapping path; it is not the disabled privileged issuance of new USDM. No maximum asset-input or deadline parameter."
+    },
+    {
+      "functionName": "name",
+      "signature": "name()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only name getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "nonces",
+      "signature": "nonces(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only nonces getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "pause",
+      "signature": "pause()",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "PAUSE_ROLE-controlled wrapper pause administration excluded."
+    },
+    {
+      "functionName": "paused",
+      "signature": "paused()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only paused getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "permit",
+      "signature": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "ERC-2612 signature-bearing allowance authority excluded; no permit or typed-data signing admission."
+    },
+    {
+      "functionName": "previewDeposit",
+      "signature": "previewDeposit(uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only previewDeposit getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "previewMint",
+      "signature": "previewMint(uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only previewMint getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "previewRedeem",
+      "signature": "previewRedeem(uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only previewRedeem getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "previewWithdraw",
+      "signature": "previewWithdraw(uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only previewWithdraw getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "proxiableUUID",
+      "signature": "proxiableUUID()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only UUPS implementation-slot compatibility helper uses notDelegated and reverts through proxy; excluded, not a transaction capability or read API."
+    },
+    {
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary exact-wUSDM-share unwrapping, rounding calculated USDM output down, burning owner shares and transferring USDM to receiver. Caller other than owner needs owner-to-caller share allowance. No minimum output/deadline; tiny shares may yield zero assets and underlying transfer rounding may reduce received USDM."
+    },
+    {
+      "functionName": "renounceRole",
+      "signature": "renounceRole(bytes32,address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Self role-renunciation changes privileged authorization state; excluded from ordinary wrapper admission."
+    },
+    {
+      "functionName": "revokeRole",
+      "signature": "revokeRole(bytes32,address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Role-administrator-controlled permission revocation excluded."
+    },
+    {
+      "functionName": "supportsInterface",
+      "signature": "supportsInterface(bytes4)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only supportsInterface getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "symbol",
+      "signature": "symbol()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only symbol getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "totalAssets",
+      "signature": "totalAssets()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only wrapper USDM balance, not external USDC reserves or financial backing evidence; no transaction capability or read API."
+    },
+    {
+      "functionName": "totalSupply",
+      "signature": "totalSupply()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only totalSupply getter/quote/interface helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "transfer",
+      "signature": "transfer(address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Generic wUSDM share-token transfer excluded; only explicit ordinary ERC-4626 wrapping/unwrapping selected."
+    },
+    {
+      "functionName": "transferFrom",
+      "signature": "transferFrom(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Generic delegated wUSDM share-token transfer excluded; no standalone transfer/allowance spending capability."
+    },
+    {
+      "functionName": "unpause",
+      "signature": "unpause()",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "PAUSE_ROLE-controlled wrapper unpause administration excluded."
+    },
+    {
+      "functionName": "upgradeTo",
+      "signature": "upgradeTo(address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "UPGRADE_ROLE-controlled UUPS implementation replacement excluded."
+    },
+    {
+      "functionName": "upgradeToAndCall",
+      "signature": "upgradeToAndCall(address,bytes)",
+      "stateMutability": "payable",
+      "decision": "excluded",
+      "reason": "UPGRADE_ROLE-controlled implementation replacement plus opaque delegatecall initialization excluded; no arbitrary executor or upgrade authority."
+    },
+    {
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary exact-USDM-asset unwrapping, rounding burned wUSDM shares up, then transferring underlying USDM to receiver. Owner shares required; caller other than owner spends owner-to-caller wUSDM allowance. Does not redeem for USDC, fiat or issuer reserves; secondary-market conversion is separate."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "mountain-wusdm:v1:1:0x57f5e098cad7a3d1eed53991d4d66c45c9af7812:deposit",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address)",
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.mountainprotocol.com/legacy-docs/usdm-token.md ; https://sourcify.dev/server/v2/contract/1/0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812?fields=all ; https://sourcify.dev/server/v2/contract/1/0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c?fields=all ; https://docs.mountainprotocol.com/wind-down-documentation/ongoing-proof-of-reserves.md",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "mountain-wusdm",
+      "label": "Mountain wUSDM deposit",
+      "operation": "deposit",
+      "warnings": [
+        "Mountain USDM is in Phase-3 wind-down effective 2025-08-22: issuer primary issuance/redemption and accounts are discontinued, rewards are zero, and former Treasury/$1 redemption claims no longer apply. Official reserves documentation describes a separate Ethereum Uniswap v4 wUSDM/USDC pool; no pool liquidity, backing, peg, yield or execution guarantee is made.",
+        "deposit/mint only wrap existing USDM into wUSDM and are included because official Phase-3 instructions require wrapping before some USDC exit routes. withdraw/redeem return USDM, not USDC or fiat. This admission does not include swaps, bridges, issuer mint/burn, generic transfers, approvals, permits or administration, and does not prove a complete redemption workflow.",
+        "Underlying initialized as Ethereum USDM 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C; assets use USDM units (18 decimals), shares use wUSDM units. Wrapping requires caller USDM balance and allowance to the proxy. Unwrapping burns owner wUSDM; caller other than owner spends owner-to-caller wUSDM allowance. Intended nonzero receiver and zero native value required.",
+        "Wrapper transfer/mint/burn hook checks underlying USDM.isBlocked(from), not recipient: burns check owner, mints check zero address. USDM transfers additionally check underlying sender (caller for wrapping, proxy for unwrapping). Either wrapper or underlying pause reverts actions; max/preview reads do not ensure eligibility or success. Tokens received by blocked addresses can become inaccessible.",
+        "ERC-4626 conversions use virtual +1 asset/+1 share, zero decimals offset and current wrapper USDM balance. Deposit shares/redeem assets round down; mint assets/withdraw shares round up. Positive small deposits or redemptions may yield zero output. Donation/rebase/multiplier changes affect conversions; no caller-set minimum output, maximum input or deadline exists.",
+        "Reviewed underlying USDM transfer accounting floors conversion to internal shares; returned/events/preview amounts are nominal and need not equal recipient balance delta. SafeERC20 checks call success/optional boolean, not exact received balances. Underlying administrator can change rewardMultiplier, block senders, pause and manage upgrade roles despite the economic wind-down.",
+        "Calls target the exact proxy, not implementation. Sourcify and explorer report implementation 0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c; service exact_match labels and source review are not fresh runtime/storage/role/implementation-persistence attestation. Deployed wrapper retains 49-slot storage gap versus 48 in pinned final official source; historical audit explicitly notes this difference and future-upgrade storage-layout constraint.",
+        "Phase-3 terms retain U.S.-person and restricted-jurisdiction prohibitions. Catalog metadata does not establish legal eligibility or bypass independent grants, pause checks, canonical ABI/value validation, recipient/destination or execution controls."
+      ]
+    },
+    {
+      "capabilityId": "mountain-wusdm:v1:1:0x57f5e098cad7a3d1eed53991d4d66c45c9af7812:mint",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812",
+      "functionName": "mint",
+      "signature": "mint(uint256,address)",
+      "abi": {
+        "name": "mint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.mountainprotocol.com/legacy-docs/usdm-token.md ; https://sourcify.dev/server/v2/contract/1/0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812?fields=all ; https://sourcify.dev/server/v2/contract/1/0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c?fields=all ; https://docs.mountainprotocol.com/wind-down-documentation/ongoing-proof-of-reserves.md",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "mountain-wusdm",
+      "label": "Mountain wUSDM mint",
+      "operation": "mint",
+      "warnings": [
+        "Mountain USDM is in Phase-3 wind-down effective 2025-08-22: issuer primary issuance/redemption and accounts are discontinued, rewards are zero, and former Treasury/$1 redemption claims no longer apply. Official reserves documentation describes a separate Ethereum Uniswap v4 wUSDM/USDC pool; no pool liquidity, backing, peg, yield or execution guarantee is made.",
+        "deposit/mint only wrap existing USDM into wUSDM and are included because official Phase-3 instructions require wrapping before some USDC exit routes. withdraw/redeem return USDM, not USDC or fiat. This admission does not include swaps, bridges, issuer mint/burn, generic transfers, approvals, permits or administration, and does not prove a complete redemption workflow.",
+        "Underlying initialized as Ethereum USDM 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C; assets use USDM units (18 decimals), shares use wUSDM units. Wrapping requires caller USDM balance and allowance to the proxy. Unwrapping burns owner wUSDM; caller other than owner spends owner-to-caller wUSDM allowance. Intended nonzero receiver and zero native value required.",
+        "Wrapper transfer/mint/burn hook checks underlying USDM.isBlocked(from), not recipient: burns check owner, mints check zero address. USDM transfers additionally check underlying sender (caller for wrapping, proxy for unwrapping). Either wrapper or underlying pause reverts actions; max/preview reads do not ensure eligibility or success. Tokens received by blocked addresses can become inaccessible.",
+        "ERC-4626 conversions use virtual +1 asset/+1 share, zero decimals offset and current wrapper USDM balance. Deposit shares/redeem assets round down; mint assets/withdraw shares round up. Positive small deposits or redemptions may yield zero output. Donation/rebase/multiplier changes affect conversions; no caller-set minimum output, maximum input or deadline exists.",
+        "Reviewed underlying USDM transfer accounting floors conversion to internal shares; returned/events/preview amounts are nominal and need not equal recipient balance delta. SafeERC20 checks call success/optional boolean, not exact received balances. Underlying administrator can change rewardMultiplier, block senders, pause and manage upgrade roles despite the economic wind-down.",
+        "Calls target the exact proxy, not implementation. Sourcify and explorer report implementation 0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c; service exact_match labels and source review are not fresh runtime/storage/role/implementation-persistence attestation. Deployed wrapper retains 49-slot storage gap versus 48 in pinned final official source; historical audit explicitly notes this difference and future-upgrade storage-layout constraint.",
+        "Phase-3 terms retain U.S.-person and restricted-jurisdiction prohibitions. Catalog metadata does not establish legal eligibility or bypass independent grants, pause checks, canonical ABI/value validation, recipient/destination or execution controls."
+      ]
+    },
+    {
+      "capabilityId": "mountain-wusdm:v1:1:0x57f5e098cad7a3d1eed53991d4d66c45c9af7812:redeem",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812",
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address)",
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.mountainprotocol.com/legacy-docs/usdm-token.md ; https://sourcify.dev/server/v2/contract/1/0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812?fields=all ; https://sourcify.dev/server/v2/contract/1/0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c?fields=all ; https://docs.mountainprotocol.com/wind-down-documentation/ongoing-proof-of-reserves.md",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "mountain-wusdm",
+      "label": "Mountain wUSDM redeem",
+      "operation": "redeem",
+      "warnings": [
+        "Mountain USDM is in Phase-3 wind-down effective 2025-08-22: issuer primary issuance/redemption and accounts are discontinued, rewards are zero, and former Treasury/$1 redemption claims no longer apply. Official reserves documentation describes a separate Ethereum Uniswap v4 wUSDM/USDC pool; no pool liquidity, backing, peg, yield or execution guarantee is made.",
+        "deposit/mint only wrap existing USDM into wUSDM and are included because official Phase-3 instructions require wrapping before some USDC exit routes. withdraw/redeem return USDM, not USDC or fiat. This admission does not include swaps, bridges, issuer mint/burn, generic transfers, approvals, permits or administration, and does not prove a complete redemption workflow.",
+        "Underlying initialized as Ethereum USDM 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C; assets use USDM units (18 decimals), shares use wUSDM units. Wrapping requires caller USDM balance and allowance to the proxy. Unwrapping burns owner wUSDM; caller other than owner spends owner-to-caller wUSDM allowance. Intended nonzero receiver and zero native value required.",
+        "Wrapper transfer/mint/burn hook checks underlying USDM.isBlocked(from), not recipient: burns check owner, mints check zero address. USDM transfers additionally check underlying sender (caller for wrapping, proxy for unwrapping). Either wrapper or underlying pause reverts actions; max/preview reads do not ensure eligibility or success. Tokens received by blocked addresses can become inaccessible.",
+        "ERC-4626 conversions use virtual +1 asset/+1 share, zero decimals offset and current wrapper USDM balance. Deposit shares/redeem assets round down; mint assets/withdraw shares round up. Positive small deposits or redemptions may yield zero output. Donation/rebase/multiplier changes affect conversions; no caller-set minimum output, maximum input or deadline exists.",
+        "Reviewed underlying USDM transfer accounting floors conversion to internal shares; returned/events/preview amounts are nominal and need not equal recipient balance delta. SafeERC20 checks call success/optional boolean, not exact received balances. Underlying administrator can change rewardMultiplier, block senders, pause and manage upgrade roles despite the economic wind-down.",
+        "Calls target the exact proxy, not implementation. Sourcify and explorer report implementation 0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c; service exact_match labels and source review are not fresh runtime/storage/role/implementation-persistence attestation. Deployed wrapper retains 49-slot storage gap versus 48 in pinned final official source; historical audit explicitly notes this difference and future-upgrade storage-layout constraint.",
+        "Phase-3 terms retain U.S.-person and restricted-jurisdiction prohibitions. Catalog metadata does not establish legal eligibility or bypass independent grants, pause checks, canonical ABI/value validation, recipient/destination or execution controls."
+      ]
+    },
+    {
+      "capabilityId": "mountain-wusdm:v1:1:0x57f5e098cad7a3d1eed53991d4d66c45c9af7812:withdraw",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,address)",
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.mountainprotocol.com/legacy-docs/usdm-token.md ; https://sourcify.dev/server/v2/contract/1/0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812?fields=all ; https://sourcify.dev/server/v2/contract/1/0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c?fields=all ; https://docs.mountainprotocol.com/wind-down-documentation/ongoing-proof-of-reserves.md",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "mountain-wusdm",
+      "label": "Mountain wUSDM withdraw",
+      "operation": "withdraw",
+      "warnings": [
+        "Mountain USDM is in Phase-3 wind-down effective 2025-08-22: issuer primary issuance/redemption and accounts are discontinued, rewards are zero, and former Treasury/$1 redemption claims no longer apply. Official reserves documentation describes a separate Ethereum Uniswap v4 wUSDM/USDC pool; no pool liquidity, backing, peg, yield or execution guarantee is made.",
+        "deposit/mint only wrap existing USDM into wUSDM and are included because official Phase-3 instructions require wrapping before some USDC exit routes. withdraw/redeem return USDM, not USDC or fiat. This admission does not include swaps, bridges, issuer mint/burn, generic transfers, approvals, permits or administration, and does not prove a complete redemption workflow.",
+        "Underlying initialized as Ethereum USDM 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C; assets use USDM units (18 decimals), shares use wUSDM units. Wrapping requires caller USDM balance and allowance to the proxy. Unwrapping burns owner wUSDM; caller other than owner spends owner-to-caller wUSDM allowance. Intended nonzero receiver and zero native value required.",
+        "Wrapper transfer/mint/burn hook checks underlying USDM.isBlocked(from), not recipient: burns check owner, mints check zero address. USDM transfers additionally check underlying sender (caller for wrapping, proxy for unwrapping). Either wrapper or underlying pause reverts actions; max/preview reads do not ensure eligibility or success. Tokens received by blocked addresses can become inaccessible.",
+        "ERC-4626 conversions use virtual +1 asset/+1 share, zero decimals offset and current wrapper USDM balance. Deposit shares/redeem assets round down; mint assets/withdraw shares round up. Positive small deposits or redemptions may yield zero output. Donation/rebase/multiplier changes affect conversions; no caller-set minimum output, maximum input or deadline exists.",
+        "Reviewed underlying USDM transfer accounting floors conversion to internal shares; returned/events/preview amounts are nominal and need not equal recipient balance delta. SafeERC20 checks call success/optional boolean, not exact received balances. Underlying administrator can change rewardMultiplier, block senders, pause and manage upgrade roles despite the economic wind-down.",
+        "Calls target the exact proxy, not implementation. Sourcify and explorer report implementation 0x616B7f7D7FAAF87beaA35c5759425cCCf4c9DB0c; service exact_match labels and source review are not fresh runtime/storage/role/implementation-persistence attestation. Deployed wrapper retains 49-slot storage gap versus 48 in pinned final official source; historical audit explicitly notes this difference and future-upgrade storage-layout constraint.",
+        "Phase-3 terms retain U.S.-person and restricted-jurisdiction prohibitions. Catalog metadata does not establish legal eligibility or bypass independent grants, pause checks, canonical ABI/value validation, recipient/destination or execution controls."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "rocket-pool",
+      "familyVersion": "v1",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xDD3f50F8A6CafbE9b31a427582963f465E745AF8",
+          "status": "inactive",
+          "contractName": "Rocket Deposit Pool",
+          "sourceRefs": ["rocket-pool-mainnet-deployments", "rocket-pool-deposit-interface"],
+          "abiFunctions": [
+            { "type": "function", "name": "deposit", "stateMutability": "payable", "inputs": [], "outputs": [] }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0xae78736Cd615f374D3085123A210448E74Fc6393",
+          "status": "inactive",
+          "contractName": "Rocket Token rETH",
+          "sourceRefs": ["rocket-pool-mainnet-deployments", "rocket-pool-reth-interface", "rocket-pool-reth-implementation"],
+          "abiFunctions": [
+            { "type": "function", "name": "burn", "stateMutability": "nonpayable", "inputs": [{ "name": "_rethAmount", "type": "uint256" }], "outputs": [] }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    { "sourceId": "rocket-pool-mainnet-deployments", "url": "https://raw.githubusercontent.com/rocketpool/docs.rocketpool.net/f5ebf7e5b387bd3b10d8ecdeeb37dc6c387688b3/docs/en/protocol/contracts-integrations.md", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official documentation records Mainnet Deposit Pool and rETH deployments; Rocket Storage address lookup is dynamic and was not queried at runtime." },
+    { "sourceId": "rocket-pool-deposit-interface", "url": "https://github.com/rocket-pool/rocketpool/blob/fef41a4f7cf99d7d66313c0ba04deb8ba2dabf88/contracts/interface/deposit/RocketDepositPoolInterface.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official interface declares payable deposit() with no parameters or return values." },
+    { "sourceId": "rocket-pool-reth-interface", "url": "https://github.com/rocket-pool/rocketpool/blob/fef41a4f7cf99d7d66313c0ba04deb8ba2dabf88/contracts/interface/token/RocketTokenRETHInterface.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official interface declares burn(uint256 _rethAmount) with no return values." },
+    { "sourceId": "rocket-pool-reth-implementation", "url": "https://github.com/rocket-pool/rocketpool/blob/fef41a4f7cf99d7d66313c0ba04deb8ba2dabf88/contracts/contract/token/RocketTokenRETH.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned implementation indicates redemption depends on contract liquid ETH; no current liquidity or execution guarantee is made." }
+  ]
+}

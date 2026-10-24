@@ -14,8 +14,9 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 
 ### 3.1 Authentication and wallet onboarding
 
-- The backend must accept Openfort IAM bearer tokens for dashboard/user-session operations.
-- `POST /auth/session` and compatibility alias `POST /auth/social` must synchronize the Openfort IAM user to a local `User` record.
+- Openfort IAM bearer identity is accepted for login exchange and fresh embedded-wallet ownership proof only; ordinary dashboard routes require a live, MFA-verified local HttpOnly session cookie.
+- `POST /auth/session` must synchronize the existing Openfort user, create a pending-MFA local session, and return its snapshot/CSRF token; no `/auth/social` alias is exposed.
+- Pending MFA has a 15-minute deadline; session expiry is fixed at one hour. Current/all-device logout revokes the relevant sessions and exact-session step-up proofs. Unsafe cookie requests require trusted Origin and CSRF.
 - Users must be able to authorize an Openfort embedded EOA and persist Calibur agent-key registration progress per supported chain.
 - `UserWallet.openfortAccountId` must remain the stable Openfort account foreign key.
 
@@ -27,6 +28,8 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 - New keys must store a 27-character lookup prefix (`sk_` + 24 hex chars); legacy shorter prefixes must remain verifiable.
 - Lookup must verify every matching prefix candidate to tolerate prefix collisions.
 - A user may have at most 10 active keys.
+- Every newly created API key must be immutably bound to one wallet owned by its user; a wallet may have multiple keys, while the 10-active-key limit remains per user across wallets.
+- Dashboard key creation requires an owned wallet UUID. Refresh requires `{ "walletId": "<wallet UUID>" }`, revokes all active keys across all of that user's wallets, and creates one replacement bound to that wallet; no existing key can be rebound.
 - Active key names must be non-empty and unique per user.
 - Optional expiry must be bounded to a future date within 365 days.
 - Optional IP allowlists must compare against `request.ip` after Express trust-proxy handling.
@@ -35,21 +38,22 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 ### 3.3 Public signing API
 
 - `POST /v1/wallets/sign` must require `X-API-Key` and reject dashboard IAM-only requests.
+- Signing and sending must resolve the wallet from the API key's immutable binding. An optional send `walletId` must match that binding or be rejected.
 - Signing must use the user's Openfort-managed wallet/agent context; private keys must never leave Openfort.
 - Signing requests must be audited with API-key attribution snapshots.
 - Raw hash signing is disabled; supported inputs must be validated DTOs such as messages or typed data.
 
 ### 3.4 Public transaction API
 
-- `POST /v1/transactions/send` must require `X-API-Key`.
+- `POST /v1/transactions` must require `X-API-Key`; `/v1/transactions/send` is not exposed.
 - Requests must validate chain ID, interactions, value fields, and idempotency keys.
 - The service must persist transaction records with request hashes and API-key attribution snapshots for audit/idempotency.
-- `GET /v1/transactions/:id` must return only safe status fields for the owning API-key user.
+- `GET /v1/transactions/:id` must return only safe status fields when the key is bound to the transaction's wallet; another key for that wallet may read it, but a key bound to another wallet may not.
 - Public status responses must not include calldata, `requestHash`, or `interactionsHash`.
 
 ### 3.5 Frontend-only wallet operations
 
-- `GET /v1/wallets/balances`, `POST /v1/wallets/deposit-info`, and `POST /v1/wallets/withdraw` must require Openfort IAM auth and frontend-origin checks.
+- `GET /wallets/balances`, `GET /wallets/deposits`, and `POST /wallets/withdrawals` must require Openfort IAM auth and frontend-origin checks.
 - These endpoints must not be callable with API keys.
 
 ### 3.6 Health and operations

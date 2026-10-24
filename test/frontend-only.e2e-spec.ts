@@ -6,7 +6,7 @@ import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/core/database/prisma.service';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
-import { OpenfortUserGuard } from '../src/common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../src/common/guards/app-session.guard';
 
 process.env.NODE_ENV = 'test';
 process.env.OPENFORT_API_KEY = 'sk_test_fake_openfort_key_for_testing';
@@ -37,7 +37,7 @@ describe('Frontend-only access control (e2e)', () => {
           timeToBlockExpire: 0,
         }),
       })
-      .overrideGuard(OpenfortUserGuard)
+      .overrideGuard(AppSessionGuard)
       .useValue({
         canActivate: (context: any) => {
           const req = context.switchToHttp().getRequest();
@@ -77,8 +77,7 @@ describe('Frontend-only access control (e2e)', () => {
 
   it('rejects frontend-only routes when Origin/Referer is absent', async () => {
     const res = await request(app.getHttpServer())
-      .get('/v1/api-keys')
-      .set('Authorization', 'Bearer fake-openfort-token')
+      .get('/api-keys')
       .expect(403);
 
     expect(res.body).toEqual(
@@ -86,15 +85,19 @@ describe('Frontend-only access control (e2e)', () => {
         statusCode: 403,
         code: 'BAD_REQUEST',
         requestId: expect.any(String),
-        path: '/v1/api-keys',
+        path: '/api-keys',
       }),
     );
   });
 
   it('allows frontend-only routes from the configured development frontend origin', async () => {
-    const res = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .get('/v1/api-keys')
-      .set('Authorization', 'Bearer fake-openfort-token')
+      .set('Origin', 'http://localhost:3000')
+      .expect(404);
+
+    const res = await request(app.getHttpServer())
+      .get('/api-keys')
       .set('Origin', 'http://localhost:3000')
       .expect(200);
 

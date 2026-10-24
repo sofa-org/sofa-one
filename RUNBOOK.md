@@ -79,11 +79,69 @@ Both endpoints are public. They never expose secrets, account/user data, or prov
 - Confirm the key is not revoked or expired.
 - Check IP allowlist against `request.ip` with trust-proxy configured correctly.
 - Remember raw API keys are shown only once; regenerate if lost.
+- Generic contract-call sends may also fail with `DEFI_*` errors when the call is
+  unlisted, the key lacks a grant, the capability is paused, or policy state is unavailable.
+  Review the capability catalog and key grants in the dashboard; do not retry using an
+  unrestricted legacy key.
+- Generic API-key message/typed-data signing is denied except the exact Polymarket CLOB
+  ClobAuth bootstrap, CLOB V2 order, and DepositWallet Batch policies. They require `canSign`,
+  `canUseEoaExecution`, and either `all` capability mode or custom mode explicitly containing
+  the matching signing capability; independent EOA/destination/risk controls still apply.
+  Other denials can have different policy error codes; destination protection may deny
+  earlier. Dashboard withdrawals/payments are separate.
+
+### Shared backend RPC configuration migration
+
+- Rename every `SIMULATION_RPC_URLS__<chainId>` deployment variable to
+  `RPC_URLS__<chainId>`, preserving its URL, and restart/redeploy all backend instances.
+  The old variables are no longer read; there is no compatibility alias.
+- Simulation and Polymarket Order/Batch verification share `rpc.urls.<chainId>`.
+  Every supported chain defaults to its registry's first HTTPS RPC. Explicit
+  `RPC_URLS__<chainId>` overrides take precedence; invalid/empty overrides fail startup.
+  Provider errors still fail closed, with no runtime failover. Bundler, USDC receipt-provider,
+  and browser RPC configuration are unchanged.
+
+### Polymarket order signing returns deposit wallet verification unavailable
+
+- `503` with `Polymarket deposit wallet verification unavailable` is a pre-signing
+  verification failure, before Openfort signing. It can mean the backend Polygon RPC is
+  missing, the RPC call failed, `eth_chainId` is not `0x89` (137), or `eth_getCode` for
+  the DepositWallet returned no runtime code. The response alone does not distinguish them.
+- Optionally override the default with `RPC_URLS__137` in the **backend process environment**, using a reachable
+  Polygon mainnet HTTPS RPC. For local development, an explicit public endpoint example is
+  `RPC_URLS__137=https://polygon-bor-rpc.publicnode.com`; use a reliable provider
+  for production. The backend reads `rpc.urls.137`; `VITE_POLYGON_RPC_URL`,
+  `DEFAULT_CHAIN_ID`, and frontend RPC configuration do not supply this value.
+- Restart/redeploy the backend after changing the environment. From that same runtime,
+  check `eth_chainId` and `eth_getCode` for the request's `message.verifyingContract`.
+  A successful read from a developer machine does not establish deployment connectivity.
+  Default selection does not bypass verification; failed RPC calls still reject signing.
+- Generate a fresh order before retrying: order `timestamp` is in milliseconds and must
+  be within five minutes of server time. Replaying an old diagnostic payload can instead
+  fail typed-data validation with a 400.
+- Passing this preflight proves only reachable Polygon runtime code. Signing still checks
+  recovered signer, unchanged code, and ERC-1271; failures in that later stage return
+  `POLYMARKET_SIGNING_FAILED`. A successful preflight is not successful CLOB order placement.
+
+### Capability mode or grant confusion
+
+- Inspect the key's configured `capabilityMode` and `allowedCapabilityIds` in dashboard
+  metadata; these are configuration, not an expanded effective-ID list.
+- `all` dynamically follows active, unpaused reviewed catalog capabilities. `custom` allows
+  only exact IDs, and `[]` denies all catalog capabilities. Neither mode overrides API-key
+  permissions or independent authorization and safety checks.
+- Capability create/edit/rotation routes are application-session/frontend-only; PATCH requires step-up and
+  replaces the complete configuration. These routes are intentionally absent from
+  `openapi.yaml`.
 
 ### Dashboard route fails with frontend-only error
 
-- Confirm the request includes Openfort IAM bearer token.
-- Confirm `Origin`/`Referer` matches configured `CORS_ORIGIN`.
+- Confirm a live SOFA session cookie is sent with `credentials: 'include'`; IAM bearer tokens do not authenticate ordinary dashboard routes.
+- Check `GET /auth/session`: pending MFA cannot access business routes (`MFA_REQUIRED`); complete TOTP or recovery verification.
+- Unsafe requests need the current snapshot's `X-CSRF-Token` and an allowed Origin. Safe GET/HEAD may use an allowed Referer when Origin is absent.
+- Confirm SPA/API are same-site, production is HTTPS, and proxies preserve cookies/headers. Cross-site cookie hosting is unsupported.
+- A provider-only `AUTH_PROVIDER_INVALID` 401 requires wallet identity reconnection, not SOFA logout; `AUTH_PROVIDER_UNAVAILABLE` 502 requires retry, not repeated sign-in.
+- Local sessions expire absolutely after one hour; upstream IAM revocation is not instantaneous locally. Current/all-device logout and account freeze take effect at subsequent auth/proof checks.
 - Do not call frontend-only routes from API-key clients.
 
 ### Transaction status lacks calldata/request details
@@ -142,6 +200,13 @@ This is intentional. Public status responses are safe by design and must not exp
 - Run migrations before deploying code that expects schema changes; this includes the
   additive `BillingWorkerHeartbeat` migration before enabling the billing worker in
   production.
+- Capability-mode rollout is a coordinated application/database migration: schedule a
+  controlled maintenance window with all API writers stopped, apply the new migration, then
+  start only the new application version. Do not run mixed old/new writers; old versions do
+  not maintain the new mode invariant. The one-time migration maps existing empty grant lists
+  to `all` and nonempty lists to `custom` without changing IDs. This deliberately treats old
+  empty lists as approval of `all`; there is no recurring repair/backfill. Follow the actual
+  migration's deployment instructions and do not apply it ad hoc.
 - Update documentation alongside behavior changes.
 - Treat `BILLING_WORKER_ENABLED=true` as an explicit production opt-in; verify its startup
   log line after each deployment that changes billing behavior.

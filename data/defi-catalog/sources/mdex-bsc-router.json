@@ -1,0 +1,2646 @@
+{
+  "schemaVersion": 1,
+  "chainId": 56,
+  "address": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+  "protocol": "mdex-bsc",
+  "version": "v1",
+  "website": "https://bsc.mdex.com/",
+  "websiteEvidence": {
+    "sourceRef": "https://bsc.mdex.com/ ; https://mdexdoc.gitbook.io/doc/master.md ; https://raw.githubusercontent.com/mdexSwap/bscswap/b845d8365344ce36a496176089a3ccf191a80b1d/static/js/main.c436dd1c.chunk.js",
+    "verifiedAt": "2026-10-17",
+    "evidence": "Independently fetched BSC website serves canonical bsc.mdex.com and Cypto Swap | Mdex metadata describing wallet swaps and MDX rewards. Its published main bundle links github.com/mdexSwap; official GitBook overview names MDEX.COM and BSC support. This is an attributable informational directory URL, not proof of operational UI, current mining rewards or liquidity."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+    "deployment": {
+      "transactionHash": "0x1b5f2401d309ed2173707abd7914eea38281b1cd90640b4a0c4500199e3bc7b0",
+      "blockNumber": "19451122",
+      "transactionIndex": "54",
+      "deployer": "0xC6F3B19075f20Ad4e9eFC7662ac2631d90AA7226"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "constructorArguments": "0x0000000000000000000000003cd1c46068daea5ebb0d3f55f6915b10648062b8000000000000000000000000bb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c",
+    "constructorDependencies": {
+      "factory": "0x3CD1C46068dAEa5Ebb0d3f55F6915B10648062B8",
+      "wrappedNative": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+      "evidence": "Exact-address source-service creation transformationValues.constructorArguments and onchain creation suffix bind constructor factory and WBNB. Factory matches the official BSC mapping; both are immutable in deployed source. No live RPC configuration query was performed."
+    },
+    "evidence": "Pinned official mdexSwap/bscswap README explicitly maps factory 0x3CD1C46068dAEa5Ebb0d3f55F6915B10648062B8, old_router 0x7DAe51BD3E3376B8c7c4900E9107f12Be3AF1bA8 and new_router at this exact target. Exact chain-56 Sourcify record binds MdexRouter ABI/source and reports non-proxy resolution. This review selects new_router only; it does not confuse the factory, old router, or swap-mining contract with the target. v1 is catalog-record version, not an assertion that official product naming calls this Router V1."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.6.6+commit.6c089d02",
+      "compilerSettings": {
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        }
+      },
+      "name": "MdexRouter",
+      "fullyQualifiedName": "MdexRouter.sol:MdexRouter"
+    },
+    "compilerMetadataSettings": {
+      "compilationTarget": {
+        "MdexRouter.sol": "MdexRouter"
+      },
+      "evmVersion": "istanbul",
+      "libraries": {},
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "remappings": []
+    },
+    "matchId": "6946042",
+    "sourceServiceVerifiedAt": "2025-07-09T15:18:26Z",
+    "reportedCreationMatch": "match",
+    "reportedRuntimeMatch": "match",
+    "sourceFile": "MdexRouter.sol",
+    "sourceSha256": "11c7a9cc67df557a41593274773f0e2d1692fb26d443f02b5f95c908092abcbf",
+    "sourceMetadata": {
+      "keccak256": "0x34cc1c39c0daeb7a38829d55326e1f04794ad705f3df3d1e00bdf428db2d058d",
+      "urls": [
+        "bzz-raw://a8a07127f65434f759a0f0ace1105f2a48d37f47759c84473ef39b9bb8d609b4",
+        "dweb:/ipfs/QmdqfCuncp8p1JLj7dM3fh1R5PMxcKgSKdwd5VpoUKJixq"
+      ]
+    },
+    "evidence": "Complete original ABI copied from the exact BSC new_router address-bound source-service record, not a generic Uniswap/MDEX fork ABI. The full single-file deployed MdexRouter.sol was reviewed, including ownership, restriction/threshold administration, conditional swap-mining hooks, native settlement and fee-on-transfer accounting. Source-service match is preserved as match, not relabeled exact_match. Official contracts repository bscContracts/router.sol describes the older router and lacks this deployed restriction/threshold surface; it is contextual only, not substituted or claimed byte-identical. The deployed ABI is authoritative. Selected ABI fragments retain all original fields; no legacy constant/payable flags occur."
+  },
+  "lifecycleEvidence": {
+    "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://mdexdoc.gitbook.io/doc/announcement.md ; https://mdexdoc.gitbook.io/doc/announcement/announcement-on-the-heco-network-shutdown-and-clearance-of-certain-heco-assets.md ; https://bsc.mdex.com/",
+    "verifiedAt": "2026-10-17",
+    "evidence": "Official pinned frontend mapping distinguishes old_router from new_router. The official November 20, 2024 notice says HECO will go offline January 15, 2025 and warns about HECO asset clearance; it does not announce a BSC-router shutdown. Official announcement index and independent BSC website retrieval were reviewed. No current BSC operation/reward/liquidity guarantee is inferred from historical documentation or a reachable static frontend."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_WBNB",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "DelRestrictPair",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "pair",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OwnershipTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SetRestrictPair",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "pair",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SetThreshold",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "pair",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "threshold",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "WBNB",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountTokenDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "defaultThreshold",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "token0",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "token1",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "token0",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "token1",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getThreshold",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_pair",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isOwner",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "multDelRestrictPair",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_pairs",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "multSetRestrictPair",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_pairs",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pairFor",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pair",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quote",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "restrict",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "setDefaultThreshold",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_threshold",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setSwapMining",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_swapMininng",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setThreshold",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_pair",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_threshold",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setUnrestricted",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "users",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "opt",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapETHForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactTokensForETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapMining",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "swapTokensForExactETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "threshold",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transferOwnership",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unrestricted",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "WBNB",
+      "signature": "WBNB()",
+      "decision": "excluded",
+      "reason": "Read-only WBNB getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit caller-funded token/token liquidity provision through the immutable factory; may create a pair and mints LP to the requested recipient. Deadline applies; minimum checks are branch-dependent and there is no minimum LP-output parameter."
+    },
+    {
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit caller-funded token/native-BNB liquidity provision; wraps the required msg.value through immutable WBNB, mints LP to recipient and refunds excess BNB to caller. Deadline and branch-dependent token/native minimum checks apply; no minimum LP output."
+    },
+    {
+      "functionName": "defaultThreshold",
+      "signature": "defaultThreshold()",
+      "decision": "excluded",
+      "reason": "Read-only defaultThreshold getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "decision": "excluded",
+      "reason": "Read-only factory getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "getAmountIn",
+      "signature": "getAmountIn(uint256,uint256,uint256,address,address)",
+      "decision": "excluded",
+      "reason": "Read-only getAmountIn getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(uint256,uint256,uint256,address,address)",
+      "decision": "excluded",
+      "reason": "Read-only getAmountOut getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "getAmountsIn",
+      "signature": "getAmountsIn(uint256,address[])",
+      "decision": "excluded",
+      "reason": "Read-only getAmountsIn getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "getAmountsOut",
+      "signature": "getAmountsOut(uint256,address[])",
+      "decision": "excluded",
+      "reason": "Read-only getAmountsOut getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "getThreshold",
+      "signature": "getThreshold(address)",
+      "decision": "excluded",
+      "reason": "Read-only getThreshold getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "isOwner",
+      "signature": "isOwner(address)",
+      "decision": "excluded",
+      "reason": "Read-only isOwner getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "multDelRestrictPair",
+      "signature": "multDelRestrictPair(address[])",
+      "decision": "excluded",
+      "reason": "Owner-only batch removal of mining-reward restriction flags; administrative configuration, not ordinary user swaps/liquidity."
+    },
+    {
+      "functionName": "multSetRestrictPair",
+      "signature": "multSetRestrictPair(address[])",
+      "decision": "excluded",
+      "reason": "Owner-only batch addition of mining-reward restriction flags; administrative configuration, not ordinary user swaps/liquidity."
+    },
+    {
+      "functionName": "owner",
+      "signature": "owner()",
+      "decision": "excluded",
+      "reason": "Read-only owner getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "pairFor",
+      "signature": "pairFor(address,address)",
+      "decision": "excluded",
+      "reason": "Read-only pairFor getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "quote",
+      "signature": "quote(uint256,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only quote getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/token removal; moves caller LP using allowance, burns to recipient and checks both burn-accounting output minimums and deadline."
+    },
+    {
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/native-BNB removal; consumes caller LP allowance, checks burn-accounting minimums/deadline and unwraps the calculated WBNB amount for recipient."
+    },
+    {
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit non-permit fee-supporting token/native-BNB removal; checks burn-accounting minimums/deadline but forwards the entire router token balance, without a net post-tax recipient-token minimum."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermit",
+      "signature": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Signature-bearing LP permit/approveMax removal path; excluded from this ordinary non-permit admission. The corresponding non-permit removal is selected separately."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Signature-bearing LP permit/approveMax removal path; excluded from this ordinary non-permit admission. The corresponding non-permit removal is selected separately."
+    },
+    {
+      "functionName": "removeLiquidityWithPermit",
+      "signature": "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Signature-bearing LP permit/approveMax removal path; excluded from this ordinary non-permit admission. The corresponding non-permit removal is selected separately."
+    },
+    {
+      "functionName": "renounceOwnership",
+      "signature": "renounceOwnership()",
+      "decision": "excluded",
+      "reason": "Privileged irreversible ownership renunciation; excluded administration."
+    },
+    {
+      "functionName": "restrict",
+      "signature": "restrict(address)",
+      "decision": "excluded",
+      "reason": "Read-only restrict getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "setDefaultThreshold",
+      "signature": "setDefaultThreshold(uint256)",
+      "decision": "excluded",
+      "reason": "Owner-only default mining-reward threshold configuration; excluded administration."
+    },
+    {
+      "functionName": "setSwapMining",
+      "signature": "setSwapMining(address)",
+      "decision": "excluded",
+      "reason": "Owner-only replacement or disabling of the external swap-mining hook; excluded dependency administration."
+    },
+    {
+      "functionName": "setThreshold",
+      "signature": "setThreshold(address,uint256)",
+      "decision": "excluded",
+      "reason": "Owner-only pair mining-reward threshold configuration; excluded administration."
+    },
+    {
+      "functionName": "setUnrestricted",
+      "signature": "setUnrestricted(address[],bool)",
+      "decision": "excluded",
+      "reason": "Owner-only batch caller mining-reward exemption configuration; excluded administration."
+    },
+    {
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-output native-BNB/token path swap; factory quotes required input, checks it against msg.value, wraps WBNB and refunds excess BNB to caller. Deadline and conditional per-hop mining hook apply."
+    },
+    {
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input native-BNB/token path swap; wraps msg.value through WBNB, checks quoted minimum output and deadline, and invokes conditional per-hop mining hooks."
+    },
+    {
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting exact-input native-BNB/token swap; wraps msg.value, uses actual pair input balances, checks recipient final-token balance increase and deadline, and applies conditional mining hooks."
+    },
+    {
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/native-BNB path swap funded by caller allowance; checks quoted output minimum/deadline, executes conditional mining hooks and unwraps calculated output WBNB."
+    },
+    {
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting exact-input token/native-BNB swap; uses actual pair input balances and conditional mining hooks, checks deadline, then checks/unwraps the entire router WBNB balance rather than an isolated output delta."
+    },
+    {
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/token path swap funded by caller allowance; checks factory-quoted minimum output/deadline and executes conditional per-hop mining hooks with empty pair callback data."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting exact-input token/token path swap; uses actual pair input balances, checks final recipient-token balance increase/deadline and executes conditional per-hop mining hooks."
+    },
+    {
+      "functionName": "swapMining",
+      "signature": "swapMining()",
+      "decision": "excluded",
+      "reason": "Read-only swapMining getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-output token/native-BNB path swap; factory quotes required caller-funded input, checks maximum input/deadline, executes conditional mining hooks and unwraps calculated WBNB output."
+    },
+    {
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-output token/token path swap; checks factory-quoted input against caller maximum and deadline, pulls caller tokens by allowance and applies conditional per-hop mining hooks."
+    },
+    {
+      "functionName": "threshold",
+      "signature": "threshold(address)",
+      "decision": "excluded",
+      "reason": "Read-only threshold getter, quote or helper; no transaction capability or read API is created."
+    },
+    {
+      "functionName": "transferOwnership",
+      "signature": "transferOwnership(address)",
+      "decision": "excluded",
+      "reason": "Privileged ownership transfer; excluded administration."
+    },
+    {
+      "functionName": "unrestricted",
+      "signature": "unrestricted(address)",
+      "decision": "excluded",
+      "reason": "Read-only unrestricted getter, quote or helper; no transaction capability or read API is created."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:add-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountADesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router addLiquidity",
+      "operation": "add-liquidity",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:add-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountTokenDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router addLiquidityETH",
+      "operation": "add-liquidity-eth",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router removeLiquidity",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:remove-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router removeLiquidityETH",
+      "operation": "remove-liquidity-eth",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router removeLiquidityETHSupportingFeeOnTransferTokens",
+      "operation": "remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:swap-eth-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapETHForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router swapETHForExactTokens",
+      "operation": "swap-eth-for-exact-tokens",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:swap-exact-eth-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router swapExactETHForTokens",
+      "operation": "swap-exact-eth-for-tokens",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:swap-exact-tokens-for-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router swapExactTokensForETH",
+      "operation": "swap-exact-tokens-for-eth",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:swap-exact-tokens-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router swapExactTokensForTokens",
+      "operation": "swap-exact-tokens-for-tokens",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:swap-tokens-for-exact-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router swapTokensForExactETH",
+      "operation": "swap-tokens-for-exact-eth",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    },
+    {
+      "capabilityId": "mdex-bsc:v1:56:0x62c1a0d92b09d0912f7bb9c96c5ecdc7f2b87059:swap-tokens-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059",
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://github.com/mdexSwap/bscswap/blob/b845d8365344ce36a496176089a3ccf191a80b1d/README.md ; https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "mdex-bsc",
+      "label": "MDEX BSC Router swapTokensForExactTokens",
+      "operation": "swap-tokens-for-exact-tokens",
+      "warnings": [
+        "Caller selects token path/assets, amounts, recipient, deadline and financial minimums/maximums. Caller balances and token/LP allowances are required; metadata does not prove complete workflows or profitable/successful execution.",
+        "ETH-named native functions spend/return BNB on BSC through constructor-bound WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Payable calls can spend msg.value; nonpayable calls require zero native value.",
+        "The immutable factory supplies pair addresses, reserves and fee-aware quotes. Pairs are called with empty callback data; no caller-selected opaque executor or arbitrary callback is admitted. Factory fee configuration, pool liquidity and current runtime identity are not attested.",
+        "The owner can replace swapMining. Both swap loops may call that external hook before each pair swap; the returned bool is ignored, but a revert or incompatible hook can revert the transaction. Native account versus contract caller, restrict[pair], unrestricted[caller] and output/reserve thresholds condition reward-hook invocation; these are not swap-denial rules and no MDX reward is promised.",
+        "Fee-supporting swaps compute input from pair balance minus reserve. Token-output supporting swaps check recipient balance increase; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Fee-supporting liquidity removal transfers the entire router token balance; burn-accounting minimums do not guarantee net post-tax receipts.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pair uses both desired amounts without separate minimum checks; nonempty branches check only the calculated optimal-side amount. No minimum LP-token output exists. Deadlines, slippage/tax behavior and recipients remain caller responsibilities.",
+        "Official deployment mapping calls this new_router and identifies a separate old_router. The official November 2024 shutdown notice concerns HECO, not this BSC deployment; historical website/docs and deployed source do not establish current service availability, reward configuration, liquidity or financial safety.",
+        "Source-service match status is historical provenance, not a fresh bytecode or execution check. Active catalog metadata creates no API-key grant and bypasses no independent authorization, pause, signing or safety policy."
+      ]
+    }
+  ],
+  "sourceReview": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x62c1A0d92B09D0912F7BB9c96C5ecdC7F2b87059?fields=sources,metadata",
+    "nativeAsset": "Four payable selected functions (addLiquidityETH and three BNB-input swaps) wrap BNB through immutable WBNB. Exact-output BNB-input swap and native liquidity addition refund excess BNB to caller. Native-output swaps and removals unwrap WBNB; receive accepts only WBNB.",
+    "swapMining": "Both _swap and _swapSupportingFeeOnTransferTokens condition external ISwapMining.swap(caller,input,output,amountOut) on a nonzero configured hook. EOAs (tx.origin == msg.sender) invoke directly. Contract callers invoke for unrestricted pairs; restricted pairs additionally require unrestricted[caller] and both output-to-reserve ratios at or below getThreshold(pair). If ineligible the hook is skipped, not the pair swap. Threshold is per-pair when nonzero, otherwise default, scaled by 1e8/10000. Returned bool is ignored; external call failures still propagate. Current hook and reward eligibility are not asserted.",
+    "liquidity": "addLiquidity can create a factory pair and mints to caller-selected recipient; minimum checks are branch-dependent and no minimum LP-output exists. Ordinary removal requires caller LP allowance, burns LP to explicit recipient (or router for native settlement), enforces both burn-accounting minimums and deadline. No signature capability is added.",
+    "feeOnTransfer": "Supporting swaps use actual pair input balance-minus-reserve. Token-output supporting swaps compare recipient final-token balance increase with amountOutMin. Native-output supporting swaps instead use the entire router WBNB balance. Supporting removal sends the entire router token balance and checks burn-accounting minimums, not net taxed receipt. Ordinary exact-output paths do not solve token-tax accounting.",
+    "factoryAndCallbacks": "Immutable factory supplies pairFor, creation, reserves and quotes, including token-aware getAmountIn/Out. Pair swaps always pass new bytes(0). No arbitrary executor, flash-swap callback or opaque multicall function appears in this deployed router ABI."
+  },
+  "reviewSummary": {
+    "abiEntryCount": 47,
+    "functionCount": 41,
+    "admittedFunctionCount": 14,
+    "excludedFunctionCount": 27,
+    "excludedCategories": {
+      "gettersQuotesAndHelpers": 16,
+      "signaturePermitPaths": 3,
+      "ownerAndMiningAdministration": 8
+    },
+    "nonFunctionEntries": "One constructor, four events and one receive; none creates a capability.",
+    "scope": "Nine explicit exact-input/exact-output swaps and five ordinary non-permit liquidity actions at official BSC new_router. No old-router capability, mining administration, signature path, getter, arbitrary executor or callback is admitted.",
+    "blockers": []
+  }
+}

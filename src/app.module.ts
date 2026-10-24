@@ -19,6 +19,7 @@ import { SecurityNotificationModule } from './modules/security-notifications/sec
 import { BillingModule } from './modules/billing/billing.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { RequestContextModule } from './common/request-context/request-context.module';
+import { DefiModule } from './modules/defi/defi.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { RequestContextModule } from './common/request-context/request-context.m
     SecurityEventModule,
     SecurityNotificationModule,
     BillingModule,
+    DefiModule,
   ],
   providers: [
     RequestIdMiddleware,

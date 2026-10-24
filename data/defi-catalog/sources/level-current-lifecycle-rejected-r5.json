@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Level Finance",
+  "reviewedAt": "2026-10-24",
+  "admissionStatus": "rejected",
+  "reason": "The current Ethereum lvlUSD/slvlUSD product is explicitly sunset. Current official homepage and linked community update state the Level protocol is winding down, no further minting or yield, and post-frontend access is unstaking/redemption only. This rejection is for Level money's Ethereum stablecoin product, not merely the older BSC leveraged-trading protocol.",
+  "evidence": [
+    {
+      "sourceRef": "https://www.level.money/",
+      "kind": "current-primary-website",
+      "observations": [
+        "Banner announces the Level team is joining a leading DeFi protocol and will be sunsetting the product.",
+        "The banner links the official Level community update."
+      ]
+    },
+    {
+      "sourceRef": "https://level-money.gitbook.io/level-documentation/update-for-the-level-community.md",
+      "kind": "official-product-sunset-announcement",
+      "observations": [
+        "States Level team is joining the Sky ecosystem as part of Grove.",
+        "Explicitly says Level protocol, including lvlUSD and slvlUSD, will be sunset.",
+        "Final yield distribution October 2, 2025; no yield after that date even if staked.",
+        "Frontend maintained until December 15, 2025, then users can interact with contracts to unstake and redeem.",
+        "Mints paused, redemption rates fixed 1:1 and public redemption offered; these exit-only functions do not override lifecycle exclusion.",
+        "Provides Ethereum LevelMinting 0x9136aB0294986267b71BeED86A75eeb3336d09E1 and initiateRedeem/completeRedeem instructions as integrator exit handling."
+      ]
+    }
+  ],
+  "consideredDeployments": [
+    {
+      "chainId": 1,
+      "address": "0x9136aB0294986267b71BeED86A75eeb3336d09E1",
+      "product": "LevelMinting lvlUSD redemptions",
+      "status": "sunset-exit-only",
+      "selectedFunctions": []
+    }
+  ],
+  "limits": [
+    "Lifecycle rejection precedes deployment ABI admission. No complete ABI inventory or current implementation identity is asserted for the rejected target.",
+    "The exact dates and exit terms above are announcement statements, not runtime state, balances, claim availability or successful-execution attestations.",
+    "Acquisition of the team does not make the sunset Level product maintained, nor authorize admitting Grove or Sky a second time."
+  ]
+}

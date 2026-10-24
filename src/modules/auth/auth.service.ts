@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -18,7 +19,6 @@ import { getSupportedChain } from '../../common/chains/supported-chains';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { SecurityEventService } from '../security-events/security-event.service';
 import { ApiKeyService } from '../api-key/api-key.service';
-import { BillingEntitlementService } from '../billing/billing-entitlement.service';
 import { BillingWalletLifecycleService } from '../billing/billing-wallet-lifecycle.service';
 import type { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
 
@@ -28,7 +28,7 @@ type WalletResponse = {
   provisioningStatus: string | null;
   walletAddress: string | null;
   status: string;
-  agentWalletAddress?: string | null;
+  signerAddress: string | null;
   agentKeyHash?: string | null;
   chainAuthorizations: Array<{
     chainId: number;
@@ -53,7 +53,6 @@ export class AuthService {
     private readonly openfort: OpenfortService,
     private readonly apiKeyService: ApiKeyService,
     private readonly configService: ConfigService,
-    private readonly billingEntitlements: BillingEntitlementService,
     private readonly walletLifecycle: BillingWalletLifecycleService,
     @Optional()
     private readonly requestContext?: RequestContextService,
@@ -85,6 +84,7 @@ export class AuthService {
       where: { socialId },
     include: { wallets: { include: { chainAuthorizations: true, provisioningIntent: true }, orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] } },
     });
+    if (existing?.frozenAt) throw new ForbiddenException('User account is frozen');
 
     let userId: string;
     let wallets: any[] = existing?.wallets ?? [];
@@ -175,10 +175,6 @@ export class AuthService {
     };
   }
 
-  /** @deprecated Use syncOpenfortSession. Kept as a compatibility alias for older callers/tests. */
-  async handleSocialLogin(openfortUserId: string, _depth = 0) {
-    return this.syncOpenfortSession(openfortUserId, undefined, undefined, undefined, _depth);
-  }
 
   async authorizeEmbeddedWallet(
     openfortUserId: string,
@@ -218,14 +214,14 @@ export class AuthService {
         wallet = { ...wallet, openfortAccountId: authorized.accountId!, walletAddress: authorized.address };
       }
       if (!wallet) {
-        const placeholder = await tx.userWallet.findFirst({ where: { userId: user.id, status: 'pending_embedded_wallet', openfortAccountId: null, walletAddress: null, agentOpenfortAccountId: null, agentWalletAddress: null, agentKeyHash: null, frozenAt: null, provisioningIntent: null, chainAuthorizations: { none: {} } } });
+        const placeholder = await tx.userWallet.findFirst({ where: { userId: user.id, status: 'pending_embedded_wallet', openfortAccountId: null, walletAddress: null, agentOpenfortAccountId: null, signerAddress: null, agentKeyHash: null, frozenAt: null, provisioningIntent: null, chainAuthorizations: { none: {} } } });
         const reservedWalletId = placeholder?.id ?? randomUUID();
         await this.walletLifecycle.assertWalletReservationAllowed(tx, user.id, reservedWalletId, new Date());
         if (placeholder) wallet = await tx.userWallet.update({ where: { id: placeholder.id }, data: { openfortAccountId: authorized.accountId, walletAddress: authorized.address }, include: { provisioningIntent: true, chainAuthorizations: true } });
         else wallet = await tx.userWallet.create({ data: { id: reservedWalletId, userId: user.id, openfortAccountId: authorized.accountId, walletAddress: authorized.address, status: 'pending_embedded_wallet', isDefault: false }, include: { provisioningIntent: true, chainAuthorizations: true } });
       }
       if (wallet.frozenAt) throw new ConflictException('Wallet is frozen');
-      const parts = [wallet.agentOpenfortAccountId, wallet.agentWalletAddress, wallet.agentKeyHash];
+      const parts = [wallet.agentOpenfortAccountId, wallet.signerAddress, wallet.agentKeyHash];
       if (parts.some(Boolean) && !parts.every(Boolean)) throw new ConflictException('Incomplete agent wallet identity requires review');
       if (wallet.status === 'active' && !wallet.agentOpenfortAccountId) throw new ConflictException('Active wallet agent identity requires review');
       if (parts.every(Boolean) && !wallet.provisioningIntent) {
@@ -236,7 +232,7 @@ export class AuthService {
         }
         return { wallet, intent: null, accountId, legacyAgent: true };
       }
-      if (wallet.status === 'active' && wallet.agentOpenfortAccountId && wallet.agentWalletAddress && wallet.agentKeyHash) {
+      if (wallet.status === 'active' && wallet.agentOpenfortAccountId && wallet.signerAddress && wallet.agentKeyHash) {
         const isEligible = Boolean(wallet.walletAddress && !wallet.frozenAt);
         if (!wasEligible && isEligible) await this.walletLifecycle.recordWalletActivation(tx, accountId, user.id, now);
         return { wallet, intent: null, accountId };
@@ -254,7 +250,7 @@ export class AuthService {
         const current = await tx.userWallet.findUniqueOrThrow({ where: { id: reservation.wallet.id } });
         if (latestUser.frozenAt || current.frozenAt) throw new ConflictException('User or wallet is frozen');
         if (current.openfortAccountId !== authorized.accountId || current.walletAddress?.toLowerCase() !== address) throw new ConflictException('Wallet identity changed during activation');
-        if (current.agentOpenfortAccountId !== reservation.wallet.agentOpenfortAccountId || current.agentWalletAddress !== reservation.wallet.agentWalletAddress || current.agentKeyHash !== reservation.wallet.agentKeyHash) throw new ConflictException('Legacy agent identity changed during activation');
+        if (current.agentOpenfortAccountId !== reservation.wallet.agentOpenfortAccountId || current.signerAddress !== reservation.wallet.signerAddress || current.agentKeyHash !== reservation.wallet.agentKeyHash) throw new ConflictException('Legacy agent identity changed during activation');
         if (current.status !== 'active') {
           await tx.userWallet.update({ where: { id: current.id }, data: { status: 'active' } });
           await this.walletLifecycle.recordWalletActivation(tx, accountId, user.id, now);
@@ -271,7 +267,7 @@ export class AuthService {
           if (latestUser.frozenAt || latestWallet.frozenAt) throw new ConflictException('User or wallet is frozen');
           if (latestWallet.openfortAccountId !== authorized.accountId || latestWallet.walletAddress?.toLowerCase() !== address) throw new ConflictException('Wallet identity changed during provisioning');
           await this.walletLifecycle.assertWalletReservationAllowed(tx, user.id, latestWallet.id, now);
-          return tx.walletProvisioningIntent.updateMany({ where: { id: intent.id, status: 'pending', dispatchToken: null, agentOpenfortAccountId: null, agentWalletAddress: null, agentKeyHash: null }, data: { status: 'dispatched', dispatchToken: token, dispatchedAt: now } });
+          return tx.walletProvisioningIntent.updateMany({ where: { id: intent.id, status: 'pending', dispatchToken: null, agentOpenfortAccountId: null, signerAddress: null, agentKeyHash: null }, data: { status: 'dispatched', dispatchToken: token, dispatchedAt: now } });
         });
         if (dispatch.count === 1) {
           let agent: { id: string; address: string; keyHash: string };
@@ -282,23 +278,23 @@ export class AuthService {
             await this.prisma.walletProvisioningIntent.updateMany({ where: { id: intent.id, dispatchToken: token, status: 'dispatched' }, data: { status: 'uncertain' } });
             throw error;
           }
-          const saved = await this.prisma.walletProvisioningIntent.updateMany({ where: { id: intent.id, dispatchToken: token, status: 'dispatched', agentOpenfortAccountId: null, agentWalletAddress: null, agentKeyHash: null, wallet: { agentOpenfortAccountId: null, agentWalletAddress: null, agentKeyHash: null } }, data: { status: 'provisioned', agentOpenfortAccountId: agent.id, agentWalletAddress: getAddress(agent.address), agentKeyHash: agent.keyHash } });
+          const saved = await this.prisma.walletProvisioningIntent.updateMany({ where: { id: intent.id, dispatchToken: token, status: 'dispatched', agentOpenfortAccountId: null, signerAddress: null, agentKeyHash: null, wallet: { agentOpenfortAccountId: null, signerAddress: null, agentKeyHash: null } }, data: { status: 'provisioned', agentOpenfortAccountId: agent.id, signerAddress: getAddress(agent.address), agentKeyHash: agent.keyHash } });
           if (saved.count !== 1) throw new ConflictException('Provisioning result could not be safely recorded');
         } else { intent = await this.prisma.walletProvisioningIntent.findUniqueOrThrow({ where: { walletId: reservation.wallet.id } }); }
       }
       intent = await this.prisma.walletProvisioningIntent.findUniqueOrThrow({ where: { walletId: reservation.wallet.id } });
       if (intent.status !== 'provisioned') throw new ConflictException('Wallet provisioning is pending review');
-      if (!intent.dispatchToken || !intent.agentOpenfortAccountId || !intent.agentWalletAddress || !isAddress(intent.agentWalletAddress) || !intent.agentKeyHash || !/^0x[0-9a-fA-F]{64}$/.test(intent.agentKeyHash)) throw new ConflictException('Provisioned agent identity is incomplete or malformed');
+      if (!intent.dispatchToken || !intent.agentOpenfortAccountId || !intent.signerAddress || !isAddress(intent.signerAddress) || !intent.agentKeyHash || !/^0x[0-9a-fA-F]{64}$/.test(intent.agentKeyHash)) throw new ConflictException('Provisioned agent identity is incomplete or malformed');
       await this.walletLifecycle.withWalletAccountLock(user.id, async (tx, accountId, now) => {
         const latestUser = await tx.user.findUniqueOrThrow({ where: { id: user.id }, select: { frozenAt: true } });
         const current = await tx.userWallet.findUniqueOrThrow({ where: { id: reservation.wallet.id } });
         if (latestUser.frozenAt || current.frozenAt) throw new ConflictException('User or wallet is frozen');
         if (current.openfortAccountId !== authorized.accountId || current.walletAddress?.toLowerCase() !== address) throw new ConflictException('Wallet identity changed during provisioning');
-        const currentAgent = [current.agentOpenfortAccountId, current.agentWalletAddress, current.agentKeyHash];
-        if (currentAgent.some(Boolean) && (current.agentOpenfortAccountId !== intent.agentOpenfortAccountId || current.agentWalletAddress?.toLowerCase() !== intent.agentWalletAddress!.toLowerCase() || current.agentKeyHash !== intent.agentKeyHash)) throw new ConflictException('Wallet agent identity conflicts with provisioned intent');
+        const currentAgent = [current.agentOpenfortAccountId, current.signerAddress, current.agentKeyHash];
+        if (currentAgent.some(Boolean) && (current.agentOpenfortAccountId !== intent.agentOpenfortAccountId || current.signerAddress?.toLowerCase() !== intent.signerAddress!.toLowerCase() || current.agentKeyHash !== intent.agentKeyHash)) throw new ConflictException('Wallet agent identity conflicts with provisioned intent');
         if (current.status === 'active' && !currentAgent.every(Boolean)) throw new ConflictException('Active wallet agent identity requires review');
         if (current.status !== 'active') {
-          await tx.userWallet.update({ where: { id: current.id }, data: { status: 'active', agentOpenfortAccountId: intent.agentOpenfortAccountId!, agentWalletAddress: intent.agentWalletAddress!, agentKeyHash: intent.agentKeyHash! } });
+          await tx.userWallet.update({ where: { id: current.id }, data: { status: 'active', agentOpenfortAccountId: intent.agentOpenfortAccountId!, signerAddress: intent.signerAddress!, agentKeyHash: intent.agentKeyHash! } });
           await this.walletLifecycle.recordWalletActivation(tx, accountId, user.id, now);
         }
         await tx.walletProvisioningIntent.updateMany({ where: { id: intent.id, status: 'provisioned' }, data: { status: 'completed' } });
@@ -477,7 +473,7 @@ export class AuthService {
       wallet.status === 'active' &&
       wallet.walletAddress &&
       wallet.agentOpenfortAccountId &&
-      wallet.agentWalletAddress &&
+      wallet.signerAddress &&
       wallet.agentKeyHash,
     );
   }
@@ -618,13 +614,13 @@ export class AuthService {
   /**
    * Revoke all existing keys and issue a fresh one.
    */
-  async refreshApiKey(openfortUserId: string) {
+  async refreshApiKey(openfortUserId: string, walletId: string) {
     const user = await this.prisma.user.findUnique({
       where: { socialId: openfortUserId },
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const result = await this.apiKeyService.rotateApiKey(user.id, 'Refreshed');
+    const result = await this.apiKeyService.rotateApiKey(user.id, 'Refreshed', walletId);
 
     return { apiKey: result.rawKey };
   }
@@ -655,7 +651,7 @@ export class AuthService {
       provisioningStatus: (wallet as any).provisioningIntent?.status ?? null,
       walletAddress: wallet.walletAddress,
       status: wallet.status,
-      agentWalletAddress: wallet.agentWalletAddress,
+      signerAddress: wallet.signerAddress ?? null,
       agentKeyHash: wallet.agentKeyHash,
       chainAuthorizations: (wallet.chainAuthorizations ?? [])
         .map((authorization) => ({

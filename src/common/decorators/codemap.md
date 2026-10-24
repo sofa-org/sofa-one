@@ -15,7 +15,7 @@ Route- and parameter-level decorators that control auth-related controller behav
 ### current-user.decorator.ts
 - `CurrentUser` (param decorator via `createParamDecorator`)
 - Input: optional `data` (property name, e.g. `'id'`) + `ExecutionContext`; Output: `request.user` or `request.user[data]`.
-- Depends on `request.user` having been attached by an auth guard (`EitherAuthGuard`, `OpenfortUserGuard`, `ApiKeyAuthGuard`).
+- Depends on request.user attached by AppSessionGuard or ApiKeyAuthGuard.
 - Dependencies: `@nestjs/common` (`createParamDecorator`, `ExecutionContext`).
 
 ### frontend-only.decorator.ts
@@ -45,15 +45,16 @@ Route- and parameter-level decorators that control auth-related controller behav
 ## Flow
 1. At class/handler definition time, decorators stamp metadata onto the route (e.g. `@Public()`, `@FrontendOnly()`, `@RequireStepUp()`, `@RequireApiKeyPermission('canSign')`).
 2. At request time, guards query that metadata with `Reflector.getAllAndOverride`:
-   - `Public` → auth guards (`EitherAuthGuard`, `ApiKeyAuthGuard`, `OpenfortUserGuard`, `OpenfortAuthGuard`) short-circuit and allow the request.
+   - Public metadata bypasses ApiKeyAuthGuard, AppSessionGuard and OpenfortAuthGuard where explicitly applied.
    - `FrontendOnly` → `FrontendOnlyGuard` validates `Origin`/`Referer` against the `CORS_ORIGIN` allowlist.
-   - `RequireStepUp` → `StepUpGuard` validates the `X-Step-Up-Token` proof via `StepUpService.validateProof(proofToken, userId, 'totp_mfa')` and sets `request.stepUpVerified = true`.
+   - RequireStepUp validates X-Step-Up-Token against exact userId AND request.appSession.id plus live full-MFA state.
    - `RequireApiKeyPermission` → `ApiKeyPermissionGuard` checks `request.apiKeyRecord[permission] === true`.
 3. `CurrentUser` reads `request.user` (populated by the auth guard) and optionally returns a single property.
 
 ## Integration
-- **`Public()`** — consumed by `EitherAuthGuard`, `ApiKeyAuthGuard`, `OpenfortUserGuard`, `OpenfortAuthGuard` (all check `IS_PUBLIC_KEY` and bypass auth when set). Used on `HealthController` and `StripeWebhookController.handleStripe`.
-- **`FrontendOnly()`** — consumed by `FrontendOnlyGuard` (`IS_FRONTEND_ONLY_KEY`). Applied to dashboard/frontend-only routes in `BillingController`, `UsdcPaymentController`, `WalletController`, `TransactionsController`, `SecurityNotificationController`, `ApiKeyController`, `MfaController`, and `AuthController.refreshApiKey`. These routes are intentionally omitted from `openapi.yaml`.
-- **`RequireApiKeyPermission()`** — consumed by `ApiKeyPermissionGuard` (`API_KEY_PERMISSION_KEY`), which reads the permission off `request.apiKeyRecord` (set by `ApiKeyAuthGuard`/`EitherAuthGuard`). Used on public API-key routes: `WalletController.sign` (`canSign`), `TransactionsController.send` (`canSendTransaction`), `TransactionsController.getStatus` (`canReadTransactionStatus`). `canUseEoaExecution` is defined in the union and enforced in service code (`WalletService`, `TransactionsService`) rather than via a route decorator.
-- **`RequireStepUp()`** — consumed by `StepUpGuard` (`STEP_UP_KEY`). Applied to sensitive routes: `ApiKeyController` (create/list/revoke), `WalletController` (withdraw, withdrawal-address add/remove), `AuthController.refreshApiKey`. `WithdrawalPolicyService` also checks step-up state as defense-in-depth.
+- Public is consumed by API-key, application-session and provider-identity guards; health/Stripe endpoints retain their explicit public boundaries.
+- **`FrontendOnly()`** — consumed by `FrontendOnlyGuard` (`IS_FRONTEND_ONLY_KEY`). Applied to dashboard/frontend-only routes in `BillingController`, `UsdcPaymentController`, `DashboardWalletController`, `DashboardTransactionsController`, `SecurityNotificationController`, `ApiKeyController`, and `MfaController`. These routes are intentionally omitted from `openapi.yaml`.
+- **`RequireApiKeyPermission()`** — consumed by `ApiKeyPermissionGuard` (`API_KEY_PERMISSION_KEY`), which reads the permission off `request.apiKeyRecord` (set by `ApiKeyAuthGuard`). Used on public API-key routes: `WalletController.sign` (`canSign`), `TransactionsController.send` (`canSendTransaction`), `TransactionsController.getStatus` (`canReadTransactionStatus`). `canUseEoaExecution` is defined in the union and enforced in service code (`WalletService`, `TransactionsService`) rather than via a route decorator.
+- **`RequireStepUp()`** — consumed by `StepUpGuard` (`STEP_UP_KEY`). Applied to sensitive routes: `ApiKeyController` (create/list/revoke/rotate), `DashboardWalletController` (withdraw, withdrawal-address add/remove). `WithdrawalPolicyService` also checks step-up state as defense-in-depth.
+- AllowPendingMfa is consumed only by AppSessionGuard and applied to session introspection/current logout and MFA status/setup/enable/verify; never business routes or factor disable.
 - **`CurrentUser`** — used across all dashboard controllers (`BillingController`, `WalletController`, `TransactionsController`, `ApiKeyController`, `SecurityNotificationController`, `UsdcPaymentController`) and public API-key routes (`WalletController.sign`, `TransactionsController.send/getStatus`) to obtain `userId` from the authenticated request.

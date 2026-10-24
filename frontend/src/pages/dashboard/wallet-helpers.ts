@@ -244,10 +244,6 @@ export function isSupportedChainId(chainId: number) {
   return SUPPORTED_CHAINS.some((chain) => chain.id === chainId);
 }
 
-export function getChainDisplayName(chainId: number) {
-  return SUPPORTED_CHAINS.find((chain) => chain.id === chainId)?.name ?? `Chain ${chainId}`;
-}
-
 export function getAuthorizationBadgeClasses(status: string) {
   if (status === 'registered') return 'border-green-200 bg-green-50 text-green-800';
   if (status === 'registration_failed') return 'border-red-200 bg-red-50 text-red-800';
