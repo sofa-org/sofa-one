@@ -192,6 +192,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Moonwell', website: 'https://moonwell.fi' },
   { name: 'MorpheusAI', website: 'https://mor.org/' },
   { name: 'Morpho', website: 'https://morpho.org' },
+  { name: 'MortgageFi', website: 'https://mortgagefi.app/' },
   { name: 'Multipli', website: 'https://multipli.fi' },
   { name: 'MUX', website: 'https://mux.network/' },
   { name: 'MYSO Finance', website: 'https://www.myso.finance/' },
@@ -314,6 +315,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Venus', website: 'https://venus.io' },
   { name: 'Veranta', website: 'https://www.veranta.xyz/' },
   { name: 'Vesper', website: 'https://vesper.finance' },
+  { name: 'vfat.io', website: 'https://vfat.io/yield' },
   // Attributable source reference only; no functioning legacy swap frontend is asserted.
   { name: 'WaultSwap', website: 'https://github.com/WaultFinance/WAULT' },
   { name: 'Wildcat', website: 'https://app.wildcat.finance' },

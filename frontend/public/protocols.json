@@ -49864,6 +49864,182 @@
         ]
       },
       {
+        "address": "0x3dbbbdeac89ad26236b929e0f0684fd6eb997d26",
+        "protocol": "vfat.io",
+        "abi": [
+          {
+            "type": "function",
+            "name": "simpleExit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "farm",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "stakingContract",
+                    "type": "address"
+                  },
+                  {
+                    "name": "poolIndex",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "harvestParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "rewardTokens",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "extraData",
+                    "type": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "withdrawParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "lpToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "extraData",
+                    "type": "bytes"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "simpleHarvest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "farm",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "stakingContract",
+                    "type": "address"
+                  },
+                  {
+                    "name": "poolIndex",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "rewardTokens",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "extraData",
+                    "type": "bytes"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "simpleIncrease",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "farm",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "stakingContract",
+                        "type": "address"
+                      },
+                      {
+                        "name": "poolIndex",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "lpToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "extraData",
+                    "type": "bytes"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "simpleWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "farm",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "stakingContract",
+                    "type": "address"
+                  },
+                  {
+                    "name": "poolIndex",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "lpToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "extraData",
+                    "type": "bytes"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x4200000000000000000000000000000000000006",
         "protocol": "ERC-20",
         "abi": [
@@ -55261,6 +55437,143 @@
             "inputs": [
               {
                 "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xe93131620945a1273b48f57f453983d270b62dc7",
+        "protocol": "MortgageFi",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimFor",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "createContract",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "size",
+                "type": "uint256"
+              },
+              {
+                "name": "duration",
+                "type": "uint256"
+              },
+              {
+                "name": "maxPaymentPerMonth",
+                "type": "uint256"
+              },
+              {
+                "name": "ref",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "createContractByob",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "size",
+                "type": "uint256"
+              },
+              {
+                "name": "duration",
+                "type": "uint256"
+              },
+              {
+                "name": "maxPaymentPerMonth",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "earlyRepayContractInFull",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_nftID",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "finishContract",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_nftID",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "fromLineToWallet",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "size",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "payDownContract",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_nftID",
+                "type": "uint256"
+              },
+              {
+                "name": "size",
                 "type": "uint256"
               }
             ],
