@@ -7626,6 +7626,196 @@
         ]
       },
       {
+        "address": "0x33afaaa35df82d56833b7eeacb2b65eb805ac774",
+        "protocol": "Opium",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancel",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_positionAddress",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cancel",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_positionsAddresses",
+                "type": "address[]"
+              },
+              {
+                "name": "_amounts",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimReserves",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_tokenAddress",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimReserves",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_tokenAddress",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "execute",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_positionOwner",
+                "type": "address"
+              },
+              {
+                "name": "_positionAddress",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "execute",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_positionsOwner",
+                "type": "address"
+              },
+              {
+                "name": "_positionsAddresses",
+                "type": "address[]"
+              },
+              {
+                "name": "_amounts",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "execute",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_positionAddress",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "execute",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_positionsAddresses",
+                "type": "address[]"
+              },
+              {
+                "name": "_amounts",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_positionsAddresses",
+                "type": "address[2]"
+              },
+              {
+                "name": "_positionsOwners",
+                "type": "address[2]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_positionsAddresses",
+                "type": "address[2]"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_positionsAddresses",
+                "type": "address[2][]"
+              },
+              {
+                "name": "_amounts",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x347a09da4fbc5bcf024c3006cc5e111869589c8d",
         "protocol": "DxSale",
         "abi": [
@@ -59033,6 +59223,84 @@
         ]
       },
       {
+        "address": "0xc2447f36ffda08e278d25d08ea91d942f0c2d6ea",
+        "protocol": "Union Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayBorrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayInterest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrower",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xc5a076cad94176c2996b32d8466be1ce757faa27",
         "protocol": "Mint Club",
         "abi": [
@@ -61619,6 +61887,43 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xfd745a1e2a220c6ac327ec55d2cb404cd939f56b",
+        "protocol": "Union Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "stake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint96"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint96"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawRewards",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
           }
         ]
       },
