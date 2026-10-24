@@ -850,3 +850,9 @@ Match/partial/null source grades and mutable dependencies remain explicit, parti
 
 The final Swaap directory screenshot was visually inspected in isolated Chrome with GPU/software-rasterizer disabled after shared-browser and CLI screenshot capture stalled. All twenty card/search and served-catalog checks had already passed; this capture workaround changed no application code.
 
+## Repeated expansion round 8, cycle 1 — Blur and Tetu (2026-10-24)
+
+- `sources/blur-blend-ethereum-r8.json`: eight current implementation-bound Ethereum Blend borrowing, repayment, refinance and lender auction/default methods under one Blur family. Existing Blur Pool balances/authorization, exact lien hashes and finite lender quote signatures remain distinct from marketplace execution or new signing grants. Compounding debt, block-based auctions and collateral seizure carry financial risks.
+- `sources/tetu-v2-usdc-polygon-r8.json`: six current exact-source-bound Polygon V2 yield-vault methods using bridged USDC, not native USDC. Nonzero current entry bounds do not guarantee liquidity. Fees, first-supply dead shares, strict block-delay requests/reset clocks and mutable splitter/gauge/insurance dependencies remain material; failed frontend fetch is not shutdown evidence.
+- Verification under Node.js 20.19.3: fourteen additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all fourteen calls and denied 104 excluded selectors. Both cards/search and served Ethereum/Polygon entries passed actual Chromium checks. No NFT loan, auction, collateral seizure, funded yield deposit or financial withdrawal was executed.
+
