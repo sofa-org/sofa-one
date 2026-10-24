@@ -1042,3 +1042,10 @@ Match/partial/null grades and unverified dependencies remain explicit. StableHod
 - BTCFi's supported-chain crosschain ingress versus unsupported CDP location and Shoebill's unsupported published lending chains are retained without shutdown claims.
 - Node.js 20.19.3 diff contained ten additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all ten calls and denied 103 excluded selectors. Chromium verified both exact filters and served Base/Ethereum ABIs. No cover purchase/refund, ETH collateral, CJPY issuance or bad-debt settlement was executed.
 
+## Repeated expansion round 10, cycle 7 — Libeara and FlokiFi Locker (2026-10-24)
+
+- `sources/libeara-ultra-ethereum-r10.json`: two current Ethereum ULTRA investor request methods with full explorer-bound current implementation. USDC goes directly to issuer custody; mint/redemption resolution, NAV, refunds and payouts remain privileged. Existing eligibility is required; user minimum settlement output and guaranteed completion are absent.
+- `sources/flokifi-locker-ethereum-r10.json`: one direct factory term-custody creation method without a transferable control key. Its full mixed-asset ABI is honestly retained, not described as ERC20-only; existing approvals, chosen beneficiary, term/vesting, mutable fees and payment-module behavior apply. Newly created dynamic vault release targets are not admitted, so no complete unlock workflow is promised.
+- Paimon's unavailable current implementation sources and T-RIZE's Base governance-only/no-bound-financial scope are retained as precise gaps, not shutdown claims.
+- Node.js 20.19.3 diff contained three additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all three calls and denied 91 excluded selectors. Chromium verified both exact filters and served Ethereum ABIs. No ULTRA request, asset custody creation or fee payment was executed.
+

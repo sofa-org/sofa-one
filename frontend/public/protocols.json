@@ -15248,6 +15248,40 @@
         ]
       },
       {
+        "address": "0x9056777ad890ece386d646a5c698a9a6a779000b",
+        "protocol": "Libeara",
+        "abi": [
+          {
+            "type": "function",
+            "name": "requestMint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAmountIn",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestRedemption",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountUltraToRedeem",
+                "type": "uint256"
+              },
+              {
+                "name": "fullWithdrawal",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x93358db73b6cd4b98d89c8f5f230e81a95c2643a",
         "protocol": "Ondo Finance",
         "abi": [
@@ -26810,6 +26844,86 @@
               {
                 "name": "removeLiquidityData",
                 "type": "bytes"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xe67193ca18132e1ccb59ee745b388cecce37cc4c",
+        "protocol": "FlokiFi Locker",
+        "abi": [
+          {
+            "type": "function",
+            "name": "createVaultWithoutKey",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "referrer",
+                "type": "address"
+              },
+              {
+                "name": "beneficiary",
+                "type": "address"
+              },
+              {
+                "name": "unlockTimestamp",
+                "type": "uint256"
+              },
+              {
+                "name": "fungibleTokenDeposits",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "tokenAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "isLP",
+                    "type": "bool"
+                  }
+                ]
+              },
+              {
+                "name": "nonFungibleTokenDeposits",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "tokenAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "multiTokenDeposits",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "tokenAddress",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "isVesting",
+                "type": "bool"
               }
             ],
             "outputs": []
