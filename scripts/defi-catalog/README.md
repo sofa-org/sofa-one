@@ -1242,3 +1242,9 @@ No new chain, execution language, backend signing scope or authorization model w
 - `sources/mitosis-matrix-usdt-bsc-r13.json`: four current own-issued BSC Matrix USDT entry methods on Lista strategy infrastructure, not a bridge or extra Lista listing. Proxy match/current implementation exact grades, 24-decimal shares, manager-valued NAV, caps and event-only ExtraData are explicit. Queue-restricted direct exits remain excluded; no complete redemption workflow is promised.
 - Node.js 20.19.3 diff contained six additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all six ABI-policy paths and denied 132 excluded selectors. Chromium verified exact filters and served Ethereum/BSC entries. No reward deposit, basket redemption or Matrix subscription was executed.
 
+## Repeated expansion round 13, cycle 3 — HyperWave and W-DEX (2026-10-24)
+
+- `sources/hyperwave-hwusd-base-r13.json`: one current direct match-grade Base hwUSD teller deposit method, not bridge execution or Veda relabeling. Caller allowance names the issued vault, pricing uses the configured accountant, and authority/locks/refunds remain mutable. This is Base entry only, not HyperEVM signing or an admitted exit workflow.
+- `sources/w-dex-direct-amm-polygon-r13.json`: five direct match-grade Polygon financial AMM swaps. Token/custom-deployer path data derive fixed pools, not arbitrary calls. Native excess, zero-recipient custody, custom-limit partial fills, plugin dependencies and excluded refund/unwrap helpers are explicit.
+- Node.js 20.19.3 diff contained six additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all six ABI-policy paths and denied 56 excluded selectors. Chromium verified exact filters and served Base/Polygon entries after restoring a blank retained browser tab. No hwUSD issuance or AMM swap was executed.
+

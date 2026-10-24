@@ -151,6 +151,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Hegic', website: 'https://www.hegic.co/' },
   { name: 'HertzFlow', website: 'https://www.hertzflow.xyz/' },
   { name: 'Hydrex', website: 'https://www.hydrex.fi/' },
+  { name: 'HyperWave', website: 'https://app.hyperwavefi.xyz/' },
   { name: 'iAero Protocol', website: 'https://iaero.finance/' },
   { name: 'ICHI', website: 'https://www.ichi.org/' },
   { name: 'Idle', website: 'https://idle.finance' },
@@ -346,6 +347,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Vesper', website: 'https://vesper.finance' },
   { name: 'VETRO', website: 'https://vetro.org/' },
   { name: 'vfat.io', website: 'https://vfat.io/yield' },
+  { name: 'W-DEX', website: 'https://w-dex.ai/' },
   // Attributable source reference only; no functioning legacy swap frontend is asserted.
   { name: 'WaultSwap', website: 'https://github.com/WaultFinance/WAULT' },
   { name: 'WePiggy', website: 'https://www.wepiggy.com/' },
