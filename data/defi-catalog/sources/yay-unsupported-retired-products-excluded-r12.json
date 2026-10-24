@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Yay!",
+  "reviewedAt": "2026-10-24",
+  "decision": "excluded-products-not-protocol-retirement",
+  "reason": "Soneium/Astar chain deployments unsupported; primary expressly sunsets ASTR products and leaves withdrawals only. This does not retire Ethereum yaySTONE. No unsupported-chain ABI or bridge execution method inventoried or activated.",
+  "sourceRefs": [
+    "https://yay.gitbook.io/yay-staking/contracts.md",
+    "https://yay.gitbook.io/yay-staking/updates/2025-09-26-sunsetting-of-astr-vaults-and-yayastr-astr-lp.md"
+  ],
+  "primarySourceSnapshots": [
+    {
+      "sourceRef": "https://yay.gitbook.io/yay-staking/contracts.md",
+      "retrievedAt": "2026-10-24",
+      "sha256": "657aea1859731a162ce6e4e6296e10123269787fe79e02bee15532a42d442341",
+      "contentType": "text/markdown; charset=utf-8",
+      "fullContent": "> For the complete documentation index, see [llms.txt](https://yay.gitbook.io/yay-staking/llms.txt). Markdown versions of documentation pages are available by appending `.md` to page URLs; this page is available as [Markdown](https://yay.gitbook.io/yay-staking/contracts.md).\n\n# Contracts\n\n| Token             | Chain            | Address                                                  | Etherscan                                                                           |\n| ----------------- | ---------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------- |\n| yaySTONE          | Ethereum Mainnet | 0xe86142af1321eaac4270422081c1EdA31eEcFf0c               | <https://etherscan.io/address/0xe86142af1321eaac4270422081c1EdA31eEcFf0c>           |\n| yaySTONE          | Soneium          | 0x54e86315C03217b76A7466C302245fD10ebEf25A               | <https://soneium.blockscout.com/address/0x54e86315C03217b76A7466C302245fD10ebEf25A> |\n| STONE             | Ethereum Mainnet | 0x7122985656e38BDC0302Db86685bb972b145bD3C               | <https://etherscan.io/address/0x7122985656e38BDC0302Db86685bb972b145bD3C>           |\n| yayAgETH          | Ethereum Mainnet | 0x0341d2c2CE65B62aF8887E905245B8CfEA2a3b97               | <https://etherscan.io/address/0x0341d2c2CE65B62aF8887E905245B8CfEA2a3b97>           |\n| yayAgETH          | Soneium          | 0xda14b3B7aEF494b8c37ed9710d14e44D490316fa               | <https://soneium.blockscout.com/address/0xda14b3B7aEF494b8c37ed9710d14e44D490316fa> |\n| AgETH             | Ethereum Mainnet | 0xe1B4d34E8754600962Cd944B535180Bd758E6c2e               | <https://etherscan.io/address/0xe1B4d34E8754600962Cd944B535180Bd758E6c2e/>          |\n| WASTR             | Astar Mainnet    | 0x37795FdD8C165CaB4D6c05771D564d80439CD093               | <https://astar.blockscout.com/address/0x37795FdD8C165CaB4D6c05771D564d80439CD093>   |\n| WASTR             | Soneium          | 0x2CAE934a1e84F693fbb78CA5ED3B0A6893259441               | <https://soneium.blockscout.com/address/0x2CAE934a1e84F693fbb78CA5ED3B0A6893259441> |\n| vASTR             | Astar Mainnet    | 0xfffFffff00000000000000010000000000000010               | <https://astar.blockscout.com/address/0xfffFffff00000000000000010000000000000010>   |\n| vASTR             | Soneium          | 0x60336f9296C79dA4294A19153eC87F8E52158e5F               | <https://soneium.blockscout.com/address/0x60336f9296C79dA4294A19153eC87F8E52158e5F> |\n| Deposit Gateway   | Astar Mainnet    | 0xC570d83e16BbbFB857EC3ceF46b3AeC25481CEe6               | <https://astar.blockscout.com/address/0xC570d83e16BbbFB857EC3ceF46b3AeC25481CEe6>   |\n| Agent Factory     | Astar Mainnet    | <p></p><p>0x379044b1b0f21cb1f9F0Fa74A1Fb23104A4E3Cf1</p> | <https://astar.blockscout.com/address/0x379044b1b0f21cb1f9F0Fa74A1Fb23104A4E3Cf1>   |\n| Yay WASTR Staking | Soneium          | 0xc8809C9f811324F4c196eb44C20555D4663Aa6c0               | <https://soneium.blockscout.com/address/0xc8809C9f811324F4c196eb44C20555D4663Aa6c0> |\n| Yay vASTR Staking | Soneium          | 0xea7Cf5C2D2509f7A4281F6E8378eaC30420f4206               | <https://soneium.blockscout.com/address/0xea7Cf5C2D2509f7A4281F6E8378eaC30420f4206> |\n| nsASTR            | Soneium          | 0xc67476893C166c537afd9bc6bc87b3f228b44337               | <https://soneium.blockscout.com/address/0xc67476893C166c537afd9bc6bc87b3f228b44337> |\n| yayASTR           | Soneium          | 0x19a80F5DFE30bdf19054716E221539FC040f3b72               | <https://soneium.blockscout.com/address/0x19a80F5DFE30bdf19054716E221539FC040f3b72> |\n"
+    },
+    {
+      "sourceRef": "https://yay.gitbook.io/yay-staking/updates/2025-09-26-sunsetting-of-astr-vaults-and-yayastr-astr-lp.md",
+      "retrievedAt": "2026-10-24",
+      "sha256": "8a4008fd57c5a719f5e391abf54ba9bc3282f45a4e90c8a7bb88b212c0fd1c2b",
+      "contentType": "text/markdown; charset=utf-8",
+      "fullContent": "> For the complete documentation index, see [llms.txt](https://yay.gitbook.io/yay-staking/llms.txt). Markdown versions of documentation pages are available by appending `.md` to page URLs; this page is available as [Markdown](https://yay.gitbook.io/yay-staking/updates/2025-09-26-sunsetting-of-astr-vaults-and-yayastr-astr-lp.md).\n\n# 2025-09-26: Sunsetting of ASTR Vaults and yayASTR/ASTR LP\n\nWe sincerely thank all users who participated in ASTR staking through Yay!. Your support across both Sake (v1) and Neemo (v2) vaults, as well as the yayASTR/ASTR LP, has been greatly appreciated.\n\nStarting from **October 1, 2025**, all *Yay! Gold* and *???? Points* distribution for ASTR-related products will end.\n\nThis includes:\n\n* **WASTR Vault** (Sake v1)\n* **vASTR Vault** (Sake v1)\n* **yayASTR Vault** (Neemo v2)\n* **yayASTR/ASTR LP**\n\n### **Key Details**\n\n* **No further points will be distributed** to these vaults or LP after *October 1, 2025*.\n* **All users with remaining assets in these vaults or LP should withdraw their assets as soon as possible.**\n\n#### **LP Access Still Available on Velodrome**\n\nAlthough the yayASTR/ASTR LP UI will be removed from the Yay! Dashboard in early October, you can still manage your LP directly on Velodrome:\n\n* [**LP**](https://velodrome.finance/deposit?token0=0x19a80f5dfe30bdf19054716e221539fc040f3b72\\&token1=0x2cae934a1e84f693fbb78ca5ed3b0a6893259441\\&type=1\\&chain=1868\\&factory=0x04625B046C69577EfC40e6c0Bb83CDBAfab5a55F\\&chain0=1868\\&chain1=1868)\n* [**Swap yayASTR/ASTR**](https://velodrome.finance/swap?from=0x2cae934a1e84f693fbb78ca5ed3b0a6893259441\\&to=0x19a80f5dfe30bdf19054716e221539fc040f3b72\\&chain0=1868\\&chain1=1868)\n\n#### **ASTR Vault Visibility**\n\nThe ASTR vaults will remain visible on the Yay! Dashboard **only for users who still have staked assets**.\\\nThese vaults will show a sunset notice and remain available for withdrawals.\\\nWe will maintain them for a certain period of time and remove them in the future.\n\nFor more information on the **Neemo incident** and reimbursement process, please refer to: [Neemo Post-Mortem & Reimbursement Plan](https://yay.gitbook.io/yay-staking/updates/2025-08-27-neemo-finance-incident-post-mortem-and-reimbursement-plan)\n\nIf you need assistance with unstaking or withdrawing your assets, please contact us via: [Support Form](https://docs.google.com/forms/d/e/1FAIpQLSfjwm3vXTG9ELgVJ-j0fVgJZ2-R8h9fg-kv6qnIqVL_rw7CrA/viewform)\n"
+    }
+  ],
+  "explicitlyExcludedProducts": [
+    {
+      "name": "Yay WASTR staking",
+      "chainId": 1868,
+      "address": "0xc8809c9f811324f4c196eb44c20555d4663aa6c0",
+      "reason": "Unsupported Soneium and primary ASTR sunset."
+    },
+    {
+      "name": "Yay vASTR staking",
+      "chainId": 1868,
+      "address": "0xea7cf5c2d2509f7a4281f6e8378eac30420f4206",
+      "reason": "Unsupported Soneium and primary ASTR sunset."
+    },
+    {
+      "name": "yayASTR staking receipt",
+      "chainId": 1868,
+      "address": "0x19a80f5dfe30bdf19054716e221539fc040f3b72",
+      "reason": "Unsupported Soneium, Neemo/ASTR sunset/recovery product."
+    },
+    {
+      "name": "Soneium yaySTONE",
+      "chainId": 1868,
+      "address": "0x54e86315c03217b76a7466c302245fd10ebef25a",
+      "reason": "Unsupported-chain token/bridge counterpart, not Ethereum own staking target."
+    }
+  ],
+  "selectedFunctions": []
+}

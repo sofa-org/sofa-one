@@ -87,6 +87,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Dfyn', website: 'https://docs.dfyn.network/technical/contracts' },
   // Now Chamber; one continuing protocol, not two separate admissions.
   { name: 'dHEDGE', website: 'https://chamberfi.com/' },
+  { name: 'DIEM Relay', website: 'https://diem-relay.com/' },
   { name: 'Dinero', website: 'https://dinero.xyz' },
   { name: 'DODO', website: 'https://dodoex.io' },
   { name: 'Dolomite', website: 'https://dolomite.io' },
@@ -331,6 +332,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Wise Token', website: 'https://app.wisetoken.com/' },
   { name: 'WOOFi', website: 'https://woofi.com' },
   { name: 'Yamato Protocol', website: 'https://app.yamato.fi/' },
+  { name: 'Yay!', website: 'https://portal.yay.space/stake' },
   { name: 'Yearn', website: 'https://yearn.fi' },
   { name: 'Yelay', website: 'https://yelay.io/' },
   { name: 'YieldBasis', website: 'https://yieldbasis.com' },
