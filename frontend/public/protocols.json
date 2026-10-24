@@ -14880,6 +14880,78 @@
         ]
       },
       {
+        "address": "0x8c14b6e8ec9968cd9c69eedea4a1295aec5e5d6e",
+        "protocol": "Vault Street",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelBurn",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cancelMint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestBurn",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_sharesAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_minWithdrawalAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestMint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_depositAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_minMintAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x8c1bed5b9a0928467c9b1341da1d7bd5e10b6549",
         "protocol": "liquid-collective-river",
         "abi": [
@@ -16847,6 +16919,46 @@
         ]
       },
       {
+        "address": "0xa3a91cf083b76bcc1a963c81a2977c8f7350d1f8",
+        "protocol": "Forest Road Vault",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "requestId",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xa57b8d98dae62b26ec3bcc4a365338157060b234",
         "protocol": "aura",
         "abi": [
@@ -18184,6 +18296,54 @@
             "inputs": [
               {
                 "name": "_referral",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xaf559d1d59b33ca4b950ab2091372af8a773e234",
+        "protocol": "Forest Road Vault",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
                 "type": "address"
               }
             ],
