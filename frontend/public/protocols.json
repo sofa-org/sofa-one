@@ -51400,6 +51400,133 @@
         ]
       },
       {
+        "address": "0x3f37c7d8e61c000085aac0515775b06a3412f36b",
+        "protocol": "Contango",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositNative",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawNative",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x46a7cf257e00964c9cec06d9c2b243340d40cc54",
         "protocol": "Nerite",
         "abi": [
@@ -52190,6 +52317,28 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x6cae28b3d09d8f8fc74ccd496ac986fc84c0c24e",
+        "protocol": "Contango",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimRewards",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "positionId",
+                "type": "bytes32"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -55500,6 +55649,40 @@
                 "type": "bool"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xff1968ae4f91efccf4d5cef823eecd46fbe114c3",
+        "protocol": "EVEDEX",
+        "abi": [
+          {
+            "type": "function",
+            "name": "depositAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositAssetTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
