@@ -88,6 +88,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Dolomite', website: 'https://dolomite.io' },
   { name: 'DOOAR', website: 'https://beta.dooar.com/swap' },
   { name: 'Drips', website: 'https://www.drips.network/' },
+  { name: 'DxSale', website: 'https://www.dx.app/' },
   // Deployment documentation only; no current legacy trading frontend is asserted.
   { name: 'Dystopia', website: 'https://docs.dystopia.exchange/dystopia-1/security/contracts.md' },
   { name: 'Ease', website: 'https://www.easedefi.org/' },
@@ -172,6 +173,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'M0', website: 'https://www.m0.org/' },
   { name: 'Magma', website: 'https://www.magmastaking.xyz/' },
   { name: 'Makina', website: 'https://makina.finance/' },
+  { name: 'Manifold Finance', website: 'https://docs.mev.io/' },
   { name: 'Mantle', website: 'https://www.methprotocol.xyz' },
   { name: 'Maple', website: 'https://maple.finance' },
   { name: 'Maverick', website: 'https://mav.xyz' },

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "protocol": "UniDex",
+  "verifiedAt": "2026-10-24",
+  "status": "rejected",
+  "reason": "Current primary root explicitly presents UniDex Legacy and withdrawal/migration from deprecated contracts. Existing legacy V4 staking card is not accepted as a loophole to the retired deployment exclusion.",
+  "selectedFunctions": [],
+  "lifecycleEvidence": [
+    {"sourceRef": "https://www.unidex.exchange/", "kind": "primary current homepage fetched", "quote": "UniDex Legacy — Withdraw and migrate from deprecated contracts", "productCards": ["Token Migration UNIDX → MOLTEN Ethereum · Optimism · Arbitrum · Base", "V2 Positions Withdraw Optimism · Arbitrum · zkSync · Fantom · Base", "V4 Positions Burn USD.m & withdraw margin", "V4 Staking Stake MOLTEN for rewards Arbitrum"]},
+    {"sourceRef": "https://docs.unidex.exchange/", "kind": "primary docs redirect", "redirect": "https://unidex.exchange/", "quote": "UniDex Legacy — Withdraw and migrate from deprecated contracts"},
+    {"sourceRef": "https://www.unidex.exchange/staking", "kind": "primary legacy staking page fetched", "quote": "Stake MOLTEN to earn rewards on Arbitrum", "limitation": "Page remains under UniDex Legacy; does not establish supported nonlegacy ordinary own trading/LP product."}
+  ],
+  "limitations": ["No claim that immutable contracts stopped functioning or every successor MOLTEN product shut down.", "Rejection based on explicit current legacy/deprecated withdrawal-and-migration presentation, not failed fetch, TVL or financial safety."],
+  "sourceRefs": ["https://www.unidex.exchange/", "https://docs.unidex.exchange/", "https://www.unidex.exchange/staking"]
+}
