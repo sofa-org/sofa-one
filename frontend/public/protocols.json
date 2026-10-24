@@ -5652,6 +5652,43 @@
         ]
       },
       {
+        "address": "0x2b5ab0a6cab343edeef46a2e90f23460bc852938",
+        "protocol": "ETH Strategy",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "stake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884",
         "protocol": "Concentrator",
         "abi": [
@@ -7312,6 +7349,88 @@
               },
               {
                 "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x3b4ec3decfec8e2260be01018f6fe04741a8aa56",
+        "protocol": "ETH Strategy",
+        "abi": [
+          {
+            "type": "function",
+            "name": "bond",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "bonder",
+                "type": "address"
+              },
+              {
+                "name": "minConversionAmountStrat",
+                "type": "uint256"
+              },
+              {
+                "name": "minConversionAmountEth",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "convert",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "toEth",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "convertPartial",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "toEth",
+                "type": "bool"
+              },
+              {
+                "name": "cdtToBurn",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeemCdtForUsdNotional",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "minEthOut",
                 "type": "uint256"
               }
             ],
@@ -10270,6 +10389,149 @@
               {
                 "name": "",
                 "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x6fe78b942c566fe2b8d0881cf3577c1b1511f204",
+        "protocol": "Nawa Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "claimFor",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "user",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositWithMinShares",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "minSharesOut",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "processQueue",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "maxIterations",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestRedeemWithMinAssets",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "minAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "id",
+                "type": "uint256"
               }
             ]
           }
