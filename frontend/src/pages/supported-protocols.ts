@@ -54,6 +54,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'BitFi', website: 'https://www.bitfi.one/' },
   { name: 'BitU', website: 'https://www.bitu.io/' },
   { name: 'Blur', website: 'https://blur.io/' },
+  { name: 'Bracket', website: 'https://bracket.fi/' },
   { name: 'Brila', website: 'https://brila.finance/' },
   { name: 'Camelot', website: 'https://camelot.exchange' },
   { name: 'Cap', website: 'https://cap.app/' },
@@ -271,5 +272,6 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'YieldNest', website: 'https://yieldnest.finance' },
   { name: 'YO Protocol', website: 'https://yo.xyz' },
   { name: 'Yuzu Money', website: 'https://yuzu.money/' },
+  { name: 'ZEROBASE', website: 'https://app.zerobase.pro/' },
   { name: 'Zharta', website: 'https://www.zharta.io/' },
 ];

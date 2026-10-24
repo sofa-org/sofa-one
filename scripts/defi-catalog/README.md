@@ -881,3 +881,10 @@ The final Swaap directory screenshot was visually inspected in isolated Chrome w
 - `sources/aloe-official-wind-down-rejection-r8.json` preserves the primary team/interface shutdown and disabled wind-down ingress; no exit-only admission or assumption that all contracts are noncallable.
 - Verification under Node.js 20.19.3: twelve additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all twelve calls and denied 84 excluded selectors. Both cards/search and served Ethereum entries passed actual Chromium checks. No stake, fixed-router conversion, interest mint, loan repayment or extension proof signing was executed.
 
+## Repeated expansion round 8, cycle 6 — ZEROBASE and Bracket (2026-10-24)
+
+- `sources/zerobase-cedefi-bnb-r8.json`: four current BNB-chain own financial-ledger stake/request/claim/immediate-fee-exit methods. Rate history, CeFi capital custody, zkToken rounding, owned claim items and mutable waiting time/penalty apply. Claim maturity does not guarantee funded WithdrawVault liquidity; currently disabled cancellation is excluded.
+- `sources/bracket-breth-ethereum-r8.json`: three current own brETH WETH pending-deposit/request/claim methods, not the closed legacy strategy. Beacon root match and implementation exact-match grades are distinct from null/unverified beacon/KYC dependencies. Asset-denominated withdrawal requests burn shares at prior NAV; exact emitted claim identity, future settled NAV, KYC, manager funding and epoch advancement govern actual payout.
+- `sources/batch76-unslashed-maintenance-deployment-gap-r8.json` records unavailable current primary maintenance/deployment binding, not established shutdown.
+- Verification under Node.js 20.19.3: seven additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all seven calls and denied 117 excluded selectors. Both cards/search and served Ethereum/BNB entries passed actual Chromium checks. No custodial stake, manager funding, epoch settlement, claim payment or immediate redemption was executed.
+

@@ -6374,6 +6374,68 @@
         ]
       },
       {
+        "address": "0x3588e6cb5dca99e35ba2e2a5d42cddb46365e71b",
+        "protocol": "Bracket",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimWithdrawal",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "claimEpoch",
+                "type": "uint16"
+              },
+              {
+                "name": "timestamp",
+                "type": "uint256"
+              },
+              {
+                "name": "salt",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "destination",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "salt",
+                "type": "bytes32"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x3714e016690ac209ab173a2b4b86aaa1c8f48327",
         "protocol": "enzyme",
         "abi": [
@@ -34814,6 +34876,81 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xcc5df5c68d8c991035b6a437d4e00a99875228e4",
+        "protocol": "ZEROBASE",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim_41202704",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_queueID",
+                "type": "uint256"
+              },
+              {
+                "name": "_token",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "flashWithdrawWithPenalty",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_token",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestClaim_8135334",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_token",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_returnID",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "stake_66380860",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_token",
+                "type": "address"
+              },
+              {
+                "name": "_stakedAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
