@@ -1179,3 +1179,10 @@ No new chain, execution language, backend signing scope or authorization model w
 - LOCKON Polygon mapping is deferred because the repeated configured address is not the Arbitrum module on Polygon; no wrong-chain admission or shutdown claim.
 - Node.js 20.19.3 diff contained ten additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all ten calls and denied 27 excluded selectors. Chromium verified exact filters and served Arbitrum/Ethereum entries. No index component, savings principal or interest was transferred.
 
+## Repeated expansion round 12, cycle 5 — Ethervista and Toucan Protocol (2026-10-24)
+
+- `sources/ethervista-current-router-ethereum-r12.json`: four current factory-selected direct exact-source Ethereum liquidity/native swaps, not the superseded tagged router or arbitrary staking target. Acquisition/frontend limitations are explicit; October factory selection and ordinary current root evidence are retained. Separate native sell fees, limited minima, oracle freshness and whole-router balances remain risks.
+- `sources/toucan-char-base-r12.json`: two current exact-source Base CHAR pooling/redemption methods with independently resolved current implementation. Primary maintenance FAQ preserves CHAR support; BCT, unsupported chains, bridging and carbon retirement are excluded. Fee-unit ceilings, cap clipping, one-project redemption requirement and mutable eligibility/inventory are explicit.
+- Superseded Ethervista/BCT scope evidence is retained separately; no old router or former-product alias was admitted.
+- Node.js 20.19.3 diff contained six additions only; generate/check, 65 backend tests and one frontend test passed. Production policy smoke exercised all six calls and denied 91 excluded selectors. Chromium verified exact filters and served Ethereum/Base entries. No swap, LP, carbon deposit/redemption or retirement was executed.
+

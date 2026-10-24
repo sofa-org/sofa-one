@@ -17446,6 +17446,138 @@
         ]
       },
       {
+        "address": "0x9bd63c5d44ff28390df1eaafd4eb4bd73e94a72a",
+        "protocol": "Ethervista",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addLiquidityETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountTokenDesired",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin",
+                "type": "uint256"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x9be9294722f8aad37b11a9792be2c782182cafa2",
         "protocol": "Ember",
         "abi": [
@@ -51940,6 +52072,62 @@
             "outputs": [
               {
                 "name": "netAmountPaidOut",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x20b048fa035d5763685d695e66adf62c5d9f5055",
+        "protocol": "Toucan Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tco2",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "maxFee",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "mintedPoolTokenAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemOutMany",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tco2s",
+                "type": "address[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "maxFee",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "poolAmountSpent",
                 "type": "uint256"
               }
             ]
