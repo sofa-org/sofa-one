@@ -9899,6 +9899,116 @@
         ]
       },
       {
+        "address": "0x3bc801419479865b24b4d32fab0bf64638abbd5f",
+        "protocol": "BTCD",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x3c769d0e8d21d380228dfb7918c6933bb6ecb6d4",
         "protocol": "Ledgity Yield",
         "abi": [
@@ -26672,6 +26782,140 @@
                     "type": "uint64"
                   }
                 ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xc60f6892973934c93ade915d5c249f10d4ece7b4",
+        "protocol": "BTCD",
+        "abi": [
+          {
+            "type": "function",
+            "name": "burn",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "btcdIn",
+                "type": "uint256"
+              },
+              {
+                "name": "wbtcMinOut",
+                "type": "uint256"
+              },
+              {
+                "name": "usdcMinOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "burnUSDC",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "btcdIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "burnWBTC",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "btcdIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "wbtcIn",
+                "type": "uint256"
+              },
+              {
+                "name": "usdcIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mintUSDC",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mintWBTC",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minOut",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -64809,6 +65053,179 @@
             "outputs": [
               {
                 "name": "quoteId",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xdd6e31a046b828cbbafb939c2a394629aff8bbdc",
+        "protocol": "PinkSale",
+        "abi": [
+          {
+            "type": "function",
+            "name": "editLock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lockId",
+                "type": "uint256"
+              },
+              {
+                "name": "newAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "newUnlockDate",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "lock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "isLpToken",
+                "type": "bool"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "unlockDate",
+                "type": "uint256"
+              },
+              {
+                "name": "description",
+                "type": "string"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multipleVestingLock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "owners",
+                "type": "address[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "isLpToken",
+                "type": "bool"
+              },
+              {
+                "name": "tgeDate",
+                "type": "uint256"
+              },
+              {
+                "name": "tgeBps",
+                "type": "uint256"
+              },
+              {
+                "name": "cycle",
+                "type": "uint256"
+              },
+              {
+                "name": "cycleBps",
+                "type": "uint256"
+              },
+              {
+                "name": "description",
+                "type": "string"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unlock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lockId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "vestingLock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "isLpToken",
+                "type": "bool"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "tgeDate",
+                "type": "uint256"
+              },
+              {
+                "name": "tgeBps",
+                "type": "uint256"
+              },
+              {
+                "name": "cycle",
+                "type": "uint256"
+              },
+              {
+                "name": "cycleBps",
+                "type": "uint256"
+              },
+              {
+                "name": "description",
+                "type": "string"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "id",
                 "type": "uint256"
               }
             ]
