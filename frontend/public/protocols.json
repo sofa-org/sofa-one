@@ -12039,6 +12039,164 @@
         ]
       },
       {
+        "address": "0x4ed5c72816abc1b67ac31ddabe31cff4a8c56a15",
+        "protocol": "Monolith Market",
+        "abi": [
+          {
+            "type": "function",
+            "name": "adjust",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "collateralDelta",
+                "type": "int256"
+              },
+              {
+                "name": "debtDelta",
+                "type": "int256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "adjust",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "collateralDelta",
+                "type": "int256"
+              },
+              {
+                "name": "debtDelta",
+                "type": "int256"
+              },
+              {
+                "name": "chooseRedeemable",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buy",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assetIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minCoinOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "coinOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "liquidate",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "repayAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minCollateralOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minAmountOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "sell",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "coinIn",
+                "type": "uint256"
+              },
+              {
+                "name": "minAssetOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assetOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "setRedemptionStatus",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "account",
+                "type": "address"
+              },
+              {
+                "name": "chooseRedeemable",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x50791a5ca041b9d6dd03e64e3fa0e34a376759ac",
         "protocol": "Fira",
         "abi": [
@@ -34940,6 +35098,104 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xfa80c7349cc2357c42a64c2954b24b1a61c29435",
+        "protocol": "Monolith Market",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
@@ -58863,6 +59119,232 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x48459abc42e5f5490169d26e1c6cc5eeb5905f07",
+        "protocol": "Treble",
+        "abi": [
+          {
+            "type": "function",
+            "name": "burn",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "collect",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amount0Max",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "amount1Max",
+                    "type": "uint128"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amount0",
+                "type": "uint256"
+              },
+              {
+                "name": "amount1",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "decreaseLiquidity",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "liquidity",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amount0",
+                "type": "uint256"
+              },
+              {
+                "name": "amount1",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "increaseLiquidity",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount0Desired",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Desired",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "liquidity",
+                "type": "uint128"
+              },
+              {
+                "name": "amount0",
+                "type": "uint256"
+              },
+              {
+                "name": "amount1",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deployer",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tickLower",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "tickUpper",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "amount0Desired",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Desired",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint128"
+              },
+              {
+                "name": "amount0",
+                "type": "uint256"
+              },
+              {
+                "name": "amount1",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
