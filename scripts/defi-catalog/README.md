@@ -970,3 +970,9 @@ Actual match/partial/null grades and unverified dependencies remain explicit, in
 - Three rejection records distinguish Wing current-source gaps, Bella's explicit Flex Savings sunset and Strike's current-primary-product gap; only Bella is established sunset evidence here.
 - Verification under Node.js 20.19.3: sixteen additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all sixteen calls and denied 81 excluded selectors. Exact filtered cards and served BNB entries passed Chromium checks. No strategy investment/exit, swap, LP mint/burn or BNB payout was executed.
 
+## Repeated expansion round 9, cycle 8 — Brickken and Estate Protocol (2026-10-24)
+
+- `sources/brickken-investor-settlement-ethereum-r9.json`: one current offering receipt/refund settlement method. Existing token whitelist, recorded investor/amount and issuer-withdrawn or explicit rollback state bind payout. October 2026 capped/ended subscription is excluded while ordinary investor receipt settlement remains current; this is not a retired recovery product or a backing-asset redemption.
+- `sources/estate-protocol-holder-dividend-arbitrum-r9.json`: one current checkpoint-holder dividend claim. Partial proxy verification and exact-match implementation are distinct. Fixed checkpoint balances, withholding, exclusions, maturity/expiry and issuer reclaim determine entitlement; current dividend expires December 15, 2026. Expired primary STO subscription evidence is retained but not activated.
+- Verification under Node.js 20.19.3: two additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised both calls and denied 116 excluded selectors. Exact filtered cards and served Ethereum/Arbitrum entries passed Chromium checks. No offering receipt, refund, property token, dividend or withholding payment was executed; legal ownership/backing/income are not attested.
+

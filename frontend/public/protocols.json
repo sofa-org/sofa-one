@@ -11429,6 +11429,28 @@
         ]
       },
       {
+        "address": "0x6c0a8d28ace093af52a9d3f899f1c5ce37f4b1ef",
+        "protocol": "Brickken",
+        "abi": [
+          {
+            "type": "function",
+            "name": "getTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "index",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x6fe78b942c566fe2b8d0881cf3577c1b1511f204",
         "protocol": "Nawa Protocol",
         "abi": [
@@ -52536,6 +52558,24 @@
                     "type": "uint256"
                   }
                 ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x11e353dc07f87bd09ec3e163a3144a450850c023",
+        "protocol": "Estate Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "pullDividendPayment",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_dividendIndex",
+                "type": "uint256"
               }
             ],
             "outputs": []
