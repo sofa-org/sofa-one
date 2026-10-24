@@ -4703,6 +4703,107 @@
         ]
       },
       {
+        "address": "0x280839980a7ed0d7717f64125fe241012e5f5815",
+        "protocol": "Tori Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelCooldown",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cooldownAssets",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "cooldownShares",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x28b3a8fb53b741a8fd78c0fb9a6b2393d896a43d",
         "protocol": "spark-vault-v2",
         "abi": [
@@ -11631,6 +11732,44 @@
             "inputs": [
               {
                 "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x7e0305b212df3fb56366251c054c07748bf9a797",
+        "protocol": "Piku Finance",
+        "abi": [
+          {
+            "type": "function",
+            "name": "buy",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAmount_",
+                "type": "uint256"
+              },
+              {
+                "name": "minAmountOut_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sell",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositAmount_",
+                "type": "uint256"
+              },
+              {
+                "name": "minAmountOut_",
                 "type": "uint256"
               }
             ],
