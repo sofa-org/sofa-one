@@ -48266,6 +48266,68 @@
         ]
       },
       {
+        "address": "0x176b29289f66236c65c7ac5db2400abb5955df13",
+        "protocol": "Meshswap",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimReward",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "compoundReward",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "lockMESH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "lockPeriodRequested",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "refixBoosting",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "lockPeriodRequested",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unlockMESH",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unlockMESHUnlimited",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x1b02da8cb0d097eb8d57a175b88c7d8b47997506",
         "protocol": "SushiSwap V2",
         "abi": [
@@ -48760,6 +48822,52 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x59a4c19b55193d5a2ead0065c54af4d516e18cb5",
+        "protocol": "Boson Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "depositFunds",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_entityId",
+                "type": "uint256"
+              },
+              {
+                "name": "_tokenAddress",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFunds",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_entityId",
+                "type": "uint256"
+              },
+              {
+                "name": "_tokenList",
+                "type": "address[]"
+              },
+              {
+                "name": "_tokenAmounts",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
