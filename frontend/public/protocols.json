@@ -21751,6 +21751,425 @@
         ]
       },
       {
+        "address": "0xccccccccccccfae2ee43f0e727a8c2969d74b9ec",
+        "protocol": "Cork Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "collateralAssetsIn",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "cptAndCstSharesOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exercise",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "cstSharesIn",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "referenceAssetsIn",
+                "type": "uint256"
+              },
+              {
+                "name": "fee",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exerciseOther",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "referenceAssetsIn",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "cstSharesIn",
+                "type": "uint256"
+              },
+              {
+                "name": "fee",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "cptAndCstSharesOut",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralAssetsIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "cptSharesIn",
+                "type": "uint256"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "referenceAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "collateralAssetsOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swap",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "collateralAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "cstSharesIn",
+                "type": "uint256"
+              },
+              {
+                "name": "referenceAssetsIn",
+                "type": "uint256"
+              },
+              {
+                "name": "fee",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unwindDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "collateralAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "cptAndCstSharesIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unwindExercise",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "cstSharesOut",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralAssetsIn",
+                "type": "uint256"
+              },
+              {
+                "name": "referenceAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "fee",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unwindExerciseOther",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "referenceAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralAssetsIn",
+                "type": "uint256"
+              },
+              {
+                "name": "cstSharesOut",
+                "type": "uint256"
+              },
+              {
+                "name": "fee",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unwindMint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "cptAndCstSharesIn",
+                "type": "uint256"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "collateralAssetsOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "unwindSwap",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "collateralAssetsIn",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "cstSharesOut",
+                "type": "uint256"
+              },
+              {
+                "name": "referenceAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "fee",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "collateralAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "cptSharesIn",
+                "type": "uint256"
+              },
+              {
+                "name": "actualCollateralAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "actualReferenceAssetsOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawOther",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "referenceAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "cptSharesIn",
+                "type": "uint256"
+              },
+              {
+                "name": "actualCollateralAssetsOut",
+                "type": "uint256"
+              },
+              {
+                "name": "actualReferenceAssetsOut",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee",
         "protocol": "etherfi",
         "abi": [
@@ -55096,6 +55515,62 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x9e8892e443ad6472e4d9362df6d0c238000028a3",
+        "protocol": "Fluidity Money",
+        "abi": [
+          {
+            "type": "function",
+            "name": "beginUnstake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_flyToUnstake",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "flyRemaining",
+                "type": "uint256"
+              },
+              {
+                "name": "unstakedBy",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "finaliseUnstake",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": [
+              {
+                "name": "flyReturned",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "stake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_flyAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "flyStaked",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
