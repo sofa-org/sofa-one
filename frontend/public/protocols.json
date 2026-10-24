@@ -5184,6 +5184,749 @@
         ]
       },
       {
+        "address": "0x18226f64a850163c0f0aba453653cc206eae99f3",
+        "protocol": "Topaz",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenA",
+                "type": "address"
+              },
+              {
+                "name": "tokenB",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "amountADesired",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBDesired",
+                "type": "uint256"
+              },
+              {
+                "name": "amountAMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountA",
+                "type": "uint256"
+              },
+              {
+                "name": "amountB",
+                "type": "uint256"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "addLiquidityETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "amountTokenDesired",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenA",
+                "type": "address"
+              },
+              {
+                "name": "tokenB",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "amountAMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountA",
+                "type": "uint256"
+              },
+              {
+                "name": "amountB",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactETHForTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "zapIn",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "tokenIn",
+                "type": "address"
+              },
+              {
+                "name": "amountInA",
+                "type": "uint256"
+              },
+              {
+                "name": "amountInB",
+                "type": "uint256"
+              },
+              {
+                "name": "zapInPool",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenA",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenB",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOutMinA",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinB",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountAMin",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountBMin",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "routesA",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "routesB",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "stake",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "zapOut",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenOut",
+                "type": "address"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "zapOutPool",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenA",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenB",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOutMinA",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinB",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountAMin",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountBMin",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "routesA",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "routesB",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x19b683a2f45012318d9b2ae1280d68d3ec54d663",
         "protocol": "izumi",
         "abi": [
@@ -5382,6 +6125,81 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x1a7e76077a4a3e80ea5835bcf33688d92746962e",
+        "protocol": "Boardwalk",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimBwlk",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimFees",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "handleRewards",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shouldClaimBwlk",
+                "type": "bool"
+              },
+              {
+                "name": "_shouldStakeMultiplierPoints",
+                "type": "bool"
+              },
+              {
+                "name": "_shouldClaimWeth",
+                "type": "bool"
+              },
+              {
+                "name": "_shouldConvertWethToEth",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "stakeBwlk",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unstakeBwlk",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -9919,6 +10737,36 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x44645311daf8c6f45a00227f85a3193c84c2fd57",
+        "protocol": "Boardwalk",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "epoch",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimAll",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "epochs",
+                "type": "uint256[]"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -38651,6 +39499,749 @@
         ]
       },
       {
+        "address": "0x1e98c8226e7d452e1888e3d3d2f929346321c6c3",
+        "protocol": "Topaz",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenA",
+                "type": "address"
+              },
+              {
+                "name": "tokenB",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "amountADesired",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBDesired",
+                "type": "uint256"
+              },
+              {
+                "name": "amountAMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountA",
+                "type": "uint256"
+              },
+              {
+                "name": "amountB",
+                "type": "uint256"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "addLiquidityETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "amountTokenDesired",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenA",
+                "type": "address"
+              },
+              {
+                "name": "tokenB",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "amountAMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountA",
+                "type": "uint256"
+              },
+              {
+                "name": "amountB",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactETHForTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "zapIn",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "tokenIn",
+                "type": "address"
+              },
+              {
+                "name": "amountInA",
+                "type": "uint256"
+              },
+              {
+                "name": "amountInB",
+                "type": "uint256"
+              },
+              {
+                "name": "zapInPool",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenA",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenB",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOutMinA",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinB",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountAMin",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountBMin",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "routesA",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "routesB",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "stake",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "zapOut",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenOut",
+                "type": "address"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "zapOutPool",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenA",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenB",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOutMinA",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinB",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountAMin",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountBMin",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "routesA",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "routesB",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
         "protocol": "ERC-20",
         "abi": [
@@ -54695,6 +56286,749 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x18226f64a850163c0f0aba453653cc206eae99f3",
+        "protocol": "Topaz",
+        "abi": [
+          {
+            "type": "function",
+            "name": "addLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenA",
+                "type": "address"
+              },
+              {
+                "name": "tokenB",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "amountADesired",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBDesired",
+                "type": "uint256"
+              },
+              {
+                "name": "amountAMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountA",
+                "type": "uint256"
+              },
+              {
+                "name": "amountB",
+                "type": "uint256"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "addLiquidityETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "amountTokenDesired",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidity",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenA",
+                "type": "address"
+              },
+              {
+                "name": "tokenB",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "amountAMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountBMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountA",
+                "type": "uint256"
+              },
+              {
+                "name": "amountB",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountToken",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "amountTokenMin",
+                "type": "uint256"
+              },
+              {
+                "name": "amountETHMin",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountETH",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactETHForTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "routes",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "zapIn",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "tokenIn",
+                "type": "address"
+              },
+              {
+                "name": "amountInA",
+                "type": "uint256"
+              },
+              {
+                "name": "amountInB",
+                "type": "uint256"
+              },
+              {
+                "name": "zapInPool",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenA",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenB",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOutMinA",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinB",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountAMin",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountBMin",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "routesA",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "routesB",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "stake",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "zapOut",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenOut",
+                "type": "address"
+              },
+              {
+                "name": "liquidity",
+                "type": "uint256"
+              },
+              {
+                "name": "zapOutPool",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenA",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenB",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOutMinA",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinB",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountAMin",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountBMin",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "routesA",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "routesB",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "from",
+                    "type": "address"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address"
+                  },
+                  {
+                    "name": "stable",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "factory",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
           }
         ]
       },

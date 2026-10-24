@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Verse",
+  "website": "https://verse.bitcoin.com/",
+  "observedAt": "2026-10-24",
+  "status": "excluded_explicit_project_sunset",
+  "reason": "Official primary homepage identifies project sunset and limits existing DEX access to managing positions; retired products have no exit-only exception.",
+  "evidence": [
+    {
+      "sourceRef": "https://verse.bitcoin.com/",
+      "canonical": "https://verse.getverse.com/",
+      "title": "Verse DEX | Verse Project Sunset",
+      "metaDescription": "Visit getverse.com for information regarding the sunset of the Verse Project. Access Verse DEX to manage existing positions.",
+      "visibleText": "Please refer to getverse.com for information regarding the sunset of the Verse Project."
+    },
+    {
+      "sourceRef": "https://www.getverse.com/",
+      "title": "Verse Sunset — Preview access",
+      "visibleText": "Verse Sunset. Please check back again later. We are preparing an important update for Verse Holders. If you have a preview code, enter it below. This page will open automatically when claims are available."
+    }
+  ],
+  "limits": [
+    "No timeline or hidden preview terms inferred. Explicit official sunset is sufficient exclusion, independent of contract liquidity or ability to exit. smartBCH would be unsupported regardless."
+  ],
+  "selectedFunctions": [],
+  "deployments": []
+}
