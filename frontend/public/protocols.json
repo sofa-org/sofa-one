@@ -2270,6 +2270,110 @@
         ]
       },
       {
+        "address": "0x06a645079cd4f3bb38ffad47f92180b8041145e3",
+        "protocol": "SATO",
+        "abi": [
+          {
+            "type": "function",
+            "name": "buy",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "currency0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "currency1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickSpacing",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "hooks",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "swapper",
+                "type": "address"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "satoOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "sell",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "currency0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "currency1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickSpacing",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "hooks",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "swapper",
+                "type": "address"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "satoIn",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "ethOut",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x074134a2784f4f66b6ced6f68849382990ff3215",
         "protocol": "yearn-tokenized-strategy",
         "abi": [
@@ -50780,6 +50884,116 @@
                     "type": "uint256"
                   }
                 ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x010224949cca211fb5ddfedd28dc8bf9d2990368",
+        "protocol": "Dexalot",
+        "abi": [
+          {
+            "type": "function",
+            "name": "partialSwap",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_order",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "nonceAndMeta",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "makerAsset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "takerAsset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "makerAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "takerAmount",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "_signature",
+                "type": "bytes"
+              },
+              {
+                "name": "_takerAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "simpleSwap",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_order",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "nonceAndMeta",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "makerAsset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "takerAsset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "makerAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "takerAmount",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "_signature",
+                "type": "bytes"
               }
             ],
             "outputs": []

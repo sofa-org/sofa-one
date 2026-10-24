@@ -72,6 +72,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Curvance', website: 'https://www.curvance.com/' },
   { name: 'Curve', website: 'https://www.curve.finance' },
   { name: 'D2 Finance', website: 'https://d2.finance/' },
+  { name: 'Dexalot', website: 'https://app.dexalot.com/' },
   { name: 'dForce', website: 'https://dforce.network' },
   { name: 'Dfyn', website: 'https://docs.dfyn.network/technical/contracts' },
   // Now Chamber; one continuing protocol, not two separate admissions.
@@ -216,6 +217,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Sablier', website: 'https://sablier.com/' },
   { name: 'Saffron Finance', website: 'https://saffron.finance/' },
   { name: 'Sandclock', website: 'https://www.sandclock.org/' },
+  { name: 'SATO', website: 'https://sat0.org/' },
   { name: 'ShibaSwap', website: 'https://shibaswap.com' },
   { name: 'Sierra Protocol', website: 'https://www.sierra.money/' },
   { name: 'Sky', website: 'https://sky.money' },

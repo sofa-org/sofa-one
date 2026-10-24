@@ -944,3 +944,9 @@ Actual match/partial/null grades and unverified dependencies remain explicit, in
 - Deferrals distinguish Marginal's current Berachain-only roots from shutdown and Paladin legacy mass-unlock/migration from Trevee's maintained Ethereum reward product.
 - Verification under Node.js 20.19.3: five additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all five calls and denied 24 excluded selectors. Exact filtered cards and served Ethereum entries passed Chromium checks. No financial vault conversion, collateral adjustment, vote, proof publication or earned-reward payout was executed.
 
+## Repeated expansion round 9, cycle 4 — SATO and Dexalot (2026-10-24)
+
+- `sources/sato-ethereum-router-r9.json`: two current direct typed curve buy/sell methods. Router does not enforce the frontend's intended PoolKey/hook or swapper identity, and provides no minimum-output/deadline. SATO curve source forbids all LP additions and can irreversibly stop future buys at its supply threshold; current observations are not a future trading/backing guarantee. No raw callback or opaque command is admitted.
+- `sources/dexalot-arbitrum-rfq-r9.json`: two same-chain Arbitrum RFQ settlement methods with exact current implementation binding. Existing counterparty proofs bind financial terms, not new wallet signing. Signed destination can differ from caller; partial fill consumes nonce, excess input does not increase output, and mutable signed slippage can reduce payout. Subnet/Portfolio bridges and role/forwarder/queue authorities remain excluded.
+- Verification under Node.js 20.19.3: four additions only; generation/check, 65 backend and one frontend tests passed. Production policy smoke exercised all four calls and denied 50 excluded selectors. Exact filtered cards and served Ethereum/Arbitrum entries passed Chromium checks. No curve trade, quote signing, RFQ fill or asset payment was executed.
+
