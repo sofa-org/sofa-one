@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Ample",
+  "candidate": "Monad AUSD deployment only",
+  "observedAt": "2026-10-24",
+  "status": "deferred-deployment-not-protocol-rejection",
+  "chainId": 143,
+  "address": "0xe89d322b5822d828b8252d3087be8486cc2048ef",
+  "selectedFunctions": [],
+  "reason": "Ample is admitted separately through its own Base and Arbitrum source-bound USDC vaults. This additional officially listed Monad deployment was not activated because an own complete applicable source/ABI artifact was not retrieved. No cross-chain exact/similar-match relabeling was used.",
+  "observations": [
+    {
+      "sourceRef": "https://ample-2.gitbook.io/docs/developers-and-partners/contracts.md",
+      "kind": "primary deployment attribution",
+      "excerpt": "Monad: AUSD: 0xE89d322b5822D828B8252D3087be8486cC2048Ef"
+    },
+    {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/143/0xE89d322b5822D828B8252D3087be8486cC2048Ef?fields=all",
+      "kind": "fetch failure",
+      "observedResult": "HTTP 404 Not Found from direct programmatic fetch; no source artifact returned. This does not prove unverified code, disabled deposits, retirement or shutdown."
+    },
+    {
+      "sourceRef": "https://monadscan.com/address/0xE89d322b5822D828B8252D3087be8486cC2048Ef#code",
+      "kind": "explorer reader observation",
+      "observedResult": "Reader reported Contract: Verified, name AmpleEarn, compiler v0.8.26+commit.8a97fa7a, optimization 200 runs, cancun, and Exact Match Similar Match linking 0xD1bE1F98991cF69355e468aD15b6d0b6429bCfCb in Arbitrum. It warned of unverified CuratorLib, ReallocateLib and StrategyLib and a heuristic possible proxy. That heuristic was not treated as resolved current implementation identity."
+    },
+    {
+      "sourceRef": "https://monadscan.com/address/0xE89d322b5822D828B8252D3087be8486cC2048Ef#code",
+      "kind": "raw artifact retrieval failure",
+      "observedResult": "Direct urllib HTML fetch returned HTTP 403 Forbidden; no full root source/ABI artifact was captured from that fetch. The successful reader result is not evidence of own complete source retrieval."
+    }
+  ],
+  "qualification": "This is a source-binding gap for one deployment, not evidence that the maintained Ample product is retired or unsafe. No substitute generic Euler ABI, Arbitrum artifact relabel, proxy assumption or funded execution claim was used. Both assigned protocol candidates remain viable and distinct; no replacement protocol is requested for this excluded additional deployment."
+}
