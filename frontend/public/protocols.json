@@ -2201,6 +2201,51 @@
         ]
       },
       {
+        "address": "0x040bec45a24afcc3fe35e0230c1fa6db772c0b4e",
+        "protocol": "JPY DeFi",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimAllCollGains",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "provideToSP",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_topUp",
+                "type": "uint256"
+              },
+              {
+                "name": "_doClaim",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFromSP",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_doClaim",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x04422053addbc9bb2759b248b574e3fca76bc145",
         "protocol": "Morpho Vault V2",
         "abi": [
@@ -10772,6 +10817,51 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x4eac642110b81192f1065f240c5b425c336f43af",
+        "protocol": "JPY DeFi",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claimAllCollGains",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "provideToSP",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_topUp",
+                "type": "uint256"
+              },
+              {
+                "name": "_doClaim",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFromSP",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_doClaim",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -53817,6 +53907,57 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x4ce3ec1b7b4ffb33a0b70c64a0560a3f341aa2e1",
+        "protocol": "Shift Protocol",
+        "abi": [
+          {
+            "type": "function",
+            "name": "cancelWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_tokenAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "reqDeposit",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "reqWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shareAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
           }
         ]
       },
