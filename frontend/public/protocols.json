@@ -18160,6 +18160,36 @@
         ]
       },
       {
+        "address": "0x7d1775061a3a713e778af23806330b532fa006b0",
+        "protocol": "Alongside AMKT",
+        "abi": [
+          {
+            "type": "function",
+            "name": "issue",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x7d5706f6ef3f89b3951e23e557cdfbc3239d4e2c",
         "protocol": "etherfi",
         "abi": [
@@ -72152,6 +72182,70 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x99c2901d2883f8d295a989544f118e31ec21823e",
+        "protocol": "Teahouse",
+        "abi": [
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount0Max",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount1Max",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "depositedAmount0",
+                "type": "uint256"
+              },
+              {
+                "name": "depositedAmount1",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount0Min",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount1Min",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "withdrawnAmount0",
+                "type": "uint256"
+              },
+              {
+                "name": "withdrawnAmount1",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
