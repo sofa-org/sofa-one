@@ -13204,6 +13204,112 @@
         ]
       },
       {
+        "address": "0x59d7d55ddc58494fbbbca29904f108ece82ac7fb",
+        "protocol": "UNCX Network",
+        "abi": [
+          {
+            "type": "function",
+            "name": "incrementLock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_lockID",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "lockLPToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_lpToken",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_unlock_date",
+                "type": "uint256"
+              },
+              {
+                "name": "_referral",
+                "type": "address"
+              },
+              {
+                "name": "_fee_in_eth",
+                "type": "bool"
+              },
+              {
+                "name": "_withdrawer",
+                "type": "address"
+              },
+              {
+                "name": "_countryCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "relock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_lockID",
+                "type": "uint256"
+              },
+              {
+                "name": "_unlock_date",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "splitLock",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_lockID",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_lockID",
+                "type": "uint256"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x5a3fbc343516cf9afa35f2753259496de5eeeb45",
         "protocol": "Peapods",
         "abi": [
@@ -18470,6 +18576,149 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x80ca847618030bc3e26ad2c444fd007279daf50a",
+        "protocol": "Resonate",
+        "abi": [
+          {
+            "type": "function",
+            "name": "batchClaimInterest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "fnftIds",
+                "type": "uint256[][]"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimInterest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "fnftId",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "createPool",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "vault",
+                "type": "address"
+              },
+              {
+                "name": "rate",
+                "type": "uint128"
+              },
+              {
+                "name": "additionalRate",
+                "type": "uint128"
+              },
+              {
+                "name": "lockupPeriod",
+                "type": "uint32"
+              },
+              {
+                "name": "packetSize",
+                "type": "uint256"
+              },
+              {
+                "name": "poolName",
+                "type": "string"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "modifyExistingOrder",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "amount",
+                "type": "uint112"
+              },
+              {
+                "name": "position",
+                "type": "uint64"
+              },
+              {
+                "name": "isProvider",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "submitConsumer",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "shouldFarm",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "submitProducer",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "poolId",
+                "type": "bytes32"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "shouldFarm",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
