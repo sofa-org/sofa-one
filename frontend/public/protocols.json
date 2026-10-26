@@ -3564,6 +3564,34 @@
           },
           {
             "type": "function",
+            "name": "liquidationCall",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "debtAsset",
+                "type": "address"
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "debtToCover",
+                "type": "uint256"
+              },
+              {
+                "name": "receiveAToken",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "repay",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -3590,6 +3618,34 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "setUserEMode",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
           },
           {
             "type": "function",
@@ -5396,6 +5452,33 @@
         ]
       },
       {
+        "address": "0x136471a34f6ef19fe571effc1ca711fdb8e49f2b",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x1455d9bd6b98f95dd8feb2b3d60ed825fcef0610",
         "protocol": "Drips",
         "abi": [
@@ -5527,6 +5610,33 @@
       },
       {
         "address": "0x14d60e7fdc0d71d8611742720e4c50e7a974020c",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x14d60e7fdc0d71d8611742720e4c50e7a974020c",
         "protocol": "Superstate",
         "abi": [
           {
@@ -5540,6 +5650,33 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x18084fba666a33d37592fa2633fd49a74dd93a88",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
@@ -6721,6 +6858,33 @@
         ]
       },
       {
+        "address": "0x1abaea1f7c830bd89acc67ec4af516284b1bc33c",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x1bb74b5ddc1f4fc91d6f9e7906cf68bc93538e33",
         "protocol": "pickle-jar",
         "abi": [
@@ -6923,6 +7087,60 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x2255718832bc9fd3be1caf75084f4803da14ff01",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_spender",
+                "type": "address"
+              },
+              {
+                "name": "_value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_spender",
+                "type": "address"
+              },
+              {
+                "name": "_value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
@@ -8829,6 +9047,92 @@
         ]
       },
       {
+        "address": "0x3167c452fa3fa1e5c16bb83bc0fde4519c464299",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrowETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x33ac9b224c8a189d2332aecf021897f1535373ab",
         "protocol": "Wildcat",
         "abi": [
@@ -9165,6 +9469,33 @@
             "stateMutability": "nonpayable",
             "inputs": [],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x356b8d89c1e1239cbbb9de4815c39a1474d5ba7d",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender_",
+                "type": "address"
+              },
+              {
+                "name": "amount_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "success_",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
@@ -11166,6 +11497,33 @@
       },
       {
         "address": "0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e",
         "protocol": "Superstate",
         "abi": [
           {
@@ -12167,6 +12525,60 @@
         ]
       },
       {
+        "address": "0x4c9edd5852cd905f086c759e8383e09bff1e68b3",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5",
         "protocol": "compound-v2",
         "abi": [
@@ -12608,6 +13020,34 @@
           },
           {
             "type": "function",
+            "name": "liquidationCall",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "debtAsset",
+                "type": "address"
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "debtToCover",
+                "type": "uint256"
+              },
+              {
+                "name": "receiveAToken",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "repay",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -12634,6 +13074,34 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "setUserEMode",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
           },
           {
             "type": "function",
@@ -13059,6 +13527,33 @@
               {
                 "name": "",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x514910771af9ca656af840dff83e8264ecf986ca",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_spender",
+                "type": "address"
+              },
+              {
+                "name": "_value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -13579,6 +14074,33 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x5a0f93d040de44e78f251b03c43be9cf317dcf64",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
@@ -14788,6 +15310,33 @@
         ]
       },
       {
+        "address": "0x657e8c867d8b37dcc18fa4caead9c45eb088c642",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x65c9a641afceb9c0e6034e558a319488fa0fa3be",
         "protocol": "f(x) Protocol",
         "abi": [
@@ -15130,6 +15679,33 @@
         ]
       },
       {
+        "address": "0x68749665ff8d2d112fa859aa293f07a622782f38",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
         "protocol": "uniswap-v3-router02",
         "abi": [
@@ -15228,6 +15804,33 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x6c3ea9036406852006290770bedfcaba0e23a0e8",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
@@ -17310,6 +17913,33 @@
         ]
       },
       {
+        "address": "0x7433806912eae67919e66aea853d46fa0aef98a8",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x74a09653a083691711cf8215a6ab074bb4e99ef5",
         "protocol": "renzo",
         "abi": [
@@ -18686,6 +19316,33 @@
         ]
       },
       {
+        "address": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x80128dbb9f07b93dde62a6daeadb69ed14a7d354",
         "protocol": "spark-vault-v2",
         "abi": [
@@ -19140,6 +19797,33 @@
         ]
       },
       {
+        "address": "0x8292bb45bf1ee4d140127049757c2e0ff06317ed",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x83f20f44975d03b1b09e64809b757c47f942beea",
         "protocol": "sdai-savings",
         "abi": [
@@ -19453,6 +20137,34 @@
               {
                 "name": "onBehalfOf",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "liquidationCall",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "debtAsset",
+                "type": "address"
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "debtToCover",
+                "type": "uint256"
+              },
+              {
+                "name": "receiveAToken",
+                "type": "bool"
               }
             ],
             "outputs": []
@@ -20212,6 +20924,33 @@
         ]
       },
       {
+        "address": "0x8c213ee79581ff4984583c6a801e5263418c4b86",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x8f08b70456eb22f6109f57b8fafe862ed28e6040",
         "protocol": "King Protocol",
         "abi": [
@@ -20277,6 +21016,28 @@
               {
                 "name": "fullWithdrawal",
                 "type": "bool"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x91b7d78bf92db564221f6b5aee744d1727d1dd1e",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approveDelegation",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "delegatee",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -22079,6 +22840,33 @@
               {
                 "name": "amountRepaid_",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x9d39a5de30e57443bff2a8307a4256c8797a3497",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -23990,6 +24778,33 @@
         ]
       },
       {
+        "address": "0xaca92e438df0b2401ff60da7e4337b687a2435da",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender_",
+                "type": "address"
+              },
+              {
+                "name": "amount_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xad55aebc9b8c03fc43cd9f62260391c13c23e7c0",
         "protocol": "OpenEden",
         "abi": [
@@ -24177,6 +24992,34 @@
           },
           {
             "type": "function",
+            "name": "liquidationCall",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "debtAsset",
+                "type": "address"
+              },
+              {
+                "name": "user",
+                "type": "address"
+              },
+              {
+                "name": "debtToCover",
+                "type": "uint256"
+              },
+              {
+                "name": "receiveAToken",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "repay",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -24203,6 +25046,34 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "setUserEMode",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
           },
           {
             "type": "function",
@@ -24250,6 +25121,33 @@
               {
                 "name": "",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xae78736cd615f374d3085123a210448e74fc6393",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -25195,6 +26093,33 @@
               {
                 "name": "amountOut",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xb0f70c0bd6fd87dbeb7c10dc692a2a6106817072",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -27262,6 +28187,33 @@
         ]
       },
       {
+        "address": "0xbe9895146f7af43049ca1c1ae358b0541ea49704",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7",
         "protocol": "curve-3pool-stableswap",
         "abi": [
@@ -27518,6 +28470,33 @@
               {
                 "name": "",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xc139190f447e929f090edeb554d95abb8b18ac1c",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -29873,6 +30852,33 @@
         ]
       },
       {
+        "address": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xccccccccccccfae2ee43f0e727a8c2969d74b9ec",
         "protocol": "Cork Protocol",
         "abi": [
@@ -30286,6 +31292,33 @@
               {
                 "name": "actualReferenceAssetsOut",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -30886,6 +31919,92 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xd01607c3c5ecaba394d8be377a08590149325722",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrowETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -32791,6 +33910,33 @@
         ]
       },
       {
+        "address": "0xdc035d45d973e3ec169d2276ddab16f1e407384f",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xdcee70654261af21c44c093c300ed3bb97b78192",
         "protocol": "origin-woeth",
         "abi": [
@@ -34283,6 +35429,33 @@
         ]
       },
       {
+        "address": "0xe343167631d89b6ffc58b88d6b7fb0228795491d",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xe365ff3cad44d19cb7aba81df8ffd6818a66ac0a",
         "protocol": "Gondi",
         "abi": [
@@ -35454,6 +36627,28 @@
         ]
       },
       {
+        "address": "0xea51d7853eefb32b6ee06b1c12e6dcca88be0ffe",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approveDelegation",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "delegatee",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xeb83112d925268bede86654c13d423a987587e3e",
         "protocol": "alchemix-v3",
         "abi": [
@@ -36360,6 +37555,33 @@
               {
                 "name": "lockId",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xf1c9acdc66974dfb6decb12aa385b9cd01190e38",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -37580,6 +38802,33 @@
         ]
       },
       {
+        "address": "0xfa1fdbbd71b0aa16162d76914d69cd8cb3ef92da",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xfa80c7349cc2357c42a64c2954b24b1a61c29435",
         "protocol": "Monolith Market",
         "abi": [
@@ -38238,6 +39487,55 @@
   "10": {
     "contracts": [
       {
+        "address": "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x0c84331e39d6658cd6e6b9ba04736cc4c4734351",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approveDelegation",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "delegatee",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x1250f2326f04ac61ee5aed92fef74bcac6e6bc90",
         "protocol": "HAI",
         "abi": [
@@ -38310,6 +39608,33 @@
             "stateMutability": "nonpayable",
             "inputs": [],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x1f32b1c2345538c0c6f582fcb022739c4a194ebb",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender_",
+                "type": "address"
+              },
+              {
+                "name": "amount_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
@@ -38732,6 +40057,33 @@
         ]
       },
       {
+        "address": "0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x3c3ea4b57a46241e54610e5f022e5c45859a1017",
         "protocol": "uniswap-v4-position-manager",
         "abi": [
@@ -38747,6 +40099,36 @@
               {
                 "name": "deadline",
                 "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae",
+        "protocol": "Merkl",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "users",
+                "type": "address[]"
+              },
+              {
+                "name": "tokens",
+                "type": "address[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "proofs",
+                "type": "bytes32[][]"
               }
             ],
             "outputs": []
@@ -38796,6 +40178,33 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x4200000000000000000000000000000000000042",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
@@ -38873,6 +40282,92 @@
         ]
       },
       {
+        "address": "0x5f2508cae9923b02316254026cd43d7902866725",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrowETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
         "protocol": "uniswap-v3-router02",
         "abi": [
@@ -38920,6 +40415,33 @@
               {
                 "name": "amountOut",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x68f180fcce6836688e9084f035309e29bf0a2095",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -39300,6 +40822,33 @@
         ]
       },
       {
+        "address": "0x76fb31fb4af56892a25e32cfc43de717950c9278",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
         "protocol": "Aave V3",
         "abi": [
@@ -39327,6 +40876,34 @@
               {
                 "name": "onBehalfOf",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "liquidationCall",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "debtAsset",
+                "type": "address"
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "debtToCover",
+                "type": "uint256"
+              },
+              {
+                "name": "receiveAToken",
+                "type": "bool"
               }
             ],
             "outputs": []
@@ -41013,6 +42590,33 @@
         ]
       },
       {
+        "address": "0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xe592427a0aece92de3edee1f18e0157c05861564",
         "protocol": "uniswap-v3",
         "abi": [
@@ -41761,6 +43365,94 @@
             "inputs": [
               {
                 "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x0c2c95b24529664fe55d4437d7a31175cfe6c4f7",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrowETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x0e76414d433ddfe8004d2a7505d218874875a996",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approveDelegation",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "delegatee",
+                "type": "address"
+              },
+              {
+                "name": "amount",
                 "type": "uint256"
               }
             ],
@@ -46375,6 +48067,34 @@
           },
           {
             "type": "function",
+            "name": "liquidationCall",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "debtAsset",
+                "type": "address"
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "debtToCover",
+                "type": "uint256"
+              },
+              {
+                "name": "receiveAToken",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "repay",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -46401,6 +48121,34 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "setUserEMode",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
           },
           {
             "type": "function",
@@ -47093,6 +48841,33 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x9b00a09492a626678e5a3009982191586c444df9",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
@@ -50712,6 +52487,33 @@
   "137": {
     "contracts": [
       {
+        "address": "0x03b54a6e9a984069379fae1a4fc4dbae93b3bccd",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x0c58b39bec89c20e19e5085e1e7a6ac193a2eec6",
         "protocol": "Textile FX",
         "abi": [
@@ -51649,6 +53451,33 @@
         ]
       },
       {
+        "address": "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x1ec2ebf4f37e7363fdfe3551602425af0b3ceef9",
         "protocol": "uniswap-v4-position-manager",
         "abi": [
@@ -51884,6 +53713,63 @@
         ]
       },
       {
+        "address": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae",
+        "protocol": "Merkl",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "users",
+                "type": "address[]"
+              },
+              {
+                "name": "tokens",
+                "type": "address[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "proofs",
+                "type": "bytes32[][]"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x3f48e00cfeba3e713db8bc3e28d634578c553e32",
         "protocol": "Untangled Finance",
         "abi": [
@@ -51932,6 +53818,28 @@
         ]
       },
       {
+        "address": "0x4a1c3ad6ed28a636ee1751c69071f6be75deb8b8",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approveDelegation",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "delegatee",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x4c4af8dbc524681930a27b2f1af5bcc8062e6fb7",
         "protocol": "woofi-v2",
         "abi": [
@@ -51969,6 +53877,33 @@
               {
                 "name": "realToAmount",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x53e0bca35ec356bd5dddfebbd1fc0fd03fabad39",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -52239,6 +54174,33 @@
         ]
       },
       {
+        "address": "0x6d80113e533a2c0fe82eabd35f1875dcea89ea97",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x7907ed8917542b79c7788ee49eb07d25a4310c63",
         "protocol": "GT3",
         "abi": [
@@ -52456,6 +54418,34 @@
               {
                 "name": "onBehalfOf",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "liquidationCall",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "debtAsset",
+                "type": "address"
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "debtToCover",
+                "type": "uint256"
+              },
+              {
+                "name": "receiveAToken",
+                "type": "bool"
               }
             ],
             "outputs": []
@@ -52852,6 +54842,33 @@
               {
                 "name": "amountIn",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -54536,6 +56553,72 @@
         ]
       },
       {
+        "address": "0xbc302053db3aa514a3c86b9221082f162b91ad63",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrowETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e",
         "protocol": "dystopia-v1",
         "abi": [
@@ -55087,6 +57170,33 @@
         ]
       },
       {
+        "address": "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xc36442b4a4522e871399cd717abdd847ab11fe88",
         "protocol": "uniswap-v3-position-manager",
         "abi": [
@@ -55373,6 +57483,33 @@
         ]
       },
       {
+        "address": "0xd6df932a45c0f255f85145f286ea0b292b21c90b",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xdc264714f68d84cf29bc605589405e78bdbe7c9f",
         "protocol": "uniswap-universal-router-2.1.2",
         "abi": [
@@ -55573,6 +57710,33 @@
   "143": {
     "contracts": [
       {
+        "address": "0x00000000efe302beaa2b3e6e1b18d08d69a9012a",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_spender",
+                "type": "address"
+              },
+              {
+                "name": "_value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x0c65a0bc65a5d819235b71f554d210d3f80e0852",
         "protocol": "Capricorn",
         "abi": [
@@ -55656,6 +57820,33 @@
               {
                 "name": "requestId",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x10aeaf63194db8d453d4d85a06e5efe1dd0b5417",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -55836,6 +58027,33 @@
               {
                 "name": "",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x211cc4dd073734da055fbf44a2b4667d5e5fe5d2",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -56483,6 +58701,33 @@
         ]
       },
       {
+        "address": "0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x60fd5aa15debd5ffdefb5129fd9fd8a34d80d608",
         "protocol": "OctoSwap",
         "abi": [
@@ -56896,6 +59141,34 @@
           },
           {
             "type": "function",
+            "name": "liquidationCall",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "debtAsset",
+                "type": "address"
+              },
+              {
+                "name": "user",
+                "type": "address"
+              },
+              {
+                "name": "debtToCover",
+                "type": "uint256"
+              },
+              {
+                "name": "receiveAToken",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "repay",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -56922,6 +59195,34 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "setUserEMode",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
           },
           {
             "type": "function",
@@ -58418,6 +60719,33 @@
         ]
       },
       {
+        "address": "0x8b562578b2f9aa8c14ccda3c5d6cbcead3b06a57",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x8d3f9f9eb2f5e8b48efbb4074440d1e2a34bc365",
         "protocol": "Valos",
         "abi": [
@@ -59048,6 +61376,33 @@
         ]
       },
       {
+        "address": "0xa3d68b74bf0528fdd07263c60d6488749044914b",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xa6ce4f10d83dbddac17e68e1837ca9ce6a1b596e",
         "protocol": "uniswap-universal-router-2.1.2",
         "abi": [
@@ -59074,7 +61429,142 @@
         ]
       },
       {
+        "address": "0xab6e5a0c3799d020c790d34f7b2c02639e238af7",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xaca92e438df0b2401ff60da7e4337b687a2435da",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xd18b7ec58cdf4876f6afebd3ed1730e4ce10414b",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xe7cd86e13ac4309349f30b3435a9d337750fc82d",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xee8c0e9f1bffb4eb878d8f15f368a02a35481242",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xfc421ad3c883bf9e7c4f42de845c4e4405799e73",
         "protocol": "ERC-20",
         "abi": [
           {
@@ -59946,6 +62436,33 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x04c0599ae5a44757c0af6f9ec3b93da8976c150a",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
@@ -61362,6 +63879,28 @@
         ]
       },
       {
+        "address": "0x24e6e0795b3c7c71d965fcc4f371803d1c1dca1e",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approveDelegation",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "delegatee",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x2626664c2603336e57b271c5c0b26f421741e481",
         "protocol": "uniswap-v3-router02",
         "abi": [
@@ -61887,6 +64426,33 @@
         ]
       },
       {
+        "address": "0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x35c07cc7c612583fac9a51735bfa57246f0c7545",
         "protocol": "Krystal",
         "abi": [
@@ -62108,6 +64674,36 @@
                     "type": "bytes"
                   }
                 ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae",
+        "protocol": "Merkl",
+        "abi": [
+          {
+            "type": "function",
+            "name": "claim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "users",
+                "type": "address[]"
+              },
+              {
+                "name": "tokens",
+                "type": "address[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "proofs",
+                "type": "bytes32[][]"
               }
             ],
             "outputs": []
@@ -62879,6 +65475,33 @@
         ]
       },
       {
+        "address": "0x60a3e35cc302bfa44cb288bc5a4f316fdb1adb42",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x628ff693426583d9a7fb391e54366292f509d457",
         "protocol": "moonwell",
         "abi": [
@@ -62964,6 +65587,60 @@
               {
                 "name": "",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x63706e401c06ac8513145b7687a14804d17f814b",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x660975730059246a68521a3e2fbd4740173100f5",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -63311,6 +65988,33 @@
               {
                 "name": "",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x6bb7a212910682dcfdbd5bcbb3e28fb4e8da10ee",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -65536,6 +68240,72 @@
         ]
       },
       {
+        "address": "0xa0d9c1e9e48ca30c8d8c3b5d69ff5dc1f6dffc24",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrowETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xa0f688905ef05ea853c35131b4899a613b4ba644",
         "protocol": "Gamma Strategies",
         "abi": [
@@ -65602,6 +68372,34 @@
               {
                 "name": "onBehalfOf",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "liquidationCall",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "debtAsset",
+                "type": "address"
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "debtToCover",
+                "type": "uint256"
+              },
+              {
+                "name": "receiveAToken",
+                "type": "bool"
               }
             ],
             "outputs": []
@@ -67317,6 +70115,33 @@
         ]
       },
       {
+        "address": "0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender_",
+                "type": "address"
+              },
+              {
+                "name": "amount_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xc2447f36ffda08e278d25d08ea91d942f0c2d6ea",
         "protocol": "Union Protocol",
         "abi": [
@@ -68194,6 +71019,33 @@
         ]
       },
       {
+        "address": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xcf77a3ba9a5ca399b7c97c74d54e5b1beb874e43",
         "protocol": "aerodrome",
         "abi": [
@@ -69003,6 +71855,33 @@
         ]
       },
       {
+        "address": "0xd4a0e0b9149bcee3c920d2e00b5de09138fd8bb7",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xd6145b2d3f379919e8cdeda7b97e37c4b2ca9c40",
         "protocol": "uniswap-universal-router-2.1.2",
         "abi": [
@@ -69652,6 +72531,33 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xecac9c5f704e954931349da37f60e39f515c11c1",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
@@ -70807,6 +73713,28 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x0c84331e39d6658cd6e6b9ba04736cc4c4734351",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approveDelegation",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "delegatee",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -72282,6 +75210,60 @@
         ]
       },
       {
+        "address": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x35751007a407ca6feffe80b3cb397736d2cf4dbe",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x3a253838121b9ad9736fafc030cf4971615d68b2",
         "protocol": "sofa",
         "abi": [
@@ -73285,6 +76267,92 @@
         ]
       },
       {
+        "address": "0x5283beced7adf6d003225c13896e536f2d4264ff",
+        "protocol": "Aave V3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrowETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              },
+              {
+                "name": "referralCode",
+                "type": "uint16"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x530476d5583724a89c8841eb6da76e7af4c0f17e",
         "protocol": "Swapr",
         "abi": [
@@ -73776,6 +76844,33 @@
               {
                 "name": "amounts",
                 "type": "uint256[]"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x5979d7b546e38e414f7e9822514be443a4800529",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender_",
+                "type": "address"
+              },
+              {
+                "name": "amount_",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -74760,6 +77855,34 @@
           },
           {
             "type": "function",
+            "name": "liquidationCall",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "collateralAsset",
+                "type": "address"
+              },
+              {
+                "name": "debtAsset",
+                "type": "address"
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "debtToCover",
+                "type": "uint256"
+              },
+              {
+                "name": "receiveAToken",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "repay",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -74886,6 +78009,33 @@
               {
                 "name": "",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x7dff72693f6a4149b17e7c6314655f6a9f7c8b33",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -75282,6 +78432,33 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x912ce59144191c1204e64559fe8253a0e49e6548",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
@@ -76167,6 +79344,33 @@
               {
                 "name": "",
                 "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0xba5ddd1f9d7f570dc94a51479a000e3bce967196",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
               }
             ]
           }
@@ -77556,6 +80760,33 @@
         ]
       },
       {
+        "address": "0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xe592427a0aece92de3edee1f18e0157c05861564",
         "protocol": "uniswap-v3",
         "abi": [
@@ -77987,6 +81218,33 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xf97f4df75117a78c1a5a0dbb814af92458539fb4",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
           }
         ]
       },
