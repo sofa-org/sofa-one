@@ -24,6 +24,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Aerodrome', website: 'https://aerodrome.finance' },
   { name: 'Ajna', website: 'https://ajna.finance' },
   { name: 'Alchemix', website: 'https://alchemix.fi' },
+  { name: 'Alien Base', website: 'https://app.alienbase.xyz/' },
   { name: 'Alongside AMKT', website: 'https://app.alongside.xyz/' },
   { name: 'Altitude', website: 'https://www.altitude.fi/' },
   { name: 'Ambient', website: 'https://ambient.finance' },

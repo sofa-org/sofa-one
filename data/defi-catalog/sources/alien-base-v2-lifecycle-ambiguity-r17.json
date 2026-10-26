@@ -1,0 +1,1212 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Alien Base",
+  "website": "https://app.alienbase.xyz/",
+  "observedAt": "2026-10-26",
+  "status": "deferred-lifecycle-ambiguity",
+  "chainId": 8453,
+  "address": "0x8c1a3cf8f83074169fe5d7ad50b978e1cd6b37c7",
+  "selectedFunctions": [],
+  "reason": "Do not admit this legacy V2 root in r17: official table says Active, but V2 guide says V2 vaults gradually deprecated. Parent chose separately active current manual V3 rather than resolving ambiguity by assuming longevity. This is not asserted Alien Base shutdown.",
+  "sourceRefs": [
+    "https://sourcify.dev/server/v2/contract/8453/0x8c1a3cf8f83074169fe5d7ad50b978e1cd6b37c7?fields=all",
+    "https://docs.alienbase.xyz/reference/contracts.md",
+    "https://docs.alienbase.xyz/liquidity/v2-pools.md"
+  ],
+  "primarySnapshots": [
+    {
+      "sourceRef": "https://docs.alienbase.xyz/reference/contracts.md",
+      "content": "> For the complete documentation index, see [llms.txt](https://docs.alienbase.xyz/llms.txt). Markdown versions of documentation pages are available by appending `.md` to page URLs; this page is available as [Markdown](https://docs.alienbase.xyz/reference/contracts.md).\n\n# Contracts\n\nCanonical list of every Alien Base contract on Base\n\nEvery contract Alien Base has deployed on Base (chain id 8453). Each row links to Basescan and notes who controls it. Verification status, source repos, and audit coverage are tracked separately on the [Audits & Security](/reference/audits-and-security.md) page.\n\n> *Last updated: October 22, 2026.* *Verification was performed against* [*Blockscout*](https://base.blockscout.com/) *and confirmed via `eth_call` on the public Base RPC.*\n\n## How to read this page\n\n* **Active** = the canonical address users and integrators should reference today.\n* **Superseded** = an earlier deployment that has been replaced. Listed for transparency; do not interact.\n* **Deprecated** = a product line that is no longer maintained. Listed for historical reference only \u2014 see [Archive](/archive/archive.md) for context.\n* A row marked with `(DAO)` means the contract's owner / fee setter is the [DAO Multisig](/governance/dao-multisig.md). Rows marked `(team)` mean the role is still held by a team-controlled key \u2014 see the [Audits & Security](/reference/audits-and-security.md) page for our migration plan.\n\n## Token\n\n|                |                                                                                                                                                                                                                                                                      |\n| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| **ALB token**  | [`0x1b23704e3f4bc7081fb00cec582183e3fe43cef7`](https://basescan.org/token/0x1b23704e3f4bc7081fb00cec582183e3fe43cef7)                                                                                                                                                |\n| Name / symbol  | Alien Base Token / ALB                                                                                                                                                                                                                                               |\n| Standard       | ERC-20, 18 decimals, burnable                                                                                                                                                                                                                                        |\n| Max supply     | 1,051,000,000 ALB, hard-coded (`MAX_SUPPLY`)                                                                                                                                                                                                                         |\n| Minters        | Migration Contract and Distributor only (`isMinter`)                                                                                                                                                                                                                 |\n| Owner          | 7-day TimelockController [`0x1c7e\u20261e21`](https://basescan.org/address/0x1c7e4284423c1a2362c49b1ea223b73e38c81e21) (timelock)                                                                                                                                         |\n| Recovery admin | DAO Multisig (can only rescue tokens sent to the ALB contract by mistake)                                                                                                                                                                                            |\n| Legacy ALB     | [`0x1dd2d631c92b1aCdFCDd51A0F7145A50130050C4`](https://basescan.org/token/0x1dd2d631c92b1acdfcdd51a0f7145a50130050c4): **Superseded**, migrates 1:1 (see [Migration Guide](/alb-migration/migration.md)). 510M cap, OpenZeppelin AccessControl, 14-day mint timelock |\n\n## New token system (AIP-5)\n\nDeployed for [AIP-5](/alb-esalb-and-govalb/alien-base-2-0.md). All contracts are verified on Basescan / Blockscout. Every contract except the Migration Contract is owned by the 7-day OpenZeppelin `TimelockController` (`0x1c7e\u20261e21`), so admin changes are visible on-chain for 7 days before they can execute.\n\n| Component                                            | Address                                                                                                                 | Status | Owner                     |\n| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------- |\n| **ALB** (`ALBToken`)                                 | [`0x1b23704e3f4bc7081fb00cec582183e3fe43cef7`](https://basescan.org/token/0x1b23704e3f4bc7081fb00cec582183e3fe43cef7)   | Active | Timelock                  |\n| **esALB** (`EsALB`, \"Escrowed Alien Base Token\")     | [`0x32d9f29170a023794025375df6949f56844e4473`](https://basescan.org/token/0x32d9f29170a023794025375df6949f56844e4473)   | Active | Timelock                  |\n| **govALB** (`GovALB`, \"Governance Alien Base Token\") | [`0x7fdb2cbe3dd946b6b4521d4a2cce62296ec1441d`](https://basescan.org/token/0x7fdb2cbe3dd946b6b4521d4a2cce62296ec1441d)   | Active | Timelock                  |\n| **Migration Contract** (legacy \u2192 new, 1:1)           | [`0xa53d1fd0aae780f5f4f3c2f75a35ca9e74269d3d`](https://basescan.org/address/0xa53d1fd0aae780f5f4f3c2f75a35ca9e74269d3d) | Active | None (no admin functions) |\n| Staking contract (esALB + govALB rewards)            | [`0x28a3c9852383eef436a874b74d2acf23047e85cf`](https://basescan.org/address/0x28a3c9852383eef436a874b74d2acf23047e85cf) | Active | Timelock                  |\n| Distributor (multi-stream farm)                      | [`0xe98af15fdc6f64ef81e53e0ae8ac8da31c577fc4`](https://basescan.org/address/0xe98af15fdc6f64ef81e53e0ae8ac8da31c577fc4) | Active | Timelock                  |\n| LoC Factory (Dev Line of Credit)                     | [`0x4f1debde1bfe0e5a6828d9958bf02dbbb5104fa2`](https://basescan.org/address/0x4f1debde1bfe0e5a6828d9958bf02dbbb5104fa2) | Active | Timelock                  |\n| ALB price oracle                                     | [`0x0463d4131e637ef7f364b7502f430380a7f00b55`](https://basescan.org/address/0x0463d4131e637ef7f364b7502f430380a7f00b55) | Active | Timelock                  |\n| ALB TWAP source                                      | [`0x857d751860e7f74169a83ecaebd31968da714851`](https://basescan.org/address/0x857d751860e7f74169a83ecaebd31968da714851) | Active | (no owner)                |\n| Uniswap V3 TWAP oracle                               | [`0x53aa2507294749b561f6250756c0121280d4b3b9`](https://basescan.org/address/0x53aa2507294749b561f6250756c0121280d4b3b9) | Active | Timelock                  |\n| New ALB/WETH V3 pool                                 | [`0xFF4364b623dC4D9A1556774467748EAb68DfF1B7`](https://basescan.org/address/0xFF4364b623dC4D9A1556774467748EAb68DfF1B7) | Active | \u2014                         |\n| New ALB/USDC V3 pool                                 | [`0x48676681A1F5BefD4b79273BdA2D85cD5390c97d`](https://basescan.org/address/0x48676681A1F5BefD4b79273BdA2D85cD5390c97d) | Active | \u2014                         |\n\nOnce the migration has run its course, the legacy farming and esALB rows below will be moved to \"Superseded\".\n\n## Alien Base V2\n\nThe original AMM. Stock Uniswap V2 plus a PancakeSwap-style farming layer.\n\n| Component     | Address                                                                                                                 | Status | Owner                              |\n| ------------- | ----------------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------- |\n| V2 Factory    | [`0x3e84d913803b02a4a7f027165e8ca42c14c0fde7`](https://basescan.org/address/0x3e84d913803b02a4a7f027165e8ca42c14c0fde7) | Active | `feeToSetter` = DAO Multisig (DAO) |\n| V2 Router     | [`0x8c1A3cF8f83074169FE5D7aD50B978e1cD6b37c7`](https://basescan.org/address/0x8c1A3cF8f83074169FE5D7aD50B978e1cD6b37c7) | Active | (immutable)                        |\n| V2 Zap helper | [`0xe0808b8e2bdd70d70e540f977cf40e26e5811054`](https://basescan.org/address/0xe0808b8e2bdd70d70e540f977cf40e26e5811054) | Active | (helper)                           |\n\n## Farming (MasterChef-style)\n\n| Component                                                                 | Address                                                                                                                 | Status     | Owner                                  |\n| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------- |\n| Farm \u2014 `BasedDistributorV2`                                               | [`0x52eaecac2402633d98b95213d0b473e069d86590`](https://basescan.org/address/0x52eaecac2402633d98b95213d0b473e069d86590) | Active     | Controller below                       |\n| **UniversalDistributorController** (current controller, since 2025-06-05) | [`0x62d58b4cdd96b590ff4174e272b5f41693c8fba9`](https://basescan.org/address/0x62d58b4cdd96b590ff4174e272b5f41693c8fba9) | **Active** | DAO Multisig (DAO)                     |\n| `DistributorController` (original)                                        | [`0x16f1F80654F2FEA97293321675907CFA2e23e4fB`](https://basescan.org/address/0x16f1F80654F2FEA97293321675907CFA2e23e4fB) | Superseded | Team operations Safe `0x845e2f13\u2026f543` |\n| OpenZeppelin `TimelockController`                                         | [`0x1c7e4284423c1a2362c49b1ea223b73e38c81e21`](https://basescan.org/address/0x1c7e4284423c1a2362c49b1ea223b73e38c81e21) | Active     | (governance helper)                    |\n| `ComplexRewarderPerSecV4` (dual rewards)                                  | multiple addresses, deployed 2023-08 \u2192 2024-12                                                                          | Active     | per-farm                               |\n\n> **Note on the docs migration:** The previous version of this page labelled `0x16f1F806\u2026e4fB` as the \"Farm Timelock Proxy\". It is the **original** `DistributorController` itself \u2014 a thin contract that enforces a 7-day delay on emission changes \u2014 and as of 2025-06-05 it is no longer the active farm controller (replaced by `UniversalDistributorController`). The OZ-style `TimelockController` is a separate contract listed above.\n\n## Alien Base V3 (Concentrated Liquidity + Bunni)\n\nStock Uniswap V3 plus a fork of Bunni for ERC-20-wrapped LP positions.\n\n| Component                            | Address                                                                                                                 | Status                               | Owner              |\n| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------ |\n| V3 Factory                           | [`0x0Fd83557b2be93617c9C1C1B6fd549401C74558C`](https://basescan.org/address/0x0Fd83557b2be93617c9C1C1B6fd549401C74558C) | Active                               | DAO Multisig (DAO) |\n| V3 NFTPositionManager (`ALB-V3-POS`) | [`0xB7996D1ECD07fB227e8DcA8CD5214bDfb04534E5`](https://basescan.org/address/0xB7996D1ECD07fB227e8DcA8CD5214bDfb04534E5) | Active                               | \u2014                  |\n| V3 SmartRouter (V2+V3 unified)       | [`0xB20C411FC84FBB27e78608C24d0056D974ea9411`](https://basescan.org/address/0xB20C411FC84FBB27e78608C24d0056D974ea9411) | Active                               | (immutable)        |\n| QuoterV2                             | [`0x353b1bea\u2026b23a`](https://basescan.org/address/0x353b1bea3a9b1a9b6e2a9c7e6e4a4d4d4d4d4d4d)                            | Active                               | \u2014                  |\n| MixedRouteQuoterV1                   | [`0xa54844d4\u2026fde6`](https://basescan.org/address/0xa54844d4)                                                            | Active                               | \u2014                  |\n| TickLens                             | [`0xe3b6a547\u2026fbd8e`](https://basescan.org/address/0xe3b6a547)                                                           | Active                               | \u2014                  |\n| Multicall                            | [`0x24fff20e\u202632fe`](https://basescan.org/address/0x24fff20e)                                                            | Active                               | \u2014                  |\n| **BunniHub** (active)                | [`0xd1fac4f51457e4a6d35bdc7311718e5d6de92bb9`](https://basescan.org/address/0xd1fac4f51457e4a6d35bdc7311718e5d6de92bb9) | **Active**                           | \u2014                  |\n| BunniHub (original)                  | [`0xDC53487e2a6eF468260Bc938F645f84caaccAC6F`](https://basescan.org/address/0xDC53487e2a6eF468260Bc938F645f84caaccAC6F) | Superseded by BunniHubA (2024-08-09) | \u2014                  |\n| BunniHubController                   | [`0x4bcc584979817219585b6a62a5bb6c15c1fa0f38`](https://basescan.org/address/0x4bcc584979817219585b6a62a5bb6c15c1fa0f38) | Active                               | DAO Multisig (DAO) |\n| **BunniZap** (active)                | [`0x77c18d8aea11147b65d9e3ee7b3a9e89910ab7f0`](https://basescan.org/address/0x77c18d8aea11147b65d9e3ee7b3a9e89910ab7f0) | **Active**                           | \u2014                  |\n| BunniZap (original)                  | [`0x6947DA282E447a2e9d65ff00aAf80efB5116D75d`](https://basescan.org/address/0x6947DA282E447a2e9d65ff00aAf80efB5116D75d) | Superseded (2024-09-02)              | \u2014                  |\n| BunniLensV2                          | latest at [`0x1733c304\u20269c44`](https://basescan.org/address/0x1733c304)                                                  | Active                               | \u2014                  |\n| Sample BunniToken (LP)               | varies per pool \u2014 see the Vaults page in the app                                                                        | \u2014                                    | \u2014                  |\n\n> **Note on the docs migration:** the previous version of this page listed `0x176ca19\u202608f0` as the \"esALB-ETH pair\". That contract is a `BunniToken` (a wrapped V3 LP position over the ALB/WETH pool), **not** a Uniswap V2 pair. Bunni LP tokens are minted by BunniHub, not by the team deployer.\n\n## Legacy esALB & escrowed token system\n\nThe **legacy** escrow / lock system, which follows Camelot's xGRAIL pattern. New esALB and govALB are listed under [Alien Base 2.0](#new-token-system-aip-5); legacy esALB migrates 1:1 via the [Migration Guide](/alb-migration/migration.md).\n\n| Component                                                                                                     | Address                                                                                                                                                                                                                                          | Status                                    | Owner                |\n| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- | -------------------- |\n| Legacy esALB (`EsToken`, name \"Escrowed ALB\", symbol `esALB`) \u2014 the one holders actually used (\\~223M supply) | [`0x365c6d588e8611125De3bEA5B9280C304FA54113`](https://basescan.org/address/0x365c6d588e8611125De3bEA5B9280C304FA54113)                                                                                                                          | **Superseded**: migrates 1:1 to new esALB | \u2014                    |\n| esALB co-deployment (2024-04-25, near-zero supply; not the canonical esALB)                                   | [`0xe1afc637f41e05efe08d55296a2ccff0072a4587`](https://basescan.org/address/0xe1afc637f41e05efe08d55296a2ccff0072a4587)                                                                                                                          | Unused                                    | \u2014                    |\n| `EsProxyMaster` (esALB system orchestrator)                                                                   | [`0xd3968a4a07d64c6e16982d45191b9a09a261ec88`](https://basescan.org/address/0xd3968a4a07d64c6e16982d45191b9a09a261ec88)                                                                                                                          | Active                                    | Team deployer (team) |\n| `EsTokenController` (refresh, 2025-06-05)                                                                     | [`0x154d41a96ad37570a2ad6849063d0b480da1ea99`](https://basescan.org/address/0x154d41a96ad37570a2ad6849063d0b480da1ea99)                                                                                                                          | Active                                    | \u2014                    |\n| `esLP-ALB-ETH` (escrowed LP)                                                                                  | [`0x3d3a5ad6d7beab234d7f0338a01e62b1d36d8ea0`](https://basescan.org/address/0x3d3a5ad6d7beab234d7f0338a01e62b1d36d8ea0)                                                                                                                          | Active                                    | \u2014                    |\n| `esLP-B-ALB-ETH` (\"Backstop\")                                                                                 | [`0x4a023efe4b5cd304e800f29074186164fda36978`](https://basescan.org/address/0x4a023efe4b5cd304e800f29074186164fda36978)                                                                                                                          | Active                                    | \u2014                    |\n| `EsVoting` (governance weight helpers)                                                                        | [`0x3f8d116e99bce42b38989a62394fa9bb532dddc1`](https://basescan.org/address/0x3f8d116e99bce42b38989a62394fa9bb532dddc1), [`0xd3cfcb52ec5715652c5096bdf99ea078c4df2e7b`](https://basescan.org/address/0xd3cfcb52ec5715652c5096bdf99ea078c4df2e7b) | Active                                    | \u2014                    |\n| `EsComplexRewarder` (dual rewards for escrowed LPs)                                                           | multiple, see the Farms page                                                                                                                                                                                                                     | Active                                    | \u2014                    |\n\n## Vesting\n\nMulti-year vesting for team and DAO contributors authorized by [AIP-4](https://snapshot.org/#/alienbase-dex.eth/proposal/0x3e1f7e1841389638f6fda99baefd61331cf711fdc7f4649ad96713c25a747826).\n\n| Component                                  | Address                                                                                                                                                                                                                                          | Status     | Owner |\n| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ----- |\n| `VestingFactory`                           | [`0x77ec0394e4edea1997bdb1919bb354d880faed84`](https://basescan.org/address/0x77ec0394e4edea1997bdb1919bb354d880faed84), [`0xf61cc1aedd072784d8f133ba9409c538cfc9453d`](https://basescan.org/address/0xf61cc1aedd072784d8f133ba9409c538cfc9453d) | Active     | \u2014     |\n| `TokenLock` (legacy launch-time team lock) | [`0x329efd9209f1ae6f43568b85e9bdf69105fb8b0c`](https://basescan.org/address/0x329efd9209f1ae6f43568b85e9bdf69105fb8b0c)                                                                                                                          | Historical | \u2014     |\n\n## Epsilon Router (orders)\n\nThe on-chain order engine behind Limit / Take Profit / Stop Loss / Trailing Stop / DCA orders. See [Epsilon](/trading/epsilon.md).\n\n| Component         | Address                                                                                                                 | Status                         | Owner |\n| ----------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ----- |\n| **EpsilonRouter** | [`0x303ca5c65AabCb1CE242DF93F478c41E0E4D2580`](https://basescan.org/address/0x303ca5c65AabCb1CE242DF93F478c41E0E4D2580) | **Active** (verified, audited) | \u2014     |\n\n## Carbon (deprecated Limit / Range / Recurring orders)\n\nA direct integration of Bancor's Carbon protocol \u2014 Alien Base was the first DEX to integrate Carbon natively rather than via a license. Order creation was deprecated in July 2026 in favor of the Epsilon Router; contracts remain live and existing orders stay withdrawable. See [Archive \u2014 Carbon Orders](/archive/carbon-orders.md).\n\n| Component                                                                 | Address                                                                                                                 | Status                           | Owner |\n| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ----- |\n| `CarbonController`                                                        | [`0xe3763886bf91d5466b416b37fdf2b6337897716e`](https://basescan.org/address/0xe3763886bf91d5466b416b37fdf2b6337897716e) | Live (deprecated for new orders) | \u2014     |\n| `Voucher` (impl)                                                          | [`0x8377244a3521ff658e008df0dd40b50ca3ce534c`](https://basescan.org/address/0x8377244a3521ff658e008df0dd40b50ca3ce534c) | Live (deprecated for new orders) | \u2014     |\n| `Voucher` proxy (\"Carbon Automated Trading Strategy\" NFT, `CARBON-STRAT`) | [`0x2f3b0d35830b921fe7fcd08401c6cbbe29a72dc9`](https://basescan.org/address/0x2f3b0d35830b921fe7fcd08401c6cbbe29a72dc9) | Live (deprecated for new orders) | \u2014     |\n\nSource: [`alienbase-xyz/carbon-contracts`](https://github.com/alienbase-xyz/carbon-contracts) (a fork of `bancorprotocol/carbon-contracts`).\n\n## Token Generator\n\nPermissionless on-chain token launcher.\n\n| Component                                                     | Address                                                                                                                 | Status     | Owner                |\n| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------- |\n| **TokenGenerator** orchestrator (collects 0.015 ETH per mint) | [`0xBcE75497D72b25c3509B62ae1a47CCfb502AD08d`](https://basescan.org/address/0xBcE75497D72b25c3509B62ae1a47CCfb502AD08d) | Active     | Team deployer (team) |\n| `SimpleTokenFactory`                                          | [`0x3b01457255bD6ec460D9Ab8f31CFabd8a710D176`](https://basescan.org/address/0x3b01457255bD6ec460D9Ab8f31CFabd8a710D176) | Active     | \u2014                    |\n| `MintableTokenFactory`                                        | [`0x6a9668c2C6E1FB107021375BaCD9d92e79cc8369`](https://basescan.org/address/0x6a9668c2C6E1FB107021375BaCD9d92e79cc8369) | Active     | \u2014                    |\n| `BurnableTokenFactory`                                        | [`0xF5A7A624f4c11F581eb5a2B12e9bcA327F692c79`](https://basescan.org/address/0xF5A7A624f4c11F581eb5a2B12e9bcA327F692c79) | Active     | \u2014                    |\n| `MintBurnTokenFactory`                                        | [`0x872521B46095139e70A38AE3e8d95611649AAF51`](https://basescan.org/address/0x872521B46095139e70A38AE3e8d95611649AAF51) | Active     | \u2014                    |\n| `TaxTokenFactory`                                             | [`0x13De15f0c5E8CC78Ad3a7001bA2Cb882aaE96373`](https://basescan.org/address/0x13De15f0c5E8CC78Ad3a7001bA2Cb882aaE96373) | Active     | \u2014                    |\n| Earlier `TaxTokenFactory` builds                              | `0xcbac\u20268436`, `0x1b24\u2026b484`, `0x9f36\u20262c9f`                                                                             | Superseded | Do not use           |\n\n## Governance\n\n| Component                                                      | Address                                                                                                                 | Status               | Owner           |\n| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------- | --------------- |\n| **DAO Multisig** (Gnosis Safe, 5-of-8)                         | [`0x4ab9070b7680f802cbf8322e597a4409902171e5`](https://basescan.org/address/0x4ab9070b7680f802cbf8322e597a4409902171e5) | Active               | Self (multisig) |\n| Snapshot space                                                 | [`alienbase-dex.eth`](https://snapshot.org/#/alienbase-dex.eth)                                                         | Active               | \u2014               |\n| Original AIP-2 \"DAO treasury wallet\" (EOA, also a Safe signer) | [`0xD9c14E5Ad86d06de762F0D179109661E5B60cC4d`](https://basescan.org/address/0xD9c14E5Ad86d06de762F0D179109661E5B60cC4d) | Historical reference | EOA             |\n| Snapshot strategies fork                                       | [`alienbase-xyz/snapshot-strategies`](https://github.com/alienbase-xyz/snapshot-strategies)                             | Active               | \u2014               |\n\n## Deployer\n\nThe team deployer EOA is publicly tagged on Basescan as **\"AlienBase: Deployer\"**:\n\n> [`0xDD3705A1c50Fc84B6d31394aA8F4D568B98a8AD5`](https://basescan.org/address/0xDD3705A1c50Fc84B6d31394aA8F4D568B98a8AD5)\n\nIt's a gas wallet with a low ETH balance; almost all of Alien Base's contracts trace back to deployments by this address. The Token Generator orchestrator routes its 0.015 ETH per-mint fee here.\n\n## Deprecated products\n\nThese contracts are still on-chain but are no longer actively maintained or recommended. See the [Archive](/archive/archive.md) for context.\n\n| Product                       | Sample contract                                                                                                                                                                                           | Status                | Note                                                      |\n| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | --------------------------------------------------------- |\n| **Area 51** sub-DEX           | Factory [`0x2d5dd5fa\u2026e51e`](https://basescan.org/address/0x2d5dd5fa7B8a1BFBDbB0916B42280208Ee6DE51e), Router [`0x3485F8E1\u202679e7`](https://basescan.org/address/0x3485F8E155973cC247CBEa9E77C0dBBB4BBb79E7) | Deprecated (Oct 2024) | The Token Generator product survives separately.          |\n| **StableSwap** (Saddle-style) | `SwapFlashLoan` [`0x927860797d\u2026bb27`](https://basescan.org/address/0x927860797d8CC9b94e3FdC6F1a4a3C42aDfFbb27)                                                                                            | Deprecated (Oct 2024) | Replaced by V3 stable-tier pools.                         |\n| **PredictionETH**             | [`0xfbe87ee1ee62244a2df80a8093eab829c52863e8`](https://basescan.org/address/0xfbe87ee1ee62244a2df80a8093eab829c52863e8)                                                                                   | Discontinued          | Binary options MVP (2023).                                |\n| **AlienbaseLottery**          | [`0x4384dcf974769f2e0e52cde92b6d5fc9be5248ff`](https://basescan.org/address/0x4384dcf974769f2e0e52cde92b6d5fc9be5248ff)                                                                                   | Discontinued          | ETH-ticket lottery (2023).                                |\n| **B3 multi-chain deployment** | (B3 chain, addresses N/A)                                                                                                                                                                                 | Shelved (Oct 2025)    | First multi-chain expansion; partnership did not deliver. |\n\n## Documentation errors fixed in this revision\n\nIf you're cross-referencing the previous version of this page, note:\n\n1. **Area 51 Router label/link mismatch** \u2014 the previous label `0x837d9B41\u20263376` is not a contract. The correct address is the linked one, `0x3485F8E1\u202679e7`.\n2. **\"Farm Timelock Proxy\"** \u2014 the address `0x16f1F806\u2026e4fB` is the original `DistributorController` itself, not a proxy. As of 2025-06-05 it is also no longer the active controller (replaced by `UniversalDistributorController`).\n3. **\"esALB-ETH pair\"** \u2014 the address `0x176ca19\u202608f0` is a Bunni V3 LP token, not a Uniswap V2 pair.\n4. **\"Sample BunniToken\" example** \u2014 the previous example referenced an ALB/USDbC pair. USDbC is the deprecated Coinbase-bridged USDC variant; users should reference USDC pairs instead.\n\n## Source code\n\n| Repo                                                                                        | Coverage                                                          |\n| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |\n| [`alienbase-xyz/alienbase-contracts`](https://github.com/alienbase-xyz/alienbase-contracts) | V2 stack + ALB token (lags onchain \u2014 last public update Nov 2024) |\n| [`alienbase-xyz/area51-contracts`](https://github.com/alienbase-xyz/area51-contracts)       | Area 51 V2 fork (deprecated)                                      |\n| [`alienbase-xyz/carbon-contracts`](https://github.com/alienbase-xyz/carbon-contracts)       | Bancor Carbon fork                                                |\n| [`alienbase-xyz/Mothership`](https://github.com/alienbase-xyz/Mothership)                   | Mothership ALM (under audit)                                      |\n| [`alienbase-xyz/snapshot-strategies`](https://github.com/alienbase-xyz/snapshot-strategies) | Custom esALB voting strategies                                    |\n| [`alienbase-xyz/DefiLlama-Adapters`](https://github.com/alienbase-xyz/DefiLlama-Adapters)   | TVL adapter contributions                                         |\n\nSeveral deployed contracts (TokenGenerator, EsProxyMaster, EsTokenController, EsVoting, EsComplexRewarder, UniversalDistributorController, VestingFactory, AlienbaseLottery, PredictionETH, AlienbaseZapV1, the recent Alien Base 2.0 rollout) are **verified on Basescan** but their source repositories are not yet public. This is on the roadmap to fix.\n",
+      "sha256": "4a3ecbbdfe7f2784ef1e5668ca45b5a655bcdc8087fdb1520af3d94b29da0d84",
+      "bytes": 32345
+    },
+    {
+      "sourceRef": "https://docs.alienbase.xyz/liquidity/v2-pools.md",
+      "content": "> For the complete documentation index, see [llms.txt](https://docs.alienbase.xyz/llms.txt). Markdown versions of documentation pages are available by appending `.md` to page URLs; this page is available as [Markdown](https://docs.alienbase.xyz/liquidity/v2-pools.md).\n\n# V2 Pools (legacy)\n\nThe original Alien Base AMM \u2014 Uniswap V2 fork\n\nV2 pools are the original Alien Base liquidity venue. Built on Uniswap V2 contracts, launched at TGE in **August 2023**.\n\n> *Last updated: July 6, 2026.*\n\n## When to use V2\n\n* **Trading any pair you can't (or won't) actively manage.** V2 is constant-product (`x * y = k`) \u2014 no ranges, no concentrated liquidity, no out-of-range states.\n* **Memecoins and small caps.** V2 is forgiving of price discovery and has the simplest LP UX.\n* **Set-and-forget LPing.** No active management, no rebalance, no out-of-range risk.\n\n## Mechanics\n\n* **50/50 deposit.** You provide both tokens in equal value at the current price.\n* **Full-range exposure.** Your liquidity is active across every price point, from zero to infinity.\n* **Pool fee.** **0.16%** per swap, paid by the taker and distributed to LPs. The V2 Factory's `feeToSetter` is the DAO Multisig \u2014 the protocol-side carve-out can be enabled by DAO vote.\n* **LP token.** Standard ERC-20. Stakeable, transferable, farmable.\n\n## Where to find them\n\n* **Trade.** The [trading terminal](https://app.alienbase.xyz/swap) routes through V2 automatically when it's the best venue.\n* **LP.** **New position** (on the [Vaults](https://app.alienbase.xyz/vaults) or Dashboard page) \u2192 select **V2** \u2014 add or remove V2 liquidity directly.\n* **Farm.** The old V2 farms live under **Vaults \u2192 Legacy farms**; their emissions have wound down under AIP-5, so the tab is mainly for unstaking. See [Vaults](/liquidity/vaults.md#legacy-farms-tab).\n\n## Why \"legacy\"?\n\nBy using a Bunni wrapper set to an infinite range, we can achieve the same effective impact of a traditional V2 position. Because of that, V2 vaults have been gradually deprecated over the years.\n\n## See also\n\n* [Concentrated Liquidity (V3)](/liquidity/v3.md) \u2014 the higher-efficiency alternative.\n* [Vaults overview](/liquidity/vaults.md)\n* [Token Generator](/builders/token-generator.md) \u2014 the easiest path from \"I have an idea\" to \"my token has a V2 pool\".\n* [Contracts](/reference/contracts.md) \u2014 V2 Factory, Router, Farm addresses.\n",
+      "sha256": "c7806986f7ecea1fc57f87f5349261819ee674b8ff0bcba8b8706b6acc667ccb",
+      "bytes": 2384,
+      "accessGrade": "Direct first-party HTTP response; app root HTML is shell metadata, not rendered UI execution."
+    }
+  ],
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_WETH",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "WETH",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountTokenDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountsIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quote",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapETHForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactTokensForETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "sources": {
+    "contracts/uniswapv2/UniswapRouter02.sol": {
+      "content": "pragma solidity =0.6.6;\n\nimport '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';\nimport '@uniswap/lib/contracts/libraries/TransferHelper.sol';\n\nimport './interfaces/IUniswapV2Router02.sol';\nimport './libraries/UniswapV2Library.sol';\nimport './libraries/SafeMath.sol';\nimport './interfaces/IERC20.sol';\nimport './interfaces/IWETH.sol';\n\ncontract UniswapV2Router02 is IUniswapV2Router02 {\n    using SafeMath for uint;\n\n    address public immutable override factory;\n    address public immutable override WETH;\n\n    modifier ensure(uint deadline) {\n        require(deadline >= block.timestamp, 'UniswapV2Router: EXPIRED');\n        _;\n    }\n\n    constructor(address _factory, address _WETH) public {\n        factory = _factory;\n        WETH = _WETH;\n    }\n\n    receive() external payable {\n        assert(msg.sender == WETH); // only accept ETH via fallback from the WETH contract\n    }\n\n    // **** ADD LIQUIDITY ****\n    function _addLiquidity(\n        address tokenA,\n        address tokenB,\n        uint amountADesired,\n        uint amountBDesired,\n        uint amountAMin,\n        uint amountBMin\n    ) internal virtual returns (uint amountA, uint amountB) {\n        // create the pair if it doesn't exist yet\n        if (IUniswapV2Factory(factory).getPair(tokenA, tokenB) == address(0)) {\n            IUniswapV2Factory(factory).createPair(tokenA, tokenB);\n        }\n        (uint reserveA, uint reserveB) = UniswapV2Library.getReserves(factory, tokenA, tokenB);\n        if (reserveA == 0 && reserveB == 0) {\n            (amountA, amountB) = (amountADesired, amountBDesired);\n        } else {\n            uint amountBOptimal = UniswapV2Library.quote(amountADesired, reserveA, reserveB);\n            if (amountBOptimal <= amountBDesired) {\n                require(amountBOptimal >= amountBMin, 'UniswapV2Router: INSUFFICIENT_B_AMOUNT');\n                (amountA, amountB) = (amountADesired, amountBOptimal);\n            } else {\n                uint amountAOptimal = UniswapV2Library.quote(amountBDesired, reserveB, reserveA);\n                assert(amountAOptimal <= amountADesired);\n                require(amountAOptimal >= amountAMin, 'UniswapV2Router: INSUFFICIENT_A_AMOUNT');\n                (amountA, amountB) = (amountAOptimal, amountBDesired);\n            }\n        }\n    }\n    function addLiquidity(\n        address tokenA,\n        address tokenB,\n        uint amountADesired,\n        uint amountBDesired,\n        uint amountAMin,\n        uint amountBMin,\n        address to,\n        uint deadline\n    ) external virtual override ensure(deadline) returns (uint amountA, uint amountB, uint liquidity) {\n        (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);\n        address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);\n        TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);\n        TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);\n        liquidity = IUniswapV2Pair(pair).mint(to);\n    }\n    function addLiquidityETH(\n        address token,\n        uint amountTokenDesired,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline\n    ) external virtual override payable ensure(deadline) returns (uint amountToken, uint amountETH, uint liquidity) {\n        (amountToken, amountETH) = _addLiquidity(\n            token,\n            WETH,\n            amountTokenDesired,\n            msg.value,\n            amountTokenMin,\n            amountETHMin\n        );\n        address pair = UniswapV2Library.pairFor(factory, token, WETH);\n        TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);\n        IWETH(WETH).deposit{value: amountETH}();\n        assert(IWETH(WETH).transfer(pair, amountETH));\n        liquidity = IUniswapV2Pair(pair).mint(to);\n        // refund dust eth, if any\n        if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);\n    }\n\n    // **** REMOVE LIQUIDITY ****\n    function removeLiquidity(\n        address tokenA,\n        address tokenB,\n        uint liquidity,\n        uint amountAMin,\n        uint amountBMin,\n        address to,\n        uint deadline\n    ) public virtual override ensure(deadline) returns (uint amountA, uint amountB) {\n        address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);\n        IUniswapV2Pair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair\n        (uint amount0, uint amount1) = IUniswapV2Pair(pair).burn(to);\n        (address token0,) = UniswapV2Library.sortTokens(tokenA, tokenB);\n        (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);\n        require(amountA >= amountAMin, 'UniswapV2Router: INSUFFICIENT_A_AMOUNT');\n        require(amountB >= amountBMin, 'UniswapV2Router: INSUFFICIENT_B_AMOUNT');\n    }\n    function removeLiquidityETH(\n        address token,\n        uint liquidity,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline\n    ) public virtual override ensure(deadline) returns (uint amountToken, uint amountETH) {\n        (amountToken, amountETH) = removeLiquidity(\n            token,\n            WETH,\n            liquidity,\n            amountTokenMin,\n            amountETHMin,\n            address(this),\n            deadline\n        );\n        TransferHelper.safeTransfer(token, to, amountToken);\n        IWETH(WETH).withdraw(amountETH);\n        TransferHelper.safeTransferETH(to, amountETH);\n    }\n    function removeLiquidityWithPermit(\n        address tokenA,\n        address tokenB,\n        uint liquidity,\n        uint amountAMin,\n        uint amountBMin,\n        address to,\n        uint deadline,\n        bool approveMax, uint8 v, bytes32 r, bytes32 s\n    ) external virtual override returns (uint amountA, uint amountB) {\n        address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);\n        uint value = approveMax ? uint(-1) : liquidity;\n        IUniswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);\n        (amountA, amountB) = removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline);\n    }\n    function removeLiquidityETHWithPermit(\n        address token,\n        uint liquidity,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline,\n        bool approveMax, uint8 v, bytes32 r, bytes32 s\n    ) external virtual override returns (uint amountToken, uint amountETH) {\n        address pair = UniswapV2Library.pairFor(factory, token, WETH);\n        uint value = approveMax ? uint(-1) : liquidity;\n        IUniswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);\n        (amountToken, amountETH) = removeLiquidityETH(token, liquidity, amountTokenMin, amountETHMin, to, deadline);\n    }\n\n    // **** REMOVE LIQUIDITY (supporting fee-on-transfer tokens) ****\n    function removeLiquidityETHSupportingFeeOnTransferTokens(\n        address token,\n        uint liquidity,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline\n    ) public virtual override ensure(deadline) returns (uint amountETH) {\n        (, amountETH) = removeLiquidity(\n            token,\n            WETH,\n            liquidity,\n            amountTokenMin,\n            amountETHMin,\n            address(this),\n            deadline\n        );\n        TransferHelper.safeTransfer(token, to, IERC20(token).balanceOf(address(this)));\n        IWETH(WETH).withdraw(amountETH);\n        TransferHelper.safeTransferETH(to, amountETH);\n    }\n    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(\n        address token,\n        uint liquidity,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline,\n        bool approveMax, uint8 v, bytes32 r, bytes32 s\n    ) external virtual override returns (uint amountETH) {\n        address pair = UniswapV2Library.pairFor(factory, token, WETH);\n        uint value = approveMax ? uint(-1) : liquidity;\n        IUniswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);\n        amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(\n            token, liquidity, amountTokenMin, amountETHMin, to, deadline\n        );\n    }\n\n    // **** SWAP ****\n    // requires the initial amount to have already been sent to the first pair\n    function _swap(uint[] memory amounts, address[] memory path, address _to) internal virtual {\n        for (uint i; i < path.length - 1; i++) {\n            (address input, address output) = (path[i], path[i + 1]);\n            (address token0,) = UniswapV2Library.sortTokens(input, output);\n            uint amountOut = amounts[i + 1];\n            (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOut) : (amountOut, uint(0));\n            address to = i < path.length - 2 ? UniswapV2Library.pairFor(factory, output, path[i + 2]) : _to;\n            IUniswapV2Pair(UniswapV2Library.pairFor(factory, input, output)).swap(\n                amount0Out, amount1Out, to, new bytes(0)\n            );\n        }\n    }\n    function swapExactTokensForTokens(\n        uint amountIn,\n        uint amountOutMin,\n        address[] calldata path,\n        address to,\n        uint deadline\n    ) external virtual override ensure(deadline) returns (uint[] memory amounts) {\n        amounts = UniswapV2Library.getAmountsOut(factory, amountIn, path);\n        require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');\n        TransferHelper.safeTransferFrom(\n            path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]\n        );\n        _swap(amounts, path, to);\n    }\n    function swapTokensForExactTokens(\n        uint amountOut,\n        uint amountInMax,\n        address[] calldata path,\n        address to,\n        uint deadline\n    ) external virtual override ensure(deadline) returns (uint[] memory amounts) {\n        amounts = UniswapV2Library.getAmountsIn(factory, amountOut, path);\n        require(amounts[0] <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');\n        TransferHelper.safeTransferFrom(\n            path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]\n        );\n        _swap(amounts, path, to);\n    }\n    function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)\n    external\n    virtual\n    override\n    payable\n    ensure(deadline)\n    returns (uint[] memory amounts)\n    {\n        require(path[0] == WETH, 'UniswapV2Router: INVALID_PATH');\n        amounts = UniswapV2Library.getAmountsOut(factory, msg.value, path);\n        require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');\n        IWETH(WETH).deposit{value: amounts[0]}();\n        assert(IWETH(WETH).transfer(UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));\n        _swap(amounts, path, to);\n    }\n    function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)\n    external\n    virtual\n    override\n    ensure(deadline)\n    returns (uint[] memory amounts)\n    {\n        require(path[path.length - 1] == WETH, 'UniswapV2Router: INVALID_PATH');\n        amounts = UniswapV2Library.getAmountsIn(factory, amountOut, path);\n        require(amounts[0] <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');\n        TransferHelper.safeTransferFrom(\n            path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]\n        );\n        _swap(amounts, path, address(this));\n        IWETH(WETH).withdraw(amounts[amounts.length - 1]);\n        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);\n    }\n    function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)\n    external\n    virtual\n    override\n    ensure(deadline)\n    returns (uint[] memory amounts)\n    {\n        require(path[path.length - 1] == WETH, 'UniswapV2Router: INVALID_PATH');\n        amounts = UniswapV2Library.getAmountsOut(factory, amountIn, path);\n        require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');\n        TransferHelper.safeTransferFrom(\n            path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]\n        );\n        _swap(amounts, path, address(this));\n        IWETH(WETH).withdraw(amounts[amounts.length - 1]);\n        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);\n    }\n    function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)\n    external\n    virtual\n    override\n    payable\n    ensure(deadline)\n    returns (uint[] memory amounts)\n    {\n        require(path[0] == WETH, 'UniswapV2Router: INVALID_PATH');\n        amounts = UniswapV2Library.getAmountsIn(factory, amountOut, path);\n        require(amounts[0] <= msg.value, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');\n        IWETH(WETH).deposit{value: amounts[0]}();\n        assert(IWETH(WETH).transfer(UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));\n        _swap(amounts, path, to);\n        // refund dust eth, if any\n        if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);\n    }\n\n    // **** SWAP (supporting fee-on-transfer tokens) ****\n    // requires the initial amount to have already been sent to the first pair\n    function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal virtual {\n        for (uint i; i < path.length - 1; i++) {\n            (address input, address output) = (path[i], path[i + 1]);\n            (address token0,) = UniswapV2Library.sortTokens(input, output);\n            IUniswapV2Pair pair = IUniswapV2Pair(UniswapV2Library.pairFor(factory, input, output));\n            uint amountInput;\n            uint amountOutput;\n            { // scope to avoid stack too deep errors\n                (uint reserve0, uint reserve1,) = pair.getReserves();\n                (uint reserveInput, uint reserveOutput) = input == token0 ? (reserve0, reserve1) : (reserve1, reserve0);\n                amountInput = IERC20(input).balanceOf(address(pair)).sub(reserveInput);\n                amountOutput = UniswapV2Library.getAmountOut(amountInput, reserveInput, reserveOutput);\n            }\n            (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOutput) : (amountOutput, uint(0));\n            address to = i < path.length - 2 ? UniswapV2Library.pairFor(factory, output, path[i + 2]) : _to;\n            pair.swap(amount0Out, amount1Out, to, new bytes(0));\n        }\n    }\n    function swapExactTokensForTokensSupportingFeeOnTransferTokens(\n        uint amountIn,\n        uint amountOutMin,\n        address[] calldata path,\n        address to,\n        uint deadline\n    ) external virtual override ensure(deadline) {\n        TransferHelper.safeTransferFrom(\n            path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amountIn\n        );\n        uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);\n        _swapSupportingFeeOnTransferTokens(path, to);\n        require(\n            IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,\n            'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT'\n        );\n    }\n    function swapExactETHForTokensSupportingFeeOnTransferTokens(\n        uint amountOutMin,\n        address[] calldata path,\n        address to,\n        uint deadline\n    )\n    external\n    virtual\n    override\n    payable\n    ensure(deadline)\n    {\n        require(path[0] == WETH, 'UniswapV2Router: INVALID_PATH');\n        uint amountIn = msg.value;\n        IWETH(WETH).deposit{value: amountIn}();\n        assert(IWETH(WETH).transfer(UniswapV2Library.pairFor(factory, path[0], path[1]), amountIn));\n        uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);\n        _swapSupportingFeeOnTransferTokens(path, to);\n        require(\n            IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,\n            'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT'\n        );\n    }\n    function swapExactTokensForETHSupportingFeeOnTransferTokens(\n        uint amountIn,\n        uint amountOutMin,\n        address[] calldata path,\n        address to,\n        uint deadline\n    )\n    external\n    virtual\n    override\n    ensure(deadline)\n    {\n        require(path[path.length - 1] == WETH, 'UniswapV2Router: INVALID_PATH');\n        TransferHelper.safeTransferFrom(\n            path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amountIn\n        );\n        _swapSupportingFeeOnTransferTokens(path, address(this));\n        uint amountOut = IERC20(WETH).balanceOf(address(this));\n        require(amountOut >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');\n        IWETH(WETH).withdraw(amountOut);\n        TransferHelper.safeTransferETH(to, amountOut);\n    }\n\n    // **** LIBRARY FUNCTIONS ****\n    function quote(uint amountA, uint reserveA, uint reserveB) public pure virtual override returns (uint amountB) {\n        return UniswapV2Library.quote(amountA, reserveA, reserveB);\n    }\n\n    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut)\n    public\n    pure\n    virtual\n    override\n    returns (uint amountOut)\n    {\n        return UniswapV2Library.getAmountOut(amountIn, reserveIn, reserveOut);\n    }\n\n    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut)\n    public\n    pure\n    virtual\n    override\n    returns (uint amountIn)\n    {\n        return UniswapV2Library.getAmountIn(amountOut, reserveIn, reserveOut);\n    }\n\n    function getAmountsOut(uint amountIn, address[] memory path)\n    public\n    view\n    virtual\n    override\n    returns (uint[] memory amounts)\n    {\n        return UniswapV2Library.getAmountsOut(factory, amountIn, path);\n    }\n\n    function getAmountsIn(uint amountOut, address[] memory path)\n    public\n    view\n    virtual\n    override\n    returns (uint[] memory amounts)\n    {\n        return UniswapV2Library.getAmountsIn(factory, amountOut, path);\n    }\n}"
+    },
+    "contracts/uniswapv2/interfaces/IWETH.sol": {
+      "content": "pragma solidity >=0.5.0 <= 0.6.6;\n\ninterface IWETH {\n    function deposit() external payable;\n    function transfer(address to, uint value) external returns (bool);\n    function withdraw(uint) external;\n}\n"
+    },
+    "contracts/uniswapv2/interfaces/IERC20.sol": {
+      "content": "pragma solidity >=0.5.0;\n\ninterface IERC20 {\n    event Approval(address indexed owner, address indexed spender, uint value);\n    event Transfer(address indexed from, address indexed to, uint value);\n\n    function name() external view returns (string memory);\n    function symbol() external view returns (string memory);\n    function decimals() external view returns (uint8);\n    function totalSupply() external view returns (uint);\n    function balanceOf(address owner) external view returns (uint);\n    function allowance(address owner, address spender) external view returns (uint);\n\n    function approve(address spender, uint value) external returns (bool);\n    function transfer(address to, uint value) external returns (bool);\n    function transferFrom(address from, address to, uint value) external returns (bool);\n}\n"
+    },
+    "contracts/uniswapv2/libraries/SafeMath.sol": {
+      "content": "pragma solidity >=0.5.16;\n\n// a library for performing overflow-safe math, courtesy of DappHub (https://github.com/dapphub/ds-math)\n\nlibrary SafeMath {\n    function add(uint x, uint y) internal pure returns (uint z) {\n        require((z = x + y) >= x, 'ds-math-add-overflow');\n    }\n\n    function sub(uint x, uint y) internal pure returns (uint z) {\n        require((z = x - y) <= x, 'ds-math-sub-underflow');\n    }\n\n    function mul(uint x, uint y) internal pure returns (uint z) {\n        require(y == 0 || (z = x * y) / y == x, 'ds-math-mul-overflow');\n    }\n}\n"
+    },
+    "contracts/uniswapv2/libraries/UniswapV2Library.sol": {
+      "content": "pragma solidity >=0.5.0 <= 0.6.6;\n\nimport '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';\n\nimport \"./SafeMath.sol\";\n\nlibrary UniswapV2Library {\n    using SafeMath for uint;\n\n    // returns sorted token addresses, used to handle return values from pairs sorted in this order\n    function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {\n        require(tokenA != tokenB, 'UniswapV2Library: IDENTICAL_ADDRESSES');\n        (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);\n        require(token0 != address(0), 'UniswapV2Library: ZERO_ADDRESS');\n    }\n\n    // calculates the CREATE2 address for a pair without making any external calls\n    function pairFor(address factory, address tokenA, address tokenB) internal pure returns (address pair) {\n        (address token0, address token1) = sortTokens(tokenA, tokenB);\n        pair = address(uint(keccak256(abi.encodePacked(\n                hex'ff',\n                factory,\n                keccak256(abi.encodePacked(token0, token1)),\n                hex'7ede5bbb7d245103c4a6d59bfd62246fbc488e93f95f23a19d9d76f0d91bd0d0' // init code hash\n            ))));\n    }\n\n    // fetches and sorts the reserves for a pair\n    function getReserves(address factory, address tokenA, address tokenB) internal view returns (uint reserveA, uint reserveB) {\n        (address token0,) = sortTokens(tokenA, tokenB);\n        (uint reserve0, uint reserve1,) = IUniswapV2Pair(pairFor(factory, tokenA, tokenB)).getReserves();\n        (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);\n    }\n\n    // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset\n    function quote(uint amountA, uint reserveA, uint reserveB) internal pure returns (uint amountB) {\n        require(amountA > 0, 'UniswapV2Library: INSUFFICIENT_AMOUNT');\n        require(reserveA > 0 && reserveB > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');\n        amountB = amountA.mul(reserveB) / reserveA;\n    }\n\n    // given an input amount of an asset and pair reserves, returns the maximum output amount of the other asset\n    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) internal pure returns (uint amountOut) {\n        require(amountIn > 0, 'UniswapV2Library: INSUFFICIENT_INPUT_AMOUNT');\n        require(reserveIn > 0 && reserveOut > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');\n        uint amountInWithFee = amountIn.mul(9984);\n        uint numerator = amountInWithFee.mul(reserveOut);\n        uint denominator = reserveIn.mul(10000).add(amountInWithFee);\n        amountOut = numerator / denominator;\n    }\n\n    // given an output amount of an asset and pair reserves, returns a required input amount of the other asset\n    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) internal pure returns (uint amountIn) {\n        require(amountOut > 0, 'UniswapV2Library: INSUFFICIENT_OUTPUT_AMOUNT');\n        require(reserveIn > 0 && reserveOut > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');\n        uint numerator = reserveIn.mul(amountOut).mul(10000);\n        uint denominator = reserveOut.sub(amountOut).mul(9984);\n        amountIn = (numerator / denominator).add(1);\n    }\n\n    // performs chained getAmountOut calculations on any number of pairs\n    function getAmountsOut(address factory, uint amountIn, address[] memory path) internal view returns (uint[] memory amounts) {\n        require(path.length >= 2, 'UniswapV2Library: INVALID_PATH');\n        amounts = new uint[](path.length);\n        amounts[0] = amountIn;\n        for (uint i; i < path.length - 1; i++) {\n            (uint reserveIn, uint reserveOut) = getReserves(factory, path[i], path[i + 1]);\n            amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);\n        }\n    }\n\n    // performs chained getAmountIn calculations on any number of pairs\n    function getAmountsIn(address factory, uint amountOut, address[] memory path) internal view returns (uint[] memory amounts) {\n        require(path.length >= 2, 'UniswapV2Library: INVALID_PATH');\n        amounts = new uint[](path.length);\n        amounts[amounts.length - 1] = amountOut;\n        for (uint i = path.length - 1; i > 0; i--) {\n            (uint reserveIn, uint reserveOut) = getReserves(factory, path[i - 1], path[i]);\n            amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);\n        }\n    }\n}\n"
+    },
+    "@uniswap/lib/contracts/libraries/TransferHelper.sol": {
+      "content": "// SPDX-License-Identifier: GPL-3.0-or-later\n\npragma solidity >=0.6.0;\n\n// helper methods for interacting with ERC20 tokens and sending ETH that do not consistently return true/false\nlibrary TransferHelper {\n    function safeApprove(\n        address token,\n        address to,\n        uint256 value\n    ) internal {\n        // bytes4(keccak256(bytes('approve(address,uint256)')));\n        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0x095ea7b3, to, value));\n        require(\n            success && (data.length == 0 || abi.decode(data, (bool))),\n            'TransferHelper::safeApprove: approve failed'\n        );\n    }\n\n    function safeTransfer(\n        address token,\n        address to,\n        uint256 value\n    ) internal {\n        // bytes4(keccak256(bytes('transfer(address,uint256)')));\n        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0xa9059cbb, to, value));\n        require(\n            success && (data.length == 0 || abi.decode(data, (bool))),\n            'TransferHelper::safeTransfer: transfer failed'\n        );\n    }\n\n    function safeTransferFrom(\n        address token,\n        address from,\n        address to,\n        uint256 value\n    ) internal {\n        // bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));\n        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0x23b872dd, from, to, value));\n        require(\n            success && (data.length == 0 || abi.decode(data, (bool))),\n            'TransferHelper::transferFrom: transferFrom failed'\n        );\n    }\n\n    function safeTransferETH(address to, uint256 value) internal {\n        (bool success, ) = to.call{value: value}(new bytes(0));\n        require(success, 'TransferHelper::safeTransferETH: ETH transfer failed');\n    }\n}\n"
+    },
+    "contracts/uniswapv2/interfaces/IUniswapV2Router01.sol": {
+      "content": "pragma solidity ^0.6.2;\n\ninterface IUniswapV2Router01 {\n    function factory() external pure returns (address);\n    function WETH() external pure returns (address);\n\n    function addLiquidity(\n        address tokenA,\n        address tokenB,\n        uint amountADesired,\n        uint amountBDesired,\n        uint amountAMin,\n        uint amountBMin,\n        address to,\n        uint deadline\n    ) external returns (uint amountA, uint amountB, uint liquidity);\n    function addLiquidityETH(\n        address token,\n        uint amountTokenDesired,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline\n    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);\n    function removeLiquidity(\n        address tokenA,\n        address tokenB,\n        uint liquidity,\n        uint amountAMin,\n        uint amountBMin,\n        address to,\n        uint deadline\n    ) external returns (uint amountA, uint amountB);\n    function removeLiquidityETH(\n        address token,\n        uint liquidity,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline\n    ) external returns (uint amountToken, uint amountETH);\n    function removeLiquidityWithPermit(\n        address tokenA,\n        address tokenB,\n        uint liquidity,\n        uint amountAMin,\n        uint amountBMin,\n        address to,\n        uint deadline,\n        bool approveMax, uint8 v, bytes32 r, bytes32 s\n    ) external returns (uint amountA, uint amountB);\n    function removeLiquidityETHWithPermit(\n        address token,\n        uint liquidity,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline,\n        bool approveMax, uint8 v, bytes32 r, bytes32 s\n    ) external returns (uint amountToken, uint amountETH);\n    function swapExactTokensForTokens(\n        uint amountIn,\n        uint amountOutMin,\n        address[] calldata path,\n        address to,\n        uint deadline\n    ) external returns (uint[] memory amounts);\n    function swapTokensForExactTokens(\n        uint amountOut,\n        uint amountInMax,\n        address[] calldata path,\n        address to,\n        uint deadline\n    ) external returns (uint[] memory amounts);\n    function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)\n        external\n        payable\n        returns (uint[] memory amounts);\n    function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)\n        external\n        returns (uint[] memory amounts);\n    function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)\n        external\n        returns (uint[] memory amounts);\n    function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)\n        external\n        payable\n        returns (uint[] memory amounts);\n\n    function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB);\n    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);\n    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external pure returns (uint amountIn);\n    function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts);\n    function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);\n}\n"
+    },
+    "contracts/uniswapv2/interfaces/IUniswapV2Router02.sol": {
+      "content": "pragma solidity ^0.6.2;\n\nimport './IUniswapV2Router01.sol';\n\ninterface IUniswapV2Router02 is IUniswapV2Router01 {\n    function removeLiquidityETHSupportingFeeOnTransferTokens(\n        address token,\n        uint liquidity,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline\n    ) external returns (uint amountETH);\n    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(\n        address token,\n        uint liquidity,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline,\n        bool approveMax, uint8 v, bytes32 r, bytes32 s\n    ) external returns (uint amountETH);\n\n    function swapExactTokensForTokensSupportingFeeOnTransferTokens(\n        uint amountIn,\n        uint amountOutMin,\n        address[] calldata path,\n        address to,\n        uint deadline\n    ) external;\n    function swapExactETHForTokensSupportingFeeOnTransferTokens(\n        uint amountOutMin,\n        address[] calldata path,\n        address to,\n        uint deadline\n    ) external payable;\n    function swapExactTokensForETHSupportingFeeOnTransferTokens(\n        uint amountIn,\n        uint amountOutMin,\n        address[] calldata path,\n        address to,\n        uint deadline\n    ) external;\n}\n"
+    },
+    "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol": {
+      "content": "pragma solidity >=0.5.0;\n\ninterface IUniswapV2Pair {\n    event Approval(address indexed owner, address indexed spender, uint value);\n    event Transfer(address indexed from, address indexed to, uint value);\n\n    function name() external pure returns (string memory);\n    function symbol() external pure returns (string memory);\n    function decimals() external pure returns (uint8);\n    function totalSupply() external view returns (uint);\n    function balanceOf(address owner) external view returns (uint);\n    function allowance(address owner, address spender) external view returns (uint);\n\n    function approve(address spender, uint value) external returns (bool);\n    function transfer(address to, uint value) external returns (bool);\n    function transferFrom(address from, address to, uint value) external returns (bool);\n\n    function DOMAIN_SEPARATOR() external view returns (bytes32);\n    function PERMIT_TYPEHASH() external pure returns (bytes32);\n    function nonces(address owner) external view returns (uint);\n\n    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;\n\n    event Mint(address indexed sender, uint amount0, uint amount1);\n    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);\n    event Swap(\n        address indexed sender,\n        uint amount0In,\n        uint amount1In,\n        uint amount0Out,\n        uint amount1Out,\n        address indexed to\n    );\n    event Sync(uint112 reserve0, uint112 reserve1);\n\n    function MINIMUM_LIQUIDITY() external pure returns (uint);\n    function factory() external view returns (address);\n    function token0() external view returns (address);\n    function token1() external view returns (address);\n    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);\n    function price0CumulativeLast() external view returns (uint);\n    function price1CumulativeLast() external view returns (uint);\n    function kLast() external view returns (uint);\n\n    function mint(address to) external returns (uint liquidity);\n    function burn(address to) external returns (uint amount0, uint amount1);\n    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external;\n    function skim(address to) external;\n    function sync() external;\n\n    function initialize(address, address) external;\n}\n"
+    },
+    "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol": {
+      "content": "pragma solidity >=0.5.0;\n\ninterface IUniswapV2Factory {\n    event PairCreated(address indexed token0, address indexed token1, address pair, uint);\n\n    function feeTo() external view returns (address);\n    function feeToSetter() external view returns (address);\n\n    function getPair(address tokenA, address tokenB) external view returns (address pair);\n    function allPairs(uint) external view returns (address pair);\n    function allPairsLength() external view returns (uint);\n\n    function createPair(address tokenA, address tokenB) external returns (address pair);\n\n    function setFeeTo(address) external;\n    function setFeeToSetter(address) external;\n}\n"
+    }
+  },
+  "proxyResolution": {
+    "isProxy": false,
+    "proxyType": null,
+    "implementations": []
+  },
+  "compilation": {
+    "language": "Solidity",
+    "compiler": "solc",
+    "compilerVersion": "0.6.6+commit.6c089d02",
+    "compilerSettings": {
+      "metadata": {
+        "bytecodeHash": "ipfs",
+        "useLiteralContent": true
+      },
+      "libraries": {},
+      "optimizer": {
+        "runs": 999999,
+        "enabled": true
+      },
+      "evmVersion": "istanbul",
+      "remappings": []
+    },
+    "name": "UniswapV2Router02",
+    "fullyQualifiedName": "contracts/uniswapv2/UniswapRouter02.sol:UniswapV2Router02"
+  },
+  "sourceServiceMatch": {
+    "match": "exact_match",
+    "creationMatch": "exact_match",
+    "runtimeMatch": "exact_match"
+  },
+  "functionReview": [
+    {
+      "signature": "WETH()",
+      "stateMutability": "view",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "payable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "factory()",
+      "stateMutability": "view",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "getAmountIn(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "getAmountOut(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "getAmountsIn(uint256,address[])",
+      "stateMutability": "view",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "getAmountsOut(uint256,address[])",
+      "stateMutability": "view",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "quote(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    },
+    {
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "exclude",
+      "reason": "Root deferred for lifecycle ambiguity; no function including exits activated."
+    }
+  ]
+}
