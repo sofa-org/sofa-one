@@ -62,6 +62,7 @@ export const SUPPORTED_PROTOCOLS: readonly SupportedProtocol[] = [
   { name: 'Beefy', website: 'https://beefy.com' },
   { name: 'Belt Finance', website: 'https://belt.fi/' },
   { name: 'BiFi', website: 'https://bifi.finance/' },
+  { name: 'Binance WBETH', website: 'https://www.binance.com/en/wbeth' },
   { name: 'Bio Protocol', website: 'https://www.bio.xyz/' },
   { name: 'Biswap', website: 'https://biswap.org' },
   { name: 'Bitbond TokenTool', website: 'https://tokentool.bitbond.com/' },
