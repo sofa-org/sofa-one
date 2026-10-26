@@ -12,6 +12,8 @@ export const SUPPORTED_CHAINS_WETH: Readonly<Record<number, string>> = Object.fr
   56: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
   // Polygon WMATIC / WPOL
   137: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
+  // Monad mainnet WMON; classification only, never an execution or debt exemption.
+  143: '0x3bd359c1119da7da1d913d1c4d2b7c461115433a',
   // Base WETH predeploy
   8453: '0x4200000000000000000000000000000000000006',
   // Arbitrum One WETH

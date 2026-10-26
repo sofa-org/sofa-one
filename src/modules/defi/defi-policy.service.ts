@@ -16,6 +16,12 @@ import { POLYMARKET_CLOB_AUTH_CAPABILITY_ID, signingPayloadDigest, validatePolym
 import { POLYMARKET_CLOB_ORDER_CAPABILITY_ID, polymarketDepositWalletAddress, polymarketWrapperDigest, validatePolymarketClobOrder } from './signing/polymarket-clob-order';
 import { polymarketDepositBatchDigest, validatePolymarketDepositBatch, type ValidatedPolymarketDepositBatch } from './signing/polymarket-deposit-batch';
 import { assertCapabilityConfiguration, hasCapability, normalizeCapabilityMode } from './capability-grants';
+import { validateUniversalRouter } from './execution/uniswap-router';
+import { validateV4PositionManager } from './execution/uniswap-v4';
+import { uniswapIdentityKind, validateUniswapBinding } from './execution/uniswap-identity';
+import type { UniswapExecutionResult } from './execution/uniswap-deployments';
+
+type UniswapPlanState = { targets: Set<string>; operations: number };
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -41,11 +47,14 @@ export class DefiPolicyService {
     if (snapshotInteractions.length > MAX_DEFI_EXECUTION_NODES || snapshotInteractions.reduce((sum, call) => sum + Math.max(0, (call.data.length - 2) / 2), 0) > 65_536) this.deny('DEFI_INVALID_PARAMETERS', snapshotContext);
     const matches: DefiMatch[] = [];
     const executionPlan: DefiExecutionPlanNode[] = [];
+    const uniswapPlan: UniswapPlanState = { targets: new Set(), operations: 0 };
     for (const interaction of snapshotInteractions) {
       const fn = this.resolveInteraction(interaction, snapshotContext);
-      this.assertGrantedAndUnpaused(fn, snapshotContext, await this.readPauseState(snapshotContext, fn));
+      const pauseState = await this.readPauseState(snapshotContext, fn);
+      this.assertGrantedAndUnpaused(fn, snapshotContext, pauseState);
       matches.push(toMatch(fn));
-      const expanded = this.expandExecution(interaction, fn, snapshotContext, [matches.length - 1], executionPlan.length);
+      const expanded = this.expandExecution(interaction, fn, snapshotContext, [matches.length - 1], executionPlan.length, uniswapPlan);
+      this.assertUniswapTargetsUnpaused(uniswapPlan, pauseState, snapshotContext, fn);
       for (const node of expanded) {
         if (!hasCapability(snapshotContext.capabilityMode, snapshotContext.allowedCapabilityIds, node.match.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', snapshotContext, this.catalog.functionForCapability(node.match.capabilityId));
         const childFn = this.catalog.functionForCapability(node.match.capabilityId)!;
@@ -160,13 +169,15 @@ export class DefiPolicyService {
       if (buildDefiRequestCommitment(authorization.interactions, context, authorization.manifestHash) !== authorization.requestCommitment) this.deny('DEFI_POLICY_UNAVAILABLE', context);
         assertCapabilityConfiguration(liveMode, key.allowedCapabilityIds);
        const recomputedPlan: DefiExecutionPlanNode[] = [];
+       const uniswapPlan: UniswapPlanState = { targets: new Set(), operations: 0 };
        for (let index = 0; index < authorization.interactions.length; index++) {
          const fn = this.resolveInteraction(authorization.interactions[index], context);
         const match = authorization.matches[index];
           if (!match || !sameMatch(match, toMatch(fn)) || !hasCapability(context.capabilityMode, context.allowedCapabilityIds, fn.capabilityId)) this.deny('DEFI_POLICY_UNAVAILABLE', context, fn);
           if (!hasCapability(liveMode, key.allowedCapabilityIds, fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
          if (isPaused(state, fn)) this.deny('DEFI_CAPABILITY_PAUSED', context, fn);
-          const expanded = this.expandExecution(authorization.interactions[index], fn, context, [index], recomputedPlan.length);
+          const expanded = this.expandExecution(authorization.interactions[index], fn, context, [index], recomputedPlan.length, uniswapPlan);
+          this.assertUniswapTargetsUnpaused(uniswapPlan, state, context, fn);
          for (const node of expanded) {
            const child = this.catalog.functionForCapability(node.match.capabilityId);
             if (!child || !hasCapability(liveMode, key.allowedCapabilityIds, child.capabilityId) || !hasCapability(context.capabilityMode, context.allowedCapabilityIds, child.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, child);
@@ -253,10 +264,35 @@ export class DefiPolicyService {
     if (isPaused(state, fn)) this.deny('DEFI_CAPABILITY_PAUSED', context, fn);
   }
 
+  private assertUniswapTargetsUnpaused(plan: UniswapPlanState, state: { pausedScopeKeys: string[] }, context: DefiExecutionContext, fn: DefiFunctionPolicy): void {
+    if ([...plan.targets].some((target) => state.pausedScopeKeys.includes(`contract:${context.chainId}:${target}`))) this.deny('DEFI_CAPABILITY_PAUSED', context, fn);
+  }
+
   /** Interprets only reviewed closed scopes; Ambient protocol callbacks never become recursive wallet children. */
-  private expandExecution(root: DefiInteraction, rootFn: DefiFunctionPolicy, context: DefiExecutionContext, path: number[], alreadyPlanned: number): DefiExecutionPlanNode[] {
+  private expandExecution(root: DefiInteraction, rootFn: DefiFunctionPolicy, context: DefiExecutionContext, path: number[], alreadyPlanned: number, uniswapPlan: UniswapPlanState, callerAddress?: string): DefiExecutionPlanNode[] {
     const rootNode = deepFreeze({ path: [...path], data: root.data.toLowerCase() as `0x${string}`, match: toMatch(rootFn, root.value as string) });
     const scope = rootFn.executionScope;
+    try { validateUniswapBinding(rootFn); }
+    catch { this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn); }
+    const uniswapKind = uniswapIdentityKind(rootFn);
+    if (uniswapKind) {
+      this.assertNativeValue(root, rootFn, context);
+      let parsed: UniswapExecutionResult;
+      try {
+        const input = { chainId: context.chainId, executionOwner: context.executionOwner, nativeValue: BigInt(root.value ?? '0'), callerAddress };
+        parsed = uniswapKind === 'uniswap-universal-router-2.1.2-v1' ? validateUniversalRouter(root.data, input) : validateV4PositionManager(root.data, input);
+      } catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
+      uniswapPlan.operations += parsed.operationCount;
+      if (uniswapPlan.operations > 64 || alreadyPlanned + 1 + parsed.children.length > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      for (const target of parsed.touchedContracts) uniswapPlan.targets.add(target.toLowerCase());
+      const nodes: DefiExecutionPlanNode[] = [rootNode];
+      for (const [index, childCall] of parsed.children.entries()) {
+        const child = this.resolveInteraction(childCall, context);
+        if (uniswapKind !== 'uniswap-universal-router-2.1.2-v1' || uniswapIdentityKind(child) !== 'uniswap-v4-position-manager-v1') this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, child);
+        nodes.push(...this.expandExecution(childCall, child, context, [...path, index], alreadyPlanned + nodes.length, uniswapPlan, root.to));
+      }
+      return nodes;
+    }
     const ambientIdentity = rootFn.chainId === AMBIENT_CHAIN_ID && rootFn.contract.toLowerCase() === AMBIENT_TARGET.toLowerCase();
     const ensoIdentityMarker = rootFn.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId
       || rootFn.chainId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.chainId && rootFn.contract.toLowerCase() === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.contract

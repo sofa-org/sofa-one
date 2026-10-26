@@ -6927,6 +6927,32 @@
         ]
       },
       {
+        "address": "0x23617e59a5925b2a4bf75d73ff6711cd0b29de85",
+        "protocol": "uniswap-universal-router-2.1.2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "execute",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "commands",
+                "type": "bytes"
+              },
+              {
+                "name": "inputs",
+                "type": "bytes[]"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x24ae2da0f361aa4be46b48eb19c91e02c5e4f27e",
         "protocol": "Manifold Finance",
         "abi": [
@@ -26960,6 +26986,28 @@
         ]
       },
       {
+        "address": "0xbd216513d74c8cf14cf4747e6aaa6420ff64ee9e",
+        "protocol": "uniswap-v4-position-manager",
+        "abi": [
+          {
+            "type": "function",
+            "name": "modifyLiquidities",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "unlockData",
+                "type": "bytes"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xbd564bfe6f2366336ecd707862eda79b97bce383",
         "protocol": "Sturdy Finance",
         "abi": [
@@ -27319,6 +27367,25 @@
                 "type": "bool"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -38665,6 +38732,28 @@
         ]
       },
       {
+        "address": "0x3c3ea4b57a46241e54610e5f022e5c45859a1017",
+        "protocol": "uniswap-v4-position-manager",
+        "abi": [
+          {
+            "type": "function",
+            "name": "modifyLiquidities",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "unlockData",
+                "type": "bytes"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x4200000000000000000000000000000000000006",
         "protocol": "ERC-20",
         "abi": [
@@ -38688,6 +38777,25 @@
                 "type": "bool"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -40143,6 +40251,32 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xc09255d86db563cbc11c2fcf4a0c512e160111b4",
+        "protocol": "uniswap-universal-router-2.1.2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "execute",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "commands",
+                "type": "bytes"
+              },
+              {
+                "name": "inputs",
+                "type": "bytes[]"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -46499,6 +46633,28 @@
         ]
       },
       {
+        "address": "0x7a4a5c919ae2541aed11041a1aeee68f1287f95b",
+        "protocol": "uniswap-v4-position-manager",
+        "abi": [
+          {
+            "type": "function",
+            "name": "modifyLiquidities",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "unlockData",
+                "type": "bytes"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x7b8a01b39d58278b5de7e48c8449c9f4f5170613",
         "protocol": "uniswap-v3-position-manager",
         "abi": [
@@ -47301,6 +47457,52 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "guy",
+                "type": "address"
+              },
+              {
+                "name": "wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -50166,6 +50368,32 @@
         ]
       },
       {
+        "address": "0xdc264714f68d84cf29bc605589405e78bdbe7c9f",
+        "protocol": "uniswap-universal-router-2.1.2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "execute",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "commands",
+                "type": "bytes"
+              },
+              {
+                "name": "inputs",
+                "type": "bytes[]"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xeca88125a5adbe82614ffc12d0db554e2e2867c8",
         "protocol": "Venus",
         "abi": [
@@ -50911,6 +51139,52 @@
         ]
       },
       {
+        "address": "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "guy",
+                "type": "address"
+              },
+              {
+                "name": "wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x109d3042a3c682f94107b3818e93b3ade2a47544",
         "protocol": "StableHodl",
         "abi": [
@@ -51371,6 +51645,28 @@
                 "type": "uint256[]"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x1ec2ebf4f37e7363fdfe3551602425af0b3ceef9",
+        "protocol": "uniswap-v4-position-manager",
+        "abi": [
+          {
+            "type": "function",
+            "name": "modifyLiquidities",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "unlockData",
+                "type": "bytes"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -55077,6 +55373,32 @@
         ]
       },
       {
+        "address": "0xdc264714f68d84cf29bc605589405e78bdbe7c9f",
+        "protocol": "uniswap-universal-router-2.1.2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "execute",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "commands",
+                "type": "bytes"
+              },
+              {
+                "name": "inputs",
+                "type": "bytes[]"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xdc7bcfd0022ca1b0abbb87a1de8fdb83f1a0b58c",
         "protocol": "Untangled Finance",
         "abi": [
@@ -55757,6 +56079,52 @@
         ]
       },
       {
+        "address": "0x3bd359c1119da7da1d913d1c4d2b7c461115433a",
+        "protocol": "ERC-20",
+        "abi": [
+          {
+            "type": "function",
+            "name": "approve",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "guy",
+                "type": "address"
+              },
+              {
+                "name": "wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x4861840c2efb2b98312b0ae34d86fd73e8f9b6f6",
         "protocol": "Mento",
         "abi": [
@@ -56086,6 +56454,28 @@
                     "type": "address"
                   }
                 ]
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x5b7ec4a94ff9bedb700fb82ab09d5846972f4016",
+        "protocol": "uniswap-v4-position-manager",
+        "abi": [
+          {
+            "type": "function",
+            "name": "modifyLiquidities",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "unlockData",
+                "type": "bytes"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -58654,6 +59044,32 @@
                 "type": "uint96"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xa6ce4f10d83dbddac17e68e1837ca9ce6a1b596e",
+        "protocol": "uniswap-universal-router-2.1.2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "execute",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "commands",
+                "type": "bytes"
+              },
+              {
+                "name": "inputs",
+                "type": "bytes[]"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -61722,6 +62138,25 @@
                 "type": "bool"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "wad",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -64172,6 +64607,28 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x7c5f5a4bbd8fd63184577525326123b519429bdc",
+        "protocol": "uniswap-v4-position-manager",
+        "abi": [
+          {
+            "type": "function",
+            "name": "modifyLiquidities",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "unlockData",
+                "type": "bytes"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -68546,6 +69003,32 @@
         ]
       },
       {
+        "address": "0xd6145b2d3f379919e8cdeda7b97e37c4b2ca9c40",
+        "protocol": "uniswap-universal-router-2.1.2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "execute",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "commands",
+                "type": "bytes"
+              },
+              {
+                "name": "inputs",
+                "type": "bytes[]"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xd68647555e5da198d50866334eed647cbe3d1556",
         "protocol": "OpenCover",
         "abi": [
@@ -71713,6 +72196,32 @@
         ]
       },
       {
+        "address": "0x2d01411773c8c24805306e89a41f7855c3c4fe65",
+        "protocol": "uniswap-universal-router-2.1.2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "execute",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "commands",
+                "type": "bytes"
+              },
+              {
+                "name": "inputs",
+                "type": "bytes[]"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x2f1c60ba96ec6925fa9bbbfc9eb7908bd35bc224",
         "protocol": "sofa",
         "abi": [
@@ -74484,6 +74993,25 @@
                 "type": "bool"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -76655,6 +77183,28 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0xd88f38f930b7952f2db2432cb002e7abbf3dd869",
+        "protocol": "uniswap-v4-position-manager",
+        "abi": [
+          {
+            "type": "function",
+            "name": "modifyLiquidities",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "unlockData",
+                "type": "bytes"
+              },
+              {
+                "name": "deadline",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },

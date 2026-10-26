@@ -1429,3 +1429,12 @@ Two independent local commits add two canonical protocols, seven exact chain/add
 
 No new chain, execution language, signing policy, role, approval or generic executor was introduced. Static admission assigns no API-key grants and does not attest runtime identity, custody/backing, funding, liquidity, financial safety, full workflows or successful execution. Full verify/build/lint/E2E gates, real database locking, funded contract execution and Openfort broadcast were not run. Browser verification covers the public directory/download, not authenticated flows. No push.
 
+## Seven-chain Uniswap execution admission (2026-10-26)
+
+`sources/uniswap-seven-chain-execution.json` binds the seven exact Router 2.1.2 and V4 PositionManager deployments plus wrapped-native interfaces. Monad uses exact-address explorer ABIs; Arbitrum WETH resolves the proxy to its reported aeWETH implementation. This adds 31 capabilities: seven Router roots, seven V4 LP roots and seventeen wrapped-native methods; existing approvals, LP capabilities and signing descriptors remain unchanged.
+
+Both executor roots require mandatory versioned closed execution scopes, bounded canonical nested ABI, owner-bound payouts and residual-custody cleanup. Router PM children require their independent capability and pause checks. Known token/Permit2/wrapper/PoolManager/PM target pauses are checked at preflight and acceptance. Existing-position hooks/subscribers remain inherited, unobserved LP economic authority, not an exhaustive target attestation. No Permit2 signing or permit transaction is admitted; required token/Permit2 allowances remain independent prerequisites.
+
+Catalog generation does not bypass billing debt, destination protection, frozen/key state or execution-mode controls. `all` dynamically includes the active additions; custom grants remain exact and chain-local. See [`docs/sofa-uniswap-protocols-integration.md`](../../docs/sofa-uniswap-protocols-integration.md) for the complete admitted/rejected language and verification limits. Static admission does not attest live deployment identity, balances, liquidity, financial safety or actual mainnet execution.
+
+

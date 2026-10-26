@@ -8,7 +8,7 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { encodeFunctionData, getAddress, parseAbi, type Hex } from 'viem';
+import { encodeAbiParameters, encodeFunctionData, getAddress, parseAbi, parseAbiParameters, type Hex } from 'viem';
 
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
@@ -44,6 +44,8 @@ import { DefiPolicyService } from '../defi/defi-policy.service';
 import { DefiCatalogService } from '../defi/defi-catalog.service';
 import { buildReviewedManifest, functionAbiHash } from '../defi/registry/defi-manifest';
 import type { DefiChainPolicy } from '../defi/defi.types';
+import { PRODUCTION_DEFI_CATALOG, PRODUCTION_DEFI_MANIFEST } from '../defi/registry/production-registry';
+import { UNISWAP_DEPLOYMENTS, UNISWAP_ROUTER_ABI, UNISWAP_V4_POSITION_ABI } from '../defi/execution/uniswap-deployments';
 
 function erc20TransferData(to: string, amount: bigint = 1n): string {
   return encodeFunctionData({
@@ -1908,6 +1910,52 @@ describe('TransactionsService', () => {
     );
     expect(prisma.transaction.create).not.toHaveBeenCalled();
     expect(openfort.sendUserOperation).not.toHaveBeenCalled();
+  });
+
+  describe('Uniswap independent safety gates', () => {
+    const deployment = UNISWAP_DEPLOYMENTS[8453];
+    const requests = () => {
+      const owner = getAddress(wallet.signerAddress);
+      const swapInput = encodeAbiParameters(parseAbiParameters('address,uint256,uint256,address[],bool,uint256[]'), [owner, 10n, 1n, [TOKEN, deployment.wrappedNative], true, []]);
+      const unlockData = encodeAbiParameters(parseAbiParameters('bytes,bytes[]'), ['0x0111', [
+        encodeAbiParameters(parseAbiParameters('uint256,uint256,uint128,uint128,bytes'), [7n, 1n, 0n, 0n, '0x']),
+        encodeAbiParameters(parseAbiParameters('address,address,address'), [TOKEN, deployment.wrappedNative, owner]),
+      ]]);
+      return [
+        { to: deployment.router, data: encodeFunctionData({ abi: [UNISWAP_ROUTER_ABI], functionName: 'execute', args: ['0x08', [swapInput], 2_000_000_000n] }), value: '0' },
+        { to: deployment.positionManager, data: encodeFunctionData({ abi: [UNISWAP_V4_POSITION_ABI], functionName: 'modifyLiquidities', args: [unlockData, 2_000_000_000n] }), value: '0' },
+        { to: deployment.wrappedNative, data: '0xd0e30db0', value: '1' },
+      ];
+    };
+
+    beforeEach(() => {
+      const db = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
+      // The fixture exposes only the database operation used before the deny gates.
+      const realPolicy = new DefiPolicyService(db as never, securityEvents, new DefiCatalogService(PRODUCTION_DEFI_CATALOG, db as never, PRODUCTION_DEFI_MANIFEST));
+      Reflect.set(service, 'defiPolicy', realPolicy);
+    });
+
+    it.each([0, 1, 2])('blocks admitted Uniswap path %s under debt before create or broadcast', async (index) => {
+      billingDebt.getDebt.mockResolvedValue({ hasDebt: true, invoiceIds: ['inv-uniswap'] });
+      const request = { ...dto, executionMode: 'eoa' as const, interactions: [requests()[index]] };
+      await expect(service.send('user-1', request, { ...apiKeyContext, canUseEoaExecution: true })).rejects.toMatchObject({
+        response: { code: API_ERROR_CODES.BILLING_ASSET_FLOW_UNVERIFIABLE },
+      });
+      expect(prisma.transaction.create).not.toHaveBeenCalled();
+      expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
+      expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+    });
+
+    it.each([0, 1, 2])('blocks admitted Uniswap path %s while destination protection is enabled', async (index) => {
+      enableDestinationProtection();
+      const request = { ...dto, executionMode: 'eoa' as const, interactions: [requests()[index]] };
+      await expect(service.send('user-1', request, { ...apiKeyContext, canUseEoaExecution: true })).rejects.toMatchObject({
+        response: { code: API_ERROR_CODES.UNPROVEN_ASSET_OUTFLOW_BLOCKED },
+      });
+      expect(prisma.transaction.create).not.toHaveBeenCalled();
+      expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
+      expect(openfort.submitUserOperation).not.toHaveBeenCalled();
+    });
   });
 
   describe('restricted pUSD wrap destination handling', () => {
