@@ -11735,6 +11735,45 @@
         ]
       },
       {
+        "address": "0x45312ea0eff7e09c83cbe249fa1d7598c4c8cd4e",
+        "protocol": "curve-router",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exchange",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_route",
+                "type": "address[11]"
+              },
+              {
+                "name": "_swap_params",
+                "type": "uint256[5][5]"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_min_dy",
+                "type": "uint256"
+              },
+              {
+                "name": "_pools",
+                "type": "address[5]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x45cd2e9bd07167cc31ff17584e325c0e562a24f7",
         "protocol": "Unvest",
         "abi": [
@@ -23179,6 +23218,303 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xa1c7a8360eb4049595a24d6919e74e105b409cb5",
+        "protocol": "curve-solver",
+        "abi": [
+          {
+            "type": "function",
+            "name": "execute_balanced_exact_in",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "root",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pool",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lp_token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "pool_type",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "n_coins",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "coins",
+                    "type": "address[8]"
+                  }
+                ]
+              },
+              {
+                "name": "branches",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "route",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "step_start",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "step_count",
+                        "type": "uint256"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "steps",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_in",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_out",
+                    "type": "address"
+                  },
+                  {
+                    "name": "i",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "j",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "variant",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool_type",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "n_coins",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "amount_in",
+                "type": "uint256"
+              },
+              {
+                "name": "final_token",
+                "type": "address"
+              },
+              {
+                "name": "min_out",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "execute_linear_exact_in",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "steps",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_in",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_out",
+                    "type": "address"
+                  },
+                  {
+                    "name": "i",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "j",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "variant",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool_type",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "n_coins",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "initial_token",
+                "type": "address"
+              },
+              {
+                "name": "amount_in",
+                "type": "uint256"
+              },
+              {
+                "name": "final_token",
+                "type": "address"
+              },
+              {
+                "name": "min_out",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "execute_split_exact_in",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "branches",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "amount_in",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "route",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "step_start",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "step_count",
+                        "type": "uint256"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "steps",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_in",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_out",
+                    "type": "address"
+                  },
+                  {
+                    "name": "i",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "j",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "variant",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool_type",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "n_coins",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "initial_token",
+                "type": "address"
+              },
+              {
+                "name": "amount_in",
+                "type": "uint256"
+              },
+              {
+                "name": "final_token",
+                "type": "address"
+              },
+              {
+                "name": "min_out",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
@@ -39536,6 +39872,45 @@
         ]
       },
       {
+        "address": "0x0dcded3545d565ba3b19e683431381007245d983",
+        "protocol": "curve-router",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exchange",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_route",
+                "type": "address[11]"
+              },
+              {
+                "name": "_swap_params",
+                "type": "uint256[5][5]"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_min_dy",
+                "type": "uint256"
+              },
+              {
+                "name": "_pools",
+                "type": "address[5]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x1250f2326f04ac61ee5aed92fef74bcac6e6bc90",
         "protocol": "HAI",
         "abi": [
@@ -48943,6 +49318,45 @@
         ]
       },
       {
+        "address": "0xa72c85c258a81761433b4e8da60505fe3dd551cc",
+        "protocol": "curve-router",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exchange",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_route",
+                "type": "address[11]"
+              },
+              {
+                "name": "_swap_params",
+                "type": "uint256[5][5]"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_min_dy",
+                "type": "uint256"
+              },
+              {
+                "name": "_pools",
+                "type": "address[5]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xb971ef87ede563556b2ed4b1c0b0019111dd85d2",
         "protocol": "uniswap-v3-router02",
         "abi": [
@@ -52983,6 +53397,45 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x0dcded3545d565ba3b19e683431381007245d983",
+        "protocol": "curve-router",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exchange",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_route",
+                "type": "address[11]"
+              },
+              {
+                "name": "_swap_params",
+                "type": "uint256[5][5]"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_min_dy",
+                "type": "uint256"
+              },
+              {
+                "name": "_pools",
+                "type": "address[5]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
@@ -61642,6 +62095,41 @@
             ]
           }
         ]
+      },
+      {
+        "address": "0xff5cb29241f002ffed2eaa224e3e996d24a6e8d1",
+        "protocol": "curve-router",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exchange",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_route",
+                "type": "address[11]"
+              },
+              {
+                "name": "_swap_params",
+                "type": "uint256[4][5]"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_min_dy",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
       }
     ],
     "sign": []
@@ -65197,6 +65685,45 @@
             "stateMutability": "nonpayable",
             "inputs": [],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x4f37a9d177470499a2dd084621020b023fcffc1f",
+        "protocol": "curve-router",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exchange",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_route",
+                "type": "address[11]"
+              },
+              {
+                "name": "_swap_params",
+                "type": "uint256[5][5]"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_min_dy",
+                "type": "uint256"
+              },
+              {
+                "name": "_pools",
+                "type": "address[5]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
@@ -74576,6 +75103,45 @@
         ]
       },
       {
+        "address": "0x2191718cd32d02b8e60badffea33e4b5dd9a0a0d",
+        "protocol": "curve-router",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exchange",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_route",
+                "type": "address[11]"
+              },
+              {
+                "name": "_swap_params",
+                "type": "uint256[5][5]"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_min_dy",
+                "type": "uint256"
+              },
+              {
+                "name": "_pools",
+                "type": "address[5]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x21a1de432ca1107c3a0f308aeb024abc487575d1",
         "protocol": "Rain",
         "abi": [
@@ -78905,6 +79471,303 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0xa1c7a8360eb4049595a24d6919e74e105b409cb5",
+        "protocol": "curve-solver",
+        "abi": [
+          {
+            "type": "function",
+            "name": "execute_balanced_exact_in",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "root",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "pool",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lp_token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "pool_type",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "n_coins",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "coins",
+                    "type": "address[8]"
+                  }
+                ]
+              },
+              {
+                "name": "branches",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "route",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "step_start",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "step_count",
+                        "type": "uint256"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "steps",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_in",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_out",
+                    "type": "address"
+                  },
+                  {
+                    "name": "i",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "j",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "variant",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool_type",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "n_coins",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "amount_in",
+                "type": "uint256"
+              },
+              {
+                "name": "final_token",
+                "type": "address"
+              },
+              {
+                "name": "min_out",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "execute_linear_exact_in",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "steps",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_in",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_out",
+                    "type": "address"
+                  },
+                  {
+                    "name": "i",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "j",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "variant",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool_type",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "n_coins",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "initial_token",
+                "type": "address"
+              },
+              {
+                "name": "amount_in",
+                "type": "uint256"
+              },
+              {
+                "name": "final_token",
+                "type": "address"
+              },
+              {
+                "name": "min_out",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "execute_split_exact_in",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "branches",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "amount_in",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "route",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "step_start",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "step_count",
+                        "type": "uint256"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "steps",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_in",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token_out",
+                    "type": "address"
+                  },
+                  {
+                    "name": "i",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "j",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "variant",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "pool_type",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "n_coins",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "initial_token",
+                "type": "address"
+              },
+              {
+                "name": "amount_in",
+                "type": "uint256"
+              },
+              {
+                "name": "final_token",
+                "type": "address"
+              },
+              {
+                "name": "min_out",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
