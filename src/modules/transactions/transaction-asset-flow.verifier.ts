@@ -19,7 +19,7 @@ export const ASSET_FLOW_EVIDENCE_SCHEMA_VERSION = 'asset-flow-evidence.v1' as co
 export const ASSET_FLOW_RULE_VERSION = 'asset-flow-rules.v1' as const;
 
 export type AssetFlowVerificationStatus = 'verified' | 'unknown' | 'external_transfer';
-export type AssetFlowExecutionMode = 'session_key' | 'eoa';
+export type AssetFlowExecutionMode = 'session_key';
 export type AssetFlowSimulationMode = 'eth_simulateV1_non_atomic' | 'calibur_atomic';
 export type CoverageCompleteness = 'complete' | 'incomplete' | 'unknown';
 
@@ -418,7 +418,7 @@ export function computeAssetFlowPlanDigest(input: {
   if (typeof input.chainId !== 'number' || !Number.isSafeInteger(input.chainId) || input.chainId < 1) {
     return null;
   }
-  if (input.executionMode !== 'session_key' && input.executionMode !== 'eoa') return null;
+  if (input.executionMode !== 'session_key') return null;
 
   const interactions = Array.isArray(input.interactions) ? input.interactions : [];
   const normalizedInteractions: Array<{ to: string; data: string; value: string }> = [];
@@ -508,7 +508,7 @@ function validateBinding(
     return { ok: false, rule: 'chain_binding_mismatch', reason: 'Evidence chain does not match request chain' };
   }
 
-  if (input.executionMode !== 'session_key' && input.executionMode !== 'eoa') {
+  if (input.executionMode !== 'session_key') {
     return { ok: false, rule: 'invalid_execution_mode', reason: 'Execution mode is invalid' };
   }
   if (binding.executionMode !== input.executionMode) {

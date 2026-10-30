@@ -21,7 +21,6 @@ import { AgentStatus } from '../../common/agent/agent-status';
 import type { ExecutionMode, SendTransactionDto } from './dto/send-transaction.dto';
 import type { ListTransactionsQueryDto } from './dto/list-transactions-query.dto';
 import { TransactionSpendBudgetDenial } from './transaction-policy.service';
-import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy.service';
 import { TransactionPolicyService } from './transaction-policy.service';
 import {
   AssetFlowSimulationUnavailableError,
@@ -183,14 +182,13 @@ export class TransactionsService {
     private readonly destinationPolicy: WithdrawalDestinationPolicyService,
     private readonly defiPolicy: DefiPolicyService,
     private readonly securityEvents: SecurityEventService,
-    private readonly eoaExecutionPolicy: EoaExecutionPolicyService,
     private readonly transactionSimulation: TransactionSimulationService,
     private readonly riskEvaluation: RiskEvaluationService,
     private readonly sessionKeyPolicy: SessionKeyPolicyService,
     private readonly requestContext: RequestContextService,
   ) {}
 
-  /** Send a transaction from the user's EIP-7702 delegated EOA via the backend agent signer. */
+  /** Submit a Calibur UserOperation from the user's wallet via its registered session key. */
   async send(userId: string, dto: SendTransactionDto, apiKeyRecord?: ApiKeyTransactionContext) {
     if (!apiKeyRecord) {
       throw new UnauthorizedException('API key is required');
@@ -206,25 +204,6 @@ export class TransactionsService {
     const chainId = dto.chainId;
     getSupportedChain(chainId);
     const executionMode = this.resolveExecutionMode(dto.executionMode);
-    if (executionMode === 'eoa') {
-      this.assertPermission(
-        apiKeyRecord.canUseEoaExecution,
-        'API key is not allowed to use EOA execution',
-      );
-      await this.assertEoaExecutionAllowed(userId, apiKeyRecord, {
-        operation: 'send_transaction',
-        chainId,
-        metadata: { interactionCount: dto.interactions.length },
-      });
-      this.logSecurityWarning({
-        message: 'Privileged EOA transaction requested',
-        userId,
-        chainId,
-        executionMode,
-        interactionCount: dto.interactions.length,
-        apiKeyPrefix: apiKeyRecord.keyPrefix,
-      });
-    }
     await this.transactionPolicy.assertAllowed(dto, {
       userId,
       chainId,
@@ -259,29 +238,24 @@ export class TransactionsService {
       });
     }
     const accountAddress = wallet.walletAddress!;
-    if (executionMode === 'session_key') {
-      this.assertAgentWalletReady(wallet, wallet.chainAuthorizations?.[0]);
-      await this.sessionKeyPolicy.assertSessionKeyAllowed({
-        userId,
-        walletId: wallet.id,
-        apiKeyId: apiKeyRecord.id,
-        apiKeyPrefix: apiKeyRecord.keyPrefix,
-        chainId,
-        accountAddress,
-        keyHash: wallet.agentKeyHash!,
-        operation: 'send_transaction',
-        dailySpendLimit: apiKeyRecord.dailySpendLimit,
-        monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
-        apiKeyExpiresAt: apiKeyRecord.expiresAt,
-      });
-    } else {
-      this.assertBackendWalletReady(wallet);
-    }
-    const transactionWalletAddress =
-      executionMode === 'eoa' ? wallet.signerAddress! : accountAddress;
+    this.assertAgentWalletReady(wallet, wallet.chainAuthorizations?.[0]);
+    await this.sessionKeyPolicy.assertSessionKeyAllowed({
+      userId,
+      walletId: wallet.id,
+      apiKeyId: apiKeyRecord.id,
+      apiKeyPrefix: apiKeyRecord.keyPrefix,
+      chainId,
+      accountAddress,
+      keyHash: wallet.agentKeyHash!,
+      operation: 'send_transaction',
+      dailySpendLimit: apiKeyRecord.dailySpendLimit,
+      monthlySpendLimit: apiKeyRecord.monthlySpendLimit,
+      apiKeyExpiresAt: apiKeyRecord.expiresAt,
+    });
+    const transactionWalletAddress = accountAddress;
 
     const requestInteractions = Object.freeze(dto.interactions.map((interaction) => Object.freeze({ ...interaction })));
-    const sponsorship = executionMode === 'session_key' ? (dto.sponsorship ?? 'none') : undefined;
+    const sponsorship = dto.sponsorship ?? 'none';
     const legacyRequestHash = hashRequest({
       operationType: 'send',
       chainId,
@@ -309,7 +283,7 @@ export class TransactionsService {
       return this.toSendResponse(existingTransaction);
     }
 
-    const executionOwner = executionMode === 'session_key' ? wallet.walletAddress! : wallet.signerAddress!;
+    const executionOwner = accountAddress;
     let defiAuthorization: DefiAuthorization;
     try {
       defiAuthorization = await this.defiPolicy.authorizeContractCalls([...requestInteractions], {
@@ -340,10 +314,8 @@ export class TransactionsService {
       0n,
     ).toString();
 
-    // Owner for asset-flow classification + destination policy + evidence binding:
-    // session_key executes as the user wallet; eoa executes as the agent backend wallet.
-    const assetFlowOwnerAddress =
-      executionMode === 'eoa' ? wallet.signerAddress! : wallet.walletAddress!;
+    // Classification, destination policy and evidence bind to the user's wallet.
+    const assetFlowOwnerAddress = accountAddress;
 
     // BILL-016: direct ERC-20-shaped transfer destinations (preflight).
     // Completeness is per-interaction: notProven entries are never dropped.
@@ -426,7 +398,7 @@ export class TransactionsService {
         type: 'send',
         nativeValueWei,
         walletId: wallet.id,
-        execution: executionMode === 'session_key' ? 'calibur_agent_user_operation' : 'backend_eoa',
+        execution: 'calibur_agent_user_operation',
         executionMode,
         ...(sponsorship ? { sponsorship } : {}),
         interactionCount: authorizedInteractions.length,
@@ -463,13 +435,11 @@ export class TransactionsService {
       typeof (tx.details as Record<string, unknown>).userOpHash === 'string'
         ? ((tx.details as Record<string, unknown>).userOpHash as string)
         : null);
+    let observedTransactionHash: string | null = tx.txHash;
     try {
       this.logger.log(
         this.logContext({
-          message:
-            executionMode === 'session_key'
-              ? 'Submitting UserOperation to Openfort bundler'
-              : 'Submitting backend EOA transaction to Openfort',
+          message: 'Submitting UserOperation to Openfort bundler',
           transactionId: tx.id,
           chainId,
           executionMode,
@@ -477,7 +447,7 @@ export class TransactionsService {
           apiKeyPrefix: apiKeyRecord.keyPrefix,
         }),
       );
-      let submission = await this.submitTransaction(executionMode, {
+      let submission = await this.submitTransaction({
         accountAddress,
         chainId,
         interactions: [...defiAuthorization.interactions] as SendTransactionDto['interactions'],
@@ -540,9 +510,10 @@ export class TransactionsService {
         }
       }
 
+      observedTransactionHash = submission.transactionHash ?? observedTransactionHash;
       let finalStatus: 'confirmed' | 'pending' | 'unknown' = submission.transactionHash
         ? 'confirmed'
-        : 'pending';
+        : submission.userOpHash ? 'pending' : 'unknown';
       if (submission.userOperationSuccess === false) finalStatus = 'unknown';
       if (submission.transactionHash) {
         try {
@@ -589,7 +560,9 @@ export class TransactionsService {
       const finalWrite = await this.prisma.transaction.updateMany({
         where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, {
           status: { in: ['submitting', 'pending', 'unknown'] },
-          ...(submission.userOpHash ? { userOpHash: submission.userOpHash } : { txHash: null }),
+          ...(submission.userOpHash
+            ? { userOpHash: submission.userOpHash }
+            : { OR: [{ txHash: null }, { txHash: observedTransactionHash }] }),
           // The completion is only allowed to establish typed truth from the
           // unresolved state. A reconciler that already wrote true (or false)
           // wins and this late request becomes a safe CAS no-op.
@@ -629,36 +602,53 @@ export class TransactionsService {
       );
       const uncertain = isOpenfortTimeout(error);
       const knownUserOperation = Boolean(observedUserOpHash);
-      await this.prisma.transaction.updateMany({
-        where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, {
-          status: { in: ['submitting', 'pending', 'unknown'] },
-          userOpSuccess: null,
-          billingReconciledAt: null,
-          ...(knownUserOperation
-            ? { OR: [{ userOpHash: observedUserOpHash }, { userOpHash: null }] }
-            : {}),
-        }),
-        data: {
-          ...(knownUserOperation
-            ? {
-                userOpHash: observedUserOpHash,
-                status: 'unknown',
-                failureReason: null,
-                completedAt: null,
-              }
-            : {
-                status: uncertain ? 'unknown' : 'failed',
-                failureReason: uncertain ? null : this.toFailureReason(error),
-                completedAt: uncertain ? null : new Date(),
-              }),
-        },
-      });
+      const knownTransaction = Boolean(observedTransactionHash);
+      try {
+        await this.prisma.transaction.updateMany({
+          where: this.sendCasWhere(tx, userId, chainId, dto.idempotencyKey!, requestHash, {
+            status: { in: ['submitting', 'pending', 'unknown'] },
+            userOpSuccess: null,
+            billingReconciledAt: null,
+            ...(knownUserOperation
+              ? { OR: [{ userOpHash: observedUserOpHash }, { userOpHash: null }] }
+              : {}),
+            ...(knownTransaction
+              ? { AND: [{ OR: [{ txHash: null }, { txHash: observedTransactionHash }] }] }
+              : { txHash: null }),
+          }),
+          data: {
+            ...(knownUserOperation || knownTransaction
+              ? {
+                  ...(knownUserOperation ? { userOpHash: observedUserOpHash } : {}),
+                  ...(knownTransaction ? { txHash: observedTransactionHash } : {}),
+                  status: 'unknown',
+                  failureReason: null,
+                  completedAt: null,
+                }
+              : {
+                  status: uncertain ? 'unknown' : 'failed',
+                  failureReason: uncertain ? null : this.toFailureReason(error),
+                  completedAt: uncertain ? null : new Date(),
+                }),
+          },
+        });
+      } catch {
+        // A second database failure cannot establish that a known broadcast
+        // failed. Keep the original error; the committed row stays unresolved.
+        this.logger.warn(this.logContext({
+          message: 'Unable to persist unresolved transaction submission',
+          transactionId: tx.id,
+        }));
+      }
       throw error;
     }
   }
 
-  private resolveExecutionMode(mode?: ExecutionMode): ExecutionMode {
-    return mode ?? 'session_key';
+  private resolveExecutionMode(mode: unknown): ExecutionMode {
+    if (mode !== undefined && mode !== 'session_key') {
+      throw new BadRequestException('executionMode must be session_key');
+    }
+    return 'session_key';
   }
 
   private sendCasWhere(
@@ -680,23 +670,6 @@ export class TransactionsService {
     };
   }
 
-  private async assertEoaExecutionAllowed(
-    userId: string,
-    apiKeyRecord: ApiKeyTransactionContext,
-    context: { operation: 'send_transaction'; chainId: number; metadata?: Record<string, unknown> },
-  ) {
-    await this.eoaExecutionPolicy.assertAllowed({
-      operation: context.operation,
-      userId,
-      apiKeyId: apiKeyRecord.id,
-      apiKeyPrefix: apiKeyRecord.keyPrefix,
-      allowedIps: apiKeyRecord.allowedIps,
-      clientIp: this.requestContext.getClientIp(),
-      expiresAt: apiKeyRecord.expiresAt,
-      chainId: context.chainId,
-      metadata: context.metadata as any,
-    });
-  }
 
   private assertWalletReady(wallet: { status: string; walletAddress?: string | null }): void {
     if (wallet.status !== 'active' || !wallet.walletAddress) {
@@ -714,7 +687,6 @@ export class TransactionsService {
   }
 
   private async submitTransaction(
-    executionMode: ExecutionMode,
     params: {
       accountAddress: string;
       chainId: number;
@@ -729,14 +701,6 @@ export class TransactionsService {
     userOpHash?: string;
     userOperationSuccess?: boolean | null;
   }> {
-    if (executionMode === 'eoa') {
-      return this.openfort.sendBackendTransaction({
-        accountId: params.agentOpenfortAccountId,
-        chainId: params.chainId,
-        interactions: params.interactions,
-      });
-    }
-
     return this.openfort.submitUserOperation({
       agentAccountId: params.agentOpenfortAccountId,
       accountAddress: params.accountAddress,
@@ -778,19 +742,6 @@ export class TransactionsService {
     }
   }
 
-  private assertBackendWalletReady(wallet: {
-    status: string;
-    agentOpenfortAccountId?: string | null;
-    signerAddress?: string | null;
-  }): void {
-    if (
-      wallet.status !== 'active' ||
-      !wallet.agentOpenfortAccountId ||
-      !wallet.signerAddress
-    ) {
-      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
-    }
-  }
 
   private async assertTransactionSimulatable(
     userId: string,
@@ -1556,7 +1507,7 @@ export class TransactionsService {
     }
     if (
       binding.executionMode !== context.executionMode ||
-      (binding.executionMode !== 'session_key' && binding.executionMode !== 'eoa')
+      binding.executionMode !== 'session_key'
     ) {
       this.logBillingAssetFlowBlocked(
         userId,
@@ -1783,9 +1734,6 @@ export class TransactionsService {
     return this.requestContext.getLogContext(extra);
   }
 
-  private logSecurityWarning(extra: Record<string, unknown>): void {
-    this.logger.warn(this.logContext({ event: 'security', ...extra }));
-  }
 
   private toListItemResponse(tx: any) {
     return {

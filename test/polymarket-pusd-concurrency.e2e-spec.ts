@@ -58,12 +58,11 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
       auditObservedReleasedDestinationLock = probe.rows[0]?.acquired === true;
     }) };
     const destinationPolicy = new WithdrawalDestinationPolicyService(prisma as any, events as any);
-    const openfort = { sendUserOperation: jest.fn(), submitUserOperation: jest.fn(), sendBackendTransaction: jest.fn() };
+    const openfort = { sendUserOperation: jest.fn(), submitUserOperation: jest.fn() };
     const defi = { assertStillAuthorized: jest.fn().mockResolvedValue(undefined), recordAllowedInTx: jest.fn() };
     const transactionPolicy = { assertSpendAllowedInTx: jest.fn().mockResolvedValue(undefined) };
     const service = new TransactionsService(prisma as any, openfort as any, transactionPolicy as any,
       {} as never, {} as never, destinationPolicy, defi as never, {} as never,
-      { assertAllowed: jest.fn() } as never,
       { assertSimulatable: jest.fn(), simulateAssetFlowEvidence: jest.fn() } as never,
       { evaluateRisk: jest.fn().mockResolvedValue({ action: 'allow' }), enforceRiskAction: jest.fn() } as never,
       { assertSessionKeyAllowed: jest.fn() } as never,
@@ -109,7 +108,6 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
       expect(await prisma.transaction.count({ where: { userId: user.id, idempotencyKey: createParams.idempotencyKey } })).toBe(0);
       expect(openfort.sendUserOperation).not.toHaveBeenCalled();
       expect(openfort.submitUserOperation).not.toHaveBeenCalled();
-      expect(openfort.sendBackendTransaction).not.toHaveBeenCalled();
       expect(defi.assertStillAuthorized).not.toHaveBeenCalled();
     } finally {
       await holder.query('ROLLBACK').catch(() => undefined);
@@ -150,12 +148,11 @@ describe('Polymarket pUSD destination mutation race (PostgreSQL)', () => {
       await realAssert(args[0], args[1], args[2], args[3]);
       if (args[3]?.prisma) { signalChecked(); await release; }
     });
-    const openfort = { sendUserOperation: jest.fn(), submitUserOperation: jest.fn(), sendBackendTransaction: jest.fn() };
+    const openfort = { sendUserOperation: jest.fn(), submitUserOperation: jest.fn() };
     const service = new TransactionsService(prisma as any, openfort as any,
       { assertSpendAllowedInTx: jest.fn().mockResolvedValue(undefined) } as any, {} as any, {} as any,
       destinationPolicy, { assertStillAuthorized: jest.fn().mockResolvedValue(undefined), recordAllowedInTx: jest.fn().mockResolvedValue(null) } as any,
       { exportCommitted: jest.fn() } as never,
-      { assertAllowed: jest.fn() } as never,
       { assertSimulatable: jest.fn(), simulateAssetFlowEvidence: jest.fn() } as never,
       { evaluateRisk: jest.fn().mockResolvedValue({ action: 'allow' }), enforceRiskAction: jest.fn() } as never,
       { assertSessionKeyAllowed: jest.fn() } as never,

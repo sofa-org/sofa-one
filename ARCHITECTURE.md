@@ -59,7 +59,7 @@ Browser SPA
 
 ### `TransactionsModule`
 
-- Owns public transaction send/status APIs.
+- Owns public Calibur session-key UserOperation submission and transaction status APIs; no direct signer EOA sends.
 - Validates API-key-only access.
 - Persists transaction status, request hashes, idempotency, and API-key attribution snapshots.
 - Must not be folded into `WalletModule`.
@@ -162,12 +162,18 @@ API client
 ```text
 API client
   → POST /v1/transactions with X-API-Key
-  → request DTO validates chain/interactions/idempotency
-  → TransactionsService loads UserWallet + authorization context
-  → Openfort submits transaction/UserOperation
+  → request DTO validates chain/interactions/idempotency and optional session_key-only mode
+  → explicit eoa or unknown mode returns HTTP 400, never automatic conversion
+  → TransactionsService loads UserWallet + live chain/key authorization context
+  → Openfort submits Calibur UserOperation from the user wallet
   → Transaction row stores status, tx hash, request hash, API-key snapshot
   → return transaction ID/hash/status
 ```
+
+The independent Polymarket ClobAuth, CLOB V2 and DepositWallet Batch typed-data signing
+lanes retain EOA mode and the TEE signer. `canUseEoaExecution` and
+`EOA_EXECUTION_ENABLED` continue to enforce restricted signing with existing IP,
+short-TTL, rate and audit controls; neither enables direct transaction sends.
 
 ### 5.6 Safe transaction status
 
@@ -178,6 +184,11 @@ API client
   → return safe public fields only
   → do not return calldata, requestHash, or interactionsHash
 ```
+
+Historical transaction queries and billing reconciliation retain their persisted
+execution identity and provider references. An old EOA transaction's `walletAddress`
+may be the TEE signer; new session-key sends record the user wallet. No historical
+data is migrated or reinterpreted.
 
 ## 6. Data architecture
 

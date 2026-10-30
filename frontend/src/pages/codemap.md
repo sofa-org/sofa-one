@@ -25,7 +25,7 @@ Top-level route components for the SOFA ONE SPA. This directory owns the **publi
 
 ## Design/Patterns
 - **Presentational public pages**: `Landing` and `SignIn` are static, copy-driven components using Tailwind brand tokens (`brand-*`) and `react-router-dom` `<Link>`s; no data fetching.
-- **Lazy route loading**: every page (public and dashboard) is `lazy()`-imported in `App.tsx` under a top-level `<Suspense>`; `SignIn` additionally lazy-loads `AuthFormPanel` with its own skeleton fallback.
+- **Lazy route loading**: every page (public and dashboard) is `lazy()`-imported in `App.tsx`; the root Suspense covers initial shell/public loading. DashboardLayout adds a content-only Suspense/error boundary around its Outlet, retaining navigation and sign-out during child loads/failures. SignIn additionally lazy-loads AuthFormPanel with its own skeleton.
 - **Composition-root auth form**: PublicOnlyRoute uses SOFA state before mounting OpenfortAuthProvider → EmailOtpForm.
 - **Controlled OTP form with local state**: `EmailOtpForm` holds `email`/`otp`/`sent`/`error`/`resendCooldownSeconds` locally; OTP input is normalized (strips spaces/dashes), auto-focuses on send, and enforces a 30s resend cooldown.
 - **Redirect-state round-trip**: `ProtectedRoute` stores `state.from` on redirect to `/sign-in`; `EmailOtpForm` reads `location.state.from` and returns the user to the original dashboard path (preserving search/hash) after a successful sign-in, defaulting to `/dashboard`.
@@ -49,7 +49,7 @@ Top-level route components for the SOFA ONE SPA. This directory owns the **publi
 4. Authenticated user re-visits `/sign-in` → `PublicOnlyRoute` redirects back to `/dashboard`.
 
 ### Dashboard subtree boundary
-DashboardLayout renders Outlet; all non-wallet pages call cookie/CSRF API helpers without Openfort hooks. DashboardStepUpGate requires server-confirmed MFA before the layout mounts; sensitive mutations retain exact-session step-up.
+DashboardLayout renders Outlet inside content-only Suspense and a pathname-keyed inline ErrorBoundary; navigation resets child errors without remounting the shell. All non-wallet pages call cookie/CSRF API helpers without Openfort hooks. Business loaders depend on stable session ID rather than refreshed snapshot objects; ProtectedRoute remounts them on session replacement. DashboardStepUpGate requires server-confirmed MFA before the layout mounts; sensitive mutations retain exact-session step-up.
 
 ## Integration
 - **Routing**: `App.tsx` lazy-imports `Landing`, `SignIn`, and all dashboard pages; `SignIn` lazy-imports `AuthFormPanel` from `src/components/`.

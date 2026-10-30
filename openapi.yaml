@@ -359,12 +359,12 @@ paths:
         使用 `X-API-Key` 提交一组原始合约交互，服务端自动完成签名和交易提交。
         此端点不接受 Openfort IAM Bearer token。
 
-        `executionMode` 可选：默认 `session_key`，通过该链已授权的 TEE Signer / Calibur UserOperation 从用户 EIP-7702 delegated wallet (`walletAddress`) 执行；`eoa` 从 TEE signer EOA (`signerAddress`) 直接签名并发送交易，不是从用户钱包执行。
+        `executionMode` 可选且仅接受 `session_key`：省略时仍通过该链已授权的 TEE Signer / Calibur UserOperation 从用户 EIP-7702 delegated wallet (`walletAddress`) 执行。显式 `eoa` 或未知 mode 返回 HTTP 400，不自动转换为 `session_key`。不支持 signer EOA 直接发送交易；独立的 Polymarket 链下签名不受此变更影响。
 
-        `sponsorship` 仅适用于 `executionMode=session_key`：默认 `none` 不使用 Paymaster；`required` 要求必须使用 Openfort Paymaster，且该链必须已配置 fee sponsorship policy。
+        `sponsorship` 是 UserOperation 的 Gas sponsorship 策略：默认 `none` 不使用 Paymaster；`required` 要求必须使用 Openfort Paymaster，且该链必须已配置 fee sponsorship policy。
 
         每个 interaction 需提供 ABI-encoded calldata（`data`）和目标地址（`to`）。  
-        必填 `chainId` 指定执行链；`session_key` 还要求该链必须已在开发者钱包中完成 API access authorization。必填 `idempotencyKey` 用于防止重复提交。
+        必填 `chainId` 指定执行链，该链必须已在开发者钱包中完成 API access authorization。必填 `idempotencyKey` 用于防止重复提交。
 
         交易使用 API key 不可变绑定的钱包。可选 `walletId` 仅作为一致性校验，必须等于 key 绑定的钱包 UUID；不匹配时拒绝。调用方不能选择另一个钱包。
 
@@ -424,7 +424,7 @@ paths:
                 timestamp: "2026-04-20T10:00:00.000Z"
                 path: "/v1/transactions"
         '400':
-          description: 请求参数错误或幂等键冲突 — 同一链上相同 idempotencyKey 已用于不同请求
+          description: 请求参数错误（包括显式 executionMode=eoa 或未知 mode，绝不自动转换）或幂等键冲突 — 同一链上相同 idempotencyKey 已用于不同请求
           content:
             application/json:
               schema:
@@ -548,7 +548,7 @@ components:
             canSign: { type: boolean }
             canSendTransaction: { type: boolean }
             canReadTransactionStatus: { type: boolean }
-            canUseEoaExecution: { type: boolean }
+            canUseEoaExecution: { type: boolean, description: "Restricted approved EOA typed-data signing only; also requires canSign, capability grants and independent EOA safety controls. Does not permit direct EOA transaction sends." }
         capabilities:
           type: object
           required: [mode, allowedIds]
@@ -706,18 +706,17 @@ components:
           example: 84532
         executionMode:
           type: string
-          enum: [session_key, eoa]
+          enum: [session_key]
           default: session_key
           description: |
-            交易执行身份：
-            - `session_key` — 默认，通过该链已授权的 TEE Signer / Calibur UserOperation 从用户钱包执行，需要该链 API access authorization
-            - `eoa` — 从 TEE signer EOA (`signerAddress`) 直接签名并发送交易，不是用户钱包地址 (`walletAddress`)
+            仅支持 `session_key`：通过该链已授权的 TEE Signer / Calibur UserOperation 从用户钱包执行，需要该链 API access authorization。省略时行为相同。
+            显式 `eoa` 或未知 mode 返回 HTTP 400，绝不自动转换为 `session_key`；不支持 signer EOA 直接发送交易。
         sponsorship:
           type: string
           enum: [required, none]
           default: none
           description: |
-            仅适用于 `executionMode=session_key` 的 Gas sponsorship 策略：
+            UserOperation 的 Gas sponsorship 策略：
             - `none` — 默认，不使用 Paymaster，直接提交非 sponsored UserOperation
             - `required` — 必须使用 Openfort Paymaster；无匹配 policy 时返回 `PAYMASTER_POLICY_NOT_CONFIGURED`
         interactions:
@@ -792,7 +791,7 @@ components:
         walletAddress:
           type: string
           pattern: '^0x[a-fA-F0-9]{40}$'
-          description: Persisted execution address, unchanged by the wallet identity response cutover. EOA execution records the TEE signer; session-key execution records the user wallet.
+          description: Persisted execution address, unchanged by the wallet identity response cutover. Historical EOA execution records the TEE signer; session-key execution records the user wallet. New sends support session-key execution only.
         failureReason:
           type: string
           nullable: true

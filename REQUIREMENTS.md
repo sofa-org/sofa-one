@@ -41,15 +41,25 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 - Signing and sending must resolve the wallet from the API key's immutable binding. An optional send `walletId` must match that binding or be rejected.
 - Signing must use the user's Openfort-managed wallet/agent context; private keys must never leave Openfort.
 - Signing requests must be audited with API-key attribution snapshots.
+- Approved Polymarket ClobAuth, CLOB V2 and DepositWallet Batch EOA signing must remain
+  independent of transaction execution, with `canUseEoaExecution`,
+  `EOA_EXECUTION_ENABLED`, short TTL, IP allowlist, rate and audit controls intact.
 - Raw hash signing is disabled; supported inputs must be validated DTOs such as messages or typed data.
 
 ### 3.4 Public transaction API
 
 - `POST /v1/transactions` must require `X-API-Key`; `/v1/transactions/send` is not exposed.
 - Requests must validate chain ID, interactions, value fields, and idempotency keys.
+- New transaction requests must accept only `executionMode: session_key` or omission
+  (the same default) and execute through Calibur UserOperations from the authorized
+  user wallet. Explicit `eoa` and unknown modes must return HTTP 400, never silently
+  convert to session-key execution; direct signer EOA sending is not supported.
 - The service must persist transaction records with request hashes and API-key attribution snapshots for audit/idempotency.
 - `GET /v1/transactions/:id` must return only safe status fields when the key is bound to the transaction's wallet; another key for that wallet may read it, but a key bound to another wallet may not.
 - Public status responses must not include calldata, `requestHash`, or `interactionsHash`.
+- Historical EOA transaction queries and billing reconciliation must remain available
+  without schema or production-data changes. Their persisted execution address may
+  be the signer, unlike the user-wallet address recorded for session-key execution.
 
 ### 3.5 Frontend-only wallet operations
 

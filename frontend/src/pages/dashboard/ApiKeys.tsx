@@ -168,6 +168,7 @@ function walletLabel(wallet: WalletInfo) {
 
 export default function ApiKeysPage() {
   const { session, loading: authLoading } = useAppSession()
+  const sessionId = session?.sessionId;
   
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [wallets, setWallets] = useState<WalletInfo[]>([]);
@@ -323,7 +324,7 @@ export default function ApiKeysPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!session) {
+    if (!sessionId) {
       setLoading(false);
       return;
     }
@@ -331,7 +332,7 @@ export default function ApiKeysPage() {
     fetchWallets();
     fetchCapabilities();
     fetchBundles();
-  }, [authLoading, fetchBundles, fetchCapabilities, fetchKeys, fetchWallets, session]);
+  }, [authLoading, fetchBundles, fetchCapabilities, fetchKeys, fetchWallets, sessionId]);
 
   function startBundlePreview(mode: 'add' | 'replace', target: string, ids: string[]) {
     const bundle = bundles.find((item) => `${item.bundleId}@${item.version}` === selectedBundleKey);
@@ -579,7 +580,7 @@ export default function ApiKeysPage() {
             <span><span className="block font-semibold text-brand-text">Choose specific capabilities</span><span className="mt-1 block text-xs leading-5 text-brand-muted">Only selected capabilities are allowed. No selection means no catalog access.</span></span>
           </label>
         </fieldset>
-        <p className="text-xs leading-5 text-brand-muted">This controls catalog capability access only; API permissions for transaction submission, signing and EOA execution remain separate. Pauses and other policy checks still apply.</p>
+        <p className="text-xs leading-5 text-brand-muted">This controls catalog capability access only; API permissions for transaction submission and restricted EOA signing remain separate. Pauses and other policy checks still apply.</p>
         {mode === 'all' ? <div className="rounded-lg border border-brand-accent/20 bg-white px-3 py-3 text-sm text-brand-text">This key can use all currently active, unpaused catalog capabilities, including future additions. No catalog IDs are stored in this selection.</div> : <>
         {capabilitiesLoading ? <p className="text-sm text-brand-muted">Loading capability catalog…</p> : capabilitiesError ? <div className="flex items-center gap-3 text-sm text-red-700"><span>{capabilitiesError}</span><button type="button" onClick={fetchCapabilities} className="underline">Retry</button></div> : <>
         <details className="rounded-lg border border-brand-border bg-white p-3">
@@ -639,7 +640,7 @@ export default function ApiKeysPage() {
   return (
     <DashboardPage
       title="API Keys"
-      description="Create keys your backend uses to submit transactions through your authorized EOA."
+      description="Create keys your backend uses to submit Calibur UserOperations and request approved typed-data signatures."
     >
       {actionError && (
         <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
@@ -804,15 +805,15 @@ export default function ApiKeysPage() {
             <div>
               <p className="text-sm font-semibold text-brand-text">API endpoint access</p>
               <p className="mt-1 text-xs leading-5 text-brand-muted">
-                Controls which API endpoints this key can call. Keep privileged EOA execution off unless reviewed.
+                Controls which API endpoints this key can call. Keep restricted EOA signing off unless reviewed; it never permits direct EOA transaction sends.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 ['canReadTransactionStatus', 'Read status', 'Fetch transaction status by id.'],
                 ['canSign', 'Sign typed data', 'Use /v1/wallets/sign for approved EOA typed data.'],
-                ['canSendTransaction', 'Send transactions', 'Use /v1/transactions.'],
-                ['canUseEoaExecution', 'Use EOA execution', 'Privileged TEE signer EOA mode.'],
+                ['canSendTransaction', 'Send transactions', 'Use /v1/transactions for Calibur session-key UserOperations only.'],
+                ['canUseEoaExecution', 'Use EOA signing', 'Restricted TEE signer typed-data signing; also requires canSign and an approved capability. No direct transaction sends.'],
               ].map(([permission, label, description]) => (
                 <label
                   key={permission}
@@ -1034,7 +1035,7 @@ export default function ApiKeysPage() {
                       {key.permissions.canReadTransactionStatus && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">status</span>}
                       {key.permissions.canSign && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">sign</span>}
                       {key.permissions.canSendTransaction && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5">send</span>}
-                      {key.permissions.canUseEoaExecution && <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">eoa</span>}
+                      {key.permissions.canUseEoaExecution && <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">eoa signing</span>}
                       {!key.permissions.canReadTransactionStatus &&
                         !key.permissions.canSign &&
                         !key.permissions.canSendTransaction &&

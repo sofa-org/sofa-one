@@ -39,11 +39,15 @@ const mockOpenfortService = {
     address: TEST_WALLET_ADDRESS,
   }),
   verifyAgentKeyRegistration: jest.fn().mockResolvedValue(undefined),
-  sendUserOperation: jest.fn().mockResolvedValue({
+  submitUserOperation: jest.fn().mockResolvedValue({
     userOpHash: `0x${'4'.repeat(64)}`,
+    transactionHash: null,
+  }),
+  waitForUserOperationReceipt: jest.fn().mockResolvedValue({
+    success: true,
     transactionHash: TEST_TX_HASH,
   }),
-  sendBackendTransaction: jest.fn().mockResolvedValue({ transactionHash: TEST_TX_HASH }),
+  getTransactionReceipt: jest.fn().mockResolvedValue({ status: 'success' }),
   signData: jest.fn().mockResolvedValue(TEST_SIGNATURE),
 };
 
@@ -92,6 +96,7 @@ describe('API-key public security flow (e2e)', () => {
       .overrideProvider(TransactionSimulationService)
       .useValue({
         assertSimulatable: jest.fn().mockResolvedValue(undefined),
+        simulateAssetFlowEvidence: jest.fn().mockResolvedValue(null),
       })
       .overrideProvider(BillingDebtService)
       .useValue(mockBillingDebtService)
@@ -139,10 +144,14 @@ describe('API-key public security flow (e2e)', () => {
       // Includes non-sensitive billing-worker state alongside the DB probe.
       expect(res.body).toEqual(
         expect.objectContaining({
-          status: 'ok',
+          status: res.body.checks.rateLimit.status === 'degraded' ? 'degraded' : 'ok',
           timestamp: expect.any(String),
           checks: expect.objectContaining({
             database: 'ok',
+            rateLimit: expect.objectContaining({
+              status: expect.stringMatching(/^(ok|degraded)$/),
+              mode: expect.stringMatching(/^(distributed|memory)$/),
+            }),
             billingWorker: expect.objectContaining({
               enabled: expect.any(Boolean),
               status: expect.any(String),
@@ -219,32 +228,19 @@ describe('API-key public security flow (e2e)', () => {
       expect(afterDenials).toBe(afterRead);
     });
 
-    it('POST /v1/wallets/sign signs a message and writes non-plaintext audit', async () => {
-      const res = await request(app.getHttpServer())
+    it.each([
+      { name: 'legacy message signing', body: { type: 'message', message: 'hello secret message' } },
+      { name: 'session-key typed-data signing', body: { type: 'typed_data', executionMode: 'session_key', typedData: {} } },
+    ])('POST /v1/wallets/sign rejects $name before signing or audit creation', async ({ body }) => {
+      await request(app.getHttpServer())
         .post('/v1/wallets/sign')
         .set('X-API-Key', testApiKey)
-        .send({ chainId: TEST_CHAIN_ID, type: 'message', message: 'hello secret message' })
-        .expect(200);
+        .send({ chainId: TEST_CHAIN_ID, ...body })
+        .expect(400)
+        .expect((res) => expectApiError(res.body, 400, 'VALIDATION_ERROR', '/v1/wallets/sign'));
 
-      expect(res.body).toEqual({
-        signature: expect.stringMatching(/^0x[0-9a-fA-F]+$/),
-        walletAddress: TEST_WALLET_ADDRESS,
-        type: 'message',
-        executionMode: 'session_key',
-      });
-      expect(mockOpenfortService.signData).toHaveBeenCalledWith(
-        'ofa_test_agent_account_123',
-        expect.stringMatching(/^0x[0-9a-f]{64}$/),
-      );
-
-      const audit = await prisma.signingRequest.findFirstOrThrow({ where: { userId: testUserId } });
-      expect(audit.apiKeyId).toBe(testKeyId);
-      expect(audit.authMethod).toBe('api_key');
-      expect(audit.apiKeyPrefix).toBe(testApiKey.substring(0, API_KEY_PREFIX_LENGTH));
-      expect(audit.apiKeyName).toBe('E2E Test Key');
-      expect(audit).not.toHaveProperty('message');
-      expect(audit.requestHash).not.toContain('hello secret message');
-      expect(audit.digest).not.toContain('hello secret message');
+      expect(mockOpenfortService.signData).not.toHaveBeenCalled();
+      await expect(prisma.signingRequest.count({ where: { userId: testUserId } })).resolves.toBe(0);
     });
 
     it('POST /v1/transactions submits transaction and stores hashes without calldata', async () => {
@@ -268,7 +264,7 @@ describe('API-key public security flow (e2e)', () => {
         transactionHash: TEST_TX_HASH,
         status: 'confirmed',
       });
-      expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledWith(
+      expect(mockOpenfortService.submitUserOperation).toHaveBeenCalledWith(
         expect.objectContaining({
           agentAccountId: 'ofa_test_agent_account_123',
           accountAddress: TEST_WALLET_ADDRESS,
@@ -311,7 +307,7 @@ describe('API-key public security flow (e2e)', () => {
         .expect(201);
 
       expect(second.body).toEqual(first.body);
-      expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledTimes(1);
+      expect(mockOpenfortService.submitUserOperation).toHaveBeenCalledTimes(1);
       await expect(
         prisma.transaction.count({
           where: {
@@ -468,7 +464,7 @@ describe('API-key public security flow (e2e)', () => {
         .expect((res) =>
           expectApiError(res.body, 400, 'IDEMPOTENCY_CONFLICT', '/v1/transactions'),
         );
-      expect(mockOpenfortService.sendUserOperation).toHaveBeenCalledTimes(1);
+      expect(mockOpenfortService.submitUserOperation).toHaveBeenCalledTimes(1);
     });
 
     it('does not allow an API key to read another user transaction status', async () => {

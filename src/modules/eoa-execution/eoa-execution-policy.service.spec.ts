@@ -87,7 +87,7 @@ describe('EoaExecutionPolicyService', () => {
   });
 
   it('records an allowed event when all EOA isolation checks pass', async () => {
-    await service.assertAllowed({ ...baseContext, metadata: { interactionCount: 1 } });
+    await service.assertAllowed({ ...baseContext, metadata: { type: 'typed_data' } });
 
     expect(securityEvents.record).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -102,7 +102,7 @@ describe('EoaExecutionPolicyService', () => {
           operation: 'sign',
           chainId: 84532,
           apiKeyPrefix: 'sk_1234567890abcdef12345678',
-          interactionCount: 1,
+          type: 'typed_data',
         }),
       }),
     );

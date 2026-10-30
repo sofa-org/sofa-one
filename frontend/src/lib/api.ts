@@ -180,7 +180,7 @@ export interface TransactionInteraction {
 
 export interface SendTransactionRequest {
   chainId: number;
-  executionMode?: 'session_key' | 'eoa';
+  executionMode?: 'session_key';
   sponsorship?: 'required' | 'none';
   interactions: TransactionInteraction[];
   idempotencyKey?: string;
@@ -336,6 +336,7 @@ export interface ApiKeyPermissions {
   canSign: boolean;
   canSendTransaction: boolean;
   canReadTransactionStatus: boolean;
+  /** Enables restricted EOA typed-data signing only; never direct transaction sends. */
   canUseEoaExecution: boolean;
 }
 

@@ -7,8 +7,8 @@ Shared application-session state, route/MFA gates, wallet-only Openfort provider
 
 ### AppSessionProvider.tsx
 - Root local-session context exposes snapshot/loading/error, refresh, explicit IAM exchange and current/all-device logout.
-- Transport uses cookies plus in-memory CSRF. Cookie 401/absolute expiry clears session/proof state; 403/5xx preserve state with retry. Focus/visibility introspection cannot supersede in-flight login exchange.
-- Session ID replacement remounts protected content and clears proof cache; cached proofs never authenticate users.
+- Transport uses cookies plus in-memory CSRF. Concurrent ordinary refresh/focus/visibility calls share one request; settlement releases it for future security checks. Cookie 401/absolute expiry clears session/proof state; 403/5xx preserve state with retry. Explicit exchange supersedes older reads; revocation/expiry/unmount invalidate late responses.
+- Session ID replacement remounts protected content and clears proof cache; same-session snapshots do not fan out business reloads. A server MFA downgrade clears proofs and reopens verification; upgrades retain recovery-code acknowledgement. Cached proofs never authenticate users.
 
 ### AuthProviders.tsx
 - **Responsibility**: Wallet-route-only Wagmi/Shield/Openfort provider stack. Missing wallet configuration does not block non-wallet dashboard routes.
@@ -47,10 +47,10 @@ Shared application-session state, route/MFA gates, wallet-only Openfort provider
 - **Integration**: Uses AppSessionProvider and cookie-auth API helpers; no Openfort hook or login exchange during dashboard bootstrap.
 
 ### ErrorBoundary.tsx
-- **Responsibility**: Top-level render error boundary for the whole SPA.
+- **Responsibility**: Render error boundary for the whole SPA and, in inline mode, dashboard route content.
 - **Design/Patterns**: Class component with `getDerivedStateFromError` + `componentDidCatch` (logs `console.error` with component stack). Error details string (time, timezone, path, UA, language, error; stack only in dev) exposed via `CopyButton`.
 - **Flow**: On error → full-screen error card with "Reload app", "Back to dashboard" (`window.location.assign('/dashboard')`), "Try without reload" (clears error state), and copy-details button. Otherwise renders `children`.
-- **Integration**: Wraps the entire app in `src/main.tsx`. Depends on `CopyButton` and `lucide-react`.
+- **Integration**: Wraps the entire app in `src/main.tsx`; DashboardLayout uses a pathname-keyed inline boundary around its Suspense/Outlet so child failures keep navigation/logout mounted. Depends on `CopyButton` and `lucide-react`.
 
 ### OpenfortConfigError.tsx
 - **Responsibility**: Full-screen diagnostic when required Openfort env vars are missing.

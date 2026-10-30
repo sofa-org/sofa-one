@@ -104,6 +104,7 @@ function getDetailEntries(metadata: SecurityNotificationRecord['metadata']) {
 
 export default function SecurityNotificationsPage() {
   const { session, loading: authLoading } = useAppSession()
+  const sessionId = session?.sessionId;
   
 
   const [notifications, setNotifications] = useState<SecurityNotificationRecord[]>([]);
@@ -139,14 +140,14 @@ export default function SecurityNotificationsPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!session) {
+    if (!sessionId) {
       setLoading(false);
       return;
     }
     const controller = new AbortController();
     fetchNotifications(controller.signal);
     return () => controller.abort();
-  }, [authLoading, session, fetchNotifications, refreshNonce]);
+  }, [authLoading, sessionId, fetchNotifications, refreshNonce]);
 
   async function handleMarkAllRead() {
     if (unreadCount === 0) return;

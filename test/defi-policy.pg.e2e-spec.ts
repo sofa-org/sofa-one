@@ -179,7 +179,6 @@ describe('DeFi policy PostgreSQL serialization (runner-owned disposable DB)', ()
       db as never, {} as never, new TransactionPolicyService(db as never, events), {} as never, {} as never,
       destinationPolicy as never, policyService,
       events as never,
-      { assertAllowed: jest.fn() } as never,
       { assertSimulatable: jest.fn(), simulateAssetFlowEvidence: jest.fn() } as never,
       { evaluateRisk: jest.fn().mockResolvedValue({ action: 'allow' }), enforceRiskAction: jest.fn() } as never,
       { assertSessionKeyAllowed: jest.fn() } as never,

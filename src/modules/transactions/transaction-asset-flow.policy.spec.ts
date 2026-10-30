@@ -394,14 +394,14 @@ describe('classifyTransactionAssetFlow', () => {
       expect(result.interactions[0].rule).toBe('aave_v3_supply_to_owner');
     });
 
-    it('treats EOA owner (signerAddress) as the retention boundary for audited protocols', () => {
-      const agent = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
+    it('does not treat the backend signer as the user wallet retention boundary', () => {
+      const signer = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
       const result = classify(
-        [{ to: AAVE_POOL_84532, data: aaveSupply(agent), value: '0' }],
-        agent,
+        [{ to: AAVE_POOL_84532, data: aaveSupply(signer), value: '0' }],
+        OWNER,
       );
-      expect(result.classification).toBe('retained_protocol');
-      expect(result.interactions[0].recipient).toBe(agent.toLowerCase());
+      expect(result.classification).toBe('external_transfer');
+      expect(result.interactions[0].recipient).toBe(signer.toLowerCase());
     });
 
     it('compares recipient addresses case-insensitively for external denial', () => {

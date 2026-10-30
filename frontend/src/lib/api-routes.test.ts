@@ -28,6 +28,26 @@ describe.each([
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', headers: expect.objectContaining({ 'X-API-Key': 'sk_test' }) });
   });
 
+  it('surfaces a legacy EOA transaction rejection without retrying as a session-key request', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify({
+      code: 'VALIDATION_ERROR',
+      message: 'executionMode must be session_key',
+    }), { status: 400 }));
+    const request: Api.SendTransactionRequest = {
+      chainId: 84532,
+      idempotencyKey: 'legacy',
+      interactions: [],
+      // @ts-expect-error Legacy JavaScript clients can still supply removed execution modes.
+      executionMode: 'eoa',
+    };
+    await expect(api.sendTransactionWithApiKey('sk_test', request)).rejects.toMatchObject({
+      statusCode: 400,
+      code: 'VALIDATION_ERROR',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).executionMode).toBe('eoa');
+  });
+
   it('preserves distinct wallet and signer addresses in EOA signing responses', async () => {
     const response: Api.SignResponse = {
       signature: '0x1234',

@@ -1,161 +1,149 @@
-const mockRedisInstances: any[] = [];
+import type { EventEmitter } from 'events';
+import { ConfigService } from '@nestjs/config';
+import { Test } from '@nestjs/testing';
+import { ResilientThrottlerStorage } from './resilient-throttler-storage';
+import { AppThrottlerModule, RateLimitStorageModule } from './throttler.module';
+import { HealthService } from '../../modules/health/health.service';
+import { PrismaService } from '../../core/database/prisma.service';
+
+type RedisDouble = EventEmitter & {
+  attempts: number;
+  available: boolean;
+  connect: jest.Mock;
+  disconnect: jest.Mock;
+  call: jest.Mock;
+  loseConnection: () => void;
+};
+const mockRedisInstances: RedisDouble[] = [];
 
 jest.mock('ioredis', () => {
-  const MockCluster = jest.fn();
-  const MockRedis = jest.fn().mockImplementation(function (this: any) {
-    this.on = jest.fn().mockReturnThis();
-    this.connect = jest.fn().mockResolvedValue(undefined);
-    this.quit = jest.fn().mockResolvedValue('OK');
-    mockRedisInstances.push(this);
-  });
+  const { EventEmitter: Emitter } = jest.requireActual<{ EventEmitter: typeof EventEmitter }>('events');
+  class MockRedis extends Emitter {
+    attempts = 0;
+    available = false;
+    private stopped = false;
+    private timer: NodeJS.Timeout | undefined;
+    call = jest.fn().mockResolvedValue([7, 60000, 0, 0]);
+    connect = jest.fn().mockResolvedValue(undefined);
+    disconnect = jest.fn(() => {
+      this.stopped = true;
+      clearTimeout(this.timer);
+      this.emit('close');
+    });
 
-  return {
-    __esModule: true,
-    default: MockRedis,
-    Cluster: MockCluster,
-  };
+    constructor(_url: string, private readonly options: { retryStrategy: (attempt: number) => number | null }) {
+      super();
+      mockRedisInstances.push(this);
+    }
+
+    loseConnection = () => {
+      this.emit('close');
+      this.retry();
+    };
+
+    private retry(): void {
+      if (this.stopped) return;
+      const delay = this.options.retryStrategy(++this.attempts);
+      if (delay === null) return;
+      this.timer = setTimeout(() => {
+        if (this.available) this.emit('ready');
+        else this.retry();
+      }, delay);
+    }
+  }
+  return { __esModule: true, default: MockRedis, Cluster: class MockCluster {} };
 });
 
-import { ResilientThrottlerStorage } from './resilient-throttler-storage';
-
 describe('ResilientThrottlerStorage', () => {
-  let storage: ResilientThrottlerStorage;
+  let storage: ResilientThrottlerStorage | undefined;
 
   beforeEach(() => {
+    jest.useFakeTimers();
     mockRedisInstances.length = 0;
   });
 
   afterEach(async () => {
-    if (storage) {
-      await storage.onModuleDestroy();
+    await storage?.onModuleDestroy();
+    storage = undefined;
+    jest.useRealTimers();
+  });
+
+  it('enforces per-instance limits without Redis and reports the intentional memory mode', async () => {
+    storage = new ResilientThrottlerStorage();
+    expect(storage.getHealth()).toEqual({ status: 'ok', mode: 'memory', reason: 'not_configured' });
+    await storage.increment('key', 60000, 1, 60000, 'short');
+    const blocked = await storage.increment('key', 60000, 1, 60000, 'short');
+    expect(blocked).toMatchObject({ totalHits: 2, isBlocked: true });
+    expect(blocked.timeToBlockExpire).toBeGreaterThan(0);
+    expect(await storage.increment('other-key', 60000, 1, 60000, 'short')).toMatchObject({
+      totalHits: 1, isBlocked: false,
+    });
+  });
+
+  it('keeps bounded retries past the former exhaustion point and recovers to distributed limiting', async () => {
+    storage = new ResilientThrottlerStorage('redis://user:secret@private-host:6379');
+    const client = mockRedisInstances[0];
+    client.loseConnection();
+    jest.advanceTimersByTime(10 * 60 * 1000);
+    expect(client.attempts).toBeGreaterThan(10);
+    expect(client.attempts).toBeLessThan(250); // No hot reconnect loop.
+    expect(storage.getHealth()).toEqual({ status: 'degraded', mode: 'memory', reason: 'redis_unavailable' });
+    await storage.increment('key', 60000, 1, 60000, 'short');
+    expect(await storage.increment('key', 60000, 1, 60000, 'short')).toMatchObject({ isBlocked: true });
+    expect(client.call).not.toHaveBeenCalled();
+
+    client.available = true;
+    jest.advanceTimersByTime(3000);
+    expect(storage.getHealth()).toEqual({ status: 'ok', mode: 'distributed', reason: null });
+    expect(await storage.increment('key', 60000, 100, 60000, 'short')).toMatchObject({ totalHits: 7 });
+  });
+
+  it('reports command failure as degraded, enforces a local limit, then recovers on command success', async () => {
+    storage = new ResilientThrottlerStorage('redis://private-host:6379');
+    const client = mockRedisInstances[0];
+    client.emit('ready');
+    client.call.mockRejectedValue(new Error('redis://user:secret@private-host:6379'));
+    await storage.increment('key', 60000, 1, 60000, 'short');
+    expect(await storage.increment('key', 60000, 1, 60000, 'short')).toMatchObject({ isBlocked: true });
+    expect(storage.getHealth()).toEqual({ status: 'degraded', mode: 'memory', reason: 'redis_unavailable' });
+    client.call.mockResolvedValue([7, 60000, 0, 0]);
+    await storage.increment('key', 60000, 100, 60000, 'short');
+    expect(storage.getHealth()).toEqual({ status: 'ok', mode: 'distributed', reason: null });
+  });
+
+  it('cleans up reconnects on actual Nest close and exposes only safe health state', async () => {
+    const module = await Test.createTestingModule({
+      imports: [AppThrottlerModule, RateLimitStorageModule],
+      providers: [
+        HealthService,
+        { provide: PrismaService, useValue: { $queryRaw: jest.fn().mockResolvedValue([]) } },
+        ConfigService,
+      ],
+    })
+      .overrideProvider(ConfigService)
+      .useValue({ get: (key: string) => key === 'redis.url' ? 'redis://user:secret@private-host:6379' : undefined })
+      .compile();
+    await module.init();
+    try {
+      const lifecycleStorage = module.get(ResilientThrottlerStorage);
+      const health = module.get(HealthService);
+      const client = mockRedisInstances[0];
+      client.loseConnection();
+      jest.advanceTimersByTime(60_000);
+      const response = await health.ready();
+      expect(response).toMatchObject({
+        status: 'degraded', checks: { rateLimit: { status: 'degraded', mode: 'memory', reason: 'redis_unavailable' } },
+      });
+      expect(JSON.stringify(response)).not.toMatch(/secret|private-host|redis:\/\//);
+      await module.close();
+      const attemptsAtClose = client.attempts;
+      jest.advanceTimersByTime(60_000);
+      expect(client.attempts).toBe(attemptsAtClose);
+      expect(client.disconnect).toHaveBeenCalledTimes(1);
+      client.emit('ready');
+      expect(lifecycleStorage.getHealth()).toEqual({ status: 'degraded', mode: 'memory', reason: 'shutting_down' });
+    } finally {
+      await module.close();
     }
-  });
-
-  describe('without REDIS_URL', () => {
-    beforeEach(() => {
-      storage = new ResilientThrottlerStorage();
-    });
-
-    it('uses in-memory storage when no Redis URL is provided', async () => {
-      const result = await storage.increment('test-key', 60000, 100, 60000, 'short');
-
-      expect(result.totalHits).toBe(1);
-      expect(result.isBlocked).toBe(false);
-    });
-
-    it('increments hits for the same key', async () => {
-      await storage.increment('test-key', 60000, 100, 60000, 'short');
-      const result = await storage.increment('test-key', 60000, 100, 60000, 'short');
-
-      expect(result.totalHits).toBe(2);
-    });
-
-    it('tracks different keys independently', async () => {
-      const result1 = await storage.increment('key-a', 60000, 100, 60000, 'short');
-      const result2 = await storage.increment('key-b', 60000, 100, 60000, 'short');
-
-      expect(result1.totalHits).toBe(1);
-      expect(result2.totalHits).toBe(1);
-    });
-
-    it('blocks when limit is exceeded', async () => {
-      // Increment up to the limit
-      for (let i = 0; i < 3; i++) {
-        await storage.increment('test-key', 60000, 3, 60000, 'short');
-      }
-
-      // Next increment should be blocked
-      const result = await storage.increment('test-key', 60000, 3, 60000, 'short');
-
-      expect(result.totalHits).toBe(4);
-      expect(result.isBlocked).toBe(true);
-      expect(result.timeToBlockExpire).toBeGreaterThan(0);
-    });
-
-    it('returns timeToExpire greater than 0', async () => {
-      const result = await storage.increment('test-key', 60000, 100, 60000, 'short');
-
-      expect(result.timeToExpire).toBeGreaterThan(0);
-    });
-  });
-
-  describe('onModuleDestroy', () => {
-    it('does not throw when no Redis client exists', async () => {
-      storage = new ResilientThrottlerStorage();
-      await expect(storage.onModuleDestroy()).resolves.toBeUndefined();
-    });
-  });
-
-  describe('Redis fallback behavior', () => {
-    it('starts the lazy Redis connection when a Redis URL is provided', () => {
-      storage = new ResilientThrottlerStorage('redis://localhost:6379');
-
-      expect(mockRedisInstances).toHaveLength(1);
-      expect(mockRedisInstances[0].connect).toHaveBeenCalledTimes(1);
-    });
-
-    it('falls back to in-memory when Redis increment throws', async () => {
-      storage = new ResilientThrottlerStorage();
-
-      // Force useRedis to true with a mock redisStorage that throws
-      (storage as any).useRedis = true;
-      (storage as any).redisStorage = {
-        increment: jest.fn().mockRejectedValue(new Error('Redis connection refused')),
-      };
-
-      const result = await storage.increment('test-key', 60000, 100, 60000, 'short');
-
-      expect(result.totalHits).toBe(1);
-      expect(result.isBlocked).toBe(false);
-    });
-
-    it('uses Redis when available and working', async () => {
-      storage = new ResilientThrottlerStorage();
-
-      const mockRedisResult = {
-        totalHits: 1,
-        timeToExpire: 60000,
-        isBlocked: false,
-        timeToBlockExpire: 0,
-      };
-
-      (storage as any).useRedis = true;
-      (storage as any).redisStorage = {
-        increment: jest.fn().mockResolvedValue(mockRedisResult),
-      };
-
-      const result = await storage.increment('test-key', 60000, 100, 60000, 'short');
-
-      expect(result).toEqual(mockRedisResult);
-      expect((storage as any).redisStorage.increment).toHaveBeenCalledWith(
-        'test-key',
-        60000,
-        100,
-        60000,
-        'short',
-      );
-    });
-
-    it('falls back to in-memory when useRedis is false', async () => {
-      storage = new ResilientThrottlerStorage();
-
-      // useRedis is false by default when no Redis URL is provided
-      expect((storage as any).useRedis).toBe(false);
-
-      const result = await storage.increment('test-key', 60000, 100, 60000, 'short');
-
-      expect(result.totalHits).toBe(1);
-    });
-
-    it('handles onModuleDestroy gracefully when Redis client quit fails', async () => {
-      storage = new ResilientThrottlerStorage();
-
-      // Set up a mock Redis client that throws on quit
-      const mockQuit = jest.fn().mockRejectedValue(new Error('Connection already closed'));
-      (storage as any).redisClient = { quit: mockQuit };
-
-      await expect(storage.onModuleDestroy()).resolves.toBeUndefined();
-      expect(mockQuit).toHaveBeenCalled();
-    });
   });
 });

@@ -47,7 +47,7 @@ process.env.OPENFORT_WALLET_SECRET = 'fake_wallet_secret_for_testing';
 process.env.MFA_SECRET_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString('base64');
 process.env.REDIS_URL = '';
 process.env.BILLING_WORKER_ENABLED = 'false';
-// Required before AppModule compile so EoaExecutionPolicyService allows eoa mode.
+// Legacy EOA transaction requests must fail even when signing isolation is enabled.
 process.env.EOA_EXECUTION_ENABLED = 'true';
 
 const SUITE_ID = randomUUID().replace(/-/g, '').slice(0, 12);
@@ -106,7 +106,6 @@ const assertSimulatableMock = jest.fn().mockImplementation(async () => {
 /**
  * Production TransactionsService calls:
  *   session_key → submitUserOperation → waitForUserOperationReceipt → getTransactionReceipt
- *   eoa         → sendBackendTransaction
  * Do not mock the legacy sendUserOperation name alone.
  */
 const mockOpenfortService = {
@@ -121,7 +120,6 @@ const mockOpenfortService = {
     transactionHash: TX_HASH,
   }),
   getTransactionReceipt: jest.fn().mockResolvedValue({ status: 'success' }),
-  sendBackendTransaction: jest.fn().mockResolvedValue({ transactionHash: TX_HASH }),
   signData: jest.fn(),
 };
 
@@ -322,7 +320,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
       chainId: number;
       idempotencyKey: string;
       interactions: Array<{ to: string; data: string; value?: string }>;
-      executionMode?: 'session_key' | 'eoa';
+      executionMode?: string;
     },
   ) {
     return request(app!.getHttpServer())
@@ -341,9 +339,6 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
       transactionHash: TX_HASH,
     });
     mockOpenfortService.getTransactionReceipt.mockReset().mockResolvedValue({ status: 'success' });
-    mockOpenfortService.sendBackendTransaction.mockReset().mockResolvedValue({
-      transactionHash: TX_HASH,
-    });
     mockOpenfortService.verifyAgentKeyRegistration.mockReset().mockResolvedValue(undefined);
   }
 
@@ -351,14 +346,12 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     expect(mockOpenfortService.submitUserOperation).not.toHaveBeenCalled();
     expect(mockOpenfortService.waitForUserOperationReceipt).not.toHaveBeenCalled();
     expect(mockOpenfortService.getTransactionReceipt).not.toHaveBeenCalled();
-    expect(mockOpenfortService.sendBackendTransaction).not.toHaveBeenCalled();
   }
 
   function expectSessionKeyProviderCalled() {
     expect(mockOpenfortService.submitUserOperation).toHaveBeenCalledTimes(1);
     expect(mockOpenfortService.waitForUserOperationReceipt).toHaveBeenCalledTimes(1);
     expect(mockOpenfortService.getTransactionReceipt).toHaveBeenCalled();
-    expect(mockOpenfortService.sendBackendTransaction).not.toHaveBeenCalled();
   }
 
   function expectNotDirectEgressDeny(body: { code?: string }) {
@@ -598,9 +591,10 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
 
   // ── Positive: allowlisted past cooldown ───────────────────────────────────
 
-  it('accepts transfer to allowlisted address past cooldown (session_key, provider mocked)', async () => {
+  it.each([undefined, 'session_key'])('accepts transfer to allowlisted address past cooldown (mode=%s, provider mocked)', async (executionMode) => {
     const res = await sendTx(rawKey, {
       chainId: CHAIN_ID,
+      ...(executionMode === undefined ? {} : { executionMode }),
       idempotencyKey: `ok-transfer-${SUITE_ID}`,
       interactions: [{ to: TOKEN, data: transferData(ALLOWLISTED), value: '0' }],
     }).expect(201);
@@ -708,40 +702,36 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     expectSessionKeyProviderCalled();
   });
 
-  // ── EOA path (execution owner = agent wallet) ─────────────────────────────
+  // ── Removed direct EOA transaction path ──────────────────────────────────
 
-  it('EOA: protection OFF self-transfer to agent succeeds; protection ON platform destination denies', async () => {
-    // EoaExecutionPolicyService rate-limits per apiKeyId (1 allowed event / window).
-    // Use two independent EOA keys on the same user/agent wallet so the second
-    // request is not blocked by the first key's allowed-event stamp.
-    const eoaSelfKey = await seedEoaKey(userId, walletId, 'self');
-    const eoaPlatKey = await seedEoaKey(userId, walletId, 'plat');
+  it.each([
+    { name: 'EOA self-transfer with protection off', executionMode: 'eoa', protection: false, recipient: AGENT_WALLET },
+    { name: 'EOA platform destination with protection on', executionMode: 'eoa', protection: true, recipient: PLATFORM_WALLET },
+    { name: 'EOA self-transfer with protection on', executionMode: 'eoa', protection: true, recipient: AGENT_WALLET },
+    { name: 'unknown mode with protection off', executionMode: 'legacy', protection: false, recipient: ALLOWLISTED },
+    { name: 'unknown mode with protection on', executionMode: 'legacy', protection: true, recipient: ALLOWLISTED },
+  ])('rejects $name with HTTP 400 and no transaction/provider effects', async ({ executionMode, protection, recipient }) => {
+    // Retain high-privilege key fixtures: EOA signing permission is not a
+    // transaction execution grant, even with the global signing gate enabled.
+    const eoaKey = await seedEoaKey(userId, walletId, `removed-${executionMode}`);
+    const idempotencyKey = `removed-${executionMode}-${protection}-${recipient.slice(2, 6)}-${SUITE_ID}`;
+    const before = await prisma!.transaction.count({ where: { userId } });
 
-    // To agent (execution owner) → self-transfer, not destination policy.
-    const selfRes = await withDestinationProtection(false, () => sendTx(eoaSelfKey.rawKey, {
+    const res = await withDestinationProtection(protection, () => sendTx(eoaKey.rawKey, {
       chainId: CHAIN_ID,
-      executionMode: 'eoa',
-      idempotencyKey: `eoa-self-agent-${SUITE_ID}`,
-      interactions: [{ to: TOKEN, data: transferData(AGENT_WALLET), value: '0' }],
-    }).expect(201));
-    expectNotDirectEgressDeny(selfRes.body);
-    expect(mockOpenfortService.sendBackendTransaction).toHaveBeenCalled();
-    expect(mockOpenfortService.submitUserOperation).not.toHaveBeenCalled();
+      executionMode,
+      idempotencyKey,
+      interactions: [{ to: TOKEN, data: transferData(recipient), value: '0' }],
+    }).expect(400));
 
-    resetProviderMocks();
-    await prisma!.transaction.deleteMany({ where: { userId } });
-
-    // To platform wallet under eoa owner=agent → external destination deny
-    // (not EOA rate-limit BAD_REQUEST).
-    const platRes = await sendTx(eoaPlatKey.rawKey, {
-      chainId: CHAIN_ID,
-      executionMode: 'eoa',
-      idempotencyKey: `eoa-to-platform-${SUITE_ID}`,
-      interactions: [{ to: TOKEN, data: transferData(PLATFORM_WALLET), value: '0' }],
-    }).expect(403);
-    expect(platRes.body.code).toBe(API_ERROR_CODES.WITHDRAWAL_ADDRESS_NOT_ALLOWLISTED);
-    expect(platRes.body.message).not.toMatch(/rate limit/i);
+    expect(res.body.code).toBe(API_ERROR_CODES.VALIDATION_ERROR);
+    expect(res.body.details).toEqual(expect.arrayContaining([expect.stringContaining('executionMode')]));
     expectNoProviderSubmit();
+    expect(mockOpenfortService.verifyAgentKeyRegistration).not.toHaveBeenCalled();
+    await expect(prisma!.transaction.count({ where: { userId } })).resolves.toBe(before);
+    await expect(prisma!.transaction.count({
+      where: { userId, operationType: 'send', idempotencyKey },
+    })).resolves.toBe(0);
   });
 
   // ── Mixed-case interaction.to (DTO-accepted, EIP-55 non-checksum) ─────────
@@ -792,7 +782,6 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     { name: 'session-key self transfer', kind: 'session-self', reason: 'self_transfer' },
     { name: 'foreign-source transferFrom', kind: 'foreign-transfer-from', reason: 'non_owner_transfer_from' },
     { name: 'unknown selector with unauthorized API key', kind: 'unauthorized-unknown', reason: 'unknown_selector' },
-    { name: 'EOA self transfer to agent wallet', kind: 'eoa-self', reason: 'self_transfer' },
     { name: 'proven allowlisted transfer plus unknown selector', kind: 'mixed', reason: 'unknown_selector' },
   ] as const;
 
@@ -800,7 +789,7 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
     const idempotencyKey = `protected-unproven-${kind}-${SUITE_ID}`;
     let apiKey = rawKey;
     let apiKeyId = authorizedKeyId;
-    let executionMode: 'session_key' | 'eoa' = 'session_key';
+    const executionMode = 'session_key';
     let interactions: Array<{ to: string; data: string; value: string }>;
 
     switch (kind) {
@@ -815,14 +804,6 @@ describe('API-key direct-egress policy (e2e runtime evidence)', () => {
         apiKeyId = keyUnauthorizedId;
         interactions = [{ to: TOKEN, data: unknownCalldata(), value: '0' }];
         break;
-      case 'eoa-self': {
-        const eoaKey = await seedEoaKey(userId, walletId, 'protected-self');
-        apiKey = eoaKey.rawKey;
-        apiKeyId = eoaKey.id;
-        executionMode = 'eoa';
-        interactions = [{ to: TOKEN, data: transferData(AGENT_WALLET), value: '0' }];
-        break;
-      }
       case 'mixed':
         interactions = [
           { to: TOKEN, data: transferData(ALLOWLISTED), value: '0' },

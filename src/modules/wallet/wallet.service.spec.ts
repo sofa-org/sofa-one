@@ -810,7 +810,6 @@ describe('WalletService.sign()', () => {
   const mockWalletFindFirst = jest.fn();
   const mockSignData = jest.fn();
   const mockSendUserOperationForSigning = jest.fn();
-  const mockSendBackendTransactionForSigning = jest.fn();
   const mockVerifyAgentKeyRegistration = jest.fn();
   const mockSigningRequestCreate = jest.fn();
   const mockSigningRequestUpdate = jest.fn();
@@ -908,7 +907,6 @@ describe('WalletService.sign()', () => {
           useValue: {
             signData: mockSignData,
             sendUserOperation: mockSendUserOperationForSigning,
-            sendBackendTransaction: mockSendBackendTransactionForSigning,
             verifyAgentKeyRegistration: mockVerifyAgentKeyRegistration,
           },
         },
@@ -1031,7 +1029,6 @@ describe('WalletService.sign()', () => {
     expect(mockSigningRequestCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ digest, walletAddress: WALLET.signerAddress }) }));
     expect(mockSignData).toHaveBeenCalledWith(WALLET.agentOpenfortAccountId, digest);
     expect(mockSendUserOperationForSigning).not.toHaveBeenCalled();
-    expect(mockSendBackendTransactionForSigning).not.toHaveBeenCalled();
     expect(result).toMatchObject({ signature: RAW_SIGNATURE, walletAddress: WALLET.walletAddress, signerAddress: WALLET.signerAddress, executionMode: 'eoa' });
     expect(result.walletAddress).not.toBe(result.signerAddress);
     expect(result).not.toHaveProperty('agentWalletAddress');
@@ -1086,7 +1083,6 @@ describe('WalletService.sign()', () => {
     expect(mockSignData).toHaveBeenCalledTimes(1);
     expect(mockBatchVerify).toHaveBeenCalledTimes(1);
     expect(mockSendUserOperationForSigning).not.toHaveBeenCalled();
-    expect(mockSendBackendTransactionForSigning).not.toHaveBeenCalled();
   });
 
   it('withholds a Batch signature when final execute verification fails and records the request as failed', async () => {
@@ -1108,7 +1104,6 @@ describe('WalletService.sign()', () => {
     expect(mockDefiRecordSigningAllowed).toHaveBeenCalledTimes(1);
     expect(mockDefiExportSigningAllowed).toHaveBeenCalledWith({ id: 'allowed-event' });
     expect(mockSendUserOperationForSigning).not.toHaveBeenCalled();
-    expect(mockSendBackendTransactionForSigning).not.toHaveBeenCalled();
   });
 
   it('rechecks original Batch evidence synchronously after verifier await before returning the signature', async () => {
@@ -1132,7 +1127,6 @@ describe('WalletService.sign()', () => {
     expect(freshnessChecks).toBe(3);
     expect(mockSigningRequestUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'failed' }) }));
     expect(mockSendUserOperationForSigning).not.toHaveBeenCalled();
-    expect(mockSendBackendTransactionForSigning).not.toHaveBeenCalled();
   });
 
   it('fails closed before persistence and TEE signing when the Batch verifier is unavailable', async () => {
@@ -1151,7 +1145,6 @@ describe('WalletService.sign()', () => {
     expect(mockSigningRequestCreate).not.toHaveBeenCalled();
     expect(mockSignData).not.toHaveBeenCalled();
     expect(mockSendUserOperationForSigning).not.toHaveBeenCalled();
-    expect(mockSendBackendTransactionForSigning).not.toHaveBeenCalled();
   });
 
   it('sanitizes an order-provider error containing signature/envelope material before HTTP propagation or logging', async () => {

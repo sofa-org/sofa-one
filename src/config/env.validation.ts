@@ -107,6 +107,12 @@ class EnvironmentVariables {
   @Matches(/\S/, { message: 'MFA_SECRET_ENCRYPTION_KEY must not be blank' })
   MFA_SECRET_ENCRYPTION_KEY: string;
 
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @IsOptional()
+  BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS?: number = 5;
+
   // ── USDC billing (Phase 3B foundation — optional) ─────────────────────────
   // Feature is off unless BILLING_USDC_ENABLED=true; when off, none of the
   // USDC variables are required and the app starts normally. When on, both

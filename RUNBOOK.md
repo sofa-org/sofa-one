@@ -59,11 +59,25 @@ npm run prisma:studio
 Both endpoints are public. They never expose secrets, account/user data, or provider identifiers.
 
 - `GET /health/live`: process liveness — returns `{ status: 'ok', timestamp }` without touching dependencies. Use it for liveness probes (is the process up?).
-- `GET /health/ready`: readiness — probes the database and reports non-sensitive billing-worker state. Use it for readiness probes (should traffic be routed here?).
+- `GET /health/ready`: readiness — probes the database and reports non-sensitive billing-worker and rate-limit state. Use its HTTP status for traffic routing; HTTP 200 may report `status: 'degraded'` while Redis is recovering.
   - `checks.database`: `ok`, or `unavailable` (readiness fails).
   - `checks.billingWorker`: `enabled`, an aggregated activity status (`starting` | `running` | `healthy` | `failed`, otherwise stale), `lastHeartbeatAt`, `lastSuccessAt`, `lastFailureAt`, `consecutiveFailures`, and an aggregate `needsReviewCount` (billing invoices/payment attempts in `needs_review`, Stripe webhook events in `needs_review`/`failed`, and quarantined usage events). The count is informational and never fails readiness by itself.
   - Worker status comes from the persisted in-process heartbeat rows (`BillingWorkerHeartbeat`), one per enabled worker, refreshed each 5-minute tick. Freshness is 15 minutes (three intervals); an enabled worker without a fresh heartbeat is stale. A missing heartbeat table/query fails closed to stale/unavailable, never silently healthy.
   - Production: 503 while the worker is disabled, failed, or stale. `starting`/`running` are allowed during bounded startup/active-tick windows. Development/test may run with the worker disabled and stay ready.
+  - `checks.rateLimit`: `status: ok|degraded`, `mode: distributed|memory`, and `reason: null|not_configured|redis_unavailable|shutting_down`. No connection URL, host, credentials, or raw Redis errors are included. Configured Redis being unreachable changes overall status to `degraded` but does not alone return 503; database/billing failures still return 503 unchanged. With no `REDIS_URL`, intentional memory-only mode reports `ok`, `memory`, `not_configured`.
+
+Redis throttling recovery:
+
+- Reconnect continues for the lifetime of the process, with delay increasing from 100ms to a maximum of 3 seconds; there is no retry-attempt exhaustion cutoff. Once Redis is ready, the same storage returns to distributed limiting. A Redis command failure uses local limiting and reports degraded until a successful Redis increment or reconnect.
+- Memory fallback enforces **per-instance** limits only. It is degraded protection, not globally fail-closed: replicas have independent buckets, and switching between Redis and memory does not migrate counters. Account for this reduced protection when investigating abuse; do not remove all API replicas from readiness solely because their shared Redis is down.
+- Application close immediately disconnects the lifecycle-owned Redis client and cancels reconnects; it does not wait for an unreachable Redis to process `QUIT`. Bootstrap enables Nest shutdown hooks so termination signals also invoke resource cleanup.
+
+### Isolated PostgreSQL security regression gate
+
+- The existing CI billing E2E job calls `npm run test:e2e:billing`. Its default runner now includes session/MFA, auth provisioning, wallet provisioning recovery, multi-wallet execution and USDC quote races, wallet peak billing/fixture lifecycle, DeFi policy, Polymarket signing budgets, and pUSD acceptance concurrency, in addition to the existing billing/payment suites. No unrelated no-database suites are added to the PG phase.
+- The no-DB identity-gate tests run first. For **each** PG suite, the runner creates a fresh database and dedicated role, checks database/user/session/owner/application identity, applies migrations, checks identity again, then runs only that exact suite in-band and drops its database/role in `finally`. Suites do not share seeds or destructive cleanup; failures stop the run after teardown. The admin URL never reaches Jest/Prisma.
+- Set `BILLING_E2E_ADMIN_DATABASE_URL` only to an explicitly designated test maintenance database; never point this destructive runner at a production database. CI supplies its job-local service. Local execution may use the runner's existing verified loopback Docker container fallback; do not assume an arbitrary local database is disposable.
+- For a targeted session/MFA run: `npm run test:e2e:billing -- --app-session-only`. Existing `--auth-provisioning-only`, `--multi-wallet-execution-only`, `--multi-wallet-quote-only`, `--recovery-only`, `--wallet-peak-only`, `--fixture-wallet-peak-only`, `--defi-policy-only`, `--polymarket-signing-budget-only`, and `--pusd-only` retain the same runner-owned isolation.
 
 ## 5. Common troubleshooting
 
@@ -89,6 +103,21 @@ Both endpoints are public. They never expose secrets, account/user data, or prov
   the matching signing capability; independent EOA/destination/risk controls still apply.
   Other denials can have different policy error codes; destination protection may deny
   earlier. Dashboard withdrawals/payments are separate.
+- `canUseEoaExecution` and `EOA_EXECUTION_ENABLED` apply only to these restricted
+  signing lanes. Preserve the global flag, short key TTL, IP allowlist, independent
+  rate limits and audit controls; they cannot enable direct signer EOA sends.
+
+### Transaction request uses an old or unknown execution mode
+
+- `POST /v1/transactions` accepts only `executionMode: "session_key"` or omission
+  (the same default), submitting a Calibur UserOperation from the authorized user wallet.
+- Explicit `"eoa"` or unknown modes return HTTP 400 (`VALIDATION_ERROR`); there is no
+  automatic conversion or direct signer EOA send. Clients must deliberately submit a
+  session-key request only when that user-wallet execution is intended and authorized.
+- Do not disable signing controls or remove API-key permissions as a workaround.
+  Approved Polymarket signing remains separate and keeps its EOA request mode.
+- Historical EOA transactions remain queryable and eligible for billing reconciliation.
+  Their recorded `walletAddress` may be the signer; do not backfill it to the user wallet.
 
 ### Shared backend RPC configuration migration
 

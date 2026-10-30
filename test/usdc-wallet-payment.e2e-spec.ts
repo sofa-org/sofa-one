@@ -103,7 +103,6 @@ const mockOpenfortService = {
     transactionHash: TX_HASH,
   }),
   getTransactionReceipt: jest.fn().mockResolvedValue({ status: 'success' }),
-  sendBackendTransaction: jest.fn(),
   signData: jest.fn(),
 };
 

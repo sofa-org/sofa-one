@@ -65,6 +65,7 @@ all persisted/returned payloads are JSON-safe (no BigInt leaks).
   `roundHalfUp(baseUnitAmount * unitPriceMicros / 10^decimals)`), and a
   `periodStart` equal to the receipt block timestamp's UTC month. A finalized
   invoice is a period-close barrier: late evidence is rejected, never appended.
+- **Outbound finality is separate from incoming USDC claims.** Receipt reconciliation alone passes `billing.outbound.requiredConfirmations` (`BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS`, default 5, integer 1–100) to Openfort. The receipt's hash/height must match the canonical block; the uncached latest head must provide `head - receipt.blockNumber + 1` confirmations. Mismatch, RPC failure, or insufficient depth stays retryable (`transientError`, `complete: false`) with no ledger append or reconciliation completion, including failed inner UserOperations. Ordinary submission/UI receipt reads and the independently snapshotted incoming USDC policy are unchanged.
 - **Wallet usage evidence.** The account's `BillingWalletUsagePeriod` records a monotonic
   peak of concurrently eligible active wallets per UTC month. Before summary/finalization,
   a standalone ReadCommitted transaction locks the billing-account row to initialize
@@ -264,9 +265,10 @@ POST /billing/reconcile { limit ≤ 200 }
   → withBillingPeriodLock: create running BillingReconciliationRun
   → selectCandidates: non-confirmed (submitting/pending/unknown) first, then
     confirmed fill, both (createdAt, id) asc, bounded by limit
-  → per candidate: OpenfortService.getTransactionReceipt
-      not_found/error → retryable counters, keep pending
-      reverted → markReverted (CAS), never metered
+  → per candidate: OpenfortService.getTransactionReceipt with outbound confirmation threshold
+      not_found/error (including canonical hash mismatch / insufficient confirmations) →
+        retryable counters, no ledger append or completion marker
+      reverted / typed failed inner UserOperation → only after finality, mark failed (CAS), never metered
       success → txHash match check; EOA sender mismatch / native withdrawal →
         quarantined; else parse each Transfer log (strict runtime validation)
         → evaluatePricing → posted (recordSuccessfulOutbound) or quarantined

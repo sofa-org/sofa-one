@@ -6,7 +6,7 @@
 - 校验 Openfort IAM 会话、授权嵌入式地址归属。
 - 校验 Calibur 代理密钥（EIP-7702 delegation + session key）的链上注册状态。
 - 通过 Calibur session account 提交 UserOperation（含 Openfort/Pimlico 赞助与 gas 估算）。
-- 通过后端 EOA 直接发送交易、签名数据。
+- 使用后端 EOA signer 签署受限数据和 Calibur UserOperation；不提供 signer 地址直接发送交易的能力。
 - 提供安全（sanitized）的交易回执查询，供计费对账使用。
 
 关键约束：私钥永不落盘/记录/返回，全部签名委托给 Openfort TEE。
@@ -36,9 +36,8 @@
   - `computeSecp256k1KeyHash(agentAddress): Hex` — 由地址计算 Calibur key hash。
   - `verifyAgentKeyRegistration({ accountAddress; chainId; keyHash }): Promise<void>` — 链上校验 delegation + key 注册 + 可用性。
   - `getTransactionReceiptStatus(chainId, txHash): Promise<'success'|'reverted'|null>` — 简化回执状态。
-  - `getTransactionReceipt(chainId, txHash): Promise<TransactionReceiptResult>` — 安全回执视图。
+  - `getTransactionReceipt(chainId, txHash, { requiredConfirmations? }): Promise<TransactionReceiptResult>` — 回执必须与按高度读取的规范区块 hash/number 一致；仅显式传确认门槛的出站计费调用额外读取最新高度，不改变普通 UI 查询的确认语义。
   - `sendUserOperation({ agentAccountId; accountAddress; chainId; keyHash; interactions; sponsorship? }): Promise<{ userOpHash; transactionHash|null }>` — 提交 UserOperation。
-  - `sendBackendTransaction({ accountId; chainId; interactions }): Promise<{ transactionHash|null }>` — 后端 EOA 直发交易。
   - `signData(accountId, data): Promise<string>` — 后端钱包签名（不广播）。
 - 私有方法：`assertCaliburContractAvailable`、`createBundlerClient`、`sendUserOperationWithSponsorship`、`estimateUserOperationFees`、`getUserOperationRpc`、`getMonadPimlicoRpcUrl`、`selectOpenfortUserOperationGasPrice`、`parseRpcBigInt`、`estimateUnsponsoredUserOperationGas`、`isMissingPaymasterPolicyError`、`createPaymasterPolicyException`、`logOpenfortError`、`createOpenfortApiException`、`createUserOperationException`、`isGasFeeTooLowError`、`isTimeoutError`、`isGasPriceRecommendationError`、`withSafeReason`、`sanitizeExternalErrorMessage`、`getErrorText`、`logContext`、`withTimeout`。
 
@@ -56,9 +55,8 @@
    - 按链选 RPC（Openfort/Pimlico）→ `assertCaliburContractAvailable` → `estimateUserOperationFees`（RPC `openfort_getUserOperationGasPrice` / `pimlico_getUserOperationGasPrice`）。
    - 无赞助时 `estimateUnsponsoredUserOperationGas` 估算 gas 上限；有赞助时挂 paymaster。
    - `bundlerClient.sendUserOperation` → `waitForUserOperationReceipt` → 返回 userOpHash + transactionHash。
-6. **后端直发**：`sendBackendTransaction` → `accounts.evm.backend.sendTransaction`。
-7. **回执查询**：`getTransactionReceipt` → `getTransactionReceipt` + `getBlock` → 组装 `SanitizedReceipt`；缺失/失败返回可重试的 `not_found`/`error`。
-8. **错误路径**：多数方法经 logOpenfortError；签名和身份校验使用固定分类安全日志，再按操作映射带 API_ERROR_CODES 的 HttpException。本地会话读写不调用 Openfort。
+6. **回执查询**：`getTransactionReceipt` → `getTransactionReceipt` + 按高度 `getBlock` 并比对 hash/number → 组装 `SanitizedReceipt`；缺失/不一致/失败均可重试。出站计费显式配置确认门槛时，以无缓存最新高度计算 `head - block + 1`；不足门槛不返回终态回执。
+7. **错误路径**：多数方法经 logOpenfortError；签名和身份校验使用固定分类安全日志，再按操作映射带 API_ERROR_CODES 的 HttpException。本地会话读写不调用 Openfort。
 
 ## Integration
 - **消费方**：auth / wallet / transactions 等模块注入 `OpenfortService`（`@Global()` 导出）。

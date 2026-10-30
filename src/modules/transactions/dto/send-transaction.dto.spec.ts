@@ -6,6 +6,7 @@ import {
   MAX_TRANSACTION_INTERACTIONS,
   SendTransactionDto,
 } from './send-transaction.dto';
+import { SignDto } from '../../wallet/dto/sign.dto';
 
 describe('SendTransactionDto', () => {
   it('rejects empty interactions arrays', async () => {
@@ -20,17 +21,40 @@ describe('SendTransactionDto', () => {
     expect(errors.some((error) => error.property === 'interactions')).toBe(true);
   });
 
-  it('accepts executionMode', async () => {
+  it.each([undefined, 'session_key'])('accepts transaction executionMode %p', async (executionMode) => {
     const dto = plainToInstance(SendTransactionDto, {
       chainId: 84532,
       idempotencyKey: 'mode-test',
       interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0x', value: '0' }],
-      executionMode: 'eoa',
+      executionMode,
     });
 
     const errors = await validate(dto);
 
     expect(errors).toHaveLength(0);
+  });
+
+  it.each(['eoa', 'invalid', '', null, 1])('rejects unsupported transaction executionMode %p', async (executionMode) => {
+    const dto = plainToInstance(SendTransactionDto, {
+      chainId: 84532,
+      idempotencyKey: 'invalid-mode-test',
+      interactions: [{ to: '0x1111111111111111111111111111111111111111', data: '0x', value: '0' }],
+      executionMode,
+    });
+    const errors = await validate(dto);
+    expect(errors.some((error) => error.property === 'executionMode')).toBe(true);
+  });
+
+  it('keeps EOA off-chain signing separate from session-key transaction execution', async () => {
+    const sign = plainToInstance(SignDto, {
+      executionMode: 'eoa',
+      chainId: 137,
+      type: 'typed_data',
+      typedData: { domain: { chainId: 137 }, types: {}, primaryType: 'ClobAuth', message: {} },
+    });
+    expect(await validate(sign)).toHaveLength(0);
+    sign.executionMode = 'session_key' as unknown as SignDto['executionMode'];
+    expect((await validate(sign)).some((error) => error.property === 'executionMode')).toBe(true);
   });
 
   it('rejects more than ten interactions at the DTO boundary', async () => {

@@ -477,6 +477,7 @@ function MetricCard({
 
 export default function BillingPage() {
   const { session, loading: authLoading } = useAppSession()
+  const sessionId = session?.sessionId;
   const [walletChoices, setWalletChoices] = useState<Array<{ id: string; walletAddress: string | null; isDefault?: boolean; status: string }>>([]);
   const [walletChoicesError, setWalletChoicesError] = useState<string | null>(null);
   
@@ -881,13 +882,13 @@ export default function BillingPage() {
   // After the initial invoice list settles, load invoice-level payment statuses.
   useEffect(() => {
     if (invoicesLoading || invoicesError) return;
-    if (!session || authLoading) return;
+    if (!sessionId || authLoading) return;
     const controller = new AbortController();
     void loadPaymentStatusesForInvoices(invoices, controller.signal);
     return () => controller.abort();
   }, [
     authLoading,
-    session,
+    sessionId,
     invoices,
     invoicesError,
     invoicesLoading,
@@ -1087,7 +1088,7 @@ export default function BillingPage() {
         message:
           "Payment is being processed. We're checking for confirmation and will update the invoice automatically.",
       });
-      if (!authLoading && session) {
+      if (!authLoading && sessionId) {
         void startPaymentConfirmationPolling();
       } else {
         pendingReturnSuccessRef.current = true;
@@ -1119,17 +1120,17 @@ export default function BillingPage() {
     location.pathname,
     location.hash,
     authLoading,
-    session,
+    sessionId,
     startPaymentConfirmationPolling,
   ]);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!session) return;
+    if (!sessionId) return;
     if (!pendingReturnSuccessRef.current) return;
     pendingReturnSuccessRef.current = false;
     void startPaymentConfirmationPolling();
-  }, [authLoading, session, startPaymentConfirmationPolling]);
+  }, [authLoading, sessionId, startPaymentConfirmationPolling]);
 
   // Abort any in-flight invoice load or payment polling when the page unmounts.
   useEffect(() => {
@@ -1610,7 +1611,7 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!session) {
+    if (!sessionId) {
       setPlansLoading(false);
       setSummaryLoading(false);
       setInvoicesLoading(false);
@@ -1624,7 +1625,7 @@ export default function BillingPage() {
     return () => controller.abort();
   }, [
     authLoading,
-    session,
+    sessionId,
     loadPlans,
     loadSummary,
     loadInvoices,

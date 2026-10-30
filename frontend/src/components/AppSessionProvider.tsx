@@ -24,9 +24,11 @@ export function AppSessionProvider({ children }: { children: ReactNode }) {
   const requestVersion = useRef(0);
   const sessionRef = useRef<AppSessionSnapshot | null>(null);
   const exchangeInFlight = useRef<Promise<AppSessionSnapshot> | null>(null);
+  const refreshInFlight = useRef<Promise<AppSessionSnapshot | null> | null>(null);
 
   const clearSession = useCallback(() => {
     requestVersion.current += 1;
+    refreshInFlight.current = null;
     sessionRef.current = null;
     configureAppSessionTransport(null, clearSession);
     bindDashboardStepUpSession(null);
@@ -37,6 +39,7 @@ export function AppSessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const acceptSession = useCallback((snapshot: AppSessionSnapshot) => {
+    if (sessionRef.current?.mfaVerified && !snapshot.mfaVerified) clearDashboardStepUpProof();
     bindDashboardStepUpSession(snapshot.sessionId);
     sessionRef.current = snapshot;
     configureAppSessionTransport(snapshot.csrfToken, clearSession);
@@ -45,14 +48,14 @@ export function AppSessionProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, [clearSession]);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(() => {
     if (exchangeInFlight.current) return exchangeInFlight.current;
+    if (refreshInFlight.current) return refreshInFlight.current;
     const version = ++requestVersion.current;
-    try {
-      const snapshot = await getAppSession();
+    const pending = getAppSession().then((snapshot) => {
       if (version === requestVersion.current) acceptSession(snapshot);
       return version === requestVersion.current ? snapshot : sessionRef.current;
-    } catch (failure) {
+    }).catch((failure: unknown) => {
       if (version !== requestVersion.current) return sessionRef.current;
       if (isApiError(failure) && failure.statusCode === 401) {
         clearSession();
@@ -61,12 +64,17 @@ export function AppSessionProvider({ children }: { children: ReactNode }) {
       setError(getApiErrorMessage(failure));
       setLoading(false);
       throw failure;
-    }
+    }).finally(() => {
+      if (refreshInFlight.current === pending) refreshInFlight.current = null;
+    });
+    refreshInFlight.current = pending;
+    return pending;
   }, [acceptSession, clearSession]);
 
   const exchange = useCallback((providerBearer: string) => {
     if (exchangeInFlight.current) return exchangeInFlight.current;
     const version = ++requestVersion.current;
+    refreshInFlight.current = null;
     const pending = exchangeAppSession(providerBearer).then((snapshot) => {
       if (version === requestVersion.current) acceptSession(snapshot);
       return snapshot;
@@ -99,6 +107,7 @@ export function AppSessionProvider({ children }: { children: ReactNode }) {
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
       requestVersion.current += 1;
+      refreshInFlight.current = null;
       configureAppSessionTransport(null);
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisibility);

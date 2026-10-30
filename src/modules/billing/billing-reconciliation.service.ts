@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createHash, randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
@@ -146,6 +147,7 @@ export class BillingReconciliationService {
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
     private readonly billing: BillingService,
+    private readonly config: ConfigService,
   ) {}
 
   async reconcile(userId: string, opts: ReconcileOptions = {}): Promise<ReconcileResult> {
@@ -792,25 +794,13 @@ export class BillingReconciliationService {
       txDetails.execution === 'calibur_agent_user_operation',
     );
 
-    if (isUserOperation && tx.userOpSuccess === false) {
-      const terminal = await this.fencedStateUpdate(
-        tx,
-        { status: 'failed', billingReconciledAt: new Date() },
-        runId,
-        workerId,
-        billingAccountId,
-        targetPeriodStart,
-        targetPeriodEnd,
-      );
-      if (terminal !== 1) summary.conflicts++;
-      else summary.reverted++;
-      return;
-    }
+    // Inner failure is non-billable, but inclusion must still reach the outbound
+    // finality threshold before this row is closed to reconciliation.
 
     // A UserOperation can be included in a successful bundle transaction while
     // its own execution reverted. The inner result is persisted separately by
     // TransactionsService; never treat the enclosing receipt as billable.
-    if (isUserOperation && txDetails.userOperationSuccess === false) {
+    if (isUserOperation && txDetails.userOperationSuccess === false && tx.userOpSuccess !== false) {
       summary.conflicts++;
       return;
     }
@@ -818,7 +808,7 @@ export class BillingReconciliationService {
     // A stored UserOperation hash remains recoverable even when an enclosing
     // bundle transaction hash is already present. The inner result is the only
     // authority for membership; never meter the outer bundle while unresolved.
-    if (isUserOperation && tx.userOpSuccess !== true) {
+    if (isUserOperation && tx.userOpSuccess !== true && (tx.userOpSuccess !== false || !tx.txHash)) {
       if (!storedUserOpHash) {
         summary.transientError++;
         return;
@@ -828,24 +818,10 @@ export class BillingReconciliationService {
           chainId,
           userOpHash: storedUserOpHash,
         });
-        if (recovered.success === false) {
-          const terminal = await this.fencedStateUpdate(
-            tx,
-            { userOpSuccess: false, status: 'failed', billingReconciledAt: new Date() },
-            runId,
-            workerId,
-            billingAccountId,
-            targetPeriodStart,
-            targetPeriodEnd,
-          );
-          if (terminal === 1) summary.reverted++;
-          else summary.conflicts++;
-          return;
-        }
-        if (recovered.success === true && recovered.transactionHash) {
+        if (recovered.success !== null && recovered.transactionHash) {
           const recoveredUpdate = await this.fencedStateUpdate(
             tx,
-            { userOpSuccess: true, txHash: recovered.transactionHash, status: 'pending' },
+            { userOpSuccess: recovered.success, txHash: recovered.transactionHash, status: 'pending' },
             runId,
             workerId,
             billingAccountId,
@@ -857,13 +833,13 @@ export class BillingReconciliationService {
             return;
           }
           tx.txHash = recovered.transactionHash;
-          tx.userOpSuccess = true;
+          tx.userOpSuccess = recovered.success;
         }
       } catch {
         summary.transientError++;
         return;
       }
-      if (tx.userOpSuccess !== true) {
+      if (tx.userOpSuccess !== true && tx.userOpSuccess !== false) {
         summary.transientError++;
         return;
       }
@@ -927,7 +903,9 @@ export class BillingReconciliationService {
       return;
     }
 
-    const result = await this.openfort.getTransactionReceipt(chainId, txHash);
+    const result = await this.openfort.getTransactionReceipt(chainId, txHash, {
+      requiredConfirmations: this.config.get<number>('billing.outbound.requiredConfirmations') ?? 5,
+    });
 
     if (result.status === 'not_found') {
       summary.notFound++;
@@ -948,6 +926,21 @@ export class BillingReconciliationService {
       this.logger.warn(
         `Receipt txHash mismatch for transaction ${tx.id}: expected ${txHash}, got ${receipt.transactionHash}`,
       );
+      return;
+    }
+
+    if (isUserOperation && tx.userOpSuccess === false) {
+      const terminal = await this.fencedStateUpdate(
+        tx,
+        { status: 'failed', billingReconciledAt: new Date() },
+        runId,
+        workerId,
+        billingAccountId,
+        targetPeriodStart,
+        targetPeriodEnd,
+      );
+      if (terminal === 1) summary.reverted++;
+      else summary.conflicts++;
       return;
     }
 

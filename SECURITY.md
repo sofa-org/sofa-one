@@ -64,6 +64,14 @@ These endpoints require `X-API-Key` and must reject IAM bearer and application-c
 - Global validation rejects unknown fields (`forbidNonWhitelisted: true`).
 - DTOs must validate Ethereum addresses, chain IDs, interaction arrays, idempotency keys, and decimal string values explicitly.
 - Request bodies are limited to `100kb`.
+- Public transaction submission accepts only `executionMode: session_key` or omission,
+  executing from the authorized user wallet through a Calibur UserOperation. Explicit
+  `eoa` and unknown modes return HTTP 400; never convert them to session-key execution.
+  Direct signer EOA transaction sends are not supported.
+- `canUseEoaExecution` and `EOA_EXECUTION_ENABLED` retain their existing names and gate
+  restricted approved Polymarket EOA typed-data signing only, never direct sends.
+  Preserve the global flag, short API-key TTL, IP allowlist, independent rate limiting
+  and audit controls; removing transaction sending must not weaken signing isolation.
 - Do not accept arbitrary raw hashes for signing unless a future security review approves it.
 - API-key signing permits the exact Polymarket CLOB `ClobAuth` bootstrap typed data and the separately scoped V2 order exception below: EOA mode,
   Polygon chain 137, exact `ClobAuthDomain` version 1 domain (no verifyingContract/salt),

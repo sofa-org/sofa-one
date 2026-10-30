@@ -30,11 +30,7 @@ export type AssetFlowInteractionInput = {
 
 export type ClassifyTransactionAssetFlowInput = {
   interactions: AssetFlowInteractionInput[];
-  /**
-   * Trusted owner of the executing wallet:
-   * - session_key → UserWallet.walletAddress
-   * - eoa → UserWallet.signerAddress
-   */
+  /** Trusted execution owner: UserWallet.walletAddress for Calibur session-key sends. */
   ownerAddress: string;
   /** Chain id for chain-scoped protocol address registries. */
   chainId: number;

@@ -183,6 +183,23 @@ beforeEach(() => {
   vi.spyOn(window, 'confirm').mockReturnValue(true);
 });
 
+it('does not reload billing collections when introspection replaces the same session snapshot', async () => {
+  const view = renderBilling();
+  await waitFor(() => expect(getBillingPlansAuth).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(listBillingInvoicesAuth).toHaveBeenCalledTimes(1));
+  const context = vi.mocked(useAppSession).mock.results[0].value;
+  vi.mocked(useAppSession).mockReturnValue({
+    ...context,
+    session: { ...context.session, csrfToken: 'rechecked-csrf', expiresAt: '2099-02-01T00:00:00.000Z' },
+  });
+  await act(async () => {
+    view.rerender(<MemoryRouter initialEntries={['/dashboard/billing']}><BillingPage /><LocationProbe /></MemoryRouter>);
+  });
+  expect(getBillingPlansAuth).toHaveBeenCalledTimes(1);
+  expect(getBillingSummaryAuth).toHaveBeenCalledTimes(1);
+  expect(listBillingInvoicesAuth).toHaveBeenCalledTimes(1);
+});
+
 describe('Billing — Stripe return markers and query cleanup', () => {
   it('shows the processing notice and strips the success param after ?success=1', async () => {
     vi.useFakeTimers();

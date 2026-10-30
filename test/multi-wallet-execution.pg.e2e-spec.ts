@@ -83,7 +83,6 @@ run('multi-wallet execution PostgreSQL', () => {
       { assertDestinationsAllowed: jest.fn() } as never,
       { authorizeContractCalls: jest.fn(), assertStillAuthorized: jest.fn(), recordAllowedInTx: jest.fn(), recordDenied: jest.fn() } as never,
       { exportCommitted: jest.fn() } as never,
-      { assertAllowed: jest.fn() } as never,
       { assertSimulatable: jest.fn(), simulateAssetFlowEvidence: jest.fn() } as never,
       { evaluateRisk: jest.fn().mockResolvedValue({ action: 'allow' }), enforceRiskAction: jest.fn() } as never,
       { assertSessionKeyAllowed: jest.fn() } as never,

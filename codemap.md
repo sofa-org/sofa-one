@@ -70,7 +70,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `src/modules/transactions/dto/` | Transaction request validation DTOs for interactions and idempotency | [View Map](src/modules/transactions/dto/codemap.md) |
 | `src/modules/security-events/` | Unified security-event write service for audit, risk, and alerting workflows | [View Map](src/modules/security-events/codemap.md) |
 | `src/modules/security-notifications/` | Dashboard security notifications generated from user-attributed security events | [View Map](src/modules/security-notifications/codemap.md) |
-| `src/modules/eoa-execution/` | Runtime isolation policy for high-privilege backend EOA execution | [View Map](src/modules/eoa-execution/codemap.md) |
+| `src/modules/eoa-execution/` | Runtime isolation policy for high-privilege backend EOA signing; not direct transaction submission | [View Map](src/modules/eoa-execution/codemap.md) |
 | `src/modules/session-key/` | On-chain Calibur session-key policy gate for delegated execution | [View Map](src/modules/session-key/codemap.md) |
 | `src/modules/step-up/` | Short-lived TOTP step-up proof issuance and validation | [View Map](src/modules/step-up/codemap.md) |
 | `src/modules/mfa/` | TOTP setup, verification, recovery codes, and proof issuance | [View Map](src/modules/mfa/codemap.md) |
@@ -130,6 +130,7 @@ Server-side automated blockchain signing service. Users authenticate via Openfor
 | `.env.example` and runtime env files | Backend configuration template; secrets and local values are not part of the codemap |
 | `test/` and `src/**/*.spec.ts` | E2E/unit tests; excluded from generated codemap analysis, but validate the mapped production code |
 | `README.md`, `API.md`, `ARCHITECTURE.md`, `PRICING.md`, `SECURITY.md`, `DATABASE.md`, `DEPLOYMENT.md`, `RUNBOOK.md`, `REQUIREMENTS.md`, `docs/` | Product, API, architecture, pricing, security, operations, and design documentation |
+| [`docs/project-remediation.md`](docs/project-remediation.md) | Module-by-dimension remediation ledger, phased acceptance criteria, exercised verification, and capacity risks awaiting production evidence |
 | `src/modules/wallet-provisioning-recovery/README.md` | Operator procedure and safety requirements for binding a known existing provider account; not an API capability |
 
 The generated hierarchy is tracked by `.slim/codemap.json`. This root file is the master
@@ -150,13 +151,13 @@ Client → POST /v1/wallets/sign (X-API-Key only)
 
 Client → POST /v1/transactions (X-API-Key only)
   → ApiKeyAuthGuard resolves API key user, rejects frozen users/keys, and freezes suspicious high-risk/repeated context changes; ApiKeyPermissionGuard requires canSendTransaction
-  → EOA execution requests pass through the same EOA isolation policy before wallet loading or Openfort submission
+  → Only omitted or `session_key` execution mode is accepted; signer-direct `eoa` requests are rejected before wallet/provider work, never converted
    → TransactionPolicyService enforces generic limits independently; DefiPolicyService checks catalog function/grant and canonical ABI
   → TransactionsService loads UserWallet chain/account data and rejects frozen wallets before idempotency or Openfort submission
   → After outer idempotency miss, DeFi authorization runs before destination protection, billing, simulation, Transaction creation, and Openfort
   → In the final create transaction, destination → pause SHARE → API-key UPDATE locks recheck live state at READ COMMITTED
   → TransactionSimulationService performs minimal provider `eth_call` preflight for each interaction; simulation allow/deny is recorded as `SecurityEvent` with safe metadata only
-  → OpenfortService.sendUserOperation/sendBackendTransaction submits interactions
+  → OpenfortService.submitUserOperation submits the user's Calibur wallet interactions and persists the UserOperation identity before waiting
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency
   → Returns { transactionId, transactionHash, status }
 
@@ -205,9 +206,10 @@ Client → GET /v1/transactions/:id (X-API-Key only)
   `prisma/schema.prisma` contains identity, wallet, API-key, transaction, security, MFA,
   and billing models. Interactive transactions and row locks protect idempotency, quota,
   withdrawal, usage-ledger, and invoice-settlement races.
-- **Execution:** `OpenfortService` is the only wallet/signing facade. It routes chain
-  execution through Openfort or Pimlico/viem as appropriate; Calibur session-key and the
-  explicitly isolated backend-EOA mode are policy-gated before submission.
+- **Execution:** `OpenfortService` is the only wallet/signing facade. Transactions
+  execute from the user's Calibur wallet through a registered session key and an
+  Openfort/Pimlico bundler. Backend signer EOA signing remains policy-gated and
+  independent; direct transactions from that signer are not provided.
 - **Frontend:** frontend is a separate Vite package. Dashboard calls use cookie/CSRF
   helpers; only public signing/transaction examples use API-key helpers. In development
   Vite proxies `/api` to the backend and strips the prefix.

@@ -34,13 +34,14 @@ jobs:
         run: npm run verify:backend
 
   backend-billing-e2e:
-    name: Backend billing E2E
+    name: Backend isolated PostgreSQL security and billing E2E
     runs-on: ubuntu-latest
 
-    # Gate 1: job-local Postgres maintenance DB only. The billing E2E runner
-    # creates a fresh per-run database + role, migrates it, runs gate + live
-    # suites (billing-http, claim-concurrency, settlement-concurrency), then
-    # drops DB/role. No static shared test DATABASE_URL is accepted.
+    # Job-local maintenance DB only. The existing runner provisions and verifies
+    # a fresh DB + role for EACH suite, migrates it, and drops it in finally.
+    # Default coverage includes session/MFA, wallet provisioning/execution,
+    # DeFi authorization, signing budgets and billing concurrency boundaries.
+    # No static shared test DATABASE_URL is accepted.
     services:
       postgres:
         image: postgres:16-alpine
@@ -132,9 +133,9 @@ jobs:
             })().catch((error) => { console.error(error.message); process.exit(1); });
           '
 
-      # Provisions fresh DB+role, migrate deploy, gate tests, billing-http +
-      # concurrency suites; drops DB WITH FORCE + role in finally.
-      - name: Run billing E2E (runner-owned)
+      # Includes all runner PG suites; each file gets an independently migrated
+      # target so destructive cleanup/canonical seeds cannot affect its peers.
+      - name: Run isolated PostgreSQL security and billing E2E
         run: npm run test:e2e:billing
 
   frontend:

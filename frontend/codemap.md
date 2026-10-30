@@ -35,7 +35,7 @@ Root-level files:
   - `build` → `tsc -b && vite build` (type-check then bundle).
   - `preview` → `vite preview` (serve the production build locally).
   - `lint` → `eslint .` (run separately; root repo lint skips `frontend/`).
-  - `test` → `vitest run`; the API route suite explicitly sets and restores `VITE_API_URL` before loading the client for each case, covering both the unset `/api` proxy fallback and a configured absolute backend URL independently of CI/local environment values.
+  - `test` → `vitest run`; React Testing Library/jsdom cover request ownership, session security transitions and shell isolation; dev-only `@testing-library/user-event` drives Enter/Space detail activation. Native dialog Tab/Escape/background isolation additionally needs real-browser smoke. The API route suite explicitly sets/restores `VITE_API_URL`, covering both `/api` proxy fallback and an absolute backend URL independently of local environment values.
   - `verify` → lint, unit tests, then the production build.
 - **TypeScript** (`tsconfig.json`): `strict: true`, `noUnusedLocals`/`noUnusedParameters`, `noEmit` (Vite emits), `moduleResolution: "bundler"`, `jsx: "react-jsx"`. `@/*` resolves to `./src/*`; `viem` resolves to this package's `./node_modules/viem`, including from the external shared Calibur leaf. `include: ["src", "vite-env.d.ts"]`.
 - **Vite** (`vite.config.ts`):
@@ -43,7 +43,7 @@ Root-level files:
   - `resolve.alias`: `@` → `./src`; `resolve.dedupe: ['viem']` uses the frontend dependency for shared-leaf imports instead of loading a second backend viem. Vitest applies the same deduplication.
   - Dev-server `fs.allow` includes this package and `../src/common/calibur`, permitting the directly imported browser-safe shared leaf without exposing the entire backend source tree.
   - `build.modulePreload: false`; `chunkSizeWarningLimit: 1300`; suppresses third-party `/*#__PURE__*/` annotation warnings.
-  - `manualChunks`: `vendor` (react, react-dom, react-router-dom) and `wallet` (@openfort/react, wagmi, viem) for cache-friendly splitting.
+  - Chunk ownership follows Rollup's compiled lazy-route graph, without package-wide manual `wallet`/`vendor` buckets. Those buckets previously assigned shared JSX/preload helpers to the wallet chunk, creating a static public-entry → wallet dependency. Keep viem deduplication; validate the built entry's transitive static imports and a cold public-page network trace after changes.
 - **Styling**: Tailwind v4 via `@import "tailwindcss"` in `src/index.css`, with a `@theme` block defining brand tokens (`brand-bg`, `brand-accent`, etc.) and font families (Inter/Newsreader/Source Code Pro loaded from Google Fonts in `index.html`).
 - **Entry**: `index.html` → `/src/main.tsx` → `createRoot` renders `<StrictMode><ErrorBoundary><BrowserRouter><App/></BrowserRouter></ErrorBoundary></StrictMode>`.
 

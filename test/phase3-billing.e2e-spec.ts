@@ -88,7 +88,6 @@ const mockOpenfortService = {
   getTransactionReceipt: jest.fn(),
   signData: jest.fn(),
   sendUserOperation: jest.fn(),
-  sendBackendTransaction: jest.fn(),
 };
 
 jest.mock('../src/core/openfort/openfort.service', () => ({

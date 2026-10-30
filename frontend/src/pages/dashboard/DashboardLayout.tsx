@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useAppSession } from '@/components/AppSessionProvider';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, History, Loader2, Menu, X, Bell, CreditCard } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { listSecurityNotificationsAuth } from '@/lib/api';
@@ -257,7 +258,11 @@ export default function DashboardLayout() {
 
       {/* Main */}
       <main className="flex-1 overflow-auto bg-brand-bg p-4 sm:p-8 lg:h-screen">
-        <Outlet />
+        <ErrorBoundary key={location.pathname} inline>
+          <Suspense fallback={<div role="status" className="flex min-h-64 items-center justify-center gap-3 text-brand-muted"><Loader2 className="h-5 w-5 animate-spin" />Loading page…</div>}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   );

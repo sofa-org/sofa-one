@@ -41,8 +41,8 @@ Top-level responsibilities in this directory:
   - Wallet-only stack: AuthProviders mounts QueryClient/Wagmi/Openfort/Shield around the wallet index; missing wallet configuration does not block non-wallet pages.
   - Sign-in stack: PublicOnlyRoute checks SOFA state, then mounts OpenfortAuthProvider → EmailOtpForm for explicit identity exchange.
 - **Route guards**: AppSessionProvider restores a server snapshot; ProtectedRoute handles missing sessions/outages and keys content by session ID. DashboardStepUpGate requires server-confirmed MFA and retains recovery acknowledgement; cached proofs never grant access.
-- **Lazy loading everywhere**: every route target and guard is `react.lazy()`; Vite splits `vendor` (react/react-dom/router) and `wallet` (`@openfort/*`, `wagmi`, `viem`) chunks manually.
-- **No global store**: each dashboard page owns fetch/loading/error state; `useCallback` loaders + `useEffect` with `AbortController`; retry via nonce bump. Stale-response guards via request-id refs and `isMountedRef`.
+- **Lazy loading**: every route target and guard is `react.lazy()`; Rollup assigns shared chunks from the route graph (no manual SDK bucket that pulls shared JSX/preload runtime into the public entry).
+- **No global store**: each dashboard page owns fetch/loading/error state; business effects depend on stable session ID, not each introspection snapshot. History list/detail requests are abort-guarded across filtering, pagination, refresh, tab changes and unmount. Ordinary session checks share one in-flight request; explicit exchange/revocation/expiry retain request-version isolation.
 - **Cookie transport**: dashboard helpers no longer take token callbacks. They include credentials and unsafe-request CSRF; explicit bearer identity is confined to exchange and wallet authorization.
 - **Step-up**: exact-session proof cache is expiry-checked and cleared on replacement/logout; delayed verification responses carry their originating session ID.
 - **Audience split**: API-key examples retain explicit keys, never substituted for dashboard cookies.
@@ -53,6 +53,7 @@ Top-level responsibilities in this directory:
 1. **Boot**: `main.tsx` renders `ErrorBoundary` → `BrowserRouter` → `App`; `App` shows a `Suspense` fallback while lazy chunks load.
 2. **Public routes**: `/` → `LandingPage`; `/protocols` → lazy-loaded, unauthenticated `ProtocolsPage`; `/pricing` → `PricingPage`; `/sign-in/*` → `SignInPage` → `AuthFormPanel` (`OpenfortAuthProvider` validates `VITE_OPENFORT_PUBLISHABLE_KEY`, renders `OpenfortConfigError` if missing; `PublicOnlyRoute` bounces authenticated users to `/dashboard`). `/sign-up/*` → redirect to `/sign-in`; `*` → `/`.
 3. **Dashboard**: ProtectedRoute → DashboardStepUpGate → DashboardLayout. Server pending-MFA sessions set up/verify TOTP before entry; only Wallet mounts heavy wallet providers.
+   DashboardLayout contains its Outlet in a pathname-keyed inline ErrorBoundary and Suspense. Child chunks can suspend or fail without hiding navigation or sign-out; changing route resets the child error.
 4. **Data flow**: cookie/CSRF helpers serve dashboard reads/mutations. Wallet creation/authorization still uses provider proof, Calibur encoders and viem/wagmi; reconnecting provider identity does not exchange the application session.
 5. **Billing**: Stripe card checkout redirects to `checkoutUrl` and returns via `?success`/`?canceled` search params; USDC payment runs inline in `UsdcPaymentPanel` (quote → pay-from-wallet with step-up / status poll, or manual claim → silent invoice refresh only when server reports paid).
 

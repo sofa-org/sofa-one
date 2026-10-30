@@ -66,7 +66,6 @@ const mockOpenfortService = {
   getTransactionReceipt: jest.fn(),
   signData: jest.fn(),
   sendUserOperation: jest.fn(),
-  sendBackendTransaction: jest.fn(),
 };
 
 /** Stripe mock: never succeeds at creating a payable session for this suite. */

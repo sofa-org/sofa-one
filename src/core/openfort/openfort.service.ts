@@ -14,7 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
 import { createClient, getAddress, http, padHex, type Address, type Hex } from 'viem';
 import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
-import { getBlock, getCode, getTransactionReceipt } from 'viem/actions';
+import { getBlock, getBlockNumber, getCode, getTransactionReceipt } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { getSupportedChain, isMonadChain } from '../../common/chains/supported-chains';
@@ -248,7 +248,11 @@ export class OpenfortService {
    * lookup returns a retryable result (never a fabricated success). A legal
    * empty `logs: []` array still yields a normal success/reverted view.
    */
-  async getTransactionReceipt(chainId: number, txHash: string): Promise<TransactionReceiptResult> {
+  async getTransactionReceipt(
+    chainId: number,
+    txHash: string,
+    options: { requiredConfirmations?: number } = {},
+  ): Promise<TransactionReceiptResult> {
     try {
       const { chain } = getSupportedChain(chainId);
       const client = createClient({ chain, transport: http() });
@@ -262,6 +266,24 @@ export class OpenfortService {
       let blockTimestamp: bigint;
       try {
         const block = await getBlock(client, { blockNumber: receipt.blockNumber });
+        if (
+          !block.hash ||
+          !receipt.blockHash ||
+          block.hash.toLowerCase() !== receipt.blockHash.toLowerCase() ||
+          block.number !== receipt.blockNumber
+        ) {
+          return { status: 'error', message: 'receipt block does not match canonical block' };
+        }
+        if (options.requiredConfirmations !== undefined) {
+          const required = options.requiredConfirmations;
+          if (!Number.isInteger(required) || required < 1 || required > 100) {
+            return { status: 'error', message: 'invalid required confirmations' };
+          }
+          const head = await getBlockNumber(client, { cacheTime: 0 });
+          if (head < receipt.blockNumber || head - receipt.blockNumber + 1n < BigInt(required)) {
+            return { status: 'error', message: 'receipt awaiting required confirmations' };
+          }
+        }
         blockTimestamp = block.timestamp;
       } catch (error: any) {
         this.logOpenfortError('getTransactionReceipt', error, {
@@ -670,39 +692,6 @@ export class OpenfortService {
     );
   }
 
-  /** Execute calls directly from a backend EOA through Openfort. */
-  async sendBackendTransaction(params: {
-    accountId: string;
-    chainId: number;
-    interactions: Array<{ to: string; data: string; value?: string }>;
-  }): Promise<{ transactionHash: string | null }> {
-    try {
-      const account = await this.withTimeout(
-        this.client.accounts.evm.backend.get({ id: params.accountId }),
-        'getBackendWallet',
-      );
-      const result = (await this.withTimeout(
-        (this.client.accounts.evm.backend as any).sendTransaction({
-          account,
-          chainId: params.chainId,
-          interactions: params.interactions,
-        }),
-        'sendBackendTransaction',
-      )) as any;
-
-      return {
-        transactionHash:
-          result?.response?.transactionHash ?? result?.transactionHash ?? result?.hash ?? null,
-      };
-    } catch (error: any) {
-      this.logOpenfortError('sendBackendTransaction', error, {
-        chainId: params.chainId,
-        interactionCount: params.interactions.length,
-      });
-      throw this.createOpenfortApiException('sendBackendTransaction', error);
-    }
-  }
-
   /** Sign hex-encoded data with a backend wallet (no transaction broadcast). */
   async signData(accountId: string, data: string): Promise<string> {
     try {
@@ -749,19 +738,6 @@ export class OpenfortService {
 
     if (operation === 'sendUserOperation') {
       return this.createUserOperationException(error);
-    }
-
-    if (operation === 'sendBackendTransaction') {
-      return new HttpException(
-        {
-          code: API_ERROR_CODES.BACKEND_TRANSACTION_FAILED,
-          message: this.withSafeReason(
-            'Backend EOA transaction failed. Check chainId, target contract calldata, value, and wallet balance.',
-            error,
-          ),
-        },
-        HttpStatus.BAD_GATEWAY,
-      );
     }
 
     return new HttpException(

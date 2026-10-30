@@ -1,7 +1,7 @@
 # Code Map for /src/modules/eoa-execution
 
 ## Responsibility
-Runtime isolation policy for privileged backend EOA execution (`sign` and `send_transaction`) requested through API-key public routes. Acts as a defense-in-depth gate that runs after API-key permission checks (`canUseEoaExecution`) but before wallet loading or Openfort submission, ensuring EOA-mode operations are globally opt-in, IP-allowlisted, short-lived, independently rate-limited, and fully security-event audited.
+Runtime isolation policy for privileged backend EOA off-chain signing requested through API-key public routes (`sign` and `polymarket_order_sign` only). Acts as a defense-in-depth gate after API-key `canUseEoaExecution` permission checks, ensuring signing operations remain globally opt-in, IP-allowlisted, short-lived, rate-limited, and security-event audited. It does not authorize or submit transactions.
 
 ## Design/Patterns
 - Single `@Injectable()` service (`EoaExecutionPolicyService`) exposing one public method, `assertAllowed(context)`, which throws `ForbiddenException` on any failed check. No controller; invoked from service layer only.
@@ -16,11 +16,11 @@ Runtime isolation policy for privileged backend EOA execution (`sign` and `send_
 - Uses a structural type `EoaPolicyPrismaClient` to narrow `PrismaService` to only the `securityEvent.count` query needed for rate limiting, avoiding a full Prisma client dependency surface in the service.
 - IP enforcement is delegated to the shared `IpAllowlistService` (from `SecurityEventModule`), which centralizes CIDR matching and records `api_key.ip_rejected` security events on mismatch.
 - Rate limiting counts only prior `eoa_execution_allowed` events, so denied attempts do not consume the per-key budget; the current request's `allowed` event is recorded after the count check.
-- Polymarket CLOB order acceptance uses a separate wallet-scoped rolling 60-second limit of 60, shared across API keys with atomic acceptance reservation; it does not replace or relax this general EOA gate or the existing ClobAuth/send 1-per-60-second limit.
+- Polymarket CLOB order acceptance uses a separate wallet-scoped rolling 60-second limit of 60, shared across API keys with atomic acceptance reservation; it does not replace or relax this general EOA signing gate or the existing ClobAuth 1-per-60-second limit.
 
 ## Flow
-- Callers: `WalletService.sign` (operation `sign`) and `TransactionsService.send` (operation `send_transaction`), both invoked only when `executionMode === 'eoa'` and after `assertPermission(apiKeyRecord.canUseEoaExecution, ...)`.
-- Caller builds `EoaExecutionPolicyContext` from the API key record (`id`, `keyPrefix`, `allowedIps`, `expiresAt`), `userId`, `clientIp` from `RequestContextService`, `chainId`, and operation-specific metadata (e.g. `type` for sign, `interactionCount` for send).
+- Caller: `WalletService` off-chain signing paths (`sign` / `polymarket_order_sign`), after `canUseEoaExecution` permission checks. `TransactionsService` does not import this module or invoke this policy.
+- Caller builds `EoaExecutionPolicyContext` from the API-key record (`id`, `keyPrefix`, `allowedIps`, `expiresAt`), `userId`, `clientIp` from `RequestContextService`, `chainId`, and signing metadata (e.g. `type`).
 - `assertAllowed` check order:
   1. `EOA_EXECUTION_ENABLED` not exactly `true` → deny `eoa_execution_disabled`.
   2. No `allowedIps` → deny `eoa_execution_requires_ip_allowlist`.
@@ -34,7 +34,7 @@ Runtime isolation policy for privileged backend EOA execution (`sign` and `send_
 
 ## Integration
 - `EoaExecutionModule` imports `SecurityEventModule` (which provides `SecurityEventService` and `IpAllowlistService`) and exports `EoaExecutionPolicyService`.
-- Imported by `WalletModule` and `TransactionsModule`; both inject the policy as `@Optional()` and fail closed with `ForbiddenException` if it is absent.
+- Imported by `WalletModule` for signing safety controls; not imported by `TransactionsModule`.
 - Dependencies: `ConfigService` (env `EOA_EXECUTION_ENABLED`, validated in `src/config/env.validation.ts`, default `false` in `.env.example`), `PrismaService` (rate-limit count on `security_events`), `SecurityEventService` (audit), `IpAllowlistService` (IP enforcement).
 - Emits security events: `eoa_execution_allowed`, `eoa_execution_denied`, and `api_key.ip_rejected` (via `IpAllowlistService`).
-- Not part of the public `openapi.yaml` surface; it is an internal service-layer gate for the public `POST /v1/wallets/sign` and `POST /v1/transactions` routes.
+- Internal service-layer gate for public `POST /v1/wallets/sign`; no direct EOA transaction submission operation exists.

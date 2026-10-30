@@ -39,9 +39,9 @@ const fieldRows = {
     ["typedData", "object", "Yes", "Exact supported Polygon ClobAuth, CLOB V2 single-order, or DepositWallet Batch schema, with domain.chainId, types, primaryType, and message."],
   ],
   send: [
-    ["chainId", "integer", "Yes", "Supported chain ID. Must be authorized for the user's EOA."],
-    ["executionMode", "string", "No", "session_key (default) executes from the user wallet through Calibur UserOp; eoa executes directly from the TEE signer."],
-    ["sponsorship", "string", "No", "required | none. Only applies to session_key UserOps; defaults to none."],
+    ["chainId", "integer", "Yes", "Supported chain ID with active Calibur authorization for the user wallet."],
+    ["executionMode", "string", "No", "session_key only (default), executing from the user wallet through Calibur UserOp. eoa and unknown values return 400; no automatic conversion."],
+    ["sponsorship", "string", "No", "required | none. UserOp gas sponsorship; defaults to none."],
     ["interactions", "array", "Yes", "At least one contract interaction."],
     ["└ to", "string", "Yes", "Target Ethereum address."],
     ["└ data", "string", "Yes", "0x-prefixed calldata, max 64 KB."],
@@ -371,7 +371,7 @@ export default function APIDocsPage() {
 
         <EndpointCard id="send" path="/v1/transactions">
           <p className="text-sm leading-6 text-brand-muted">
-            Submit one or more contract interactions using an API key. By default, <code>executionMode: &quot;session_key&quot;</code> executes from the user&apos;s EIP-7702 delegated wallet via the chain-authorized TEE signer and Calibur UserOp. Use <code>executionMode: &quot;eoa&quot;</code> to execute directly from the TEE signer&apos;s EOA, not the user wallet. Set <code>sponsorship: &quot;required&quot;</code> only when a paymaster policy is configured; otherwise keep the default <code>&quot;none&quot;</code>. Openfort IAM bearer tokens are not accepted here.
+            Submit one or more contract interactions using an API key. Only <code>executionMode: &quot;session_key&quot;</code> is accepted; omitting it keeps the same default. Execution uses the user&apos;s EIP-7702 delegated wallet via the chain-authorized TEE signer and Calibur UserOp. An explicit <code>&quot;eoa&quot;</code> or unknown mode returns HTTP 400, never an automatic conversion. Direct signer EOA transaction sends are not supported; the independent approved Polymarket signing endpoint remains available. Set <code>sponsorship: &quot;required&quot;</code> only when a paymaster policy is configured; otherwise keep the default <code>&quot;none&quot;</code>. Openfort IAM bearer tokens are not accepted here.
           </p>
 
           <div className="space-y-3">
@@ -403,7 +403,7 @@ export default function APIDocsPage() {
 
         <EndpointCard id="status" path="/v1/transactions/:id" method="GET">
           <p className="text-sm leading-6 text-brand-muted">
-            Query a safe status view for transactions created through the public send endpoint. The response excludes calldata, request hashes, and interaction hashes. Its <code>walletAddress</code> remains the persisted execution address: the user wallet for session-key execution or the TEE signer for EOA execution, not a current wallet identity projection.
+            Query a safe status view for transactions created through the public send endpoint. The response excludes calldata, request hashes, and interaction hashes. Its <code>walletAddress</code> remains the persisted execution address: the user wallet for session-key execution or the TEE signer for historical EOA execution, not a current wallet identity projection.
           </p>
 
           <div className="space-y-3">
@@ -440,8 +440,8 @@ export default function APIDocsPage() {
           <h2 className="mb-3 font-serif text-xl font-bold text-brand-text">Validation</h2>
           <ul className="space-y-2 text-sm leading-6 text-brand-muted">
             <li>• Unknown request properties are rejected.</li>
-            <li>• Chain IDs must be supported and authorized for the user's EOA.</li>
-            <li>• EOAs must exist and be active before sending transactions.</li>
+            <li>• Transaction chain IDs must be supported with active Calibur authorization for the user wallet.</li>
+            <li>• Transaction executionMode accepts only session_key or omission; eoa and unknown modes return HTTP 400.</li>
           </ul>
         </div>
         <div className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">

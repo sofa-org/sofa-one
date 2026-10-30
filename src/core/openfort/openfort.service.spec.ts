@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 
 const backendCreate = jest.fn();
 const backendSign = jest.fn();
+const backendGet = jest.fn();
 const iamGetSession = jest.fn();
 const accountsList = jest.fn();
 const mockHasCaliburDelegation = jest.fn();
@@ -17,6 +18,7 @@ const mockIsCaliburKeyRegistered = jest.fn();
 const mockGetCaliburKeySettings = jest.fn();
 const mockGetTransactionReceipt = jest.fn();
 const mockGetBlock = jest.fn();
+const mockGetBlockNumber = jest.fn();
 const mockGetCode = jest.fn();
 const originalFetch = globalThis.fetch;
 const mockFetch = jest.fn();
@@ -29,8 +31,7 @@ jest.mock('@openfort/openfort-node', () => ({
       evm: {
         backend: {
           create: backendCreate,
-          get: jest.fn(),
-          sendTransaction: jest.fn(),
+          get: backendGet,
           sign: backendSign,
         },
       },
@@ -56,6 +57,7 @@ jest.mock('viem/actions', () => ({
   getCode: mockGetCode,
   getTransactionReceipt: mockGetTransactionReceipt,
   getBlock: mockGetBlock,
+  getBlockNumber: mockGetBlockNumber,
 }));
 
 import { OpenfortService } from './openfort.service';
@@ -65,6 +67,8 @@ describe('OpenfortService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     backendSign.mockReset();
+    backendGet.mockReset().mockResolvedValue({ id: 'backend-1' });
+    mockGetBlockNumber.mockReset();
     (globalThis as any).fetch = mockFetch;
     mockFetch.mockResolvedValue({
       ok: true,
@@ -540,7 +544,7 @@ describe('OpenfortService', () => {
 
     it('returns a sanitized success receipt with block timestamp and logs', async () => {
       mockGetTransactionReceipt.mockResolvedValue(receipt);
-      mockGetBlock.mockResolvedValue({ timestamp: 1_700_000_000n });
+      mockGetBlock.mockResolvedValue({ timestamp: 1_700_000_000n, hash: receipt.blockHash, number: receipt.blockNumber });
 
       const service = new OpenfortService(configService as any);
       const result = await service.getTransactionReceipt(84532, TX_HASH);
@@ -566,12 +570,38 @@ describe('OpenfortService', () => {
 
     it('returns reverted for a reverted receipt', async () => {
       mockGetTransactionReceipt.mockResolvedValue({ ...receipt, status: 'reverted' });
-      mockGetBlock.mockResolvedValue({ timestamp: 1_700_000_000n });
+      mockGetBlock.mockResolvedValue({ timestamp: 1_700_000_000n, hash: receipt.blockHash, number: receipt.blockNumber });
 
       const service = new OpenfortService(configService as any);
       const result = await service.getTransactionReceipt(84532, TX_HASH);
 
       expect(result.status).toBe('reverted');
+    });
+
+    it('rejects receipt/block hash mismatch instead of mixing receipt logs with another timestamp', async () => {
+      mockGetTransactionReceipt.mockResolvedValue(receipt);
+      mockGetBlock.mockResolvedValue({
+        timestamp: 1_700_000_001n, number: receipt.blockNumber, hash: `0x${'d'.repeat(64)}`,
+      });
+      const service = new OpenfortService(configService as unknown as ConfigService);
+      await expect(service.getTransactionReceipt(84532, TX_HASH)).resolves.toEqual({
+        status: 'error', message: 'receipt block does not match canonical block',
+      });
+    });
+
+    it('requires outbound confirmation depth only when explicitly requested', async () => {
+      mockGetTransactionReceipt.mockResolvedValue(receipt);
+      mockGetBlock.mockResolvedValue({
+        timestamp: 1_700_000_000n, number: receipt.blockNumber, hash: receipt.blockHash,
+      });
+      mockGetBlockNumber.mockResolvedValueOnce(12348n).mockResolvedValueOnce(12349n);
+      const service = new OpenfortService(configService as unknown as ConfigService);
+      await expect(service.getTransactionReceipt(84532, TX_HASH)).resolves.toMatchObject({ status: 'success' });
+      expect(mockGetBlockNumber).not.toHaveBeenCalled();
+      await expect(service.getTransactionReceipt(84532, TX_HASH, { requiredConfirmations: 5 }))
+        .resolves.toEqual({ status: 'error', message: 'receipt awaiting required confirmations' });
+      await expect(service.getTransactionReceipt(84532, TX_HASH, { requiredConfirmations: 5 }))
+        .resolves.toMatchObject({ status: 'success', receipt: { blockHash: receipt.blockHash } });
     });
 
     it('returns a retryable error when the provider returns null logs', async () => {
@@ -615,7 +645,7 @@ describe('OpenfortService', () => {
 
     it('treats a legal empty logs array as a valid receipt', async () => {
       mockGetTransactionReceipt.mockResolvedValue({ ...receipt, logs: [] });
-      mockGetBlock.mockResolvedValue({ timestamp: 1_700_000_000n });
+      mockGetBlock.mockResolvedValue({ timestamp: 1_700_000_000n, hash: receipt.blockHash, number: receipt.blockNumber });
 
       const service = new OpenfortService(configService as any);
       const result = await service.getTransactionReceipt(84532, TX_HASH);
@@ -742,23 +772,4 @@ describe('OpenfortService', () => {
     });
   });
 
-  it('maps backend EOA send failures to a specific API error', () => {
-    const configService = {
-      getOrThrow: jest.fn(() => 'secret'),
-      get: jest.fn(() => 25),
-    };
-    const service = new OpenfortService(configService as any) as any;
-
-    const exception = service.createOpenfortApiException(
-      'sendBackendTransaction',
-      new Error('insufficient funds for gas'),
-    );
-
-    expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY);
-    expect(exception.getResponse()).toEqual({
-      code: 'BACKEND_TRANSACTION_FAILED',
-      message:
-        'Backend EOA transaction failed. Check chainId, target contract calldata, value, and wallet balance. Reason: insufficient funds for gas',
-    });
-  });
 });

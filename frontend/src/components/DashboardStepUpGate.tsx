@@ -55,6 +55,7 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
   const sessionId = session?.sessionId;
   const serverMfaVerified = useRef(session?.mfaVerified ?? false);
   serverMfaVerified.current = session?.mfaVerified ?? false;
+  const previousMfaVerified = useRef(session?.mfaVerified ?? false);
   const authenticatorInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const recoveryCodeInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const continueButtonRef = useRef<HTMLButtonElement>(null);
@@ -114,6 +115,13 @@ export default function DashboardStepUpGate({ children }: { children: React.Reac
   useEffect(() => {
     void bootstrap();
   }, [bootstrap]);
+
+  useEffect(() => {
+    // Rechecking the same identity must still enforce a server-side downgrade.
+    // Do not bootstrap on upgrades: recovery codes require acknowledgement.
+    if (previousMfaVerified.current && !session?.mfaVerified) void bootstrap();
+    previousMfaVerified.current = session?.mfaVerified ?? false;
+  }, [session?.mfaVerified, bootstrap]);
 
   useEffect(() => {
     if (stage === 'setup' || stage === 'verify' || (stage === 'recovery' && !proofReady)) {

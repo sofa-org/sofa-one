@@ -47,6 +47,9 @@ export default () => ({
     cancelUrl: process.env.STRIPE_CANCEL_URL,
   },
   billing: {
+    outbound: {
+      requiredConfirmations: parseInt(process.env.BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS || '5', 10),
+    },
     usdc: {
       enabled: process.env.BILLING_USDC_ENABLED === 'true',
       treasuryAddresses: {

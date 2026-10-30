@@ -40,7 +40,7 @@ Openfort-side identity revocation is therefore bounded by that hour, not synchro
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `POST` | `/v1/wallets/sign` | API-key signing; exact Polymarket ClobAuth, capability-authorized CLOB V2 order, or verified DepositWallet Batch typed data |
-| `POST` | `/v1/transactions` | Submit validated EVM interactions through the user's Openfort/agent wallet context |
+| `POST` | `/v1/transactions` | Submit validated EVM interactions as Calibur session-key UserOperations from the user wallet |
 | `GET` | `/v1/transactions/:id` | Return safe transaction status for the owning API-key user |
 | `GET` | `/v1/permissions` | Return the key's configured permissions, capability mode/IDs, and constraints; configuration is not an execution guarantee |
 | `GET` | `/v1/capabilities?ids=id1,id2` | Look up 1–100 catalog capability definitions; definitions do not grant capabilities |
@@ -65,7 +65,7 @@ this response change does not add session-key signing or change execution polici
 
 Transaction status/history and signing-request history are audit records, not current wallet
 projections. Their persisted `walletAddress` fields retain the address recorded at execution
-or signing: transaction EOA execution records the TEE signer, while session-key execution
+or signing: historical transaction EOA execution recorded the TEE signer, while session-key execution
 records the user wallet. Historical signing rows retain their recorded signing address.
 These fields are not renamed, backfilled, or reinterpreted as the current user's wallet.
 
@@ -159,10 +159,15 @@ This makes the output canonical where older responses could end in `00/01`; clie
 must not depend on the former byte representation. Protocol envelopes are constructed
 separately. This is Sofa's EOA output contract, not an ERC-1271-wide signature restriction.
 
-This signing-only cleanup does not remove transaction session keys:
-`POST /v1/transactions` still defaults to `session_key`, checks the registered,
-unexpired chain authorization and live on-chain key, then submits an Openfort
-UserOperation. Clients do not call `/v1/wallets/sign` before sending a transaction.
+`POST /v1/transactions` accepts only `executionMode: "session_key"` or omission
+(the same default). It checks the registered, unexpired chain authorization and live
+on-chain key, then submits an Openfort Calibur UserOperation from the user wallet.
+Explicit `"eoa"` and unknown modes return HTTP 400 (`VALIDATION_ERROR`), never an
+automatic conversion to session-key execution. Direct signer EOA transaction sends
+are not supported. Clients do not call `/v1/wallets/sign` before sending a transaction.
+The independent Polymarket EOA signing lanes remain unchanged: `canUseEoaExecution`
+continues to gate restricted typed-data signing, not transaction submission, with
+`EOA_EXECUTION_ENABLED`, IP allowlist, short TTL and independent rate controls intact.
 
 `message.address` must equal the selected wallet's `signerAddress` (not its embedded
 `walletAddress` or funder address); timestamp is canonical decimal Unix seconds within

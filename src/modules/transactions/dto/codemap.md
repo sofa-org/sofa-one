@@ -17,7 +17,7 @@ Request/query validation types for the transactions module: the public send-tran
 ## Key Symbols
 
 ### send-transaction.dto.ts
-- `type ExecutionMode = 'session_key' | 'eoa'` — which backend wallet authority executes. Also independently redeclared in `wallet/dto/sign.dto.ts` (module-local copy).
+- `type ExecutionMode = 'session_key'` — transaction-only Calibur execution; independent from the off-chain signing DTO's EOA mode.
 - `type SponsorshipMode = 'required' | 'none'`.
 - `const MAX_TRANSACTION_INTERACTIONS = 10` — max interactions per send; mirrors `TransactionPolicyService.assertAllowed` limit.
 - `const MAX_INTERACTION_CALLDATA_BYTES = 64 * 1024` — per-interaction calldata cap; imported by policy service.
@@ -27,7 +27,7 @@ Request/query validation types for the transactions module: the public send-tran
   - `data: string` — byte-aligned hex `Matches(/^0x(?:[0-9a-fA-F]{2})*$/)`, max `MAX_INTERACTION_CALLDATA_HEX_LENGTH`.
   - `value?: string` — optional wei as decimal string `Matches(/^\d+$/)`, `MaxLength(78)` (max uint256).
 - `class SendTransactionDto`:
-  - `executionMode?: ExecutionMode` — optional, `IsIn(['session_key', 'eoa'])`.
+  - `executionMode?: ExecutionMode` — optional, `ValidateIf(value !== undefined)` plus `IsIn(['session_key'])`; legacy `eoa`, arbitrary modes and null reject with 400 rather than falling back. Omission and explicit `session_key` remain accepted.
   - `sponsorship?: SponsorshipMode` — optional, `IsIn(['required', 'none'])`.
   - `chainId: number` — required, `IsInt`, `Min(1)`.
   - `interactions: InteractionDto[]` — required, `ArrayMinSize(1)`, `ArrayMaxSize(MAX_TRANSACTION_INTERACTIONS)`, nested-validated.

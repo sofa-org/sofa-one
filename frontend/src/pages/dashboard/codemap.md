@@ -24,8 +24,8 @@ Authenticated wallet, key, history, notification and billing screens use local S
 
 ## Design/Patterns
 
-- **Container pages with local state**: each page is a default-exported component holding its own fetch/loading/error state; no global store. Data fetching uses `useCallback` loaders + `useEffect` with `AbortController` cleanup; retry is a nonce bump that re-runs the effect.
-- **Shared layout**: ProtectedRoute → server-authoritative DashboardStepUpGate → DashboardLayout; only index Wallet mounts AuthProviders/Wagmi/Shield.
+- **Container pages with local state**: each page is a default-exported component holding its own fetch/loading/error state; no global store. Business effects use stable session IDs, not introspection snapshot objects; true session replacement remounts protected content. History requests use per-effect AbortControllers and guard every data/error/loading write, including ignored-abort responses.
+- **Shared layout**: ProtectedRoute → server-authoritative DashboardStepUpGate → DashboardLayout; only index Wallet mounts AuthProviders/Wagmi/Shield. The shell wraps Outlet in content-level Suspense and a pathname-keyed inline ErrorBoundary, retaining nav/logout through child chunk loading/failures.
 - **Cookie transports**: API helpers take business parameters directly, with credentials and in-memory CSRF managed by AppSessionProvider. No generic provider token accessors.
 - **Step-up**: sensitive calls reuse only a proof for the current session or prompt for TOTP. Requests capture the originating session; delayed responses from replaced sessions cannot poison the new cache.
 - **Controlled forms**: key creation, capability grants, withdrawal, and allowlist forms lift all field state to the page and pass setters down to presentational components.
@@ -56,11 +56,13 @@ Sidebar/mobile layout uses AppSessionProvider, loads alerts with cookies and exp
 ### ApiKeys (`/dashboard/api-keys`)
 
 Lists keys (sorted: active by soonest expiry then last-used; revoked by newest), filters by status, enforces the 10-active-key cap, and loads the user's wallet list for binding labels. Create requires a wallet selection (preselected for a single wallet); each key's wallet binding is immutable. The list shows the bound wallet address/label, and unbound legacy keys as revoked/unbound with no rebind action. Create sends wallet ID, capability mode and configured IDs, spend limits, and permission checkboxes; shows the raw key once. `all` dynamically allows active, unpaused reviewed capabilities; `custom` allows exact IDs and `[]` denies all. Neither bypasses independent permissions or policies. Capability selection uses `GET /defi-capabilities`; inactive/paused capabilities cannot be newly granted, while existing grants can be removed. Cards show configured mode/IDs, not expanded effective IDs. Per-key edits call step-up-protected `PATCH /api-keys/:id/capabilities` with full replacement; `{capabilityMode: "all"}` resets, custom requires IDs, IDs-only remains custom, and `{}` is invalid. Revoke (per-key), rotate-all (`refreshApiKey` with a required replacement-wallet ID and warning that all keys across wallets are revoked), and emergency revoke-all are confirm-gated and step-up gated. Includes a backend-only curl quick start.
+`canUseEoaExecution` keeps its API field name; its checkbox and list badge describe restricted EOA typed-data signing, requiring `canSign`, an approved capability and independent safety controls, never direct signer transaction sending.
 
 ### Transactions (`/dashboard/transactions`)
 
-Two tabs: transactions (`listTransactionsAuth`) and signing requests (`listSigningRequestsAuth`), each with status/type/chain filters, 20-per-page pagination, and refresh. Row click opens a slide-over drawer that fetches detail (`getTransactionDetailAuth`/`getSigningRequestDetailAuth`) with retry; Escape/backdrop close and body scroll is locked while open.
+Two tabs: transactions (`listTransactionsAuth`) and signing requests (`listSigningRequestsAuth`), each with status/type/chain filters, 20-per-page pagination, and refresh. Every list request is cancelled and its data/error/loading writes invalidated on filter/page/refresh/tab/session changes and unmount. Semantic per-row View details buttons open a portalled native modal dialog; showModal supplies background isolation/focus containment, the close button receives focus, and close/Escape/backdrop/unmount restores the connected opener and body scroll. Detail requests retain cancellation and retry.
 Historical detail addresses are labeled execution/recorded signing addresses and shown unchanged from persisted `walletAddress`, not projected from the current wallet.
+`Transactions.test.tsx` covers out-of-order success/error/loading, filter/page/refresh ownership, abort on tab/unmount, same-session versus replacement-session reloads and semantic detail activation/focus restoration with jsdom dialog shims. `DashboardLayout.test.tsx` exercises lazy suspension/rejection with real shell navigation/logout; browser smoke must additionally exercise native Tab/Escape/inert behavior.
 
 ### SecurityNotifications (`/dashboard/notifications`)
 
@@ -76,7 +78,7 @@ Selects Base/Ethereum mainnet/Sepolia, fetches a quote (`createUsdcQuoteAuth`), 
 
 ### Docs (`/dashboard/docs`)
 
-Static reference for the three documented automation endpoints (`/v1/wallets/sign`, `/v1/transactions`, `/v1/transactions/:id`): field tables, EOA-only approved typed-data signing examples, supported networks from `SUPPORTED_CHAINS`, and error-format notes. Wallet/signer identity notes document the breaking `signerAddress` response cutover and distinguish unchanged historical execution addresses. Base URL comes from `getApiBaseUrlForDisplay`/`getApiBaseUrlModeLabel` (Vite proxy vs `VITE_API_URL`).
+Static reference for the three documented automation endpoints (`/v1/wallets/sign`, `/v1/transactions`, `/v1/transactions/:id`): field tables, EOA-only approved typed-data signing examples, session-key-only Calibur UserOperation sending (omission allowed; explicit EOA/unknown mode is HTTP 400 without conversion), supported networks from `SUPPORTED_CHAINS`, and error-format notes. Wallet/signer identity notes document the breaking `signerAddress` response cutover and distinguish unchanged historical execution addresses, including historical EOA signer addresses. Base URL comes from `getApiBaseUrlForDisplay`/`getApiBaseUrlModeLabel` (Vite proxy vs `VITE_API_URL`).
 
 ## Integration
 

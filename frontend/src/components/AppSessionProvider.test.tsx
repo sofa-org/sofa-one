@@ -141,6 +141,86 @@ describe('application session boundary without Openfort context', () => {
     expect(screen.getByTestId('session-id')).toHaveTextContent('new-login');
   });
 
+  it('coalesces focus, visibility and manual refresh, then allows another security check', async () => {
+    let complete!: (value: Response) => void;
+    const pending = new Promise<Response>((resolve) => { complete = resolve; });
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(json(snapshot())).mockReturnValueOnce(pending);
+    renderSession();
+    await screen.findByText('Business content');
+    fireEvent.focus(window);
+    fireEvent(document, new Event('visibilitychange'));
+    fireEvent.click(screen.getByText('Refresh session'));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await act(async () => { complete(json(snapshot({ csrfToken: 'rotated-csrf' }))); });
+    fetchMock.mockResolvedValueOnce(json({}, 401));
+    fireEvent.click(screen.getByText('Refresh session'));
+    expect(await screen.findByText('Email sign-in')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('releases a failed shared refresh so retry still rechecks security state', async () => {
+    let complete!: (value: Response) => void;
+    const pending = new Promise<Response>((resolve) => { complete = resolve; });
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(json(snapshot())).mockReturnValueOnce(pending);
+    renderSession();
+    await screen.findByText('Business content');
+    fireEvent.focus(window);
+    fireEvent.click(screen.getByText('Refresh session'));
+    await act(async () => { complete(json({ message: 'Security check offline' }, 503)); });
+    expect(screen.getByRole('alert')).toHaveTextContent('Security check offline');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    fetchMock.mockResolvedValueOnce(json(snapshot()));
+    fireEvent.click(screen.getByText('Retry session check'));
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not accept an ordinary refresh from before a newer login exchange', async () => {
+    let completeOld!: (value: Response) => void;
+    const old = new Promise<Response>((resolve) => { completeOld = resolve; });
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(snapshot()))
+      .mockReturnValueOnce(old)
+      .mockResolvedValueOnce(json(snapshot({ sessionId: 'replacement', csrfToken: 'replacement-csrf' })));
+    renderSession();
+    await screen.findByText('Business content');
+    fireEvent.click(screen.getByText('Refresh session'));
+    fireEvent.click(screen.getByText('Exchange identity'));
+    await waitFor(() => expect(screen.getByTestId('session-id')).toHaveTextContent('replacement'));
+    await act(async () => { completeOld(json(snapshot())); });
+    expect(screen.getByTestId('session-id')).toHaveTextContent('replacement');
+  });
+
+  it.each(['Current logout', 'All logout'])('never restores an old refresh after %s', async (control) => {
+    let completeOld!: (value: Response) => void;
+    const old = new Promise<Response>((resolve) => { completeOld = resolve; });
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(snapshot()))
+      .mockReturnValueOnce(old)
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    renderSession();
+    await screen.findByText('Business content');
+    fireEvent.click(screen.getByText('Refresh session'));
+    fireEvent.click(screen.getByText(control));
+    await screen.findByText('Email sign-in');
+    await act(async () => { completeOld(json(snapshot())); });
+    expect(screen.getByTestId('session-id')).toHaveTextContent('absent');
+    expect(screen.queryByText('Business content')).not.toBeInTheDocument();
+  });
+
+  it('enforces a same-session MFA downgrade on focus and clears its old proof', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(json(snapshot()));
+    renderSession(true);
+    await screen.findByText('Business content');
+    storeDashboardStepUpProof({ proofToken: 'old-proof', expiresAt: new Date(Date.now() + 600_000).toISOString() }, 'session-1');
+    fetchMock.mockResolvedValueOnce(json(snapshot({ mfaVerified: false })))
+      .mockResolvedValueOnce(json({ enabled: true, recoveryCodesRemaining: 5 }));
+    fireEvent.focus(window);
+    expect(await screen.findByText('Verify your authenticator code')).toBeInTheDocument();
+    expect(screen.queryByText('Business content')).not.toBeInTheDocument();
+    expect(getDashboardStepUpToken()).toBeNull();
+  });
+
   it.each(['Current logout', 'All logout'])('revokes %s before clearing local authentication', async (control) => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(json(snapshot()));
     renderSession();

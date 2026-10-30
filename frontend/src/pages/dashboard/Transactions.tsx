@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useAppSession } from '@/components/AppSessionProvider'
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useAppSession } from '@/components/AppSessionProvider';
 import { AlertCircle, ArrowLeft, ArrowRight, Loader2, RefreshCw, X } from 'lucide-react';
 import { DashboardPage, DashboardCard } from './components/DashboardPage';
 import { CopyButton } from '@/components/CopyButton';
@@ -97,6 +98,7 @@ function truncateAddress(address: string | null) {
 
 export default function TransactionsPage() {
   const { session, loading: authLoading } = useAppSession()
+  const sessionId = session?.sessionId;
   
 
   const [activeTab, setActiveTab] = useState<TabValue>('transactions');
@@ -119,6 +121,8 @@ export default function TransactionsPage() {
   const [srChainId, setSrChainId] = useState(0);
   const [srLoading, setSrLoading] = useState(true);
   const [srError, setSrError] = useState<string | null>(null);
+  const [txRefreshNonce, setTxRefreshNonce] = useState(0);
+  const [srRefreshNonce, setSrRefreshNonce] = useState(0);
 
   // Drawer state
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -129,51 +133,51 @@ export default function TransactionsPage() {
   const [drawerError, setDrawerError] = useState<string | null>(null);
   const [drawerRetryNonce, setDrawerRetryNonce] = useState(0);
 
-  const fetchTransactions = useCallback(async () => {
+  useEffect(() => {
+    const controller = new AbortController();
+    if (authLoading || !sessionId || activeTab !== 'transactions') {
+      setTxLoading(false);
+      return;
+    }
     setTxLoading(true);
     setTxError(null);
-    try {
-      const params: Record<string, unknown> = { page: txPage, limit: PAGE_SIZE };
-      if (txStatus) params.status = txStatus;
-      if (txChainId) params.chainId = txChainId;
-      const data = await listTransactionsAuth(params, undefined);
+    setTxItems([]);
+    setTxTotal(0);
+    const params = { page: txPage, limit: PAGE_SIZE, status: txStatus || undefined, chainId: txChainId || undefined };
+    void listTransactionsAuth(params, controller.signal).then((data) => {
+      if (controller.signal.aborted) return;
       setTxItems(data.items);
       setTxTotal(data.total);
-    } catch (err: unknown) {
-      setTxError(getApiErrorMessage(err));
-    } finally {
-      setTxLoading(false);
-    }
-  }, [txPage, txStatus, txChainId]);
-
-  const fetchSigningRequests = useCallback(async () => {
-    setSrLoading(true);
-    setSrError(null);
-    try {
-      const params: Record<string, unknown> = { page: srPage, limit: PAGE_SIZE };
-      if (srType) params.type = srType;
-      if (srStatus) params.status = srStatus;
-      if (srChainId) params.chainId = srChainId;
-      const data = await listSigningRequestsAuth(params, undefined);
-      setSrItems(data.items);
-      setSrTotal(data.total);
-    } catch (err: unknown) {
-      setSrError(getApiErrorMessage(err));
-    } finally {
-      setSrLoading(false);
-    }
-  }, [srPage, srType, srStatus, srChainId]);
+    }).catch((err: unknown) => {
+      if (!controller.signal.aborted) setTxError(getApiErrorMessage(err));
+    }).finally(() => {
+      if (!controller.signal.aborted) setTxLoading(false);
+    });
+    return () => controller.abort();
+  }, [authLoading, sessionId, activeTab, txPage, txStatus, txChainId, txRefreshNonce]);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!session) {
-      setTxLoading(false);
+    const controller = new AbortController();
+    if (authLoading || !sessionId || activeTab !== 'signing-requests') {
       setSrLoading(false);
       return;
     }
-    if (activeTab === 'transactions') fetchTransactions();
-    else fetchSigningRequests();
-  }, [authLoading, session, activeTab, fetchTransactions, fetchSigningRequests]);
+    setSrLoading(true);
+    setSrError(null);
+    setSrItems([]);
+    setSrTotal(0);
+    const params = { page: srPage, limit: PAGE_SIZE, type: srType || undefined, status: srStatus || undefined, chainId: srChainId || undefined };
+    void listSigningRequestsAuth(params, controller.signal).then((data) => {
+      if (controller.signal.aborted) return;
+      setSrItems(data.items);
+      setSrTotal(data.total);
+    }).catch((err: unknown) => {
+      if (!controller.signal.aborted) setSrError(getApiErrorMessage(err));
+    }).finally(() => {
+      if (!controller.signal.aborted) setSrLoading(false);
+    });
+    return () => controller.abort();
+  }, [authLoading, sessionId, activeTab, srPage, srType, srStatus, srChainId, srRefreshNonce]);
 
   const handleTxStatusChange = useCallback((value: string) => {
     setTxPage(1);
@@ -261,27 +265,11 @@ export default function TransactionsPage() {
     };
   }, [drawerOpen, drawerId, drawerType, drawerRetryNonce]);
 
-  // Lock body scroll when drawer is open
   useEffect(() => {
-    if (drawerOpen) {
-      const original = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = original;
-      };
-    }
-  }, [drawerOpen]);
-
-  // Close on Escape
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') closeDrawer();
-    }
-    if (drawerOpen) {
-      window.addEventListener('keydown', onKeyDown);
-      return () => window.removeEventListener('keydown', onKeyDown);
-    }
-  }, [drawerOpen, closeDrawer]);
+    setDrawerOpen(false);
+    setDrawerData(null);
+    setDrawerError(null);
+  }, [sessionId]);
 
   const txTotalPages = Math.max(1, Math.ceil(txTotal / PAGE_SIZE));
   const srTotalPages = Math.max(1, Math.ceil(srTotal / PAGE_SIZE));
@@ -321,7 +309,7 @@ export default function TransactionsPage() {
           onStatusChange={handleTxStatusChange}
           onChainChange={handleTxChainChange}
           onPageChange={setTxPage}
-          onRefresh={fetchTransactions}
+          onRefresh={() => setTxRefreshNonce((nonce) => nonce + 1)}
           onRowClick={openTransactionDrawer}
         />
       ) : (
@@ -339,7 +327,7 @@ export default function TransactionsPage() {
           onStatusChange={handleSrStatusChange}
           onChainChange={handleSrChainChange}
           onPageChange={setSrPage}
-          onRefresh={fetchSigningRequests}
+          onRefresh={() => setSrRefreshNonce((nonce) => nonce + 1)}
           onRowClick={openSigningRequestDrawer}
         />
       )}
@@ -389,6 +377,24 @@ interface DetailDrawerProps {
 
 function DetailDrawer({ open, onClose, title, children }: DetailDrawerProps) {
   const [mounted, setMounted] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialog.showModal();
+    closeButtonRef.current?.focus();
+    return () => {
+      dialog.close();
+      document.body.style.overflow = originalOverflow;
+      if (opener?.isConnected) opener.focus();
+    };
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -399,8 +405,15 @@ function DetailDrawer({ open, onClose, title, children }: DetailDrawerProps) {
     }
   }, [open]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+  return createPortal(
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="drawer-title"
+      aria-modal="true"
+      onCancel={(event) => { event.preventDefault(); onClose(); }}
+      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-0 bg-transparent p-0 backdrop:bg-transparent"
+    >
+    <div className="relative flex h-full justify-end">
       {/* Backdrop */}
       <div
         className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
@@ -415,9 +428,6 @@ function DetailDrawer({ open, onClose, title, children }: DetailDrawerProps) {
         className={`relative z-10 flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-300 ease-out md:w-[420px] ${
           mounted ? 'translate-x-0' : 'translate-x-full'
         }`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="drawer-title"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-brand-border px-5 py-4">
@@ -425,6 +435,7 @@ function DetailDrawer({ open, onClose, title, children }: DetailDrawerProps) {
             {title}
           </h2>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
             className="rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-brand-bg hover:text-brand-text"
             aria-label="Close drawer"
@@ -437,6 +448,8 @@ function DetailDrawer({ open, onClose, title, children }: DetailDrawerProps) {
         <div className="flex-1 overflow-y-auto p-5">{children}</div>
       </div>
     </div>
+    </dialog>,
+    document.body,
   );
 }
 
@@ -488,7 +501,7 @@ function TransactionDetailContent({ data }: { data: TransactionDetail }) {
           mono
         />
         <p className="text-xs leading-5 text-brand-muted">
-          Address recorded for this execution: the user wallet for session-key execution or the TEE signer for EOA execution.
+          Address recorded for this execution: the user wallet for session-key execution or the TEE signer for historical EOA execution.
         </p>
         <DetailField
           label="Operation Type"
@@ -623,6 +636,7 @@ function TransactionList({
       <DashboardCard title="Filters" description="Narrow down transaction history.">
         <div className="flex flex-wrap gap-3">
           <select
+            aria-label="Transaction status"
             value={status}
             onChange={(e) => onStatusChange(e.target.value)}
             className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-accent/30"
@@ -632,6 +646,7 @@ function TransactionList({
             ))}
           </select>
           <select
+            aria-label="Transaction chain"
             value={chainId}
             onChange={(e) => onChainChange(Number(e.target.value))}
             className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-accent/30"
@@ -681,14 +696,14 @@ function TransactionList({
                   <th className="pb-3 pr-4">API Key</th>
                   <th className="pb-3 pr-4">Created</th>
                   <th className="pb-3">Completed</th>
+                  <th className="pb-3">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border">
                 {items.map((tx) => (
                   <tr
                     key={tx.id}
-                    onClick={() => onRowClick(tx.id)}
-                    className="group cursor-pointer transition-colors hover:bg-brand-accent/5"
+                    className="group transition-colors hover:bg-brand-accent/5"
                   >
                     <td className="py-3 pr-4">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${statusBadge(tx.status)}`}>
@@ -708,6 +723,11 @@ function TransactionList({
                     </td>
                     <td className="py-3 text-brand-muted" title={formatFullDate(tx.completedAt)}>
                       {formatRelativeTime(tx.completedAt)}
+                    </td>
+                    <td className="py-3">
+                      <button type="button" onClick={() => onRowClick(tx.id)} aria-label={`View transaction ${tx.id}`} className="rounded px-2 py-1 text-brand-accent underline focus-visible:outline-2">
+                        View details
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -773,6 +793,7 @@ function SigningRequestList({
       <DashboardCard title="Filters" description="Narrow down signing request history.">
         <div className="flex flex-wrap gap-3">
           <select
+            aria-label="Signing request type"
             value={type}
             onChange={(e) => onTypeChange(e.target.value)}
             className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-accent/30"
@@ -782,6 +803,7 @@ function SigningRequestList({
             ))}
           </select>
           <select
+            aria-label="Signing request status"
             value={status}
             onChange={(e) => onStatusChange(e.target.value)}
             className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-accent/30"
@@ -791,6 +813,7 @@ function SigningRequestList({
             ))}
           </select>
           <select
+            aria-label="Signing request chain"
             value={chainId}
             onChange={(e) => onChainChange(Number(e.target.value))}
             className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-accent/30"
@@ -840,14 +863,14 @@ function SigningRequestList({
                   <th className="pb-3 pr-4">API Key</th>
                   <th className="pb-3 pr-4">Created</th>
                   <th className="pb-3">Completed</th>
+                  <th className="pb-3">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border">
                 {items.map((sr) => (
                   <tr
                     key={sr.id}
-                    onClick={() => onRowClick(sr.id)}
-                    className="group cursor-pointer transition-colors hover:bg-brand-accent/5"
+                    className="group transition-colors hover:bg-brand-accent/5"
                   >
                     <td className="py-3 pr-4">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${statusBadge(sr.status)}`}>
@@ -871,6 +894,11 @@ function SigningRequestList({
                     </td>
                     <td className="py-3 text-brand-muted" title={formatFullDate(sr.completedAt)}>
                       {formatRelativeTime(sr.completedAt)}
+                    </td>
+                    <td className="py-3">
+                      <button type="button" onClick={() => onRowClick(sr.id)} aria-label={`View signing request ${sr.id}`} className="rounded px-2 py-1 text-brand-accent underline focus-visible:outline-2">
+                        View details
+                      </button>
                     </td>
                   </tr>
                 ))}

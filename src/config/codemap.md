@@ -15,6 +15,7 @@ Centralized, environment-backed application configuration for the SOFA ONE backe
   - `database`: `{ url }`
   - `stripe`: `{ secretKey, webhookSecret, successUrl, cancelUrl }`
   - `billing.usdc`: `{ enabled, treasuryAddresses: { 1, 11155111, 8453, 84532 }, rpcUrls: { 1, 11155111, 8453, 84532 }, requiredConfirmations (default 5), quoteTtlSeconds (default 86400) }`
+  - `billing.outbound`: `{ requiredConfirmations (default 5) }`, exclusive to outbound receipt reconciliation; independent of USDC payment-claim snapshots and ordinary UI receipt queries.
   - `rpc.urls`: shared supported-chain HTTPS URLs; defaults to each registry chain's first HTTPS RPC, overridden by `RPC_URLS__<chainId>`. No runtime failover.
   - `security`: `{ trustProxy }`
   - `chain`: `{ defaultChainId }` (default `84532`)
@@ -34,6 +35,7 @@ Centralized, environment-backed application configuration for the SOFA ONE backe
 - **Validation rules**:
   - Required (non-empty): `OPENFORT_API_KEY`, `OPENFORT_WALLET_SECRET`, `DATABASE_URL`, `MFA_SECRET_ENCRYPTION_KEY` (must be 32 base64-encoded bytes).
   - `NODE_ENV` must be a valid `Environment` value; `PORT` numeric (default 3001); `OPENFORT_TIMEOUT_MS` int 1–120000; `BILLING_USDC_REQUIRED_CONFIRMATIONS` int 5–100 (default 5); `BILLING_USDC_QUOTE_TTL_SECONDS` int 1–604800 (default 86400).
+  - `BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS` integer 1–100 (default 5), validated even when the optional incoming USDC rail is disabled.
   - Production-only: `CORS_ORIGIN` must be set.
   - Optional HTTPS URLs (validated whenever provided): `SECURITY_EVENTS_SIEM_WEBHOOK_URL`, `STEP_UP_OTP_WEBHOOK_URL`, `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL`, and USDC RPC URLs.
   - `DEFAULT_CHAIN_ID` must be an integer in `SUPPORTED_CHAIN_IDS` (default `84532`).

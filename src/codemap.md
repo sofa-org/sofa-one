@@ -77,9 +77,9 @@ formatting, throttling, request correlation) globally.
   returns a standardized `{ statusCode, code, message, requestId, timestamp, path }` envelope
   with sanitized messages (no hashes/URLs/paths/stacks leak).
 - **Resilient throttling.** `ResilientThrottlerStorage` uses Redis when available and
-  fail-closed to in-memory otherwise; `ApiKeyThrottlerGuard` buckets by API-key prefix (or IP
-  for JWT auth); named `short` (20/10s) and `medium` (100/60s) throttlers with route-level
-  overrides.
+  degrades to per-instance memory limits otherwise; this does not preserve a global
+  distributed limit. `ApiKeyThrottlerGuard` buckets by API-key prefix or client IP;
+  named `short` (20/10s) and `medium` (100/60s) throttlers have route-level overrides.
 
 ## Flow
 
@@ -94,10 +94,10 @@ formatting, throttling, request correlation) globally.
 3. **Public API-key path** (`sign`/`send`/`status`): `ApiKeyAuthGuard` (Argon2 verify every
    prefix candidate, reject frozen, IP allowlist, suspicious-use freeze, billing metering) →
    `ApiKeyPermissionGuard` (`canSign`/`canSendTransaction`/`canReadTransactionStatus`) →
-   service re-asserts permission → execution-mode strategy (`session_key` via Calibur agent
-   UserOp, or `eoa` via backend EOA gated by `EoaExecutionPolicyService`) → policy checks →
-   risk evaluation → wallet/chain-authorization readiness → idempotency → optional simulation
-   → Openfort submission → safe response shaping.
+   service re-asserts permission → sends require the user's registered, unexpired
+   Calibur session key and submit a UserOperation; restricted EOA typed-data signing
+   remains a separate policy-gated, non-broadcast path. Risk, grants, freeze,
+   destination/billing checks, idempotency and safe response shaping remain enforced.
 4. **Dashboard path** (wallets, transactions history, billing, MFA, API-key mgmt, security
    notifications, auth): `AppSessionGuard` + `FrontendOnlyGuard`; sensitive routes
     (withdrawals, withdrawal-addresses, API-key mutations/rotation, step-up) add
@@ -140,10 +140,11 @@ formatting, throttling, request correlation) globally.
   openapi.yaml; frontend-only routes require local MFA cookies plus FrontendOnlyGuard/unsafe CSRF
   checks; API-key management is never callable by API keys; `FrontendOnlyGuard` is never added
   to public routes.
-- **Fail-closed everywhere.** Env validation aborts startup; trust-proxy/CORS required in
-  production; throttling falls back to in-memory (never bypassed); on-chain session-key and
-  EOA policy checks deny on RPC/policy unavailability; billing metering blocks (503) if it
-  cannot persist and surfaces quota as 429.
+- **Fail-closed authorization and persistence.** Env validation aborts startup;
+  trust-proxy/CORS are required in production; on-chain session-key and EOA policy
+  checks deny on RPC/policy unavailability; billing metering blocks (503) if it cannot
+  persist and surfaces quota as 429. Redis loss degrades to per-instance throttling,
+  not globally fail-closed rate limiting. Shutdown signals invoke Nest cleanup hooks.
 - **Safe responses and telemetry.** Public transaction status never exposes calldata,
   `requestHash`, or `interactionsHash`; error messages are sanitized; security-event metadata
   and SIEM payloads never contain raw keys, secrets, full calldata/typed data, or signatures.

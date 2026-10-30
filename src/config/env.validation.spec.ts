@@ -167,6 +167,25 @@ describe('environment validation', () => {
     );
   });
 
+  it.each(['0', '-1', '1.5', '101', 'NaN', ''])(
+    'rejects invalid outbound confirmation threshold %j',
+    (value) => {
+      expect(() => validate({ ...baseConfig, BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: value }))
+        .toThrow();
+    },
+  );
+
+  it('defaults outbound confirmations independently from incoming USDC claims', () => {
+    expect(validate({ ...baseConfig, BILLING_USDC_REQUIRED_CONFIRMATIONS: '10' }))
+      .toEqual(expect.objectContaining({
+        BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: 5, BILLING_USDC_REQUIRED_CONFIRMATIONS: 10,
+      }));
+    expect(validate({ ...baseConfig, BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: '1' }))
+      .toEqual(expect.objectContaining({ BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: 1 }));
+    expect(validate({ ...baseConfig, BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: '100' }))
+      .toEqual(expect.objectContaining({ BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: 100 }));
+  });
+
   it('requires both treasuries and RPC URLs when USDC billing is enabled', () => {
     expect(() => validate({ ...baseConfig, BILLING_USDC_ENABLED: 'true' })).toThrow(
       'BILLING_USDC_TREASURY_ADDRESS_1 must be set when BILLING_USDC_ENABLED=true',

@@ -15,7 +15,7 @@ type EoaPolicyPrismaClient = {
   };
 };
 
-export type EoaExecutionOperation = 'sign' | 'send_transaction' | 'polymarket_order_sign';
+export type EoaExecutionOperation = 'sign' | 'polymarket_order_sign';
 export type EoaPrerequisiteOperation = 'polymarket_order_sign';
 
 export type EoaExecutionPolicyContext = {
