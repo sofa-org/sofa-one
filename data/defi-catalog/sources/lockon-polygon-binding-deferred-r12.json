@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "protocol": "LOCKON",
+  "observedAt": "2026-10-24",
+  "status": "deferred-deployment",
+  "scope": "Polygon expansion only; does not reject the independently bound Arbitrum admission.",
+  "reason": "The Arbitrum application bundle repeats its Arbitrum BasicIssuanceModule address in a Polygon config branch, but that exact address on Polygon is an EOA/no-code explorer page. Official Polygon LAI token is published and has a different controller, so cross-chain address reuse must not be treated as a reliable Polygon issuance deployment binding. No Polygon financial root is admitted from this ambiguous config. No shutdown, retirement or financial-safety claim is made.",
+  "selectedFunctions": [],
+  "deployments": [
+    {
+      "chainId": 137,
+      "address": "0xADb6d62E142A2f911Fb3c9Ca1c1D0fE5d9437252",
+      "sourceRef": "https://docs.lockon.finance/en/product/contracts.md",
+      "status": "official-token-only",
+      "currentController": "0x153e739B8823B277844Ad885A30AC5bD9DfB6E83",
+      "stateSourceRef": "https://polygonscan.com/readContract?m=normal&a=0xADb6d62E142A2f911Fb3c9Ca1c1D0fE5d9437252&v=0x1A06c5cA630Cff517F0E7E762c3C3759E12D1623",
+      "limitation": "Polygon token source explorer showed Exact Match Similar Match to 0x1A06c5cA630Cff517F0E7E762c3C3759E12D1623. No stronger exact deployed module grade is asserted; no token transfer or module-admin methods selected."
+    },
+    {
+      "chainId": 137,
+      "address": "0x018afBF49356138d7Ccf465F3F3420E233925E82",
+      "sourceRef": "https://polygonscan.com/address/0x018afBF49356138d7Ccf465F3F3420E233925E82#code",
+      "observedExplorerLabel": "Address (EOA); transactions 0; no verified contract source",
+      "match": null
+    }
+  ],
+  "applicationEvidence": {
+    "sourceRef": "https://arbitrum.app.lockon.finance/_next/static/chunks/pages/_app-3a145cc092170a36.js",
+    "sha256": "d2ada418b83b1adad8efa1a242f8d9c4a4ed2fc155c414bb665ba5750404c7e7",
+    "excerpt": "[f.wg.polygon]:{exchangeIssuanceZeroEx:\"0x7eEA5246D5fc47D97D04cE9Fa23640d821B86c79\",basicIssuanceModule:\"0x018afBF49356138d7Ccf465F3F3420E233925E82\",controller:\"0xA36c2B06aFc96Ffd52d148Ed6acbB9fe2Ab864Be\",indexStaking:null!=(n=y.env.NEXT_PUBLIC_POLYGON_INDEX_STAKING_ADDRESS)?n:\"\",lockStaking:null!=(i=y.env.NEXT_PUBLIC_POLYGON_LOCK_STAKING_ADDRESS)?i:\"\",airdrop:null!=(o=y.env.NEXT_PUBLIC_POLYGON_AIRDROP_ADDRESS)?o:\"\","
+  },
+  "sourceRefs": [
+    "https://docs.lockon.finance/en/product/contracts.md",
+    "https://arbitrum.app.lockon.finance/_next/static/chunks/pages/_app-3a145cc092170a36.js",
+    "https://polygonscan.com/address/0x018afBF49356138d7Ccf465F3F3420E233925E82#code"
+  ],
+  "limitation": "This is a precise source/deployment binding deferral only. It does not infer protocol shutdown from fetch failures, old source dates, absent TVL, liquidity or inactivity."
+}

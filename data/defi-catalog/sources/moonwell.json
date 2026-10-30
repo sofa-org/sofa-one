@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "moonwell",
+      "familyVersion": "v2",
+      "contracts": [
+        {
+          "chainId": 8453,
+          "address": "0xedc817a28e8b93b03976fbd4a3ddbc9f7d176c22",
+          "contractName": "Moonwell Base mUSDC",
+          "sourceRefs": ["moonwell-base-contracts"],
+          "abiFunctions": [
+            {"type":"function","name":"mint","stateMutability":"nonpayable","inputs":[{"name":"mintAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"redeem","stateMutability":"nonpayable","inputs":[{"name":"redeemTokens","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"redeemUnderlying","stateMutability":"nonpayable","inputs":[{"name":"redeemAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"borrow","stateMutability":"nonpayable","inputs":[{"name":"borrowAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"repayBorrow","stateMutability":"nonpayable","inputs":[{"name":"repayAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]}
+          ]
+        },
+        {
+          "chainId": 8453,
+          "address": "0x628ff693426583d9a7fb391e54366292f509d457",
+          "contractName": "Moonwell Base mWETH",
+          "sourceRefs": ["moonwell-base-contracts"],
+          "abiFunctions": [
+            {"type":"function","name":"mint","stateMutability":"nonpayable","inputs":[{"name":"mintAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"redeem","stateMutability":"nonpayable","inputs":[{"name":"redeemTokens","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"redeemUnderlying","stateMutability":"nonpayable","inputs":[{"name":"redeemAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"borrow","stateMutability":"nonpayable","inputs":[{"name":"borrowAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"repayBorrow","stateMutability":"nonpayable","inputs":[{"name":"repayAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]}
+          ]
+        },
+        {
+          "chainId": 8453,
+          "address": "0x703843c3379b52f9ff486c9f5892218d2a065cc8",
+          "contractName": "Moonwell Base mUSDbC",
+          "sourceRefs": ["moonwell-base-contracts"],
+          "abiFunctions": [
+            {"type":"function","name":"mint","stateMutability":"nonpayable","inputs":[{"name":"mintAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"redeem","stateMutability":"nonpayable","inputs":[{"name":"redeemTokens","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"redeemUnderlying","stateMutability":"nonpayable","inputs":[{"name":"redeemAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"borrow","stateMutability":"nonpayable","inputs":[{"name":"borrowAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]},
+            {"type":"function","name":"repayBorrow","stateMutability":"nonpayable","inputs":[{"name":"repayAmount","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]}
+          ]
+        },
+        {
+          "chainId": 8453,
+          "address": "0xfbb21d0380bee3312b33c4353c8936a0f13ef26c",
+          "contractName": "Moonwell Base Comptroller",
+          "sourceRefs": ["moonwell-base-contracts"],
+          "abiFunctions": [
+            {"type":"function","name":"enterMarkets","stateMutability":"nonpayable","inputs":[{"name":"mTokens","type":"address[]"}],"outputs":[{"name":"","type":"uint256[]"}]},
+            {"type":"function","name":"exitMarket","stateMutability":"nonpayable","inputs":[{"name":"mToken","type":"address"}],"outputs":[{"name":"","type":"uint256"}]}
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {"sourceId":"moonwell-base-contracts","url":"https://docs.moonwell.fi/moonwell/protocol-information/contracts.md","retrievedAtUtc":"2026-10-04","evidence":"Official Moonwell contract directory lists the Base mUSDC, mWETH, mUSDbC and Comptroller addresses. Address listings do not establish current enabled-market membership, runtime code, liquidity, or funded execution."},
+    {"sourceId":"moonwell-v2-contract-source","url":"https://raw.githubusercontent.com/moonwell-fi/moonwell-contracts-v2/6914f05d052e026d909ea14058fc1778bec7bf5a/src/MErc20.sol","retrievedAtUtc":"2026-10-04","evidence":"Pinned official repository commit; fixed declarations cross-checked against MTokenInterfaces.sol, MErc20.sol, ComptrollerInterface.sol, Comptroller.sol, and TokenErrorReporter.sol at the same commit. Source-to-deployment implementation correspondence was not independently verified."}
+  ],
+  "unresolved": []
+}

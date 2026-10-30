@@ -1,0 +1,3 @@
+# Enso registry candidate
+
+`index.ts` contains one inactive-lane candidate represented as an active fragment only for isolated manifest tests: Ethereum `routeSingle((uint8,bytes),bytes)`, bound to the exact mandatory `enso-static-weiroll-v1` scope and its three fixed baseline child identities. It is not imported by the production registry, catalog admission, generated catalog, or policy service. `index.spec.ts` compares the literal candidate to the retained address-bound source snapshot and immutable v7 child identities. This fragment does not authorize execution or automatic grants and does not prove current constructor/runtime identity, liquidity, funded execution, or complete workflows.

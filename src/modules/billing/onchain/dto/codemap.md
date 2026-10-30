@@ -6,9 +6,9 @@ Request-body DTOs for the dashboard-only native USDC invoice payment flow
 (`UsdcPaymentController`). This folder defines the **only** client-supplied
 inputs for the USDC endpoints:
 
-- `UsdcQuoteDto` — optional chain selector for `POST /v1/billing/invoices/:id/usdc/quote`.
-- `UsdcClaimDto` — `{ paymentAttemptId, txHash }` for `POST /v1/billing/invoices/:id/usdc/claim`.
-- `UsdcCancelDto` — `{ paymentAttemptId }` for `POST /v1/billing/invoices/:id/usdc/cancel` (BILL-003).
+- `UsdcQuoteDto` — optional chain selector for `POST /billing/invoices/:id/usdc/quote`.
+- `UsdcClaimDto` — `{ paymentAttemptId, txHash }` for `POST /billing/invoices/:id/usdc/claim`.
+- `UsdcCancelDto` — `{ paymentAttemptId }` for `POST /billing/invoices/:id/usdc/cancel` (BILL-003).
 
 The DTOs deliberately expose a minimal surface: every payment fact (token,
 treasury, RPC, decimals, amount, payer, chain, confirmations) is derived
@@ -33,21 +33,21 @@ Cancel accepts no hash, receipt, chain, or provider fields.
 
 ## Flow
 
-1. `POST /v1/billing/invoices/:id/usdc/quote`
+1. `POST /billing/invoices/:id/usdc/quote`
    - `@Body()` is parsed/validated as `UsdcQuoteDto`.
    - `body.chainId` (may be `undefined`) is forwarded to
      `UsdcPaymentService.quote(userId, id, body.chainId)`.
-2. `POST /v1/billing/invoices/:id/usdc/claim`
+2. `POST /billing/invoices/:id/usdc/claim`
    - `@Body()` is parsed/validated as `UsdcClaimDto`.
    - The whole DTO is forwarded to `UsdcPaymentService.claim(userId, id, body)`,
      which verifies `txHash` against the attempt's server-side quote snapshot
      and advances the payment lifecycle.
-3. `POST /v1/billing/invoices/:id/usdc/cancel` (BILL-003)
+3. `POST /billing/invoices/:id/usdc/cancel` (BILL-003)
    - `@Body()` is parsed/validated as `UsdcCancelDto`.
    - `body.paymentAttemptId` is forwarded to
      `UsdcPaymentService.cancel(userId, id, body.paymentAttemptId)`.
 
-All three routes are guarded by `OpenfortUserGuard` + `FrontendOnlyGuard`; claim
+All three routes use AppSessionGuard + FrontendOnlyGuard and mutation Origin/CSRF; claim
 carries a tight route-level `@Throttle` (5/60s, 20/3600s) for RPC amplification;
 cancel is throttled (10/60s, 60/3600s) as a write path.
 

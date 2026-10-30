@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Hats Finance",
+  "verifiedAt": "2026-10-24",
+  "status": "rejected",
+  "reason": "Official final wind-down of hosted operations; retired hosted product and support is not admitted even where immutable contracts continue and direct withdrawals remain possible.",
+  "selectedFunctions": [],
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://x.com/HatsFinance/status/1995478325641286130",
+      "kind": "primary official announcement, search-index excerpt",
+      "quote": "Important announcement: Sadly, we’re announcing that Hats.finance is entering a final wind-down of its hosted operations. After a lot of reflection, we’ve reached the point where keeping a centralized UI and servers running is no longer sustainable",
+      "additionalIndexedQuote": "The Hats.finance hosted frontend and backend (UI and servers) are expected to go offline on Dec 31, 2025.",
+      "retrievalLimit": "Direct X fetch unavailable because automated X access requires xAI credentials; indexed official post and corroborating coverage retained without representing the full post as fetched."
+    },
+    {
+      "sourceRef": "https://www.bitget.com/news/detail/12560605091202",
+      "kind": "secondary ChainCatcher coverage, fetched",
+      "publishedAt": "2025-12-01",
+      "quote": "The team believes that continuing to operate a centralized user interface (UI) and server is no longer sustainable, and there are currently no plans to adopt a new legal or operational framework to maintain this custodial architecture.",
+      "contractCaveat": "The Hats protocol will remain deployed on-chain and managed by the DAO, with the core contracts intended to continue running as coded.",
+      "withdrawalQuote": "Users can submit withdrawal requests through the custodial UI before December 17; after that, withdrawals must be completed by interacting directly with the contract."
+    }
+  ],
+  "primaryDeploymentReference": {
+    "sourceRef": "https://docs.hats.finance/contracts-and-audit/hats-contracts",
+    "chainId": 1,
+    "address": "0x571f39d351513146248acafa9d0509319a327c4d",
+    "description": "Legacy official HATVaults reference, not activated and not asserted to be current product. Full implementation inventory intentionally not pursued after lifecycle rejection."
+  },
+  "limitations": [
+    "No assertion that immutable contracts cease functioning or funds are inaccessible.",
+    "The rejection is based on explicit final wind-down, not failed app fetch, low deposits, old code or financial safety research.",
+    "No capability admission or exit-only exception."
+  ],
+  "sourceRefs": ["https://hats.finance/", "https://docs.hats.finance/contracts-and-audit/hats-contracts", "https://x.com/HatsFinance/status/1995478325641286130", "https://www.bitget.com/news/detail/12560605091202"]
+}

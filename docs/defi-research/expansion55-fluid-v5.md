@@ -1,0 +1,11 @@
+# Fluid Base v5 expansion candidate
+
+This source-qualified fixture declares exactly 17 functions on Base (8453): eight fToken overloads each on fUSDC (`0xf42f5795D9ac7e9D757dB633D693cD548Cfd9169`) and fWETH (`0x9272D6153133175175Bc276512B2336BE3931CE9`), plus payable `operate(uint256,int256,int256,address)` on Vault T1 ETH GHO (`0x03271C337c86a6Fd89625A2820e48621DC2a128b`). Families are `fluid-lending:v1` and `fluid-vault-t1:v1`. This fixture is not runtime-wired, production-admitted, or auto-granted.
+
+## Pinned artifact evidence
+
+The three exact official deployment JSON artifacts at Instadapp/fluid-contracts-public revision `9496626f71a761fc296dc3b2efbfd54c504e18f0` were retrieved 2026-10-04. Their embedded `.address` fields matched the addresses above. Their embedded ABIs supplied the declarations transcribed in the v5 source file: eight nonpayable methods per fToken and payable Vault `operate`. Artifact files establish source declarations and listed addresses, not current proxy/runtime implementation identity, liquidity, solvency, or funded user-operation success.
+
+Every fToken overload has a selector-qualified capability ID, so granting a two-argument call does not grant its corresponding three/four-argument overload. Operations are deposit, mint, withdraw, and redeem; precise arguments and output names follow the artifact. Vault `operate` uses NFT ID zero to open a position; positive collateral/debt deltas deposit/borrow and negative deltas withdraw/repay; a zero recipient means the caller. These are source semantics, not platform financial limits or guarantees; protocol state can still reject calls. This is position operation, not generic NFT transfer or arbitrary operator execution.
+
+All arguments remain caller-selected, including asset/share amount, recipient, owner, min-output/max-input bounds, position ID, signed collateral/debt changes, and native value. No platform cap, ownership/asset/recipient validation, solvency or health-factor filter is added. Underlying-token approvals remain separate and are never automatic; artifact names do not establish an asset binding, and no getter is admitted as an execution capability. No Fluid DEX, other factories, native fTokens, signature, Permit2, or router surface is included. Existing catalog IDs and grants remain untouched.

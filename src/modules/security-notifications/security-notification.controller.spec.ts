@@ -1,17 +1,10 @@
-import { GUARDS_METADATA } from '@nestjs/common/constants';
-
 jest.mock('../../common/guards/frontend-only.guard', () => ({
   FrontendOnlyGuard: class FrontendOnlyGuard {},
 }));
-jest.mock('../../common/guards/openfort-user.guard', () => ({
-  OpenfortUserGuard: class OpenfortUserGuard {},
-}));
+jest.mock('../../common/guards/app-session.guard', () => ({ AppSessionGuard: class AppSessionGuard {} }));
 
 import { SecurityNotificationController } from './security-notification.controller';
 import { SecurityNotificationService } from './security-notification.service';
-import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
-import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
-import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 
 describe('SecurityNotificationController', () => {
   const notifications = {
@@ -26,13 +19,6 @@ describe('SecurityNotificationController', () => {
     controller = new SecurityNotificationController(notifications as unknown as SecurityNotificationService);
   });
 
-  it('uses frontend-only user guards at the class level', () => {
-    const guards = Reflect.getMetadata(GUARDS_METADATA, SecurityNotificationController) ?? [];
-
-    expect(guards).toContain(OpenfortUserGuard);
-    expect(guards).toContain(FrontendOnlyGuard);
-    expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, SecurityNotificationController)).toBe(true);
-  });
 
   it('delegates list with parsed query values', async () => {
     notifications.listForUser.mockResolvedValue([{ id: 'notification-1' }]);

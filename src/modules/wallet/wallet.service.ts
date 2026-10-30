@@ -12,15 +12,13 @@ import {
 import { Prisma } from '@prisma/client';
 import {
   createPublicClient,
-  encodeAbiParameters,
   encodeFunctionData,
   formatEther,
   formatUnits,
-  hashMessage,
-  hashTypedData,
   http,
   type Hex,
   type PublicClient,
+  recoverAddress,
 } from 'viem';
 import { PrismaService } from '../../core/database/prisma.service';
 import { OpenfortService } from '../../core/openfort/openfort.service';
@@ -29,7 +27,7 @@ import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { hashRequest } from '../../common/utils/request-hash';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { AgentStatus } from '../../common/agent/agent-status';
-import type { ExecutionMode, SignDto, SignMessage } from './dto/sign.dto';
+import type { ExecutionMode, SignDto } from './dto/sign.dto';
 import { ListSigningRequestsQueryDto } from './dto/list-signing-requests-query.dto';
 import type { WithdrawDto } from './dto/withdraw.dto';
 import type { CreateWithdrawalAddressDto } from './dto/withdrawal-address.dto';
@@ -39,8 +37,16 @@ import { EoaExecutionPolicyService } from '../eoa-execution/eoa-execution-policy
 import { SigningPolicyService } from './signing-policy.service';
 import { RiskEvaluationService } from '../security-events/risk-evaluation.service';
 import { SecurityEventService } from '../security-events/security-event.service';
-import { SessionKeyPolicyService } from '../session-key/session-key-policy.service';
 import { BillingDebtService } from '../billing/billing-debt.service';
+import { DefiPolicyService, DefiPolicyDenial } from '../defi';
+import { validatePolymarketClobOrder, polymarketOrderDigest, polymarketWrapperDigest, type ValidatedPolymarketOrder } from '../defi/signing/polymarket-clob-order';
+import { buildPolymarketPoly1271Envelope } from '../defi/signing/polymarket-poly1271-envelope';
+import { polymarketDepositBatchDigest, validatePolymarketDepositBatch, type ValidatedPolymarketDepositBatch } from '../defi/signing/polymarket-deposit-batch';
+import { PolymarketDepositWalletVerifierService, type DepositWalletEvidence } from './polymarket-deposit-wallet-verifier.service';
+import { PolymarketSigningBudgetService } from './polymarket-signing-budget.service';
+import { PolymarketDepositBatchVerifierService } from './polymarket-deposit-batch-verifier.service';
+import type { PolymarketDepositBatchEvidence } from './polymarket-deposit-batch-verifier.types';
+import { normalizeEoaSignature } from './eoa-signature';
 
 /** Fixed public reason for BILL-016 sign blocks (no payload fields). */
 const SIGNING_BLOCKED_BY_DESTINATION_PROTECTION_REASON =
@@ -84,14 +90,15 @@ const ERC20_BALANCE_ABI = [
 
 type ApiKeySigningContext = {
   id?: string;
+  walletId?: string | null;
   keyPrefix?: string;
   name?: string | null;
   allowedIps?: string[] | null;
   expiresAt?: Date | string | null;
   canSign?: boolean;
   canUseEoaExecution?: boolean;
-  allowedContracts?: string[];
-  allowedFunctionSelectors?: string[];
+  allowedCapabilityIds?: string[];
+  capabilityMode?: 'all' | 'custom';
 };
 
 @Injectable()
@@ -104,16 +111,14 @@ export class WalletService {
     private readonly openfort: OpenfortService,
     private readonly withdrawalPolicy: WithdrawalPolicyService,
     private readonly billingDebt: BillingDebtService,
-    @Optional()
-    private readonly eoaExecutionPolicy?: EoaExecutionPolicyService,
-    @Optional()
-    private readonly signingPolicy?: SigningPolicyService,
-    @Optional()
-    private readonly requestContext?: RequestContextService,
-    @Optional()
-    private readonly riskEvaluation?: RiskEvaluationService,
-    @Optional()
-    private readonly sessionKeyPolicy?: SessionKeyPolicyService,
+    private readonly defiPolicy: DefiPolicyService,
+    private readonly eoaExecutionPolicy: EoaExecutionPolicyService,
+    private readonly signingPolicy: SigningPolicyService,
+    private readonly requestContext: RequestContextService,
+    private readonly riskEvaluation: RiskEvaluationService,
+    private readonly polymarketVerifier: PolymarketDepositWalletVerifierService,
+    private readonly polymarketBudget: PolymarketSigningBudgetService,
+    private readonly polymarketBatchVerifier: PolymarketDepositBatchVerifierService,
     /**
      * Audit only for destination-protection sign denials. Optional so missing
      * wiring never blocks the 403/503 fail-closed path; never used to gate the
@@ -132,14 +137,17 @@ export class WalletService {
     return client;
   }
 
-  private async selectWallet(userId: string, walletId?: string) {
-    const wallets = await this.prisma.userWallet.findMany({ where: { userId } });
-    if (wallets.length === 0) throw new NotFoundException('Wallet not found');
+  private async selectWallet(userId: string, walletId?: string, chainId?: number) {
+    const include = chainId === undefined
+      ? {}
+      : { chainAuthorizations: { where: { chainId: BigInt(chainId) } } };
     if (walletId) {
-      const wallet = wallets.find((candidate) => candidate.id === walletId);
+      const wallet = await this.prisma.userWallet.findFirst({ where: { id: walletId, userId }, include });
       if (!wallet) throw new NotFoundException('Wallet not found');
       return wallet;
     }
+    const wallets = await this.prisma.userWallet.findMany({ where: { userId }, include });
+    if (wallets.length === 0) throw new NotFoundException('Wallet not found');
     if (wallets.length === 1) return wallets[0];
     const eligible = wallets.filter((wallet) => wallet.status === 'active' && wallet.walletAddress && !wallet.frozenAt);
     if (eligible.length !== 1) throw new ConflictException('walletId is required when multiple wallets are available');
@@ -186,137 +194,119 @@ export class WalletService {
     if (!apiKeyRecord) {
       throw new UnauthorizedException('API key is required for signing');
     }
-    this.assertPermission(apiKeyRecord.canSign, 'API key is not allowed to sign messages');
+    const apiKey = apiKeyRecord;
+    if (!apiKey.walletId || (params.walletId && params.walletId !== apiKey.walletId)) throw new ForbiddenException('API key is not bound to the selected wallet');
+    this.assertPermission(apiKey.canSign, 'API key is not allowed to sign messages');
+    if (params.type !== 'typed_data') {
+      throw new ForbiddenException('API-key signing is limited to Polymarket ClobAuth typed data, V2 orders, and verifier-approved setup Batch typed data');
+    }
 
     const chainId = this.resolveSigningChainId(params);
-    if (chainId === undefined) {
-      throw new BadRequestException('chainId is required for API-key signing');
-    }
     getSupportedChain(chainId);
-    const executionMode = this.resolveExecutionMode(params.executionMode);
+    const executionMode = params.executionMode ?? 'eoa';
+    const isPolymarketOrder = params.typedData?.primaryType === 'TypedDataSign';
+    const isPolymarketDepositBatch = params.typedData?.primaryType === 'Batch';
+    if (isPolymarketOrder && chainId !== 137) throw new ForbiddenException('Polymarket order signing requires EOA mode on Polygon');
+    if (isPolymarketDepositBatch && chainId !== 137) throw new ForbiddenException('Polymarket DepositWallet Batch signing requires EOA mode on Polygon');
+    const orderPayload: ValidatedPolymarketOrder | undefined = isPolymarketOrder ? validatePolymarketClobOrder(params.typedData) : undefined;
+    const batchPayload: ValidatedPolymarketDepositBatch | undefined = isPolymarketDepositBatch ? validatePolymarketDepositBatch(params.typedData) : undefined;
     const policyContext = {
       userId,
       chainId,
       type: params.type,
       executionMode,
-      apiKeyId: apiKeyRecord.id,
-      apiKeyPrefix: apiKeyRecord.keyPrefix,
-      allowedContracts: apiKeyRecord.allowedContracts,
-      allowedFunctionSelectors: apiKeyRecord.allowedFunctionSelectors,
+      apiKeyId: apiKey.id,
+      apiKeyPrefix: apiKey.keyPrefix,
+      deferAllowedAudit: true,
     };
 
-    // BILL-016 root preflight: after API-key permission, before EOA / SigningPolicy /
-    // risk / session-key / Openfort. requireAddressAllowlist === true → fail closed
-    // for all message/typed_data × session_key/eoa. Empty allowlist / allowlisted
-    // contracts / cooldown / reauth cannot bypass. Query failures → 503.
+    // BILL-016 root preflight: before EOA / SigningPolicy / risk / Openfort.
+    // An enforced destination allowlist blocks every signing lane; query failures
+    // fail closed (503), and allowlisted contracts cannot bypass protection.
     // Does not revoke signatures already accepted before protection was enabled.
     const destinationProtectionEnabled = await this.isDestinationProtectionEnabled(userId);
     if (destinationProtectionEnabled) {
       await this.throwSigningBlockedByDestinationProtection({
         userId,
-        apiKeyId: apiKeyRecord.id,
-        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        apiKeyId: apiKey.id,
+        apiKeyPrefix: apiKey.keyPrefix,
         chainId,
         type: params.type,
         executionMode,
       });
     }
 
-    if (executionMode === 'eoa') {
-      this.assertPermission(
-        apiKeyRecord.canUseEoaExecution,
-        'API key is not allowed to use EOA execution',
-      );
-      await this.assertEoaExecutionAllowed(userId, apiKeyRecord, {
-        operation: 'sign',
-        chainId,
-        metadata: { type: params.type },
+    const activeWallet = await this.selectWallet(userId, apiKey.walletId, chainId);
+    this.assertWalletNotFrozen(activeWallet);
+    if (activeWallet.status !== 'active' || !activeWallet.walletAddress) throw new BadRequestException(`Wallet is not active (status: ${activeWallet.status})`);
+    let signingAuthorization: Awaited<ReturnType<DefiPolicyService['authorizeSigning']>>;
+    try {
+      signingAuthorization = await this.defiPolicy.authorizeSigning(batchPayload ?? orderPayload ?? params.typedData, {
+        userId, apiKeyId: apiKey.id!, apiKeyPrefix: apiKey.keyPrefix,
+        walletId: activeWallet.id, chainId, executionMode,
+        executionOwner: activeWallet.signerAddress!,
+        allowedCapabilityIds: apiKey.allowedCapabilityIds ?? [], capabilityMode: apiKey.capabilityMode,
+        walletAddress: activeWallet.walletAddress!, signerAddress: activeWallet.signerAddress!, agentOpenfortAccountId: activeWallet.agentOpenfortAccountId!,
       });
-      this.logSecurityWarning({
-        message: 'Privileged EOA signing requested',
-        userId,
-        chainId,
-        type: params.type,
-        executionMode,
-        apiKeyPrefix: apiKeyRecord.keyPrefix,
-      });
+    } catch (error) {
+      if (error instanceof DefiPolicyDenial) {
+        try { await this.defiPolicy.recordDenied(error); } catch { /* audit must not mask stable denial */ }
+        throw error.httpException;
+      }
+      throw error;
     }
+
+    this.assertPermission(
+      apiKey.canUseEoaExecution,
+      'API key is not allowed to use EOA execution',
+    );
+    if (isPolymarketOrder) {
+      await this.eoaExecutionPolicy.assertPolymarketOrderPrerequisites({ operation: 'polymarket_order_sign', userId, apiKeyId: apiKey.id, apiKeyPrefix: apiKey.keyPrefix, allowedIps: apiKey.allowedIps, clientIp: this.requestContext.getClientIp(), expiresAt: apiKey.expiresAt, chainId: 137, metadata: { type: 'typed_data' } });
+    } else {
+      await this.assertEoaExecutionAllowed(userId, apiKey, { operation: 'sign', chainId, metadata: { type: params.type } });
+    }
+    this.logSecurityWarning({
+      message: 'Privileged EOA signing requested',
+      userId,
+      chainId,
+      type: params.type,
+      executionMode,
+      apiKeyPrefix: apiKey.keyPrefix,
+    });
 
     // Apply signing policy checks
-    let typedDataSummary:
-      | {
-          typedDataPrimaryType?: string;
-          typedDataVerifyingContract?: string;
-          typedDataDomainName?: string;
-        }
-      | undefined = undefined;
-    if (params.type === 'message') {
-      await this.signingPolicy?.assertMessageSigningPolicy(params.message!, policyContext);
-    } else if (params.type === 'typed_data') {
-      typedDataSummary = await this.signingPolicy?.assertTypedDataSigningPolicy(
-        params.typedData!,
-        policyContext,
-      );
-    }
+    const typedDataSummary = await this.signingPolicy.assertTypedDataSigningPolicy(
+      signingAuthorization.payload as any,
+      policyContext,
+    );
 
     // Evaluate multi-factor risk before proceeding
-    const selectedWallet = await this.selectWallet(userId, params.walletId);
-    const wallet = await this.prisma.userWallet.findFirst({
-      where: { id: selectedWallet.id, userId },
-      include: { chainAuthorizations: { where: { chainId: BigInt(chainId) } } },
-    });
-    if (!wallet) throw new NotFoundException('Wallet not found');
-    this.assertWalletNotFrozen(wallet);
-    if (wallet.status !== 'active' || !wallet.walletAddress) throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
-    const riskAssessment = await this.riskEvaluation?.evaluateRisk({
+    const riskAssessment = await this.riskEvaluation.evaluateRisk({
       userId,
-      apiKeyId: apiKeyRecord.id,
-      walletId: wallet.id,
+      apiKeyId: apiKey.id,
+      walletId: activeWallet.id,
       operationType: 'signing',
     });
-    if (riskAssessment && riskAssessment.action !== 'allow') {
-      await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
+    if (riskAssessment.action !== 'allow') {
+      await this.riskEvaluation.enforceRiskAction(riskAssessment, {
         userId,
-        apiKeyId: apiKeyRecord.id,
-        walletId: wallet.id,
+        apiKeyId: apiKey.id,
+        walletId: activeWallet.id,
         operationType: 'signing',
       });
     }
 
-    if (executionMode === 'session_key') {
-      this.assertAgentWalletReady(wallet);
-      this.assertChainAuthorizationReady(wallet.chainAuthorizations?.[0]);
-      await this.sessionKeyPolicy?.assertSessionKeyAllowed({
-        userId,
-        walletId: wallet.id,
-        apiKeyId: apiKeyRecord?.id,
-        apiKeyPrefix: apiKeyRecord?.keyPrefix,
-        chainId,
-        accountAddress: wallet.walletAddress,
-        keyHash: wallet.agentKeyHash!,
-        operation: 'sign',
-        allowedContracts: apiKeyRecord?.allowedContracts,
-        allowedFunctionSelectors: apiKeyRecord?.allowedFunctionSelectors,
-        apiKeyExpiresAt: apiKeyRecord?.expiresAt,
-      });
-    } else {
-      this.assertBackendWalletReady(wallet);
-    }
-    const signingWalletAddress =
-      executionMode === 'eoa' ? wallet.agentWalletAddress! : wallet.walletAddress;
+    this.assertBackendWalletReady(activeWallet);
+    const signingWalletAddress = activeWallet.signerAddress!;
 
-    let data: string;
-    switch (params.type) {
-      case 'message':
-        // Compute EIP-191 personal message hash → raw ECDSA sign
-        data = this.hashSignMessage(params.message!);
-        break;
-      case 'typed_data': {
-        // Compute EIP-712 struct hash → raw ECDSA sign
-        const { domain, types, primaryType, message } = params.typedData!;
-        data = hashTypedData({ domain, types, primaryType, message } as any);
-        break;
-      }
+    const data = signingAuthorization.typedDataDigest;
+    let depositEvidence: DepositWalletEvidence | undefined;
+    let batchEvidence: PolymarketDepositBatchEvidence | undefined;
+    if (orderPayload) {
+      depositEvidence = await this.polymarketVerifier.verify(activeWallet.signerAddress!, orderPayload);
+    }
+    if (batchPayload) {
+      batchEvidence = await this.polymarketBatchVerifier.verify(batchPayload, activeWallet.signerAddress!);
     }
 
     // BILL-016 final check: same withdrawal_dest:<userId> advisory lock as address
@@ -326,17 +316,21 @@ export class WalletService {
     // committed first wins). Sign already accepted before enablement is out of scope.
     const signingBlockedAudit: SigningDestinationProtectionAudit = {
       userId,
-      apiKeyId: apiKeyRecord.id,
-      apiKeyPrefix: apiKeyRecord.keyPrefix,
-      walletId: wallet.id,
+      apiKeyId: apiKey.id,
+      apiKeyPrefix: apiKey.keyPrefix,
+      walletId: activeWallet.id,
       chainId,
       type: params.type,
       executionMode,
     };
     let signingRequest: { id: string };
+    let allowedEvent: unknown;
     try {
       signingRequest = await this.prisma.$transaction(async (txClient) => {
         await this.withdrawalPolicy.acquireUserDestinationLock(userId, txClient);
+        if (isPolymarketOrder) await this.polymarketBudget.acquireWalletLock(txClient, activeWallet.id);
+        if (isPolymarketOrder) this.polymarketVerifier.assertFresh(depositEvidence!, activeWallet.signerAddress!, orderPayload!);
+        if (isPolymarketDepositBatch) this.polymarketBatchVerifier.assertFresh(batchEvidence!, batchPayload!, activeWallet.signerAddress!);
         const protectionOn = await this.isDestinationProtectionEnabled(userId, txClient);
         if (protectionOn) {
           throw new DeferredSigningDestinationProtectionDenial(
@@ -344,15 +338,24 @@ export class WalletService {
             signingBlockedAudit,
           );
         }
+        await this.defiPolicy.assertSigningStillAuthorized(txClient, signingAuthorization, {
+          userId, apiKeyId: apiKey.id!, chainId, executionMode, type: params.type,
+          digest: data, walletId: activeWallet.id, walletAddress: activeWallet.walletAddress!,
+          signerAddress: activeWallet.signerAddress!, agentOpenfortAccountId: activeWallet.agentOpenfortAccountId!,
+        });
+        allowedEvent = isPolymarketOrder
+          ? await this.polymarketBudget.recordAcceptedInTransaction(txClient, { walletId: activeWallet.id, userId, apiKeyId: apiKey.id!, apiKeyPrefix: apiKey.keyPrefix })
+          : await this.defiPolicy.recordSigningAllowedInTx(txClient, signingAuthorization);
         return txClient.signingRequest.create({
           data: {
             userId,
-            apiKeyId: apiKeyRecord?.id,
+            apiKeyId: apiKey.id,
             authMethod: 'api_key',
-            apiKeyPrefix: apiKeyRecord?.keyPrefix,
-            apiKeyName: apiKeyRecord?.name,
+            apiKeyPrefix: apiKey.keyPrefix,
+            apiKeyName: apiKey.name,
             type: params.type,
             chainId: BigInt(chainId),
+            // Historical signing records retain the execution signer, not the user wallet.
             walletAddress: signingWalletAddress,
             requestHash: hashRequest({
               type: params.type,
@@ -365,14 +368,22 @@ export class WalletService {
             status: 'submitting',
           },
         });
-      });
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
     } catch (error) {
       // After TX rollback: destination advisory released — safe to audit once.
       if (error instanceof DeferredSigningDestinationProtectionDenial) {
         await this.recordSigningBlockedByDestinationProtection(error.audit);
         throw error.httpException;
       }
+      if (error instanceof DefiPolicyDenial) {
+        try { await this.defiPolicy.recordDenied(error); } catch { /* denial audit must not mask policy result */ }
+        throw error.httpException;
+      }
       throw error;
+    }
+    if (allowedEvent) {
+      if (isPolymarketOrder) await this.polymarketBudget.exportAccepted(allowedEvent);
+      else await this.defiPolicy.exportSigningAllowed(allowedEvent);
     }
 
     this.logger.log(
@@ -383,19 +394,36 @@ export class WalletService {
         chainId,
         type: params.type,
         executionMode,
-        ...(typedDataSummary ?? {}),
-        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        ...(!isPolymarketOrder ? typedDataSummary ?? {} : {}),
+        apiKeyPrefix: apiKey.keyPrefix,
       }),
     );
 
     let signature: string;
     try {
-      const accountId = wallet.agentOpenfortAccountId!;
-      const rawSignature = await this.openfort.signData(accountId, data);
-      signature =
-        executionMode === 'session_key'
-          ? this.wrapCaliburSignature(wallet.agentKeyHash!, rawSignature)
-          : rawSignature;
+      const accountId = activeWallet.agentOpenfortAccountId!;
+      const eoaSignature = normalizeEoaSignature(await this.openfort.signData(accountId, data));
+      if (isPolymarketOrder) {
+        if (!orderPayload || !depositEvidence) throw new Error('order evidence unavailable');
+        const recovered = await recoverAddress({ hash: polymarketWrapperDigest(orderPayload), signature: eoaSignature });
+        if (recovered.toLowerCase() !== activeWallet.signerAddress!.toLowerCase()) throw new Error('signer mismatch');
+        const envelope = buildPolymarketPoly1271Envelope(orderPayload, eoaSignature);
+        this.polymarketVerifier.assertFresh(depositEvidence, activeWallet.signerAddress!, orderPayload);
+        const finalEvidence = await this.polymarketVerifier.verify(activeWallet.signerAddress!, orderPayload);
+        if (finalEvidence.codeHash.toLowerCase() !== depositEvidence.codeHash.toLowerCase()) throw new Error('deposit wallet code changed');
+        await this.polymarketVerifier.verify1271(orderPayload, polymarketOrderDigest(orderPayload), envelope);
+        signature = eoaSignature;
+      } else if (isPolymarketDepositBatch) {
+        if (!batchPayload || !batchEvidence) throw new Error('batch evidence unavailable');
+        const recovered = await recoverAddress({ hash: polymarketDepositBatchDigest(batchPayload), signature: eoaSignature });
+        if (recovered.toLowerCase() !== activeWallet.signerAddress!.toLowerCase()) throw new Error('signer mismatch');
+        await this.polymarketBatchVerifier.assertFresh(batchEvidence, batchPayload, activeWallet.signerAddress!);
+        await this.polymarketBatchVerifier.verifySignature(batchPayload, activeWallet.signerAddress!, eoaSignature, batchEvidence);
+        this.polymarketBatchVerifier.assertFresh(batchEvidence, batchPayload, activeWallet.signerAddress!);
+        signature = eoaSignature;
+      } else {
+        signature = eoaSignature;
+      }
     } catch (err) {
       this.logger.error(
         this.logContext({
@@ -405,15 +433,30 @@ export class WalletService {
           chainId,
           type: params.type,
           executionMode,
-          apiKeyPrefix: apiKeyRecord.keyPrefix,
+          apiKeyPrefix: apiKey.keyPrefix,
         }),
-        err instanceof Error ? err.stack : undefined,
+        isPolymarketOrder || isPolymarketDepositBatch ? undefined : err instanceof Error ? err.stack : undefined,
       );
       await this.updateSigningRequestStatus(signingRequest.id, 'failed');
+      if (isPolymarketOrder) {
+        throw new ServiceUnavailableException({ code: 'POLYMARKET_SIGNING_FAILED', message: 'Polymarket order signing could not be verified' });
+      }
+      if (isPolymarketDepositBatch) {
+        throw new ServiceUnavailableException({ code: 'POLYMARKET_SIGNING_FAILED', message: 'Polymarket DepositWallet batch signing could not be verified' });
+      }
       throw err;
     }
 
     await this.updateSigningRequestStatus(signingRequest.id, 'signed');
+
+    if (isPolymarketDepositBatch && batchPayload && batchEvidence) {
+      try {
+        this.polymarketBatchVerifier.assertFresh(batchEvidence, batchPayload, activeWallet.signerAddress!);
+      } catch {
+        await this.updateSigningRequestStatus(signingRequest.id, 'failed');
+        throw new ServiceUnavailableException({ code: 'POLYMARKET_SIGNING_FAILED', message: 'Polymarket DepositWallet batch signing could not be verified' });
+      }
+    }
 
     this.logger.log(
       this.logContext({
@@ -423,13 +466,14 @@ export class WalletService {
         chainId,
         type: params.type,
         executionMode,
-        apiKeyPrefix: apiKeyRecord.keyPrefix,
+        apiKeyPrefix: apiKey.keyPrefix,
       }),
     );
 
     return {
       signature,
-      walletAddress: signingWalletAddress,
+      walletAddress: activeWallet.walletAddress!,
+      signerAddress: signingWalletAddress,
       type: params.type,
       executionMode,
     };
@@ -438,10 +482,10 @@ export class WalletService {
   /** Return detail for a single signing request (dashboard-only, ownership-enforced). */
   async getSigningRequestDetail(userId: string, signingRequestId: string, walletId?: string) {
     const wallet = walletId ? await this.selectWallet(userId, walletId) : undefined;
-    if (walletId && !wallet?.walletAddress && !wallet?.agentWalletAddress) {
+    if (walletId && !wallet?.walletAddress && !wallet?.signerAddress) {
       throw new NotFoundException('Signing request not found');
     }
-    const addresses = wallet ? [wallet.walletAddress, wallet.agentWalletAddress].filter((x): x is string => !!x) : [];
+    const addresses = wallet ? [wallet.walletAddress, wallet.signerAddress].filter((x): x is string => !!x) : [];
     const sr = await this.prisma.signingRequest.findFirst({
       where: { id: signingRequestId, userId, ...(wallet ? { walletAddress: { in: addresses } } : {}) },
     });
@@ -451,6 +495,7 @@ export class WalletService {
       id: sr.id,
       type: sr.type,
       chainId: sr.chainId ? Number(sr.chainId) : null,
+      // Historical records preserve their stored execution address.
       walletAddress: sr.walletAddress,
       status: sr.status,
       authMethod: sr.authMethod,
@@ -458,6 +503,40 @@ export class WalletService {
       apiKeyName: sr.apiKeyName,
       createdAt: sr.createdAt,
       completedAt: sr.completedAt,
+    };
+  }
+
+  /** Read safe wallet and chain-authorization metadata for the authenticated owner. */
+  async listApiKeyWallets(userId: string, walletId: string | null | undefined) {
+    if (!walletId) throw new UnauthorizedException('Invalid API key');
+    const wallets = await this.prisma.userWallet.findMany({
+      where: { userId, id: walletId },
+      select: {
+        id: true,
+        walletAddress: true,
+        signerAddress: true,
+        status: true,
+        frozenAt: true,
+        chainAuthorizations: {
+          select: { chainId: true, status: true, expiresAt: true },
+          orderBy: { chainId: 'asc' },
+        },
+      },
+      orderBy: { id: 'asc' },
+    });
+    return {
+      wallets: wallets.map(({ id, walletAddress, signerAddress, status, frozenAt, chainAuthorizations }) => ({
+        id,
+        walletAddress,
+        signerAddress: signerAddress ?? null,
+        status,
+        isFrozen: frozenAt !== null,
+        chainAuthorizations: chainAuthorizations.map(({ chainId, status: authorizationStatus, expiresAt }) => ({
+          chainId: Number(chainId),
+          status: authorizationStatus,
+          expiresAt: expiresAt?.toISOString() ?? null,
+        })),
+      })),
     };
   }
 
@@ -470,7 +549,7 @@ export class WalletService {
     const where: Record<string, unknown> = { userId };
     if (query.walletId) {
       const wallet = await this.selectWallet(userId, query.walletId);
-      const addresses = [wallet.walletAddress, wallet.agentWalletAddress].filter((x): x is string => !!x);
+      const addresses = [wallet.walletAddress, wallet.signerAddress].filter((x): x is string => !!x);
       if (addresses.length === 0) return { items: [], total: 0, page, limit };
       where.walletAddress = { in: addresses };
     }
@@ -500,6 +579,7 @@ export class WalletService {
         id: sr.id,
         type: sr.type,
         chainId: sr.chainId ? Number(sr.chainId) : null,
+        // Historical records preserve their stored execution address.
         walletAddress: sr.walletAddress,
         status: sr.status,
         apiKeyPrefix: sr.apiKeyPrefix,
@@ -511,10 +591,6 @@ export class WalletService {
       page,
       limit,
     };
-  }
-
-  private resolveExecutionMode(mode?: ExecutionMode): ExecutionMode {
-    return mode ?? 'session_key';
   }
 
   private assertPermission(allowed: boolean | undefined, message: string): void {
@@ -645,56 +721,31 @@ export class WalletService {
     apiKeyRecord: ApiKeySigningContext,
     context: { operation: 'sign'; chainId: number; metadata?: Record<string, unknown> },
   ) {
-    if (!this.eoaExecutionPolicy) {
-      throw new ForbiddenException('EOA execution policy is not available');
-    }
     await this.eoaExecutionPolicy.assertAllowed({
       operation: context.operation,
       userId,
       apiKeyId: apiKeyRecord.id,
       apiKeyPrefix: apiKeyRecord.keyPrefix,
       allowedIps: apiKeyRecord.allowedIps,
-      clientIp: this.requestContext?.getClientIp(),
+      clientIp: this.requestContext.getClientIp(),
       expiresAt: apiKeyRecord.expiresAt,
       chainId: context.chainId,
       metadata: context.metadata as any,
     });
   }
 
-  private assertAgentWalletReady(wallet: {
-    status: string;
-    agentOpenfortAccountId?: string | null;
-    agentWalletAddress?: string | null;
-    agentKeyHash?: string | null;
-  }): void {
-    if (!wallet.agentOpenfortAccountId || !wallet.agentWalletAddress || !wallet.agentKeyHash) {
-      throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
-    }
-  }
-
   private assertBackendWalletReady(wallet: {
     status: string;
     agentOpenfortAccountId?: string | null;
-    agentWalletAddress?: string | null;
+    signerAddress?: string | null;
   }): void {
     if (
       wallet.status !== 'active' ||
       !wallet.agentOpenfortAccountId ||
-      !wallet.agentWalletAddress
+      !wallet.signerAddress
     ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
     }
-  }
-
-  private wrapCaliburSignature(keyHash: string, signature: string): Hex {
-    return encodeAbiParameters(
-      [
-        { name: 'keyHash', type: 'bytes32' },
-        { name: 'signature', type: 'bytes' },
-        { name: 'hookData', type: 'bytes' },
-      ],
-      [keyHash as Hex, signature as Hex, '0x'],
-    );
   }
 
   private async updateSigningRequestStatus(id: string, status: 'signed' | 'failed'): Promise<void> {
@@ -716,7 +767,7 @@ export class WalletService {
   }
 
   private logContext(extra: Record<string, unknown>) {
-    return this.requestContext?.getLogContext(extra) ?? extra;
+    return this.requestContext.getLogContext(extra);
   }
 
   private logSecurityWarning(extra: Record<string, unknown>): void {
@@ -822,14 +873,7 @@ export class WalletService {
   async withdraw(userId: string, params: WithdrawDto, options?: { stepUpVerified?: boolean }) {
     const chainId = params.chainId;
     const supportedChain = getSupportedChain(chainId);
-    const selected = await this.selectWallet(userId, params.walletId);
-    const wallet = await this.prisma.userWallet.findFirst({
-      where: { userId, id: selected.id },
-      include: {
-        chainAuthorizations: { where: { chainId: BigInt(chainId) } },
-      },
-    });
-    if (!wallet) throw new NotFoundException('Wallet not found');
+    const wallet = await this.selectWallet(userId, params.walletId, chainId);
     this.assertWalletNotFrozen(wallet);
 
     // Guard: wallet must be active before any outbound transfer
@@ -837,7 +881,7 @@ export class WalletService {
       wallet.status !== 'active' ||
       !wallet.walletAddress ||
       !wallet.agentOpenfortAccountId ||
-      !wallet.agentWalletAddress ||
+      !wallet.signerAddress ||
       !wallet.agentKeyHash
     ) {
       throw new BadRequestException(`Wallet is not active (status: ${wallet.status})`);
@@ -862,15 +906,15 @@ export class WalletService {
     );
 
     // Evaluate multi-factor risk before proceeding
-    const riskAssessment = await this.riskEvaluation?.evaluateRisk({
+    const riskAssessment = await this.riskEvaluation.evaluateRisk({
       userId,
       walletId: wallet.id,
       operationType: 'withdrawal',
     });
     const riskStepUpSatisfied =
-      riskAssessment?.action === 'require_step_up' && options?.stepUpVerified === true;
-    if (riskAssessment && riskAssessment.action !== 'allow' && !riskStepUpSatisfied) {
-      await this.riskEvaluation!.enforceRiskAction(riskAssessment, {
+      riskAssessment.action === 'require_step_up' && options?.stepUpVerified === true;
+    if (riskAssessment.action !== 'allow' && !riskStepUpSatisfied) {
+      await this.riskEvaluation.enforceRiskAction(riskAssessment, {
         userId,
         walletId: wallet.id,
         operationType: 'withdrawal',
@@ -1013,7 +1057,7 @@ export class WalletService {
               amount: params.amount,
               token: params.token,
               contractAddress: tokenAddress,
-              agentWalletAddress: wallet.agentWalletAddress,
+              signerAddress: wallet.signerAddress,
               agentKeyHash: wallet.agentKeyHash,
               idempotencyKey: params.idempotencyKey,
               requestHash,
@@ -1351,37 +1395,16 @@ export class WalletService {
     throw new BadRequestException(`USDT is not supported on ${chain.name}`);
   }
 
-  private resolveSigningChainId(params: SignDto): number | undefined {
-    if ((params as { type: string }).type === 'hash') {
-      throw new BadRequestException('hash signing is not allowed');
-    }
-
+  private resolveSigningChainId(params: SignDto): number {
     const typedDataChainId = params.typedData?.domain?.chainId;
-
-    if (params.type === 'typed_data') {
-      if (typeof typedDataChainId !== 'number') {
-        throw new BadRequestException(
-          'typedData.domain.chainId is required when signing typed data with an API key',
-        );
-      }
-      if (params.chainId !== undefined && typedDataChainId !== params.chainId) {
-        throw new BadRequestException('typedData.domain.chainId must match chainId');
-      }
+    if (typeof typedDataChainId !== 'number') {
+      throw new BadRequestException(
+        'typedData.domain.chainId is required when signing typed data with an API key',
+      );
     }
-
-    const chainId =
-      params.chainId ?? (typeof typedDataChainId === 'number' ? typedDataChainId : undefined);
-    if (chainId === undefined) {
-      throw new BadRequestException('chainId is required when signing with an API key');
+    if (params.chainId !== undefined && typedDataChainId !== params.chainId) {
+      throw new BadRequestException('typedData.domain.chainId must match chainId');
     }
-    return chainId;
-  }
-
-  private hashSignMessage(message: SignMessage): string {
-    if (typeof message === 'string') {
-      return hashMessage(message);
-    }
-
-    return hashMessage({ raw: message.raw });
+    return params.chainId ?? typedDataChainId;
   }
 }

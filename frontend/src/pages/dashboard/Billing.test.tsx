@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useUser } from '@openfort/react';
+import { useAppSession } from '@/components/AppSessionProvider';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -34,8 +34,7 @@ const PENDING_INVOICE_STORAGE_KEY = 'sofa-one.billing.pendingInvoiceId';
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_ATTEMPTS = 6;
 
-// Narrowly mock the Openfort IAM hook; the Billing page only reads these fields.
-vi.mock('@openfort/react', () => ({ useUser: vi.fn() }));
+vi.mock('@/components/AppSessionProvider', () => ({ useAppSession: vi.fn() }));
 
 // Mock the API layer, keeping ApiError/isApiError/getApiErrorMessage real so the page's
 // error mapping (friendly checkout errors, plan-change messages, retry surfaces) is exercised.
@@ -98,18 +97,23 @@ function renderBilling(initialPath = '/dashboard/billing') {
   );
 }
 
-function mockUseUser(
-  over: Partial<{
-    isAuthenticated: boolean;
-    isLoading: boolean;
-    getAccessToken: () => Promise<string | null>;
-  }> = {},
-) {
-  vi.mocked(useUser).mockReturnValue({
-    getAccessToken: over.getAccessToken ?? vi.fn().mockResolvedValue('test-token'),
-    isAuthenticated: over.isAuthenticated ?? true,
-    isLoading: over.isLoading ?? false,
-  } as ReturnType<typeof useUser>);
+function mockAppSession() {
+  vi.mocked(useAppSession).mockReturnValue({
+    session: {
+      sessionId: 'session-1',
+      userId: 'user-1',
+      email: 'test@example.com',
+      mfaVerified: true,
+      expiresAt: '2099-01-01T00:00:00.000Z',
+      csrfToken: 'csrf-token',
+    },
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    exchange: vi.fn(),
+    signOut: vi.fn(),
+    signOutAll: vi.fn(),
+  });
 }
 
 /** A module-scoped list backing the invoice API mock so tests can flip invoice state. */
@@ -133,7 +137,7 @@ async function flushTimers() {
 beforeEach(() => {
   currentInvoices = [];
   sessionStorage.clear();
-  mockUseUser();
+  mockAppSession();
   vi.mocked(getBillingPlansAuth).mockResolvedValue(makePlans());
   vi.mocked(getBillingSummaryAuth).mockResolvedValue(makeSummary());
   vi.mocked(listBillingInvoicesAuth).mockImplementation(async () =>
@@ -173,10 +177,27 @@ beforeEach(() => {
     cancelledAt: '2026-08-01T12:00:00.000Z',
     cancelReason: 'user_requested',
   });
-  vi.mocked(getInvoicePaymentStatusAuth).mockImplementation(async (_getToken, invoiceId) =>
+  vi.mocked(getInvoicePaymentStatusAuth).mockImplementation(async (invoiceId) =>
     makeInvoicePaymentStatus({ invoiceId }),
   );
   vi.spyOn(window, 'confirm').mockReturnValue(true);
+});
+
+it('does not reload billing collections when introspection replaces the same session snapshot', async () => {
+  const view = renderBilling();
+  await waitFor(() => expect(getBillingPlansAuth).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(listBillingInvoicesAuth).toHaveBeenCalledTimes(1));
+  const context = vi.mocked(useAppSession).mock.results[0].value;
+  vi.mocked(useAppSession).mockReturnValue({
+    ...context,
+    session: { ...context.session, csrfToken: 'rechecked-csrf', expiresAt: '2099-02-01T00:00:00.000Z' },
+  });
+  await act(async () => {
+    view.rerender(<MemoryRouter initialEntries={['/dashboard/billing']}><BillingPage /><LocationProbe /></MemoryRouter>);
+  });
+  expect(getBillingPlansAuth).toHaveBeenCalledTimes(1);
+  expect(getBillingSummaryAuth).toHaveBeenCalledTimes(1);
+  expect(listBillingInvoicesAuth).toHaveBeenCalledTimes(1);
 });
 
 describe('Billing — Stripe return markers and query cleanup', () => {
@@ -622,7 +643,7 @@ describe('Billing — bounded payment-confirmation polling', () => {
 
     const deferreds: Array<{ resolve: (value: BillingInvoicesResponse) => void }> = [];
     const signals: Array<AbortSignal | undefined> = [];
-    vi.mocked(listBillingInvoicesAuth).mockImplementation((_token, _params, signal) => {
+    vi.mocked(listBillingInvoicesAuth).mockImplementation((_params, signal) => {
       signals.push(signal);
       const d = deferred<BillingInvoicesResponse>();
       deferreds.push({ resolve: d.resolve });
@@ -745,7 +766,7 @@ describe('Billing — invoice payment actions and user-visible errors', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Card' }));
 
     await waitFor(() =>
-      expect(createBillingCheckoutSessionAuth).toHaveBeenCalledWith(expect.any(Function), 'inv_1'),
+      expect(createBillingCheckoutSessionAuth).toHaveBeenCalledWith('inv_1'),
     );
     expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBe('inv_1');
     expect(locationStub.href).toBe('https://checkout.stripe.example/start');
@@ -820,7 +841,6 @@ describe('Billing — invoice payment actions and user-visible errors', () => {
 
     await waitFor(() =>
       expect(createBillingCheckoutSessionAuth).toHaveBeenCalledWith(
-        expect.any(Function),
         'inv_plan',
       ),
     );
@@ -987,7 +1007,7 @@ describe('Billing — plan change', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Schedule Starter' }));
 
     await waitFor(() =>
-      expect(assignBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function), 'plan_starter'),
+      expect(assignBillingPlanAuth).toHaveBeenCalledWith('plan_starter'),
     );
     expect(screen.getByText('Downgrade scheduled')).toBeInTheDocument();
     expect(screen.getByText(/Starter begins on/i)).toBeInTheDocument();
@@ -1031,7 +1051,7 @@ describe('Billing — plan change', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Upgrade to Pro' }));
 
     await waitFor(() =>
-      expect(assignBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function), 'plan_pro'),
+      expect(assignBillingPlanAuth).toHaveBeenCalledWith('plan_pro'),
     );
 
     expect(screen.getByText('Payment required to upgrade')).toBeInTheDocument();
@@ -1051,7 +1071,6 @@ describe('Billing — plan change', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pay with card' }));
     await waitFor(() =>
       expect(createBillingCheckoutSessionAuth).toHaveBeenCalledWith(
-        expect.any(Function),
         'inv_upgrade',
       ),
     );
@@ -1206,7 +1225,7 @@ describe('Billing — plan change', () => {
 
     expect(confirmSpy).toHaveBeenCalled();
     await waitFor(() =>
-      expect(cancelBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function)),
+      expect(cancelBillingPlanAuth).toHaveBeenCalledWith(),
     );
     expect(screen.getByText('Scheduled change canceled')).toBeInTheDocument();
     expect(screen.getByText(/You will stay on Pro/i)).toBeInTheDocument();
@@ -1307,7 +1326,7 @@ describe('Billing — plan change', () => {
 
     expect(confirmSpy).toHaveBeenCalled();
     await waitFor(() =>
-      expect(cancelBillingPlanUpgradeAuth).toHaveBeenCalledWith(expect.any(Function)),
+      expect(cancelBillingPlanUpgradeAuth).toHaveBeenCalledWith(),
     );
     expect(screen.getByText('Upgrade canceled')).toBeInTheDocument();
     expect(screen.getByText(/You will stay on Starter/i)).toBeInTheDocument();
@@ -1758,7 +1777,7 @@ describe('Billing — plan-change catalog guard (contact-sales plans)', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Upgrade to Pro' }));
     await waitFor(() =>
-      expect(assignBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function), 'plan_pro'),
+      expect(assignBillingPlanAuth).toHaveBeenCalledWith('plan_pro'),
     );
   });
 
@@ -1842,7 +1861,6 @@ describe('Billing — BILL-018 payment status recovery and BILL-003 card lock', 
     expect(await screen.findByText(/Payment needs review/i)).toBeInTheDocument();
     expect(screen.getByText(/already used on another invoice/i)).toBeInTheDocument();
     expect(getInvoicePaymentStatusAuth).toHaveBeenCalledWith(
-      expect.any(Function),
       'inv_1',
       expect.anything(),
     );
@@ -1918,7 +1936,6 @@ describe('Billing — BILL-018 payment status recovery and BILL-003 card lock', 
 
     await waitFor(() => expect(cancelUsdcQuoteAuth).toHaveBeenCalledTimes(1));
     expect(cancelUsdcQuoteAuth).toHaveBeenCalledWith(
-      expect.any(Function),
       'inv_1',
       'att_pending',
     );

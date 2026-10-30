@@ -1,0 +1,2201 @@
+{
+  "schemaVersion": 1,
+  "chainId": 8453,
+  "address": "0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9",
+  "protocol": "Veranta",
+  "protocolId": "veranta-avusdc",
+  "website": "https://www.veranta.xyz/",
+  "scope": "Current unified Base avUSDC direct deposit/mint/withdraw/redeem only. Former Avantis junior proxy is continued by current unified implementation, not a retired junior/senior product. No leverage router, veTranche staking, arbitrary executor or admin admission.",
+  "lifecycleEvidence": {
+    "verifiedAt": "2026-10-22",
+    "decision": "eligible-active",
+    "sourceRefs": [
+      "https://docs.avantisfi.com/liquidity-providers/avantis-lp-vault-avusdc.md",
+      "https://docs.veranta.xyz/liquidity-providers/veranta-lp-vault-avusdc.md",
+      "https://raw.githubusercontent.com/Avantis-Labs/avantis_trader_sdk/main/veranta_sdk/config.py",
+      "https://raw.githubusercontent.com/Avantis-Labs/avantis_trader_sdk/main/docs/mintlify/more/lp-vault.mdx",
+      "https://api.github.com/repos/Avantis-Labs/avantis_trader_sdk"
+    ],
+    "evidence": "Original official Avantis vault documentation redirects to Veranta current unified avUSDC docs. Official SDK config explicitly states Avantis is now Veranta; current LP page describes ordinary deposit/mint/withdraw/redeem with no lock or epoch. Official repository archived=false, disabled=false, pushed_at=2026-09-16T10:43:44Z. Current official /v2/meta binds the same former junior proxy as tranche. Exact implementation returns unified Avantis USDC Vault/avUSDC and balancingFee returns zero with merged-tranches comment. No separate legacy senior/junior admission. These are maintenance/product-continuity evidence, not DAU/TVL or runtime guarantees."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://tx-builder.veranta.xyz/v2/meta",
+    "verifiedAt": "2026-10-22",
+    "chainId": 8453,
+    "address": "0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9",
+    "officialMetadata": {
+      "ok": true,
+      "data": {
+        "chainId": 8453,
+        "addresses": {
+          "tradingRouter": "0x44914408af82bC9983bbb330e3578E1105e11d4e",
+          "tradingStorage": "0x8a311D7048c35985aa31C131B9A13e03a5f7422d",
+          "pairStorage": "0x5db3772136e5557EFE028Db05EE95C84D76faEC4",
+          "pairInfos": "0x81F22d0Cc22977c91bEfE648C9fddf1f2bd977e5",
+          "priceAggregator": "0x64e2625621970F8cfA17B294670d61CB883dA511",
+          "multicall": "0xA7cFc43872F4D7B0E6141ee8c36f1F7FEe5d099e",
+          "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "referral": "0x1A110bBA13A1f16cCa4b79758BD39290f29De82D",
+          "tranche": "0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9",
+          "execute": "0xdbDd7B8a8747904f53eb7AEF655a6FF81e2c306a",
+          "vaultManager": "0xe9fB8C70aF1b99F2Baaa07Aa926FCf3d237348DD",
+          "builderCode": "0xeDA810c70769a7221fB7e640D974534026719975",
+          "delegationTemplate": "0x92F8ab16f6322a11d9f629baF081094c22A3a362"
+        },
+        "eip712": {
+          "trading": {
+            "name": "AvantisTrading",
+            "version": "1",
+            "chainId": 8453,
+            "verifyingContract": "0x44914408af82bC9983bbb330e3578E1105e11d4e"
+          },
+          "referral": {
+            "name": "AvantisTrading",
+            "version": "1",
+            "chainId": 8453,
+            "verifyingContract": "0x1A110bBA13A1f16cCa4b79758BD39290f29De82D"
+          },
+          "signatureFormat": "rsv-65-bytes"
+        },
+        "enums": {
+          "openOrderType": {
+            "market": 0,
+            "stop_limit": 1,
+            "limit": 2,
+            "market_pnl": 3
+          },
+          "marginUpdateType": {
+            "deposit": 0,
+            "withdraw": 1
+          },
+          "priceSourcing": {
+            "HERMES": 0,
+            "PRO": 1
+          },
+          "limitOrderType": {
+            "tp": 0,
+            "sl": 1,
+            "liq": 2,
+            "open": 3,
+            "partial_tp": 4,
+            "partial_sl": 5
+          },
+          "triggerType": {
+            "fixed": 0,
+            "percentage": 1
+          }
+        },
+        "units": {
+          "price": "1e10",
+          "leverage": "1e10",
+          "slippagePercent": "1e10",
+          "coinExposure": "1e10",
+          "usdc": "1e6",
+          "intentDeadline": "milliseconds",
+          "delegateExpiry": "seconds"
+        },
+        "defaults": {
+          "executionFeeWei": "0",
+          "intentDeadlineMs": 120000,
+          "slippagePercent": "1"
+        },
+        "glossary": {
+          "positionSizeUSDC": "The trade's collateral in USDC (1e6). Misleading name: NOT the leveraged position size.",
+          "initialPosToken": "Always 0 on opens. On increases: the additional collateral being added (1e6).",
+          "_amount": "Collateral being closed, in USDC (1e6); request param collateralToCloseUsdc.",
+          "_openTimestamp": "The position's on-chain open timestamp; binds a close intent to the exact position instance (PositionMismatch on drift).",
+          "timestamp": "In TpSlReq: same position-instance binding as _openTimestamp. In Trade: set by the contract, 0 in requests.",
+          "wantedPrice": "Expected execution price (1e10) used for slippage checks; request param expectedPrice.",
+          "defaultLeverage": "Target fill leverage (1e10); request param leverage.",
+          "coinSize": "Exposure in base-asset units (1e10); request params coinExposure / coinExposureToClose.",
+          "buy": "true = long, false = short; request param side.",
+          "tp": "Take-profit price (1e10); 0 = not set.",
+          "sl": "Stop-loss price (1e10); 0 = not set.",
+          "orderType": "In TpSlReq: PARTIAL_TP(4) / PARTIAL_SL(5); request param kind (take_profit | stop_loss).",
+          "percentage": "TpSlReq percentage trigger: signed int256, 1e10 = 1% (negative allowed).",
+          "signTimestamp": "TpSlReq freshness stamp in milliseconds; must not be in the future. TpSlReq has NO deadline field.",
+          "_deadline": "Intent expiry in unix MILLISECONDS (contract checks deadline/1000 >= block.timestamp).",
+          "expiry": "DelegateReq delegation expiry in unix SECONDS.",
+          "tnc": "Fixed Terms-of-Service constant; sign the returned string verbatim.",
+          "_nonce": "Signer-chosen 256-bit nonce on a Permit2-style unordered bitmap (no sequencing).",
+          "twapId": "On-chain id of a TWAP order (from the twap-app open response or the twaps list); cancels are scoped to it.",
+          "entityId": "Storage id of an off-chain partial TP/SL (named documentId before the /price-triggers migration); CancelOffchainOrder signs over it as proof of ownership (verified off-chain, never submitted on-chain).",
+          "__reserved1": "Always 0."
+        }
+      }
+    },
+    "proxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0xe79184763b27FA8bB0eB2d6AF1F0123D43AF0e89",
+          "name": "Tranche"
+        }
+      ]
+    },
+    "explorerProxyResolutionSourceRef": "https://basescan.org/address/0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9#code",
+    "deployment": {
+      "transactionHash": "0x30e1db6e825a228d2b505c2abcb17aa9b9dfcdf82ee782bde00aaaba19f6cada",
+      "blockNumber": "9776166",
+      "transactionIndex": "3",
+      "deployer": "0xDef54C048119eE522D73d8bA08F4641578da142f"
+    },
+    "evidence": "Official mainnet metadata returns chainId=8453 and addresses.tranche equal to exact admitted address. Official SDK LP docs use this tranche binding. BaseScan and Sourcify resolve current implementation e79184763b27FA8bB0eB2d6AF1F0123D43AF0e89. This is not independent fresh RPC resolution."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0xe79184763b27FA8bB0eB2d6AF1F0123D43AF0e89?fields=all",
+    "verifiedAt": "2026-10-22",
+    "chainId": 8453,
+    "address": "0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9",
+    "implementationAddress": "0xe79184763b27FA8bB0eB2d6AF1F0123D43AF0e89",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "sourceServiceVerifiedAt": "2026-09-22T14:40:53Z",
+    "reportedProxyCreationMatch": "exact_match",
+    "reportedProxyRuntimeMatch": "exact_match",
+    "explorerImplementationMatch": "Exact Match",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.13+commit.abaa5c0e",
+      "compilerSettings": {
+        "viaIR": false,
+        "metadata": {
+          "bytecodeHash": "ipfs",
+          "useLiteralContent": false
+        },
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "london",
+        "remappings": [
+          "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+          "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+          "forge-std/=lib/forge-std/src/",
+          "pyth-sdk-solidity/=lib/pyth-sdk-solidity/",
+          "@chainlink/=lib/chainlink/",
+          "pyth-lazer-sdk/=lib/pyth-crosschain/lazer/contracts/evm/",
+          "chainlink/=lib/chainlink/",
+          "createx/=lib/pyth-crosschain/lazer/contracts/evm/lib/createx/src/",
+          "ds-test/=lib/forge-std/lib/ds-test/src/",
+          "erc4626-tests/=lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/",
+          "halmos-cheatcodes/=lib/pyth-crosschain/lazer/contracts/evm/lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+          "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/",
+          "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+          "openzeppelin-foundry-upgrades/=lib/pyth-crosschain/target_chains/ethereum/sdk/stylus/pyth-mock-solidity/lib/openzeppelin-foundry-upgrades/src/",
+          "openzeppelin/=lib/openzeppelin-contracts-upgradeable/contracts/",
+          "pyth-crosschain/=lib/pyth-crosschain/",
+          "solady/=lib/pyth-crosschain/lazer/contracts/evm/lib/createx/lib/solady/",
+          "solidity-stringutils/=lib/pyth-crosschain/target_chains/ethereum/sdk/stylus/pyth-mock-solidity/lib/openzeppelin-foundry-upgrades/lib/solidity-stringutils/"
+        ]
+      },
+      "name": "Tranche",
+      "fullyQualifiedName": "src/AvantisTranche.sol:Tranche"
+    },
+    "evidence": "Complete deployed implementation ABI/source from Sourcify exact address; both creation/runtime exact_match, corroborated by BaseScan implementation Source Code Verified Exact Match. Not a generic ERC4626 substitution. Proxy ABI retained separately; no function entries appear in its returned ABI."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "DepositCapBreached",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyGov",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyManager",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ReleaseAmountExceedsAvailable",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ReserveAmountExceedsAvailable",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ThresholdTooHigh",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "UtilizationRatioExceeded",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ZeroAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BalanceReleased",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BalanceReserved",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "FeeTransferredToVM",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "isDuringDeposit",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "FeesStatusUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "feesOn",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Initialized",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "uint8"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PauseFailed",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "router",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ReserveCapUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newCap",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TokenTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TrancheBreakerConfigUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "threshold",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "halfLifeFactor",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TrancheBreakerTripped",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "decayedVolume",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "VaultManagerUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "vaultManager",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "VeTrancheUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "veTranche",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "WithdrawThresholdUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newThreshold",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "asset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balancingFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "isDeposit",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "collateralHealthFee",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decayedPullBreaker",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "threshold",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "halfLifeFactor",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "decayedVolume",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "lastUpdateTime",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decreaseAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "subtractedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositCap",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "feesOn",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDecayedPullVolume",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDepositFeesRaw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDepositFeesTotal",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getWithdrawalFeesRaw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getWithdrawalFeesTotal",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "hasLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_reserveAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "increaseAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "addedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "__asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_vaultManager",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "trancheName",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "tranchSymbol",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "maxDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "principalAssetsDeposited",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "principalSharesDeposited",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "releaseBalance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "reserveBalance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setBreakerParams",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_threshold",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_halfLifeFactor",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setCap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_newCap",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setFeesOn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_feesOn",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setVaultManager",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_vaultManager",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setWithdrawThreshold",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_withdrawThreshold",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalPrincipalDeposited",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalReserved",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "utilizationRatio",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "vaultManager",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IVaultManagerExtended"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "veTranche",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdrawAsVaultManager",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdrawThreshold",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    }
+  ],
+  "proxyAbi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_logic",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "admin_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "AdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BeaconUpgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "beacon",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Upgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "fallback",
+      "stateMutability": "payable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionDecisions": [
+    {
+      "signature": "allowance(address,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only allowance metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "approve(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "approve changes ERC20 share allowances/transfers rather than deposit or redemption; outside this narrowly reviewed LP lifecycle."
+    },
+    {
+      "signature": "asset()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only asset metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "balanceOf(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only balanceOf metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "balancingFee(uint256,bool)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only balancingFee metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "collateralHealthFee()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only collateralHealthFee metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "convertToAssets(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToAssets metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "convertToShares(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToShares metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "decayedPullBreaker()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only decayedPullBreaker metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "decimals()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only decimals metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "decreaseAllowance(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "decreaseAllowance changes ERC20 share allowances/transfers rather than deposit or redemption; outside this narrowly reviewed LP lifecycle."
+    },
+    {
+      "signature": "deposit(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary ERC4626 USDC deposit into the unified LP vault, with cap and fee validation."
+    },
+    {
+      "signature": "depositCap()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only depositCap metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "feesOn()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only feesOn metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "getDecayedPullVolume()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getDecayedPullVolume metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "getDepositFeesRaw(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getDepositFeesRaw metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "getDepositFeesTotal(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getDepositFeesTotal metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "getWithdrawalFeesRaw(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getWithdrawalFeesRaw metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "getWithdrawalFeesTotal(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getWithdrawalFeesTotal metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "hasLiquidity(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only hasLiquidity metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "increaseAllowance(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "increaseAllowance changes ERC20 share allowances/transfers rather than deposit or redemption; outside this narrowly reviewed LP lifecycle."
+    },
+    {
+      "signature": "initialize(address,address,string,string)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "One-time proxy initialization, not an LP operation; implementation constructor disables initialization on the implementation itself."
+    },
+    {
+      "signature": "maxDeposit(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxDeposit metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "maxMint(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxMint metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "maxRedeem(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxRedeem metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "maxWithdraw(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxWithdraw metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "mint(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary exact-share mint funded by caller USDC, using inherited ERC4626 implementation and tranche fee/cap overrides."
+    },
+    {
+      "signature": "name()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only name metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "previewDeposit(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewDeposit metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "previewMint(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewMint metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "previewRedeem(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewRedeem metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "previewWithdraw(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewWithdraw metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "principalAssetsDeposited(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only principalAssetsDeposited metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "principalSharesDeposited(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only principalSharesDeposited metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "redeem(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary exact-share redemption; owner/allowance, fees, liquidity and strict utilization threshold apply."
+    },
+    {
+      "signature": "releaseBalance(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "releaseBalance is onlyManager vault-manager reserve/fund movement, not an ordinary depositor operation."
+    },
+    {
+      "signature": "reserveBalance(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "reserveBalance is onlyManager vault-manager reserve/fund movement, not an ordinary depositor operation."
+    },
+    {
+      "signature": "setBreakerParams(uint256,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "setBreakerParams is onlyGov configuration, not a public depositor operation."
+    },
+    {
+      "signature": "setCap(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "setCap is onlyGov configuration, not a public depositor operation."
+    },
+    {
+      "signature": "setFeesOn(bool)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "setFeesOn is onlyGov configuration, not a public depositor operation."
+    },
+    {
+      "signature": "setVaultManager(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "setVaultManager is onlyGov configuration, not a public depositor operation."
+    },
+    {
+      "signature": "setWithdrawThreshold(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "setWithdrawThreshold is onlyGov configuration, not a public depositor operation."
+    },
+    {
+      "signature": "symbol()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only symbol metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "totalAssets()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalAssets metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "totalPrincipalDeposited()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalPrincipalDeposited metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "totalReserved()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalReserved metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "totalSupply()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalSupply metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "transfer(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "transfer changes ERC20 share allowances/transfers rather than deposit or redemption; outside this narrowly reviewed LP lifecycle."
+    },
+    {
+      "signature": "transferFrom(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "transferFrom changes ERC20 share allowances/transfers rather than deposit or redemption; outside this narrowly reviewed LP lifecycle."
+    },
+    {
+      "signature": "utilizationRatio()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only utilizationRatio metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "vaultManager()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only vaultManager metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "veTranche()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only veTranche metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    },
+    {
+      "signature": "withdraw(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary exact-asset withdrawal; owner/allowance, fees, liquidity and strict utilization threshold apply."
+    },
+    {
+      "signature": "withdrawAsVaultManager(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "withdrawAsVaultManager is onlyManager vault-manager reserve/fund movement, not an ordinary depositor operation."
+    },
+    {
+      "signature": "withdrawThreshold()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only withdrawThreshold metadata/accounting/configuration query; retained in full deployed ABI but not a state-changing LP capability."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "veranta-avusdc:v1:8453:0x944766f715b51967e56afde5f0aa76ceacc9e7f9:deposit",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://tx-builder.veranta.xyz/v2/meta ; https://basescan.org/address/0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9#code ; https://sourcify.dev/server/v2/contract/8453/0xe79184763b27FA8bB0eB2d6AF1F0123D43AF0e89?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Veranta",
+      "operation": "deposit",
+      "label": "Veranta avUSDC deposit",
+      "warnings": [
+        "Veranta is the current brand of Avantis. This is the current unified Base avUSDC LP vault at the former junior proxy, not a separate senior/junior tranche or a legacy veTranche staking product. Explorer jUSDC labels are historical; applicable implementation name()/symbol() return Avantis USDC Vault/avUSDC.",
+        "LP principal is exposed to trader payouts, buffer depletion, trading/oracle and market-making risk, smart-contract upgrades, governance and USDC risk. Depositing LP liquidity does not make leveraged trading or the yield strategy safe; no principal, APY or redemption guarantee is provided.",
+        "Current SDK vault docs explicitly describe no lock and no epoch/request/claim cycle. withdraw/redeem are immediate only if liquidity and utilization permit: the implementation checks adjusted balances, reserved assets, withdrawThreshold and actual ERC20 liquidity. There is no admitted request/claim fallback when an exit reverts.",
+        "Deposit cap and fee configuration are mutable. previews include configured fees; withdrawal collateral-health fees can apply. maxWithdraw/maxRedeem are not a success guarantee because fees, balance and utilization can change, and the post-withdraw utilization threshold is strict.",
+        "USDC asset amounts and avUSDC shares use their onchain integer units; shares are not guaranteed 1:1 with USDC. Deposit/mint require caller USDC allowance to this exact vault; receiver receives shares. Withdraw/redeem burn owner shares and pay receiver; caller != owner requires share allowance.",
+        "No fresh RPC storage/runtime identity, current cap/fee/reserve/allowance/paused-state, liquidity, successful execution or wallet eligibility verification was performed. Catalog membership does not bypass authorization, canonical calldata, pause or final execution checks."
+      ]
+    },
+    {
+      "abi": {
+        "name": "mint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "veranta-avusdc:v1:8453:0x944766f715b51967e56afde5f0aa76ceacc9e7f9:mint",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9",
+      "functionName": "mint",
+      "signature": "mint(uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://tx-builder.veranta.xyz/v2/meta ; https://basescan.org/address/0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9#code ; https://sourcify.dev/server/v2/contract/8453/0xe79184763b27FA8bB0eB2d6AF1F0123D43AF0e89?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Veranta",
+      "operation": "mint",
+      "label": "Veranta avUSDC mint",
+      "warnings": [
+        "Veranta is the current brand of Avantis. This is the current unified Base avUSDC LP vault at the former junior proxy, not a separate senior/junior tranche or a legacy veTranche staking product. Explorer jUSDC labels are historical; applicable implementation name()/symbol() return Avantis USDC Vault/avUSDC.",
+        "LP principal is exposed to trader payouts, buffer depletion, trading/oracle and market-making risk, smart-contract upgrades, governance and USDC risk. Depositing LP liquidity does not make leveraged trading or the yield strategy safe; no principal, APY or redemption guarantee is provided.",
+        "Current SDK vault docs explicitly describe no lock and no epoch/request/claim cycle. withdraw/redeem are immediate only if liquidity and utilization permit: the implementation checks adjusted balances, reserved assets, withdrawThreshold and actual ERC20 liquidity. There is no admitted request/claim fallback when an exit reverts.",
+        "Deposit cap and fee configuration are mutable. previews include configured fees; withdrawal collateral-health fees can apply. maxWithdraw/maxRedeem are not a success guarantee because fees, balance and utilization can change, and the post-withdraw utilization threshold is strict.",
+        "USDC asset amounts and avUSDC shares use their onchain integer units; shares are not guaranteed 1:1 with USDC. Deposit/mint require caller USDC allowance to this exact vault; receiver receives shares. Withdraw/redeem burn owner shares and pay receiver; caller != owner requires share allowance.",
+        "No fresh RPC storage/runtime identity, current cap/fee/reserve/allowance/paused-state, liquidity, successful execution or wallet eligibility verification was performed. Catalog membership does not bypass authorization, canonical calldata, pause or final execution checks."
+      ]
+    },
+    {
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "veranta-avusdc:v1:8453:0x944766f715b51967e56afde5f0aa76ceacc9e7f9:redeem",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9",
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://tx-builder.veranta.xyz/v2/meta ; https://basescan.org/address/0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9#code ; https://sourcify.dev/server/v2/contract/8453/0xe79184763b27FA8bB0eB2d6AF1F0123D43AF0e89?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Veranta",
+      "operation": "redeem",
+      "label": "Veranta avUSDC redeem",
+      "warnings": [
+        "Veranta is the current brand of Avantis. This is the current unified Base avUSDC LP vault at the former junior proxy, not a separate senior/junior tranche or a legacy veTranche staking product. Explorer jUSDC labels are historical; applicable implementation name()/symbol() return Avantis USDC Vault/avUSDC.",
+        "LP principal is exposed to trader payouts, buffer depletion, trading/oracle and market-making risk, smart-contract upgrades, governance and USDC risk. Depositing LP liquidity does not make leveraged trading or the yield strategy safe; no principal, APY or redemption guarantee is provided.",
+        "Current SDK vault docs explicitly describe no lock and no epoch/request/claim cycle. withdraw/redeem are immediate only if liquidity and utilization permit: the implementation checks adjusted balances, reserved assets, withdrawThreshold and actual ERC20 liquidity. There is no admitted request/claim fallback when an exit reverts.",
+        "Deposit cap and fee configuration are mutable. previews include configured fees; withdrawal collateral-health fees can apply. maxWithdraw/maxRedeem are not a success guarantee because fees, balance and utilization can change, and the post-withdraw utilization threshold is strict.",
+        "USDC asset amounts and avUSDC shares use their onchain integer units; shares are not guaranteed 1:1 with USDC. Deposit/mint require caller USDC allowance to this exact vault; receiver receives shares. Withdraw/redeem burn owner shares and pay receiver; caller != owner requires share allowance.",
+        "No fresh RPC storage/runtime identity, current cap/fee/reserve/allowance/paused-state, liquidity, successful execution or wallet eligibility verification was performed. Catalog membership does not bypass authorization, canonical calldata, pause or final execution checks."
+      ]
+    },
+    {
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "veranta-avusdc:v1:8453:0x944766f715b51967e56afde5f0aa76ceacc9e7f9:withdraw",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://tx-builder.veranta.xyz/v2/meta ; https://basescan.org/address/0x944766f715b51967E56aFdE5f0Aa76cEaCc9E7f9#code ; https://sourcify.dev/server/v2/contract/8453/0xe79184763b27FA8bB0eB2d6AF1F0123D43AF0e89?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Veranta",
+      "operation": "withdraw",
+      "label": "Veranta avUSDC withdraw",
+      "warnings": [
+        "Veranta is the current brand of Avantis. This is the current unified Base avUSDC LP vault at the former junior proxy, not a separate senior/junior tranche or a legacy veTranche staking product. Explorer jUSDC labels are historical; applicable implementation name()/symbol() return Avantis USDC Vault/avUSDC.",
+        "LP principal is exposed to trader payouts, buffer depletion, trading/oracle and market-making risk, smart-contract upgrades, governance and USDC risk. Depositing LP liquidity does not make leveraged trading or the yield strategy safe; no principal, APY or redemption guarantee is provided.",
+        "Current SDK vault docs explicitly describe no lock and no epoch/request/claim cycle. withdraw/redeem are immediate only if liquidity and utilization permit: the implementation checks adjusted balances, reserved assets, withdrawThreshold and actual ERC20 liquidity. There is no admitted request/claim fallback when an exit reverts.",
+        "Deposit cap and fee configuration are mutable. previews include configured fees; withdrawal collateral-health fees can apply. maxWithdraw/maxRedeem are not a success guarantee because fees, balance and utilization can change, and the post-withdraw utilization threshold is strict.",
+        "USDC asset amounts and avUSDC shares use their onchain integer units; shares are not guaranteed 1:1 with USDC. Deposit/mint require caller USDC allowance to this exact vault; receiver receives shares. Withdraw/redeem burn owner shares and pay receiver; caller != owner requires share allowance.",
+        "No fresh RPC storage/runtime identity, current cap/fee/reserve/allowance/paused-state, liquidity, successful execution or wallet eligibility verification was performed. Catalog membership does not bypass authorization, canonical calldata, pause or final execution checks."
+      ]
+    }
+  ],
+  "sourceSemantics": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0xe79184763b27FA8bB0eB2d6AF1F0123D43AF0e89?fields=all",
+    "sources": {
+      "src/AvantisTranche.sol": {
+        "content": "// SPDX-License-Identifier: MIT\n\npragma solidity 0.8.13;\n\nimport \"./interfaces/ITradingStorage.sol\";\nimport \"./interfaces/IVaultManager.sol\";\nimport \"./interfaces/ITranche.sol\";\nimport {IPausableTrading} from \"./interfaces/IPausable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol\";\nimport \"@openzeppelin/contracts/token/ERC20/ERC20.sol\";\nimport \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\nimport {ABDKMathQuadExt} from \"./library/abdkQuadMathExt.sol\";\nimport {Errors} from \"./library/Errors.sol\";\n\ninterface IVaultManagerExtended is IVaultManager {\n    function keeper() external view returns (address);\n    function senior() external view returns (address);\n    function storageT() external view returns (address);\n}\n\ncontract Tranche is ERC4626Upgradeable {\n    using MathUpgradeable for uint256;\n\n    uint256 private constant _PRECISION = 1e10;\n\n    /// @notice Last-resort circuit breaker on funds pulled out of the tranche.\n    struct DecayedPullBreaker {\n        uint256 threshold;      // decayed pull volume that trips the breaker (USDC, 1e6)\n        uint256 halfLifeFactor; // decay rate lambda per second, 1e10 precision\n        uint256 decayedVolume;  // exponentially decayed cumulative pull volume\n        uint256 lastUpdateTime; // timestamp of the last pull attempt\n    }\n\n    IVaultManagerExtended public vaultManager;\n    address public veTranche; // unused variable kept for storage compatibility\n    uint256 public totalReserved;\n    uint256 public withdrawThreshold;\n    uint256 public totalPrincipalDeposited;\n    uint256 public depositCap;\n    bool public feesOn;\n\n    mapping(address => uint256) public principalSharesDeposited;\n    mapping(address => uint256) public principalAssetsDeposited;\n\n    DecayedPullBreaker public decayedPullBreaker;\n\n    event FeesStatusUpdated(bool feesOn);\n    event TrancheBreakerTripped(uint256 decayedVolume, uint256 amount);\n    event TrancheBreakerConfigUpdated(uint256 threshold, uint256 halfLifeFactor);\n    event PauseFailed(address router);\n    event VeTrancheUpdated(address indexed veTranche);\n    event VaultManagerUpdated(address indexed vaultManager);\n    event WithdrawThresholdUpdated(uint256 newThreshold);\n    event BalanceReserved(uint256 amount);\n    event BalanceReleased(uint256 amount);\n    event ReserveCapUpdated(uint256 newCap);\n    event TokenTransferred(address indexed from, address indexed to, uint256 shares, uint256 assets);\n    event FeeTransferredToVM( uint256 fee, bool isDuringDeposit); // Confirm with Zellic if event can be added in upgraded contract\n\n    modifier onlyManager() {\n        if (msg.sender != address(vaultManager)) revert Errors.OnlyManager();\n        _;\n    }\n\n    modifier onlyGov() {\n        if (msg.sender != vaultManager.gov()) revert Errors.OnlyGov();\n        _;\n    }\n\n    constructor() {\n        _disableInitializers();\n    }\n    /**\n     * @notice Initializes the proxy\n     * @param __asset The address of the asset (token) the contract will manage\n     * @param _vaultManager The address of the vault manager contract\n     * @param trancheName The name of the tranche for easy identification\n     */\n    function initialize(address __asset, address _vaultManager, string memory trancheName, string memory tranchSymbol) external initializer {\n        vaultManager = IVaultManagerExtended(_vaultManager);\n        withdrawThreshold = 90 * _PRECISION;\n        depositCap = 500000e6; //Will be less on mainnet\n\n        __ERC4626_init_unchained(IERC20Upgradeable(__asset));\n        __ERC20_init_unchained(\n            string(abi.encodePacked(trancheName, abi.encodePacked(\" Tranche \", ERC20(__asset).name()))),\n            string(abi.encodePacked(tranchSymbol, ERC20(__asset).symbol()))\n        );\n    }\n\n    /**\n     * @notice Toggles the fee status\n     * @param _feesOn The boolean indicating whether to turn fees on or off\n     */\n    function setFeesOn(bool _feesOn) external onlyGov {\n        feesOn = _feesOn;\n        emit FeesStatusUpdated(_feesOn);\n    }\n\n    /**\n     * @notice Updates the deposit cap of the tranche\n     * @param _newCap The new deposit cap amount\n     */\n    function setCap(uint256 _newCap) external onlyGov {\n        depositCap = _newCap;\n        emit ReserveCapUpdated(_newCap);\n    }\n\n    /**\n     * @notice Updates the address of the vault manager\n     * @param _vaultManager The new vault manager's address\n     */\n    function setVaultManager(address _vaultManager) external onlyGov {\n        if (_vaultManager == address(0)) revert Errors.ZeroAddress();\n        vaultManager = IVaultManagerExtended(_vaultManager);\n        emit VaultManagerUpdated(_vaultManager);\n    }\n\n    /**\n     * @notice Sets the withdraw threshold for the contract\n     * @param _withdrawThreshold The new withdraw threshold value\n     */\n    function setWithdrawThreshold(uint256 _withdrawThreshold) external onlyGov {\n        if (_withdrawThreshold >= 100 * _PRECISION) revert Errors.ThresholdTooHigh();\n        withdrawThreshold = _withdrawThreshold;\n        emit WithdrawThresholdUpdated(_withdrawThreshold);\n    }\n\n    /**\n     * @notice Reserves a certain amount of assets for trading by the vault manager.\n     * @param amount The amount of assets to reserve.\n     */\n    function reserveBalance(uint256 amount) external onlyManager {\n        _reserveBalance(amount);\n    }\n\n    /**\n     * @notice Releases a certain amount of reserved assets back to the vault.\n     * @param amount The amount of assets to release.\n     */\n    function releaseBalance(uint256 amount) external onlyManager {\n        _releaseBalance(amount);\n    }\n\n    /**\n     * @notice Allows the vault manager to withdraw a specific amount of assets, guarded by the\n     *         decayed pull-volume circuit breaker.\n     * @param amount The amount of assets to withdraw.\n     */\n    function withdrawAsVaultManager(uint256 amount) external onlyManager {\n        DecayedPullBreaker storage b = decayedPullBreaker;\n        b.decayedVolume = _decayedNow() + amount;\n        b.lastUpdateTime = block.timestamp;\n\n        if (b.decayedVolume > b.threshold) {\n            emit TrancheBreakerTripped(b.decayedVolume, amount);\n            _tryPauseTrading();\n            return;\n        }\n        SafeERC20.safeTransfer(ERC20(asset()), address(vaultManager), amount);\n    }\n\n    /**\n     * @notice Configures the decayed pull-volume breaker.\n     * @param _threshold The decayed pull volume that trips the breaker (USDC, 1e6).\n     * @param _halfLifeFactor Decay rate lambda per second at 1e10 precision\n     *        (factor = ln(2) / halfLifeSeconds * 1e10; 0 disables decay, not the breaker).\n     */\n    function setBreakerParams(uint256 _threshold, uint256 _halfLifeFactor) external onlyGov {\n        decayedPullBreaker.threshold = _threshold;\n        decayedPullBreaker.halfLifeFactor = _halfLifeFactor;\n        emit TrancheBreakerConfigUpdated(_threshold, _halfLifeFactor);\n    }\n\n    /**\n     * @notice Returns the decayed pull volume as of the current timestamp.\n     */\n    function getDecayedPullVolume() external view returns (uint256) {\n        return _decayedNow();\n    }\n\n    /**\n     * @dev Decays the stored pull volume by e^(-halfLifeFactor * dt).\n     *      Mirrors TradingStorageCoreExtension._decayVol / getDecayedVol.\n     */\n    function _decayedNow() internal view returns (uint256) {\n        DecayedPullBreaker storage b = decayedPullBreaker;\n        if (b.decayedVolume == 0 || b.lastUpdateTime == 0 || b.halfLifeFactor == 0) return b.decayedVolume;\n        uint256 dt = block.timestamp - b.lastUpdateTime;\n        if (dt == 0) return b.decayedVolume;\n        if (dt > 1e8) dt = 1e8;\n        uint256 exponentNum = b.halfLifeFactor * dt;\n        if (exponentNum > 20 * _PRECISION) exponentNum = 20 * _PRECISION;\n        int256 e = ABDKMathQuadExt.expInt(exponentNum, _PRECISION, _PRECISION);\n        return e == 0 ? 0 : (b.decayedVolume * _PRECISION) / uint256(e);\n    }\n\n    /**\n     * @dev Best-effort pause of the trading suite; never reverts so the breaker cannot brick\n     *      the close path. Router is derived live through the VaultManager wiring.\n     */\n    function _tryPauseTrading() internal {\n        address router = ITradingStorage(vaultManager.storageT()).trading();\n        if (IPausableTrading(router).paused()) return;\n        try IPausableTrading(router).pause() {} catch {\n            emit PauseFailed(router);\n        }\n    }\n\n    /**\n     * @notice Calculates the utilization ratio of the vault up to 10 decimal points.\n     * @return The utilization ratio in percentage (multiplied by 10^10 for decimals).\n     */\n    function utilizationRatio() public view returns (uint256) {\n        return (totalReserved * _PRECISION * 100) / \n                vaultManager.adjustedBalance(super.totalAssets());\n    }\n\n    /**\n     * @notice Checks if the vault has sufficient liquidity after reserving a given amount.\n     * @param _reserveAmount The amount to check for.\n     * @return True if sufficient liquidity exists, otherwise false.\n     */\n    function hasLiquidity(uint256 _reserveAmount) public view returns (bool) {\n        return vaultManager.adjustedBalance(super.totalAssets()) > (_reserveAmount + totalReserved);\n    }\n\n    /**\n     * @notice Previews the amount to deposit after accounting for fees.\n     * @param assets The amount to deposit.\n     * @return The net depositable amount.\n     */\n    function previewDeposit(uint256 assets) public view virtual override returns (uint256) {\n        return super.previewDeposit(assets - getDepositFeesTotal(assets));\n    }\n\n    /** @dev See {IERC4626-previewMint}. */\n    function previewMint(uint256 shares) public view virtual override returns (uint256) {\n        uint256 assets = super.previewMint(shares);\n        return assets + getDepositFeesRaw(assets);\n    }\n\n    /** @dev See {IERC4626-previewWithdraw}. */\n    function previewWithdraw(uint256 assets) public view virtual override returns (uint256) {\n        return super.previewWithdraw(assets + getWithdrawalFeesRaw(assets));\n    }\n\n    /** @dev See {IERC4626-previewRedeem}. */\n    function previewRedeem(uint256 shares) public view virtual override returns (uint256) {\n        uint256 assets = super.previewRedeem(shares);\n        return assets - getWithdrawalFeesTotal(assets);\n    }\n\n    /**\n     * @notice Calculates the raw deposit fees for a given amount of assets.\n     * @param assets The amount of assets.\n     * @return The raw deposit fee.\n     */\n    function getDepositFeesRaw(uint256 assets) public view returns (uint256) {\n        if (!feesOn) return 0;\n        return _feeOnRaw(assets, balancingFee(assets, true));\n    }\n\n    /** \n     * @notice Calculate the total deposit fees for a given amount of assets.\n     * @param assets The amount of assets being deposited.\n     * @return The total deposit fees.\n     */\n    function getDepositFeesTotal(uint256 assets) public view returns (uint256) {\n        if (!feesOn) return 0;\n        return _feeOnTotal(assets, balancingFee(assets, true));\n    }\n\n    /** \n     * @notice Calculate the raw withdrawal fees for a given amount of assets.\n     * @param assets The amount of assets being withdrawn.\n     * @return The raw withdrawal fees.\n     */\n    function getWithdrawalFeesRaw(uint256 assets) public view returns (uint256) {\n        if (!feesOn) return 0;\n        return _feeOnRaw(assets, balancingFee(assets, false)) + _feeOnRaw(assets, collateralHealthFee());\n    }\n\n    function getWithdrawalFeesTotal(uint256 assets) public view returns (uint256) {\n        if (!feesOn) return 0;\n        return _feeOnTotal(assets, balancingFee(assets, false)) + _feeOnTotal(assets, collateralHealthFee());\n    }\n    /** \n     * @notice Retrieve the balancing fee based  Vault status\n     * @param isDeposit Indicates if the action is a deposit (true) or withdrawal (false).\n     * @return The balancing fee.\n     */\n    function balancingFee(uint256 assets, bool isDeposit) public view returns (uint256) {\n        return 0; // Since tranches are being merged. There is no rebalancing fee\n    }\n\n    /** \n     * @notice Retrieve the collateral health fee based on protocol Pnl Status\n     * @return The collateral health fee.\n     */\n    function collateralHealthFee() public view returns (uint256) {\n        return vaultManager.getCollateralFee();\n    }\n\n    /** \n     * @notice Reserve a specific amount of balance.\n     * @param amount The amount to reserve.\n     */\n    function _reserveBalance(uint256 amount) internal {\n        if (vaultManager.adjustedBalance(super.totalAssets()) < amount + totalReserved) revert Errors.ReserveAmountExceedsAvailable();\n        totalReserved += amount;\n        emit BalanceReserved(amount);\n    }\n\n    /** \n     * @notice Release a specific amount of reserved balance.\n     * @param amount The amount to release from the reserve.\n     */\n    function _releaseBalance(uint256 amount) internal {\n        if (totalReserved < amount) revert Errors.ReleaseAmountExceedsAvailable();\n        totalReserved -= amount;\n        emit BalanceReleased(amount);\n    }\n\n    /** \n     * @notice Internal function to handle deposit actions.\n     * @param caller The address initiating the deposit.\n     * @param receiver The address receiving the assets.\n     * @param assets The amount of assets being deposited after fees.\n     * @param shares The number of shares for the deposit.\n     */\n    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override {\n        if (totalAssets() + assets >= depositCap) revert Errors.DepositCapBreached();\n\n        uint256 fee = getDepositFeesTotal(assets);\n        super._deposit(caller, receiver, assets, shares);\n\n        if (fee > 0) {\n            SafeERC20.safeTransfer(ERC20(asset()), address(vaultManager), fee);\n            vaultManager.allocateRewards(fee, false);\n            emit FeeTransferredToVM(fee, true);\n        }\n    }\n\n    /** \n     * @notice Internal function to handle withdrawal actions.\n     * @param caller The address initiating the withdrawal.\n     * @param receiver The address receiving the assets.\n     * @param owner The owner of the assets.\n     * @param assets The amount of assets being withdrawn before fees\n     * @param shares The number of shares for the withdrawal.\n     */\n    function _withdraw(\n        address caller,\n        address receiver,\n        address owner,\n        uint256 assets,\n        uint256 shares\n    ) internal virtual override {\n\n        uint256 fee = getWithdrawalFeesRaw(assets);\n        super._withdraw(caller, receiver, owner, assets, shares);\n\n        if (fee > 0) {\n            SafeERC20.safeTransfer(ERC20(asset()), address(vaultManager), fee);\n            vaultManager.allocateRewards(fee, false);\n            emit FeeTransferredToVM(fee, false);\n        }\n        if (utilizationRatio() >= withdrawThreshold) revert Errors.UtilizationRatioExceeded();\n    }\n\n    /** \n     * @notice Internal function to augment transfer actions.\n     * @param from The address initiating the transfer.\n     * @param to The address receiving the shares.\n     * @param amount The owner of the shares.\n     */\n    function _transfer(address from, address to, uint256 amount) internal virtual override {\n        emit TokenTransferred(from, to, amount, convertToAssets(amount));\n        super._transfer(from, to, amount);\n    }\n\n    /** @dev See {IERC4626-maxDeposit}. */\n    function maxDeposit(address) public view virtual override returns (uint256) {\n        uint256 assets = totalAssets();\n        return assets + 1 >= depositCap ? 0 : depositCap - assets - 1;\n    }\n\n    /** @dev See {IERC4626-maxMint} */\n    function maxMint(address) public view virtual override returns (uint256) {\n        return previewDeposit(maxDeposit(address(0)));\n    }\n\n    /** @dev See {IERC4626-maxRedeem}. */\n    function maxRedeem(address owner) public view virtual override returns (uint256) {\n        int256 maxAssets = int256(vaultManager.adjustedBalance(super.totalAssets())) - int256((totalReserved * _PRECISION * 100)/withdrawThreshold) ;\n        maxAssets =  maxAssets < 0 ? int256(0) : maxAssets;\n        uint256 redeemAssets = convertToAssets(balanceOf(owner));\n        if(redeemAssets < uint256(maxAssets)) return balanceOf(owner);\n        return convertToShares(uint256(maxAssets));\n    }\n\n    /** @dev See {IERC4626-maxWithdraw}. */\n    function maxWithdraw(address owner) public view virtual override returns (uint256) {\n        int256 maxAssets = int256(vaultManager.adjustedBalance(super.totalAssets()))  - int256((totalReserved * _PRECISION * 100)/withdrawThreshold) ;\n        maxAssets =  maxAssets < 0 ? int256(0) : maxAssets;\n        uint256 withdrawAssets = _convertToAssets(balanceOf(owner), MathUpgradeable.Rounding.Down);\n        if(withdrawAssets < uint256(maxAssets)) return withdrawAssets;\n        return uint256(maxAssets);\n    }\n    /** \n     * @notice Calculate the raw fee amount. Is Higher than feeTotal\n     * @param assets The amount of assets.\n     * @param feeBasePoint The fee rate in basis points.\n     * @return The raw fee amount.\n     */\n    function _feeOnRaw(uint256 assets, uint256 feeBasePoint) private pure returns (uint256) {\n        return assets.mulDiv(feeBasePoint, 1e5, MathUpgradeable.Rounding.Up);\n    }\n\n    /** \n     * @notice Calculate the total fee amount. Is lower than Raw fees\n     * @param assets The amount of assets.\n     * @param feeBasePoint The fee rate in basis points.\n     * @return The total fee amount.\n     */\n    function _feeOnTotal(uint256 assets, uint256 feeBasePoint) private pure returns (uint256) {\n        return assets.mulDiv(feeBasePoint, feeBasePoint + 1e5, MathUpgradeable.Rounding.Up);\n    }\n\n    /**\n     * @dev Returns the name of the token.\n     */\n    function name() public view override(ERC20Upgradeable, IERC20MetadataUpgradeable) returns(string memory) {\n        return \"Avantis USDC Vault\";\n    }\n\n    /**\n     * @dev Returns the symbol of the token, usually a shorter version of the\n     * name.\n     */\n    function symbol() public view override(ERC20Upgradeable, IERC20MetadataUpgradeable) returns(string memory) {\n        return \"avUSDC\";\n    }\n\n\n}\n\n"
+      },
+      "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol": {
+        "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/extensions/ERC4626.sol)\n\npragma solidity ^0.8.0;\n\nimport \"../ERC20Upgradeable.sol\";\nimport \"../utils/SafeERC20Upgradeable.sol\";\nimport \"../../../interfaces/IERC4626Upgradeable.sol\";\nimport \"../../../utils/math/MathUpgradeable.sol\";\nimport \"../../../proxy/utils/Initializable.sol\";\n\n/**\n * @dev Implementation of the ERC4626 \"Tokenized Vault Standard\" as defined in\n * https://eips.ethereum.org/EIPS/eip-4626[EIP-4626].\n *\n * This extension allows the minting and burning of \"shares\" (represented using the ERC20 inheritance) in exchange for\n * underlying \"assets\" through standardized {deposit}, {mint}, {redeem} and {burn} workflows. This contract extends\n * the ERC20 standard. Any additional extensions included along it would affect the \"shares\" token represented by this\n * contract and not the \"assets\" token which is an independent contract.\n *\n * [CAUTION]\n * ====\n * In empty (or nearly empty) ERC-4626 vaults, deposits are at high risk of being stolen through frontrunning\n * with a \"donation\" to the vault that inflates the price of a share. This is variously known as a donation or inflation\n * attack and is essentially a problem of slippage. Vault deployers can protect against this attack by making an initial\n * deposit of a non-trivial amount of the asset, such that price manipulation becomes infeasible. Withdrawals may\n * similarly be affected by slippage. Users can protect against this attack as well as unexpected slippage in general by\n * verifying the amount received is as expected, using a wrapper that performs these checks such as\n * https://github.com/fei-protocol/ERC4626#erc4626router-and-base[ERC4626Router].\n *\n * Since v4.9, this implementation uses virtual assets and shares to mitigate that risk. The `_decimalsOffset()`\n * corresponds to an offset in the decimal representation between the underlying asset's decimals and the vault\n * decimals. This offset also determines the rate of virtual shares to virtual assets in the vault, which itself\n * determines the initial exchange rate. While not fully preventing the attack, analysis shows that the default offset\n * (0) makes it non-profitable, as a result of the value being captured by the virtual shares (out of the attacker's\n * donation) matching the attacker's expected gains. With a larger offset, the attack becomes orders of magnitude more\n * expensive than it is profitable. More details about the underlying math can be found\n * xref:erc4626.adoc#inflation-attack[here].\n *\n * The drawback of this approach is that the virtual shares do capture (a very small) part of the value being accrued\n * to the vault. Also, if the vault experiences losses, the users try to exit the vault, the virtual shares and assets\n * will cause the first user to exit to experience reduced losses in detriment to the last users that will experience\n * bigger losses. Developers willing to revert back to the pre-v4.9 behavior just need to override the\n * `_convertToShares` and `_convertToAssets` functions.\n *\n * To learn more, check out our xref:ROOT:erc4626.adoc[ERC-4626 guide].\n * ====\n *\n * _Available since v4.7._\n */\nabstract contract ERC4626Upgradeable is Initializable, ERC20Upgradeable, IERC4626Upgradeable {\n    using MathUpgradeable for uint256;\n\n    IERC20Upgradeable private _asset;\n    uint8 private _underlyingDecimals;\n\n    /**\n     * @dev Set the underlying asset contract. This must be an ERC20-compatible contract (ERC20 or ERC777).\n     */\n    function __ERC4626_init(IERC20Upgradeable asset_) internal onlyInitializing {\n        __ERC4626_init_unchained(asset_);\n    }\n\n    function __ERC4626_init_unchained(IERC20Upgradeable asset_) internal onlyInitializing {\n        (bool success, uint8 assetDecimals) = _tryGetAssetDecimals(asset_);\n        _underlyingDecimals = success ? assetDecimals : 18;\n        _asset = asset_;\n    }\n\n    /**\n     * @dev Attempts to fetch the asset decimals. A return value of false indicates that the attempt failed in some way.\n     */\n    function _tryGetAssetDecimals(IERC20Upgradeable asset_) private view returns (bool, uint8) {\n        (bool success, bytes memory encodedDecimals) = address(asset_).staticcall(\n            abi.encodeWithSelector(IERC20MetadataUpgradeable.decimals.selector)\n        );\n        if (success && encodedDecimals.length >= 32) {\n            uint256 returnedDecimals = abi.decode(encodedDecimals, (uint256));\n            if (returnedDecimals <= type(uint8).max) {\n                return (true, uint8(returnedDecimals));\n            }\n        }\n        return (false, 0);\n    }\n\n    /**\n     * @dev Decimals are computed by adding the decimal offset on top of the underlying asset's decimals. This\n     * \"original\" value is cached during construction of the vault contract. If this read operation fails (e.g., the\n     * asset has not been created yet), a default of 18 is used to represent the underlying asset's decimals.\n     *\n     * See {IERC20Metadata-decimals}.\n     */\n    function decimals() public view virtual override(IERC20MetadataUpgradeable, ERC20Upgradeable) returns (uint8) {\n        return _underlyingDecimals + _decimalsOffset();\n    }\n\n    /** @dev See {IERC4626-asset}. */\n    function asset() public view virtual override returns (address) {\n        return address(_asset);\n    }\n\n    /** @dev See {IERC4626-totalAssets}. */\n    function totalAssets() public view virtual override returns (uint256) {\n        return _asset.balanceOf(address(this));\n    }\n\n    /** @dev See {IERC4626-convertToShares}. */\n    function convertToShares(uint256 assets) public view virtual override returns (uint256) {\n        return _convertToShares(assets, MathUpgradeable.Rounding.Down);\n    }\n\n    /** @dev See {IERC4626-convertToAssets}. */\n    function convertToAssets(uint256 shares) public view virtual override returns (uint256) {\n        return _convertToAssets(shares, MathUpgradeable.Rounding.Down);\n    }\n\n    /** @dev See {IERC4626-maxDeposit}. */\n    function maxDeposit(address) public view virtual override returns (uint256) {\n        return type(uint256).max;\n    }\n\n    /** @dev See {IERC4626-maxMint}. */\n    function maxMint(address) public view virtual override returns (uint256) {\n        return type(uint256).max;\n    }\n\n    /** @dev See {IERC4626-maxWithdraw}. */\n    function maxWithdraw(address owner) public view virtual override returns (uint256) {\n        return _convertToAssets(balanceOf(owner), MathUpgradeable.Rounding.Down);\n    }\n\n    /** @dev See {IERC4626-maxRedeem}. */\n    function maxRedeem(address owner) public view virtual override returns (uint256) {\n        return balanceOf(owner);\n    }\n\n    /** @dev See {IERC4626-previewDeposit}. */\n    function previewDeposit(uint256 assets) public view virtual override returns (uint256) {\n        return _convertToShares(assets, MathUpgradeable.Rounding.Down);\n    }\n\n    /** @dev See {IERC4626-previewMint}. */\n    function previewMint(uint256 shares) public view virtual override returns (uint256) {\n        return _convertToAssets(shares, MathUpgradeable.Rounding.Up);\n    }\n\n    /** @dev See {IERC4626-previewWithdraw}. */\n    function previewWithdraw(uint256 assets) public view virtual override returns (uint256) {\n        return _convertToShares(assets, MathUpgradeable.Rounding.Up);\n    }\n\n    /** @dev See {IERC4626-previewRedeem}. */\n    function previewRedeem(uint256 shares) public view virtual override returns (uint256) {\n        return _convertToAssets(shares, MathUpgradeable.Rounding.Down);\n    }\n\n    /** @dev See {IERC4626-deposit}. */\n    function deposit(uint256 assets, address receiver) public virtual override returns (uint256) {\n        require(assets <= maxDeposit(receiver), \"ERC4626: deposit more than max\");\n\n        uint256 shares = previewDeposit(assets);\n        _deposit(_msgSender(), receiver, assets, shares);\n\n        return shares;\n    }\n\n    /** @dev See {IERC4626-mint}.\n     *\n     * As opposed to {deposit}, minting is allowed even if the vault is in a state where the price of a share is zero.\n     * In this case, the shares will be minted without requiring any assets to be deposited.\n     */\n    function mint(uint256 shares, address receiver) public virtual override returns (uint256) {\n        require(shares <= maxMint(receiver), \"ERC4626: mint more than max\");\n\n        uint256 assets = previewMint(shares);\n        _deposit(_msgSender(), receiver, assets, shares);\n\n        return assets;\n    }\n\n    /** @dev See {IERC4626-withdraw}. */\n    function withdraw(uint256 assets, address receiver, address owner) public virtual override returns (uint256) {\n        require(assets <= maxWithdraw(owner), \"ERC4626: withdraw more than max\");\n\n        uint256 shares = previewWithdraw(assets);\n        _withdraw(_msgSender(), receiver, owner, assets, shares);\n\n        return shares;\n    }\n\n    /** @dev See {IERC4626-redeem}. */\n    function redeem(uint256 shares, address receiver, address owner) public virtual override returns (uint256) {\n        require(shares <= maxRedeem(owner), \"ERC4626: redeem more than max\");\n\n        uint256 assets = previewRedeem(shares);\n        _withdraw(_msgSender(), receiver, owner, assets, shares);\n\n        return assets;\n    }\n\n    /**\n     * @dev Internal conversion function (from assets to shares) with support for rounding direction.\n     */\n    function _convertToShares(uint256 assets, MathUpgradeable.Rounding rounding) internal view virtual returns (uint256) {\n        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), totalAssets() + 1, rounding);\n    }\n\n    /**\n     * @dev Internal conversion function (from shares to assets) with support for rounding direction.\n     */\n    function _convertToAssets(uint256 shares, MathUpgradeable.Rounding rounding) internal view virtual returns (uint256) {\n        return shares.mulDiv(totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);\n    }\n\n    /**\n     * @dev Deposit/mint common workflow.\n     */\n    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual {\n        // If _asset is ERC777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the\n        // `tokensToSend` hook. On the other hand, the `tokenReceived` hook, that is triggered after the transfer,\n        // calls the vault, which is assumed not malicious.\n        //\n        // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the\n        // assets are transferred and before the shares are minted, which is a valid state.\n        // slither-disable-next-line reentrancy-no-eth\n        SafeERC20Upgradeable.safeTransferFrom(_asset, caller, address(this), assets);\n        _mint(receiver, shares);\n\n        emit Deposit(caller, receiver, assets, shares);\n    }\n\n    /**\n     * @dev Withdraw/redeem common workflow.\n     */\n    function _withdraw(\n        address caller,\n        address receiver,\n        address owner,\n        uint256 assets,\n        uint256 shares\n    ) internal virtual {\n        if (caller != owner) {\n            _spendAllowance(owner, caller, shares);\n        }\n\n        // If _asset is ERC777, `transfer` can trigger a reentrancy AFTER the transfer happens through the\n        // `tokensReceived` hook. On the other hand, the `tokensToSend` hook, that is triggered before the transfer,\n        // calls the vault, which is assumed not malicious.\n        //\n        // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the\n        // shares are burned and after the assets are transferred, which is a valid state.\n        _burn(owner, shares);\n        SafeERC20Upgradeable.safeTransfer(_asset, receiver, assets);\n\n        emit Withdraw(caller, receiver, owner, assets, shares);\n    }\n\n    function _decimalsOffset() internal view virtual returns (uint8) {\n        return 0;\n    }\n\n    /**\n     * @dev This empty reserved space is put in place to allow future versions to add new\n     * variables without shifting down storage in the inheritance chain.\n     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps\n     */\n    uint256[49] private __gap;\n}\n"
+      }
+    },
+    "evidence": "Reviewed all Tranche source and inherited ERC4626 mutating flows. No role modifiers on four ordinary inherited user operations; tranche overrides enforce depositCap, fee transfers, actual balances and utilization. No request/claim or epoch function in applicable ABI."
+  },
+  "restrictions": {
+    "warnings": [
+      "Veranta is the current brand of Avantis. This is the current unified Base avUSDC LP vault at the former junior proxy, not a separate senior/junior tranche or a legacy veTranche staking product. Explorer jUSDC labels are historical; applicable implementation name()/symbol() return Avantis USDC Vault/avUSDC.",
+      "LP principal is exposed to trader payouts, buffer depletion, trading/oracle and market-making risk, smart-contract upgrades, governance and USDC risk. Depositing LP liquidity does not make leveraged trading or the yield strategy safe; no principal, APY or redemption guarantee is provided.",
+      "Current SDK vault docs explicitly describe no lock and no epoch/request/claim cycle. withdraw/redeem are immediate only if liquidity and utilization permit: the implementation checks adjusted balances, reserved assets, withdrawThreshold and actual ERC20 liquidity. There is no admitted request/claim fallback when an exit reverts.",
+      "Deposit cap and fee configuration are mutable. previews include configured fees; withdrawal collateral-health fees can apply. maxWithdraw/maxRedeem are not a success guarantee because fees, balance and utilization can change, and the post-withdraw utilization threshold is strict.",
+      "USDC asset amounts and avUSDC shares use their onchain integer units; shares are not guaranteed 1:1 with USDC. Deposit/mint require caller USDC allowance to this exact vault; receiver receives shares. Withdraw/redeem burn owner shares and pay receiver; caller != owner requires share allowance.",
+      "No fresh RPC storage/runtime identity, current cap/fee/reserve/allowance/paused-state, liquidity, successful execution or wallet eligibility verification was performed. Catalog membership does not bypass authorization, canonical calldata, pause or final execution checks."
+    ]
+  }
+}

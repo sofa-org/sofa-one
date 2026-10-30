@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
-import { useOpenfort, useSignOut, useUser } from '@openfort/react';
+import { useAppSession } from '@/components/AppSessionProvider';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AlertCircle, LogOut, Wallet, KeyRound, BookOpen, History, Loader2, Menu, X, Bell, CreditCard } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { listSecurityNotificationsAuth } from '@/lib/api';
 import { onSecurityNotificationsChanged } from './notification-events';
-import { clearDashboardStepUpProof } from './step-up-session';
+import { getDashboardStepUpToken } from './step-up-session';
+import { requestStepUpToken } from './step-up';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Wallet', icon: Wallet },
@@ -16,82 +18,23 @@ const NAV_ITEMS = [
   { href: '/dashboard/docs', label: 'API Docs', icon: BookOpen },
 ];
 
-const SESSION_REFRESH_INTERVAL_MS = 30 * 60 * 1000; // Renew at most every 30 minutes
-const SESSION_REFRESH_COOLDOWN_MS = 5 * 60 * 1000; // Focus/visibility re-entry cooldown
 
 export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useOpenfort();
-  const { signOut } = useSignOut();
-  const { getAccessToken, isAuthenticated, validateAndRefreshToken } = useUser();
-  const getToken = useCallback(async () => {
-    const token = await getAccessToken();
-    if (!token) {
-      throw new Error('Openfort session is not ready. Refresh and sign in again.');
-    }
-    return token;
-  }, [getAccessToken]);
-
-  // Sliding-session keep-alive: proactively renew the Openfort session while the
-  // dashboard stays open so an idle-but-open tab does not let the session lapse.
-  const sessionRefreshInFlightRef = useRef(false);
-  const lastSessionRefreshAtRef = useRef(0);
-
-  const refreshSession = useCallback(async () => {
-    if (!isAuthenticated || sessionRefreshInFlightRef.current) return;
-    const now = Date.now();
-    if (now - lastSessionRefreshAtRef.current < SESSION_REFRESH_COOLDOWN_MS) return;
-
-    sessionRefreshInFlightRef.current = true;
-    lastSessionRefreshAtRef.current = now;
-    try {
-      await validateAndRefreshToken();
-    } catch {
-      // Swallow silently: expired/invalid sessions are handled by ProtectedRoute
-      // and Openfort's own state. Never log tokens or expose sensitive details.
-    } finally {
-      sessionRefreshInFlightRef.current = false;
-    }
-  }, [isAuthenticated, validateAndRefreshToken]);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    void refreshSession();
-
-    const intervalId = window.setInterval(() => {
-      void refreshSession();
-    }, SESSION_REFRESH_INTERVAL_MS);
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        void refreshSession();
-      }
-    };
-    const handleWindowFocus = () => {
-      void refreshSession();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleWindowFocus);
-
-    return () => {
-      window.clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleWindowFocus);
-    };
-  }, [isAuthenticated, refreshSession]);
+  const { session, signOut, signOutAll } = useAppSession();
+  const isAuthenticated = Boolean(session);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [signOutLoading, setSignOutLoading] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
+  const [signOutAllRequested, setSignOutAllRequested] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const accountEmail = user?.email ?? null;
+  const accountEmail = session?.email ?? null;
 
   const fetchUnreadCount = useCallback(
     async (signal?: AbortSignal) => {
       try {
-        const data = await listSecurityNotificationsAuth(getToken, { unreadOnly: true }, signal);
+        const data = await listSecurityNotificationsAuth({ unreadOnly: true }, signal);
         if (!signal?.aborted) {
           setUnreadCount(data.length);
         }
@@ -99,7 +42,7 @@ export default function DashboardLayout() {
         // Silently fail; badge will just not show
       }
     },
-    [getToken],
+    [],
   );
 
   useEffect(() => {
@@ -116,16 +59,21 @@ export default function DashboardLayout() {
     });
   }, [fetchUnreadCount, isAuthenticated]);
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (allDevices = false) => {
     if (signOutLoading) return;
 
+    setSignOutAllRequested(allDevices);
     setMobileMenuOpen(false);
     setSignOutLoading(true);
     setSignOutError(null);
 
     try {
-      clearDashboardStepUpProof();
-      await signOut();
+      if (allDevices) {
+        const proof = getDashboardStepUpToken() ?? await requestStepUpToken();
+        await signOutAll(proof);
+      } else {
+        await signOut();
+      }
       navigate('/sign-in', { replace: true });
     } catch (err: unknown) {
       setSignOutError(err instanceof Error ? err.message : 'Could not sign out. Please try again.');
@@ -136,7 +84,7 @@ export default function DashboardLayout() {
 
   const UserBadge = () => (
     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent/10 text-xs font-bold uppercase text-brand-accent">
-      {(user?.email?.[0] ?? 'U').toUpperCase()}
+      {(accountEmail?.[0] ?? 'U').toUpperCase()}
     </div>
   );
 
@@ -187,7 +135,7 @@ export default function DashboardLayout() {
         </div>
         <button
           type="button"
-          onClick={handleSignOut}
+          onClick={() => { void handleSignOut(signOutAllRequested); }}
           disabled={signOutLoading}
           className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-white px-2 py-1 font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
@@ -251,7 +199,7 @@ export default function DashboardLayout() {
                     Signed in as
                   </p>
                   <p className="truncate text-sm font-medium text-brand-text">
-                    {accountEmail ?? 'Openfort user'}
+                    {accountEmail ?? 'SOFA user'}
                   </p>
                 </div>
                 {accountEmail && <CopyButton text={accountEmail} className="h-7 w-7 shrink-0" />}
@@ -261,7 +209,7 @@ export default function DashboardLayout() {
                   {signOutLoading ? 'Signing out…' : 'Sign out'}
                 </span>
                 <button
-                  onClick={handleSignOut}
+                  onClick={() => { void handleSignOut(); }}
                   disabled={signOutLoading}
                   className="rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
                   aria-label="Sign out"
@@ -269,6 +217,7 @@ export default function DashboardLayout() {
                   <SignOutIcon />
                 </button>
               </div>
+              <button disabled={signOutLoading} onClick={() => { void handleSignOut(true); }} className="mt-3 text-xs text-brand-muted underline">Sign out all devices</button>
             </div>
           </div>
         </div>
@@ -290,12 +239,12 @@ export default function DashboardLayout() {
             <div className="flex min-w-0 items-center gap-2">
               <UserBadge />
               <span className="truncate text-xs font-medium text-brand-muted">
-                {accountEmail ?? 'Openfort user'}
+                {accountEmail ?? 'SOFA user'}
               </span>
               {accountEmail && <CopyButton text={accountEmail} className="h-7 w-7 shrink-0" />}
             </div>
             <button
-              onClick={handleSignOut}
+              onClick={() => { void handleSignOut(); }}
               disabled={signOutLoading}
               className="rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-brand-bg hover:text-brand-text disabled:cursor-not-allowed disabled:opacity-60"
               aria-label="Sign out"
@@ -303,12 +252,17 @@ export default function DashboardLayout() {
               <SignOutIcon />
             </button>
           </div>
+          <button disabled={signOutLoading} onClick={() => { void handleSignOut(true); }} className="mt-3 text-xs text-brand-muted underline">Sign out all devices</button>
         </div>
       </aside>
 
       {/* Main */}
       <main className="flex-1 overflow-auto bg-brand-bg p-4 sm:p-8 lg:h-screen">
-        <Outlet />
+        <ErrorBoundary key={location.pathname} inline>
+          <Suspense fallback={<div role="status" className="flex min-h-64 items-center justify-center gap-3 text-brand-muted"><Loader2 className="h-5 w-5 animate-spin" />Loading page…</div>}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   );

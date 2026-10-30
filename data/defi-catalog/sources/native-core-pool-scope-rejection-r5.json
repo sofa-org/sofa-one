@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Native",
+  "observedAt": "2026-10-24",
+  "decision": "not-admitted-current-product-outside-existing-execution-scope",
+  "reason": "Current maintained Native Pool is Native Core earn ledger, with supported EVM chains only supplying bridge deposits and withdrawal requiring Native Core signed actions. Legacy wNLP positions cannot substitute for current product. Not a claim of project shutdown.",
+  "evidence": [
+    {
+      "sourceRef": "https://native.org/",
+      "observation": "Current primary site offers Native Pool, lending-based pools, sovereign Native Core and app.native.org/pool."
+    },
+    {
+      "sourceRef": "https://docs.native.org/native-dev/build-with-native/asset-issuers/wnlp.md",
+      "observation": "Official text: wNLP is a legacy LP token used for users who supplied single-sided liquidity directly on public networks."
+    },
+    {
+      "sourceRef": "https://docs.native.org/native-dev/modules/native-pool/deposit-withdrawal-earn-migrate-for-native-pool.md",
+      "observation": "Current official guide calls old positions legacy Liquidity Pool and provides migration into Native Pool."
+    },
+    {
+      "sourceRef": "https://docs.native.org/native-dev/build-with-native/native-core-pool/deposit.md",
+      "observation": "EVM route deposit_type bridge_deposit; credited into Native Core earn_balance. Native Core balance route is EIP712 transfer, nativeChainId=696969."
+    },
+    {
+      "sourceRef": "https://docs.native.org/native-dev/build-with-native/deposit-withdraw/vault-contract.md",
+      "observation": "DepositWithdrawVault is the EVM side of Native Core funding; withdraw is operator-only carrying M-of-N signer-network signatures, submitted by Native."
+    },
+    {
+      "sourceRef": "https://docs.native.org/native-dev/build-with-native/native-core-pool/withdraw.md",
+      "observation": "Every step is a signed request; nothing is submitted on-chain by you. Pool withdrawal moves earn_balance back into Native Core balance."
+    }
+  ],
+  "limitations": [
+    "No legacy callable deposit/redeem is labeled maintained on the basis of mere deployment or ABI availability.",
+    "No bridge-only contract, unsupported native chain or new signing scheme admitted."
+  ]
+}

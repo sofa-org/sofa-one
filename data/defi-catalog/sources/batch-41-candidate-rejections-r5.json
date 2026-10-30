@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "batch": 41,
+  "observedAt": "2026-10-24",
+  "purpose": "Rejection/nonselection evidence only; never catalog activation input. Authorized replacement protocols: Veda and Concrete.",
+  "candidates": [
+    {
+      "name": "aPriori",
+      "decision": "exclude_duplicate_canonical_alias",
+      "reason": "aPriori is the current Capricorn brand/product, already admitted; not a distinct new protocol. No shutdown inference.",
+      "evidence": [
+        {
+          "sourceRef": "https://apr.io/",
+          "redirectChain": [
+            {
+              "url": "https://apr.io/",
+              "status": 308,
+              "location": "https://www.capricorn.tech/"
+            }
+          ],
+          "finalUrl": "https://www.capricorn.tech/",
+          "observation": "HTTP308 redirect; current page title Capricorn Tech, canonical capricorn.tech, Stake Now points app.capricorn.tech, Docs still links apriori-docs.gitbook.io."
+        },
+        {
+          "sourceRef": "frontend/src/pages/supported-protocols.ts",
+          "observation": "Already admitted canonical Capricorn at https://app.capricorn.tech/."
+        }
+      ]
+    },
+    {
+      "name": "Kuru",
+      "chainId": 143,
+      "decision": "exclude_current_source_binding_gap",
+      "reason": "Current maintained Spot V2 ledger is a genuine credited custody/trading workflow, but required full current deployment-bound Solidity/source inventory and current implementation binding cannot be obtained. ABI-only SDK surface is not substituted; obsolete V1 not used. This is not a shutdown determination.",
+      "currentDeployments": {
+        "accountProxy": "0x264123a9B96Cc1193944cC25C188f1bD3dFa670e",
+        "accountImpl": "0xB52deBaD718730eE0a4C12C28E70d346dbCc9E5B",
+        "bookProxy": "0xc9dE998e272d59a19CEA3783C8dd44f87A86405D",
+        "bookImpl": "0x38e7620A96E79A1d2B4439c68141203d757D69E6",
+        "limiterProxy": "0xF059F4AAb49Bd3AFB62134145EeAF38Fe103F0eA",
+        "limiterImpl": "0x64E621868318a68DfD1F374EC75bd3Cd5B72b349"
+      },
+      "evidence": [
+        {
+          "sourceRef": "https://docs.kuru.io/",
+          "observation": "Current primary docs say Spot V2 public frontend live, Monad mainnet, deposits and trading."
+        },
+        {
+          "sourceRef": "https://docs.kuru.io/deployments/mainnet",
+          "observation": "Current primary exact chain143 AccountCore proxy/current implementation and nine new market proxies; current core impl B52d differs original deployment reference fe1b."
+        },
+        {
+          "sourceRef": "https://api.github.com/gists/0093a81e9fc21b6c96e74ac3d3eb08e9",
+          "gistRevision": "c97f0f51e67f324f0a3808d743e1f48310225b34",
+          "quote": "No source code was uploaded for public explorer verification. No existing deployment was upgraded.",
+          "sourceRevision": "bcf0b7c8e54722abdf50ddd43d36262725efa41f",
+          "observation": "Deployment manifests/artifacts/source comparison retained locally; no full source attached."
+        },
+        {
+          "sourceRef": "https://docs.kuru.io/contracts/account-core",
+          "observation": "Docs explicitly callable reference omits admin full interface; genuine deposit -> root free balance -> trading reserves -> root withdrawal."
+        },
+        {
+          "sourceRef": "https://api.github.com/repos/Kuru-Labs/kuru-contracts-perps",
+          "httpStatus": 404
+        },
+        {
+          "sourceRef": "https://raw.githubusercontent.com/Kuru-Labs/kuru-contracts-perps/42ef525/docs/AccountArchitecture.md",
+          "httpStatus": 404
+        },
+        {
+          "sourceRef": "https://monadscan.com/address/0xB52deBaD718730eE0a4C12C28E70d346dbCc9E5B#code",
+          "observation": "Explorer says Unverified; no source."
+        },
+        {
+          "sourceRef": "https://raw.githubusercontent.com/Kuru-Labs/ts-sdk/8588784c4d54183a04029cb1b513910c806905a9/src/generated/metadata.ts",
+          "observation": "SDK committed full ABIs pin cdac5ae1311ce4793f80d604d25f9713fcfed57d but no Solidity and no independently current deployed binding."
+        },
+        {
+          "sourceRef": "https://sourcify.dev/server/v2/contract/143/0x264123a9B96Cc1193944cC25C188f1bD3dFa670e?fields=all",
+          "httpStatus": 404
+        },
+        {
+          "sourceRef": "https://sourcify.dev/server/v2/contract/143/0xB52deBaD718730eE0a4C12C28E70d346dbCc9E5B?fields=all",
+          "httpStatus": 404
+        },
+        {
+          "sourceRef": "https://sourcify.dev/server/v2/contract/143/0xc9dE998e272d59a19CEA3783C8dd44f87A86405D?fields=all",
+          "httpStatus": 404
+        },
+        {
+          "sourceRef": "https://sourcify.dev/server/v2/contract/143/0x38e7620A96E79A1d2B4439c68141203d757D69E6?fields=all",
+          "httpStatus": 404
+        },
+        {
+          "sourceRef": "https://sourcify.dev/server/v2/contract/143/0xF059F4AAb49Bd3AFB62134145EeAF38Fe103F0eA?fields=all",
+          "httpStatus": 404
+        },
+        {
+          "sourceRef": "https://sourcify.dev/server/v2/contract/143/0x64E621868318a68DfD1F374EC75bd3Cd5B72b349?fields=all",
+          "httpStatus": 404
+        }
+      ],
+      "requiredToReconsider": "Published full source+complete ABI for actual current core/book implementations, with current proxy binding, plus individual ordinary method inventory."
+    },
+    {
+      "name": "Nad.fun",
+      "chainId": 143,
+      "decision": "exclude_current_source_binding_gap",
+      "reason": "Current maintained V2 router has exact primary address/ABI/flow documentation but no recovered current implementation Solidity source. Neither current ABI-only docs nor 2025 legacy Nad.Pump contracts substitute for current upgrade.",
+      "deployments": {
+        "router": "0x8986C8fD44eb85294A725a7e61AF35E76bA26F91",
+        "curve": "0x9f3832732923252A21044F21eE6bd87F09514ae4",
+        "currentRouterImplementation": "0xf0001763fe64837f603D0464B7AC8BB65C3807b9"
+      },
+      "evidence": [
+        {
+          "sourceRef": "https://nad.fun/",
+          "observation": "Current production launch/trade app, rendered production metadata last-updated 2026-10-23; not evidence of shutdown."
+        },
+        {
+          "sourceRef": "https://raw.githubusercontent.com/Naddotfun/nadfun-v2-intergration/72eb116eab6a2d1cc0222b31b12a175e15b327da/README.md",
+          "observation": "Official current mainnet chain143 exact router+curve addresses and ABI file inventory."
+        },
+        {
+          "sourceRef": "https://raw.githubusercontent.com/Naddotfun/nadfun-v2-intergration/72eb116eab6a2d1cc0222b31b12a175e15b327da/ROUTER_INTEGRATION.md",
+          "observation": "Fixed financial buy/sell/native exact-in/out flows; no arbitrary router bytes proposed. Direct curve balance-delta buy/sell deliberately not admitted."
+        },
+        {
+          "sourceRef": "https://monadscan.com/address/0x8986C8fD44eb85294A725a7e61AF35E76bA26F91#code",
+          "observation": "EIP1967 active upgrade Sep18, implementation0xf0001763fe64837f603D0464B7AC8BB65C3807b9; proxy Unverified."
+        },
+        {
+          "sourceRef": "https://monadscan.com/address/0xf0001763fe64837f603D0464B7AC8BB65C3807b9#code",
+          "observation": "Current implementation Unverified; no Solidity source."
+        },
+        {
+          "sourceRef": "https://rpc.monad.xyz",
+          "method": "eth_getCode",
+          "address": "0xf0001763fe64837f603D0464B7AC8BB65C3807b9",
+          "observation": "Read-only runtime fetch; metadata IPFS QmTWxAxDENKwc1BeioxPvUs6nm5131zxvwo5uFCPH1YgsK extracted from CBOR trailer. No transaction execution."
+        },
+        {
+          "sourceRef": "https://api.github.com/repos/Naddotfun/contracts/git/trees/47f14990312f72a311b099ba1df22e6ae4d4de7d?recursive=1",
+          "observation": "Public contracts contains legacy Nad.Pump interface, not current NadFunRouter source."
+        },
+        {
+          "sourceRef": "https://sourcify.dev/server/v2/contract/143/0x8986C8fD44eb85294A725a7e61AF35E76bA26F91?fields=all",
+          "httpStatus": 404
+        },
+        {
+          "sourceRef": "https://sourcify.dev/server/v2/contract/143/0x9f3832732923252A21044F21eE6bd87F09514ae4?fields=all",
+          "httpStatus": 404
+        },
+        {
+          "sourceRef": "https://sourcify.dev/server/v2/contract/143/0xf0001763fe64837f603D0464B7AC8BB65C3807b9?fields=all",
+          "httpStatus": 404
+        }
+      ],
+      "metadataFetchLimits": [
+        "ipfs.io and dweb.link returned429 gateway transition message",
+        "gateway.ipfs.io returned429",
+        "gateway.pinata.cloud and ipfs.filebase.io timed out",
+        "gateway.lighthouse.storage returned402",
+        "cloudflare-ipfs.com unavailable"
+      ],
+      "requiredToReconsider": "Recover full current implementation compilation/source and deployed ABI binding; otherwise cannot satisfy source-derived financial dataflow admission."
+    },
+    {
+      "name": "Veda Golden Goose deployment (not entire protocol)",
+      "chainId": 1,
+      "decision": "not_selected_use_current_public_LiquidUSD_instead",
+      "reason": "Maintained primary Lido GGV page exists and says EarnETH can allocate into GGV, but tested direct user deposit assets disabled and deposit/withdraw selectors not public. No retired/shutdown assertion made; choose explicitly current public-funding LiquidUSD rather than this narrower queue-only route.",
+      "evidence": [
+        {
+          "sourceRef": "https://stake.lido.fi/earn/ggv/deposit",
+          "observation": "Names Veda curator/infra, exact vault0xef417FCE1883c6653E7dC6AF7c6F85CCDE84Aa09 and current EarnETH meta-vault allocation; no invented sunset label."
+        },
+        {
+          "sourceRef": "https://raw.githubusercontent.com/Veda-Labs/boring-vault/3957d3b55ad49196cf9ca7f910fd244a77d3c464/deployments/addresses/Mainnet/GoldenGoose.json",
+          "observation": "Old teller0xE89f... superseded by vault current hook0x4c74... listed Tellers.json."
+        },
+        {
+          "sourceRef": "https://raw.githubusercontent.com/Veda-Labs/boring-vault/3957d3b55ad49196cf9ca7f910fd244a77d3c464/deployments/addresses/Mainnet/Tellers.json",
+          "observation": "Current nonproxy LayerZeroTeller0x4c74cca483a278bcb90aea3f8f565e56202d82b2.",
+          "readOnlyObservations": {
+            "vedaCurrentTeller": {
+              "vault()": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x000000000000000000000000ef417fce1883c6653e7dc6af7c6f85ccde84aa09"
+              },
+              "accountant()": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x000000000000000000000000c873f2b7b3ba0a7faa2b56e210e3b965f2b618f5"
+              },
+              "nativeWrapper()": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+              },
+              "authority()": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x0000000000000000000000009778d78495cbbfce0b1f6194526a8c3d4b9c3aaf"
+              },
+              "shareLockPeriod()": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x0000000000000000000000000000000000000000000000000000000000015180"
+              },
+              "depositCap()": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x000000000000000000000000000000000000ffffffffffffffffffffffffffff"
+              },
+              "isPaused()": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+              },
+              "teller:weth": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+              },
+              "queue:weth": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a300000000000000000000000000000000000000000000000000000000000003f4800000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+              },
+              "teller:steth": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+              },
+              "queue:steth": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000e100000000000000000000000000000000000000000000000000000000000093a80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090000000000000000000000000000000000000000000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+              },
+              "teller:wsteth": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+              },
+              "queue:wsteth": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000e100000000000000000000000000000000000000000000000000000000000093a80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090000000000000000000000000000000000000000000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+              },
+              "teller:native": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+              },
+              "queue:native": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+              }
+            },
+            "vedaPublicPermissions": {
+              "deposit(address,uint256,uint256,address)": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+              },
+              "withdraw(address,uint256,uint256,address)": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+              },
+              "requestOnChainWithdraw(address,uint128,uint16,uint24)": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+              },
+              "cancelOnChainWithdraw((uint96,address,address,uint128,uint128,uint40,uint24,uint24))": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+              },
+              "replaceOnChainWithdraw((uint96,address,address,uint128,uint128,uint40,uint24,uint24),uint16,uint24)": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

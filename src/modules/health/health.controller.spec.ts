@@ -25,7 +25,14 @@ describe('HealthController', () => {
   });
 
   it('delegates readiness checks to the health service', async () => {
-    const response = { status: 'ok', timestamp: '2026-04-28T00:00:00.000Z' };
+    const response = {
+      status: 'degraded',
+      timestamp: '2026-04-28T00:00:00.000Z',
+      checks: {
+        database: 'ok',
+        rateLimit: { status: 'degraded', mode: 'memory', reason: 'redis_unavailable' },
+      },
+    };
     healthService.ready.mockResolvedValue(response);
 
     await expect(controller.ready()).resolves.toBe(response);

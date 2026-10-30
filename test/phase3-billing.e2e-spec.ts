@@ -4,7 +4,7 @@
  * Real: AppModule + runner-provisioned PostgreSQL (BILLING_E2E_* only), row locks,
  *       unique cross-rail index, cleanup lease/CAS, worker tick backlog, health
  *       healthy-wins aggregation (BILL-020 B3/B4).
- * Mocked: Openfort IAM, Stripe client (never live provider / chain / Openfort).
+ * Mocked: Openfort wallet operations, Stripe client (never live provider / chain / Openfort).
  *
  * Does not claim a live Stripe contract. Run via `npm run test:e2e:billing`.
  * Does not claim the full multi-suite runner.
@@ -17,6 +17,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as request from 'supertest';
 import { PrismaService } from '../src/core/database/prisma.service';
+import { AppSessionService } from '../src/modules/app-session/app-session.service';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { HealthService } from '../src/modules/health/health.service';
 import { BillingWorkerService } from '../src/modules/billing/billing-worker.service';
@@ -74,30 +75,19 @@ const STRIPE_CUSTOMER = 'cus_phase3_e2e';
 
 type SeedBundle = {
   userId: string;
-  token: string;
+  cookie: string;
+  csrfToken: string;
   accountId: string;
   planId: string;
   invoiceId: string;
 };
 
-const iamSessions = new Map<string, { openfortUserId: string; email: string }>();
-
 const mockOpenfortService = {
-  verifyIamSession: jest.fn(async (accessToken: string) => {
-    const session = iamSessions.get(accessToken);
-    if (!session) throw new Error('invalid openfort token');
-    return {
-      openfortUserId: session.openfortUserId,
-      email: session.email,
-      session: { id: `sess_${session.openfortUserId}` },
-    };
-  }),
   createBackendWallet: jest.fn(),
   createAgentWallet: jest.fn(),
   getTransactionReceipt: jest.fn(),
   signData: jest.fn(),
   sendUserOperation: jest.fn(),
-  sendBackendTransaction: jest.fn(),
 };
 
 jest.mock('../src/core/openfort/openfort.service', () => ({
@@ -202,7 +192,6 @@ describe('Phase 3 billing integrity (disposable PostgreSQL e2e)', () => {
       throw new Error('phase3 e2e: database not initialized or identity unverified');
     }
     jest.clearAllMocks();
-    iamSessions.clear();
     customersCreate.mockRejectedValue(new Error('stripe customer create must not run'));
     sessionsCreate.mockRejectedValue(new Error('stripe checkout create must not run'));
     sessionsRetrieve.mockRejectedValue(new Error('stripe retrieve not configured'));
@@ -279,9 +268,10 @@ describe('Phase 3 billing integrity (disposable PostgreSQL e2e)', () => {
       expect(before[0]!.method).toBe('usdc');
 
       const res = await request(app!.getHttpServer())
-        .post(`/v1/billing/invoices/${seed.invoiceId}/checkout`)
+        .post(`/billing/invoices/${seed.invoiceId}/checkout`)
         .set('Origin', FRONTEND_ORIGIN)
-        .set('Authorization', `Bearer ${seed.token}`)
+        .set('Cookie', seed.cookie)
+        .set('X-CSRF-Token', seed.csrfToken)
         .expect(409);
 
       // ConflictException string messages resolve to BAD_REQUEST code (no CONFLICT token).
@@ -290,7 +280,7 @@ describe('Phase 3 billing integrity (disposable PostgreSQL e2e)', () => {
           statusCode: 409,
           code: 'BAD_REQUEST',
           message: expect.stringMatching(/active payment of another rail/i),
-          path: `/v1/billing/invoices/${seed.invoiceId}/checkout`,
+          path: `/billing/invoices/${seed.invoiceId}/checkout`,
           requestId: expect.any(String),
         }),
       );
@@ -1077,10 +1067,8 @@ describe('Phase 3 billing integrity (disposable PostgreSQL e2e)', () => {
 
   async function seedUserAccountInvoice(opts: { paid?: boolean } = {}): Promise<SeedBundle> {
     const userId = randomUUID();
-    const token = `tok_${SUITE_ID}_${userId.slice(0, 8)}`;
     const socialId = `phase3-${SUITE_ID}-${userId.slice(0, 8)}`;
     const email = `phase3-${userId.slice(0, 8)}@example.test`;
-    iamSessions.set(token, { openfortUserId: socialId, email });
 
     await prisma!.user.create({
       data: {
@@ -1144,7 +1132,23 @@ describe('Phase 3 billing integrity (disposable PostgreSQL e2e)', () => {
       },
     });
 
-    return { userId, token, accountId, planId, invoiceId };
+    const sessions = app!.get(AppSessionService);
+    const { token, session } = await sessions.exchange(userId, undefined);
+    // Billing fixtures explicitly satisfy MFA; real factor verification is
+    // covered by the dedicated application-session PostgreSQL suite.
+    await prisma!.appSession.update({
+      where: { id: session.id },
+      data: { mfaVerified: true },
+    });
+
+    return {
+      userId,
+      cookie: `${sessions.cookieName}=${token}`,
+      csrfToken: sessions.csrfToken(token),
+      accountId,
+      planId,
+      invoiceId,
+    };
   }
 
   async function seedPaidInvoiceWithSibling(args: {
@@ -1309,6 +1313,10 @@ describe('Phase 3 billing integrity (disposable PostgreSQL e2e)', () => {
     await prisma.withdrawalPolicy.deleteMany();
     await prisma.securityNotification.deleteMany();
     await prisma.securityEvent.deleteMany();
+    // Deleting suite-owned sessions also cascades their session-bound proofs.
+    await prisma.appSession.deleteMany({
+      where: { user: { socialId: { startsWith: `phase3-${SUITE_ID}-` } } },
+    });
     await prisma.stepUpChallenge.deleteMany();
     await prisma.userMfaTotpRecoveryCode.deleteMany();
     await prisma.userMfaTotpCredential.deleteMany();

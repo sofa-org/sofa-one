@@ -48,23 +48,34 @@ Update docs in the same change when behavior changes:
 
 ## 7. Verification
 
-Run the narrowest useful checks first, then broader checks when appropriate:
+CI uses Node.js 20 and `npm ci`; use these to align dependency installation,
+without assuming the local environment is otherwise identical to CI. Run the
+narrowest package gate for package-local changes and the root gate for
+cross-layer/repository-wide changes:
 
 ```bash
-npm run test
-npm run build
-npm run lint
+npm run verify:backend       # from repository root; backend-only changes
+npm run verify:frontend      # from repository root; frontend-only changes
+npm run verify               # from repository root; cross-layer/repository-wide changes
 ```
 
-Frontend checks:
+`verify:backend` runs Prisma Client generation, non-fixing lint (`lint:check`),
+all backend unit tests in-band, and backend build, sequentially. `verify:frontend`
+runs frontend lint, Vitest unit tests, and frontend build, sequentially. The frontend
+test step is part of the CI verification gate. Each command chain stops on the first
+failure.
+
+`npm run lint:check` is the backend CI-equivalent lint check; `npm run lint` uses
+`--fix` for compatibility and is **not** CI-equivalent. `npm run verify` does not
+include E2E and must not be described as complete CI/E2E validation. Schema, billing,
+or concurrency changes additionally require the billing E2E runner with its isolated
+database/Redis environment:
 
 ```bash
-cd frontend
-npm run build
-npm run lint
+npm run test:e2e:billing
 ```
 
-E2E tests require reachable database/Redis services:
+Other backend E2E tests require reachable database/Redis services:
 
 ```bash
 npm run test:e2e

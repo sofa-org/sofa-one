@@ -1,0 +1,2507 @@
+{
+  "schemaVersion": 1,
+  "chainId": 56,
+  "address": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+  "protocol": "thena-v2",
+  "version": "v2",
+  "website": "https://thena.fi/",
+  "websiteEvidence": {
+    "sourceRef": "https://docs.thena.fi/thena/official-links ; https://www.thena.fi/",
+    "verifiedAt": "2026-10-17",
+    "evidence": "Official Links names www.thena.fi and links the contracts repository and deployment spreadsheet. Independently fetched www.thena.fi redirects to thena.fi and serves Home | THENA metadata describing swaps, liquidity and voting; suitable informational directory URL, not a claim that the public swap UI uses this classic router."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.thena.fi/thena/official-links ; https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; https://docs.thena.fi/thena ; https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+    "deployment": {
+      "transactionHash": "0x311bd144fd53bce8e632af8d1093f42d789511ae330a7f856e44a8b08723b7d0",
+      "blockNumber": "25152397",
+      "transactionIndex": "86",
+      "deployer": "0x993Ae2b514677c7AC52bAeCd8871d2b362A9D693"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "evidence": "Official Links points to the Thena Contracts spreadsheet. Its Thena V3 Contract Addresses tab, Classic Factory and Router section, row 29 explicitly lists Router V2 at this address and is Proxy? NO; row 30 lists Classic PairFactory 0xAFD89d21BdB66d00817d4153E055830B1c2B3970. Official overview identifies THENA as built on BNB Chain. Exact chain-56 Sourcify deployment/ABI/source corroborates address, RouterV2 compilation and non-proxy resolution. This is the classic Solidly-style router, not the separate Algebra V3 SwapRouter, Thena Router 0x146c3126932B6908DF8a4e8664f22082A97a0840, or Kyber-powered frontend aggregator.",
+    "constructorArguments": "0x000000000000000000000000afd89d21bdb66d00817d4153e055830b1c2b3970000000000000000000000000bb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c",
+    "constructorDependencies": {
+      "factory": "0xAFD89d21BdB66d00817d4153E055830B1c2B3970",
+      "wrappedNative": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+      "officialScriptRef": "https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/scripts/V1/DeployRouterV2.js",
+      "evidence": "Source-service constructor arguments decode to this factory and WBNB; pinned official deployment script uses the same dependencies. No fresh RPC or runtime configuration query was performed."
+    }
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.13+commit.abaa5c0e",
+      "compilerSettings": {
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        }
+      },
+      "name": "RouterV2",
+      "fullyQualifiedName": "contracts/RouterV2.sol:RouterV2"
+    },
+    "compilerMetadataSettings": {
+      "compilationTarget": {
+        "contracts/RouterV2.sol": "RouterV2"
+      },
+      "evmVersion": "london",
+      "libraries": {},
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "remappings": []
+    },
+    "matchId": "7041734",
+    "sourceServiceVerifiedAt": "2025-07-10T10:32:38Z",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "proxyResolutionRef": "https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=proxyResolution",
+    "sourceFile": "contracts/RouterV2.sol",
+    "sourceSha256": "e8d28327b5c984844490855c6c305fd4f4a531d643b75bc10bc051ecf282bb2d",
+    "sourceMetadata": {
+      "keccak256": "0x03bc14fb38039349405b32f52162261c4e5483805bde0ae89d55999218ce27ca",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://c4fab52c86955b791cf3d8c8489a73d0134b7ac6db0b9ab7f31673e957d3297e",
+        "dweb:/ipfs/QmSh4Svv6azxjDWPYzEZcgPHoaaNcSsHcBSjeqwkr5LqwD"
+      ]
+    },
+    "officialCommit": "f5bc742e1ff16c8be308a271a6a4a0e8f9e06453",
+    "officialSourceGitBlob": "1d4afa4d808aaae285903b14cab9f3709bbfcaa1",
+    "whitespaceStrippedSourceSha256": "21200362b647bf4d4cd3fdb8fa73430916f004eef0c9f99b910abff6d34a696f",
+    "evidence": "Complete original ABI copied from exact-chain/address Sourcify record, not a generic Solidly interface. Deployed source and pinned official contracts/RouterV2.sol are equal after removing whitespace; raw/newline-normalized files differ in blank lines, so byte-for-byte equality is not claimed. The exact deployed source remains authoritative. Source-service exact_match is a reported historical verification status, not an independent fresh runtime attestation. No legacy constant/payable fields occur in this full ABI; selected fragments preserve input/output/tuple/internalType/stateMutability exactly."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_wETH",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "Swap",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount0In",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "_tokenIn",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UNSAFE_swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct RouterV2.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "amountTokenDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct RouterV2.route[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getReserves",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isPair",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "pair",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pairFor",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pair",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quoteAddLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quoteRemoveLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "sortTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "token0",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "token1",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "swapExactETHForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct RouterV2.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct RouterV2.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactTokensForETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct RouterV2.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct RouterV2.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct RouterV2.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSimple",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenFrom",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenTo",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct RouterV2.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "wETH",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IWETH"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "UNSAFE_swapExactTokensForTokens",
+      "signature": "UNSAFE_swapExactTokensForTokens(uint256[],(address,address,bool)[],address,uint256)",
+      "decision": "excluded",
+      "reason": "Specialized raw per-hop-amount swap outside the ordinary quoted-swap admission: accepts caller-supplied amounts[] and bypasses getAmountsOut and amountOutMin checks. It is explicit, not an opaque executor, but is not selected in this ordinary-swap review."
+    },
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,bool,uint256,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit token/token stable-or-volatile pool liquidity provision; pulls caller tokens by allowance, may create the factory pair, checks minimums/deadline and mints LP to specified recipient."
+    },
+    {
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,bool,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit token/native-BNB liquidity provision; wraps required msg.value through constructor-bound WBNB, pulls caller tokens, checks minimums/deadline, mints LP to recipient and refunds unused native input to caller."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote or token-order helper; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(uint256,address,address)",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote or token-order helper; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "getAmountsOut",
+      "signature": "getAmountsOut(uint256,(address,address,bool)[])",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote or token-order helper; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "getReserves",
+      "signature": "getReserves(address,address,bool)",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote or token-order helper; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "isPair",
+      "signature": "isPair(address)",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote or token-order helper; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "pairFor",
+      "signature": "pairFor(address,address,bool)",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote or token-order helper; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "quoteAddLiquidity",
+      "signature": "quoteAddLiquidity(address,address,bool,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote or token-order helper; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "quoteRemoveLiquidity",
+      "signature": "quoteRemoveLiquidity(address,address,bool,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote or token-order helper; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,bool,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/token stable-or-volatile liquidity removal; transfers caller LP by allowance to the derived pair, burns to recipient and checks both output minimums/deadline."
+    },
+    {
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,bool,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/native-BNB removal; consumes caller LP allowance, checks minimums/deadline, transfers calculated token output and unwraps calculated WBNB output to recipient."
+    },
+    {
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,bool,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit non-permit fee-supporting token/native-BNB removal; checks pair burn accounting minimums/deadline but forwards the entire router token balance, not a guaranteed post-tax receipt."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermit",
+      "signature": "removeLiquidityETHWithPermit(address,bool,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Signature-bearing LP permit/approveMax path excluded; ordinary non-permit removal is admitted separately."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,bool,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Signature-bearing LP permit/approveMax path excluded; ordinary non-permit removal is admitted separately."
+    },
+    {
+      "functionName": "removeLiquidityWithPermit",
+      "signature": "removeLiquidityWithPermit(address,address,bool,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Signature-bearing LP permit/approveMax path excluded; ordinary non-permit removal is admitted separately."
+    },
+    {
+      "functionName": "sortTokens",
+      "signature": "sortTokens(address,address)",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote or token-order helper; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,(address,address,bool)[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input BNB/token path swap; requires WBNB route start, wraps msg.value, checks quoted output minimum/deadline and pays recipient."
+    },
+    {
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,(address,address,bool)[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting exact-input BNB/token swap; requires WBNB route start, wraps msg.value and checks recipient token balance increase against minimum/deadline."
+    },
+    {
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/BNB swap; requires WBNB route end, pulls caller input, checks quoted minimum/deadline, unwraps calculated output and sends native BNB to recipient."
+    },
+    {
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting token/BNB path swap; requires WBNB route end and deadline, pulls caller input, checks minimum against whole-router WBNB balance before unwrap/payment."
+    },
+    {
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input multihop token swap; each route is (from,to,stable), not opaque executor data. Pulls caller input, quotes derived pairs and checks output minimum/deadline."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSimple",
+      "signature": "swapExactTokensForTokensSimple(uint256,uint256,address,address,bool,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit single-hop exact-input token swap with caller token addresses/stable flag; pulls caller input using allowance, computes factory-pair quote and checks output minimum/deadline."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting exact-input token path swap; pulls caller input, computes hop amounts from pair balances and checks recipient final-token balance increase against minimum/deadline."
+    },
+    {
+      "functionName": "wETH",
+      "signature": "wETH()",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote or token-order helper; excluded from transaction capabilities and does not create a read API."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:add-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,bool,uint256,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "amountADesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 addLiquidity",
+      "operation": "add-liquidity",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    },
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:add-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "amountTokenDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 addLiquidityETH",
+      "operation": "add-liquidity-eth",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    },
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 removeLiquidity",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    },
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:remove-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 removeLiquidityETH",
+      "operation": "remove-liquidity-eth",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    },
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:remove-liquidity-ethsupporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 removeLiquidityETHSupportingFeeOnTransferTokens",
+      "operation": "remove-liquidity-ethsupporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    },
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:swap-exact-ethfor-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct RouterV2.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 swapExactETHForTokens",
+      "operation": "swap-exact-ethfor-tokens",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    },
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:swap-exact-ethfor-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct RouterV2.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-ethfor-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    },
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:swap-exact-tokens-for-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct RouterV2.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 swapExactTokensForETH",
+      "operation": "swap-exact-tokens-for-eth",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    },
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:swap-exact-tokens-for-ethsupporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct RouterV2.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-ethsupporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    },
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:swap-exact-tokens-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct RouterV2.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 swapExactTokensForTokens",
+      "operation": "swap-exact-tokens-for-tokens",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    },
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:swap-exact-tokens-for-tokens-simple",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "swapExactTokensForTokensSimple",
+      "signature": "swapExactTokensForTokensSimple(uint256,uint256,address,address,bool,address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSimple",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "tokenFrom",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenTo",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 swapExactTokensForTokensSimple",
+      "operation": "swap-exact-tokens-for-tokens-simple",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    },
+    {
+      "capabilityId": "thena-v2:v2:56:0xd4ae6eca985340dd434d38f470accce4dc78d109:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xd4ae6eCA985340Dd434D38F470aCCce4DC78D109",
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct RouterV2.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment table: https://docs.google.com/spreadsheets/d/1nk-OLHL6yZ3rvTYo2-OXTVpjgfo5PVyufmM1U4S8geA/edit#gid=0 ; exact-address ABI/source: https://sourcify.dev/server/v2/contract/56/0xd4ae6eca985340dd434d38f470accce4dc78d109?fields=all ; matching official source: https://github.com/ThenafiBNB/THENA-Contracts/blob/f5bc742e1ff16c8be308a271a6a4a0e8f9e06453/contracts/RouterV2.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "thena-v2",
+      "label": "THENA Classic Router V2 swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller chooses assets, stable/volatile pool flags, connected route sequence, recipient, amounts, minimums and deadline. These financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. ETH/wETH ABI names refer here to native BNB/constructor-bound WBNB; payable functions spend msg.value, nonpayable functions require zero native value.",
+        "Pair addresses derive from constructor-bound factory and pairCodeHash; liquidity calls may create a pair. Swap calls use empty callback bytes, not arbitrary executor payloads. No current factory/pool configuration, liquidity or execution claim is made.",
+        "Fee-supporting removal forwards the entire router token balance; fee-supporting token-to-native swaps unwrap the entire router WBNB balance. Burn-accounting minimums do not guarantee net post-tax token receipt.",
+        "The fee-supporting internal loop calls getAmountOut, which chooses the larger quote across stable and volatile pools, while executing the caller-selected route.stable pool. This discrepancy can make swaps revert; compatibility and success are not guaranteed.",
+        "Source/ABI admission is not a fresh deployed-bytecode check, complete-workflow claim or financial-safety assessment. Catalog metadata creates no API-key grant and bypasses no independent execution control."
+      ]
+    }
+  ],
+  "reviewSummary": {
+    "abiEntryCount": 29,
+    "functionCount": 26,
+    "admittedFunctionCount": 12,
+    "excludedFunctionCount": 14,
+    "excludedCategories": {
+      "gettersQuotesAndPureHelpers": 10,
+      "signaturePermitPaths": 3,
+      "specializedUnsafeRawAmountsSwap": 1
+    },
+    "nonFunctionEntries": "One constructor, one Swap event and one receive; none creates a capability. No administrative, initialization or opaque-executor function is exposed by this deployed ABI.",
+    "scope": "Classic Router V2 admits seven explicit swaps and five non-permit liquidity actions. No V1 deployment substitution, whole-ABI activation, opaque aggregator, callback, permit or getter capability is introduced.",
+    "blockers": []
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "sky",
+      "familyVersion": "susds-v1@5381240",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD",
+          "status": "inactive",
+          "contractName": "Sky Ethereum sUSDS",
+          "sourceRefs": [
+            "sky-mainnet-chainlog",
+            "sky-susds-listed-implementation-abi",
+            "sky-usds-underlying-chainlog"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "sky-susds-listed-implementation-abi"
+            },
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" },
+                { "name": "referral", "type": "uint16", "internalType": "uint16" }
+              ],
+              "outputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "sky-susds-listed-implementation-abi"
+            },
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "sky-susds-listed-implementation-abi"
+            },
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" },
+                { "name": "referral", "type": "uint16", "internalType": "uint16" }
+              ],
+              "outputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "sky-susds-listed-implementation-abi"
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" },
+                { "name": "owner", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "sky-susds-listed-implementation-abi"
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" },
+                { "name": "owner", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "sky-susds-listed-implementation-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "sky-mainnet-chainlog",
+      "url": "https://chainlog.skyeco.com/api/mainnet/1.20.20.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official versioned Ethereum chainlog 1.20.20 (Last-Modified 2026-09-03 15:38:09 GMT) records SUSDS proxy 0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD and SUSDS_IMP 0x4e7991e5C547ce825BdEb665EE14a3274f9F61e0. The implementation address is ABI/source evidence only, never the transaction target. This dated role mapping is not proof of current proxy storage/runtime state."
+    },
+    {
+      "sourceId": "sky-susds-listed-implementation-abi",
+      "url": "https://sourcify.dev/server/v2/contract/1/0x4e7991e5C547ce825BdEb665EE14a3274f9F61e0?fields=abi,metadata,sources,compilation",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Sourcify full match 5381240, verified 2024-09-17T12:01:09Z, Solidity 0.8.21 SUsds source, supplies the exact selected ABI entries and source. Complete selected overloads: deposit(uint256,address), deposit(uint256,address,uint16), mint(uint256,address), mint(uint256,address,uint16), withdraw(uint256,address,address), redeem(uint256,address,address); all nonpayable with primitive internal types."
+    },
+    {
+      "sourceId": "sky-usds-underlying-chainlog",
+      "url": "https://chainlog.skyeco.com/api/mainnet/1.20.20.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "The same dated official mainnet chainlog identifies USDS at 0xdC035D45d973E3EC169d2276DDab16f1e407384F as the underlying token role. This does not certify current balances, accrual, proxy implementation, or redemption liquidity."
+    }
+  ]
+}

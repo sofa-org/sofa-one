@@ -16,7 +16,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "viem": ["./node_modules/viem"]
     }
   },
   "include": ["src", "vite-env.d.ts"]

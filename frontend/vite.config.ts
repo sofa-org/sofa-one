@@ -27,21 +27,22 @@ export default defineConfig({
 
         defaultHandler(warning);
       },
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          wallet: ['@openfort/react', '@openfort/react/ethereum', '@openfort/react/wagmi', 'wagmi', 'viem'],
-        },
-      },
+      // Let Rollup assign shared dependencies from the actual lazy-route graph.
+      // Package-level wallet chunks also absorb common runtime helpers, making
+      // the public entry statically import the entire SDK through those helpers.
     },
   },
   resolve: {
+    dedupe: ['viem'],
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
   },
   server: {
     port: 3000,
+    fs: {
+      allow: [__dirname, path.resolve(__dirname, '../src/common/calibur')],
+    },
     proxy: {
       '/api': {
         target: apiProxyTarget,

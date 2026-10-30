@@ -12,6 +12,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\" --max-warnings=0",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -19,11 +20,18 @@
     "test:e2e:billing": "ts-node --transpile-only scripts/billing-e2e-runner.ts",
     "test:e2e:billing:gate": "ts-node --transpile-only scripts/billing-e2e-runner.ts --gate-only",
     "prisma:generate": "prisma generate",
+    "verify:backend": "npm run prisma:generate && npm run defi:catalog:check && npm run lint:check && npm run test -- --runInBand && npm run build",
+    "verify:frontend": "npm --prefix frontend run verify",
+    "verify": "npm run verify:backend && npm run verify:frontend",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "billing:testnet-smoke": "ts-node --transpile-only scripts/billing-testnet-smoke.ts",
-    "billing:fixture": "ts-node --transpile-only scripts/billing-fixture.ts"
+    "billing:fixture": "ts-node --transpile-only scripts/billing-fixture.ts",
+    "defi:catalog:generate": "ts-node --transpile-only scripts/defi-catalog/cli.ts generate",
+    "defi:catalog:check": "ts-node --transpile-only scripts/defi-catalog/cli.ts check",
+    "defi:catalog:diff": "ts-node --transpile-only scripts/defi-catalog/cli.ts diff",
+    "defi:catalog:inventory": "ts-node --transpile-only scripts/defi-catalog/inventory.ts"
   },
   "dependencies": {
     "@nest-lab/throttler-storage-redis": "^1.2.0",

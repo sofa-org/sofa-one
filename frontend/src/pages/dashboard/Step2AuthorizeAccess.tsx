@@ -113,7 +113,7 @@ export function Step2AuthorizeAccess({
           <div className="mt-3 rounded-xl bg-white/70 p-4 text-sm text-blue-900 border border-blue-200 shadow-inner">
             <strong className="block mb-1 text-blue-950">Deposit gas to continue</strong>
             <p className="mb-3 text-blue-800">
-              Send a small amount of {agentNativeSymbol} on {agentChainName} to this EOA address. Then use your Step 1
+              Send a small amount of {agentNativeSymbol} on {agentChainName} to your wallet address below. Then use your Step 1
               password to sign the one-time Calibur authorization in your browser.
             </p>
             <div className="flex items-center gap-2 bg-white rounded-md p-1.5 border border-blue-200 shadow-sm">
@@ -132,7 +132,7 @@ export function Step2AuthorizeAccess({
                 rel="noreferrer"
                 className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900"
               >
-                View EOA on {agentChainName} explorer
+                View wallet on {agentChainName} explorer
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             )}

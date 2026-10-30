@@ -1,10 +1,10 @@
 /**
- * Runner-owned billing E2E entrypoint (Gate 1).
+ * Runner-owned PostgreSQL security and billing E2E entrypoint (Gate 1).
  *
- * Provisions a fresh per-run PostgreSQL database + dedicated login role under
- * a unique run id, verifies identity (database/user/session/owner/application
- * marker), runs migrations, then executes the billing E2E suites against that
- * exact target. Drops the database (FORCE) and role in finally.
+ * Provisions a fresh PostgreSQL database + dedicated login role for each suite
+ * under a unique run id, verifies identity (database/user/session/owner/application
+ * marker), runs migrations, then executes that suite against the exact target.
+ * Drops the database (FORCE) and role in finally before moving to the next suite.
  *
  * Failures inside provisioning/migrate/test throw (never process.exit) so the
  * main try/finally always runs teardown when names were registered.
@@ -21,13 +21,19 @@
  *   npm run test:e2e:billing -- --wallet-lifecycle-only # disposable DB, migrations, lifecycle suite only
  *   npm run test:e2e:billing -- --recovery-only # disposable DB, migrations, recovery race suite only
  *   npm run test:e2e:billing -- --auth-provisioning-only # disposable DB, migrations, auth provisioning suite only
+ *   npm run test:e2e:billing -- --app-session-only # disposable DB, session/MFA security suite only
  *   npm run test:e2e:billing -- --multi-wallet-execution-only # disposable DB, multi-wallet execution suite only
  *   npm run test:e2e:billing -- --multi-wallet-quote-only # disposable DB, USDC payer quote race suite only
  *   npm run test:e2e:billing -- --wallet-peak-only # disposable DB, monthly wallet peak billing suite only
  *   npm run test:e2e:billing -- --fixture-wallet-peak-only # disposable DB, signed billing fixture lifecycle
+ *   npm run test:e2e:billing -- --defi-policy-only # disposable DB, DeFi pause/grant serialization evidence
+ *   npm run test:e2e:billing -- --direct-egress-only # disposable DB, direct-egress HTTP suite only
+ *   npm run test:e2e:billing -- --pusd-only # disposable DB, Polymarket pUSD acceptance race only
+ *   npm run test:e2e:billing -- --polymarket-signing-budget-only # disposable DB, order signing budget acceptance only
  */
 import { randomBytes } from 'crypto';
 import { spawn } from 'child_process';
+import { execFileSync } from 'child_process';
 import * as path from 'path';
 import {
   BILLING_E2E_IDENTITY_SQL,
@@ -110,6 +116,34 @@ function sanitizeAdminUrl(raw: string): { url: string; maintenanceDb: string } {
     parsed.pathname = '/postgres';
   }
   return { url: parsed.toString(), maintenanceDb: 'postgres' };
+}
+
+/** Resolve only the known local Compose PG container; never emit its credentials. */
+function localDockerAdminUrl(): string {
+  try {
+    const raw = execFileSync('docker', ['inspect', 'sofa-one-postgres-1'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const inspected = JSON.parse(raw) as Array<{
+      Name?: string; State?: { Running?: boolean }; Config?: { Env?: string[] };
+      NetworkSettings?: { Ports?: Record<string, Array<{ HostIp?: string; HostPort?: string }> | null> };
+    }>;
+    const container = inspected[0];
+    const variables = Object.fromEntries((container?.Config?.Env ?? []).map((entry) => {
+      const split = entry.indexOf('='); return [entry.slice(0, split), entry.slice(split + 1)];
+    }));
+    const binding = container?.NetworkSettings?.Ports?.['5432/tcp']?.[0];
+    if (container?.Name !== '/sofa-one-postgres-1' || container.State?.Running !== true || binding?.HostIp !== '127.0.0.1' || !binding.HostPort || !variables.POSTGRES_USER || !variables.POSTGRES_PASSWORD) {
+      runnerFail('local PostgreSQL container identity or loopback binding could not be verified');
+    }
+    const url = new URL('postgresql://localhost/postgres');
+    url.username = variables.POSTGRES_USER;
+    url.password = variables.POSTGRES_PASSWORD;
+    url.hostname = '127.0.0.1';
+    url.port = binding.HostPort;
+    return url.toString();
+  } catch (error) {
+    if (error instanceof BillingE2eRunnerError) throw error;
+    runnerFail('no admin URL supplied and verified local PostgreSQL container credentials are unavailable');
+  }
 }
 
 function buildTargetUrl(args: {
@@ -317,10 +351,15 @@ async function main(): Promise<number> {
   const walletLifecycleOnly = process.argv.includes('--wallet-lifecycle-only');
   const recoveryOnly = process.argv.includes('--recovery-only');
   const authProvisioningOnly = process.argv.includes('--auth-provisioning-only');
+  const appSessionOnly = process.argv.includes('--app-session-only');
   const multiWalletExecutionOnly = process.argv.includes('--multi-wallet-execution-only');
   const multiWalletQuoteOnly = process.argv.includes('--multi-wallet-quote-only');
   const walletPeakOnly = process.argv.includes('--wallet-peak-only');
   const fixtureWalletPeakOnly = process.argv.includes('--fixture-wallet-peak-only');
+  const defiPolicyOnly = process.argv.includes('--defi-policy-only');
+  const directEgressOnly = process.argv.includes('--direct-egress-only');
+  const pusdOnly = process.argv.includes('--pusd-only');
+  const polymarketSigningBudgetOnly = process.argv.includes('--polymarket-signing-budget-only');
 
   // Always run no-DB gate tests first (no admin URL required; no provisioned resources).
   const gateEnv: NodeJS.ProcessEnv = {
@@ -347,119 +386,131 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  const adminRaw = process.env[ADMIN_URL_ENV]?.trim() ?? '';
-  if (!adminRaw) {
-    runnerFail(
-      `${ADMIN_URL_ENV} is required to provision a disposable billing E2E database (no static target)`,
-    );
-  }
+  const billingSuites = polymarketSigningBudgetOnly
+    ? ['test/polymarket-signing-budget.e2e-spec.ts']
+    : pusdOnly
+    ? ['test/polymarket-pusd-concurrency.e2e-spec.ts']
+    : directEgressOnly
+    ? ['test/api-key-direct-egress.e2e-spec.ts']
+    : defiPolicyOnly
+    ? ['test/defi-policy.pg.e2e-spec.ts']
+    : fixtureWalletPeakOnly
+    ? ['test/billing-fixture-wallet-peak.pg.e2e-spec.ts']
+    : walletPeakOnly
+    ? ['test/billing-wallet-peak.pg.e2e-spec.ts']
+    : multiWalletQuoteOnly
+    ? ['test/multi-wallet-usdc-quote.pg.e2e-spec.ts']
+    : multiWalletExecutionOnly
+    ? ['test/multi-wallet-execution.pg.e2e-spec.ts']
+    : appSessionOnly
+    ? ['test/app-session.pg.e2e-spec.ts']
+    : authProvisioningOnly
+    ? ['test/auth-provisioning.pg.e2e-spec.ts']
+    : recoveryOnly
+    ? ['test/wallet-provisioning-recovery.pg.e2e-spec.ts']
+    : walletLifecycleOnly
+    ? ['test/billing-wallet-lifecycle.pg.e2e-spec.ts']
+    : [
+        'test/billing-http.e2e-spec.ts',
+        'test/claim-concurrency.e2e-spec.ts',
+        'test/settlement-concurrency.e2e-spec.ts',
+        'test/api-key-direct-egress.e2e-spec.ts',
+        'test/api-key-direct-egress-concurrency.e2e-spec.ts',
+        'test/usdc-wallet-payment.e2e-spec.ts',
+        'test/phase3-billing.e2e-spec.ts',
+        'test/billing-wallet-lifecycle.pg.e2e-spec.ts',
+        'test/app-session.pg.e2e-spec.ts',
+        'test/auth-provisioning.pg.e2e-spec.ts',
+        'test/multi-wallet-execution.pg.e2e-spec.ts',
+        'test/multi-wallet-usdc-quote.pg.e2e-spec.ts',
+        'test/wallet-provisioning-recovery.pg.e2e-spec.ts',
+        'test/billing-wallet-peak.pg.e2e-spec.ts',
+        'test/billing-fixture-wallet-peak.pg.e2e-spec.ts',
+        'test/defi-policy.pg.e2e-spec.ts',
+        'test/polymarket-signing-budget.e2e-spec.ts',
+        'test/polymarket-pusd-concurrency.e2e-spec.ts',
+      ];
+  const adminRaw = process.env[ADMIN_URL_ENV]?.trim() || localDockerAdminUrl();
 
   const Client = loadPg();
   const { url: adminUrl } = sanitizeAdminUrl(adminRaw);
 
-  // Tracked as soon as provision chooses names — even if CREATE fails mid-way.
-  const provisionedNames: BillingE2eProvisionedNames = {};
-  let exitCode = 1;
-  let primaryError: unknown;
+  // Every suite gets its own database and role. Several suites deliberately
+  // seed canonical plans or clean whole tables; never make file order an
+  // isolation boundary.
+  for (const suite of billingSuites) {
+    // Tracked as soon as provision chooses names, including partial failures.
+    const provisionedNames: BillingE2eProvisionedNames = {};
+    let exitCode = 1;
+    let primaryError: unknown;
 
-  try {
-    await waitForAdmin(Client, adminUrl);
-    const provisioned = await provisionBillingE2eTarget(Client, adminUrl, (names) => {
-      if (names.database) provisionedNames.database = names.database;
-      if (names.role) provisionedNames.role = names.role;
-    });
-
-    const target: BillingE2eDatabaseTarget = {
-      url: provisioned.targetUrl,
-      databaseName: provisioned.database,
-      runId: provisioned.runId,
-      expectedUser: provisioned.role,
-      expectedOwner: provisioned.role,
-      applicationName: provisioned.applicationName,
-    };
-
-    // Child env: generated target only — never admin credentials.
-    const childEnv = buildBillingE2eChildEnv(target, process.env);
-
-    console.log(
-      `[billing-e2e-runner] provisioned run_id=${provisioned.runId} (database/role names embed run id; credentials omitted)`,
-    );
-
-    const migrateCode = await runCommand(
-      process.platform === 'win32' ? 'npx.cmd' : 'npx',
-      ['prisma', 'migrate', 'deploy'],
-      childEnv,
-    );
-    if (migrateCode !== 0) {
-      runnerFail('prisma migrate deploy failed against runner-provisioned target', migrateCode);
-    }
-
-    // Re-verify after migrate (still same generated target).
-    await withClient(Client, provisioned.targetUrl, async (client) => {
-      await assertBillingE2eDatabaseIdentity(target, async () => {
-        const res = await client.query(BILLING_E2E_IDENTITY_SQL);
-        return res.rows;
+    try {
+      await waitForAdmin(Client, adminUrl);
+      const provisioned = await provisionBillingE2eTarget(Client, adminUrl, (names) => {
+        if (names.database) provisionedNames.database = names.database;
+        if (names.role) provisionedNames.role = names.role;
       });
-    });
 
-    const billingSuites = fixtureWalletPeakOnly
-      ? ['test/billing-fixture-wallet-peak.pg.e2e-spec.ts']
-      : walletPeakOnly
-      ? ['test/billing-wallet-peak.pg.e2e-spec.ts']
-      : multiWalletQuoteOnly
-      ? ['test/multi-wallet-usdc-quote.pg.e2e-spec.ts']
-      : multiWalletExecutionOnly
-      ? ['test/multi-wallet-execution.pg.e2e-spec.ts']
-      : authProvisioningOnly
-      ? ['test/auth-provisioning.pg.e2e-spec.ts']
-      : recoveryOnly
-      ? ['test/wallet-provisioning-recovery.pg.e2e-spec.ts']
-      : walletLifecycleOnly
-      ? ['test/billing-wallet-lifecycle.pg.e2e-spec.ts']
-      : [
-          'test/billing-http.e2e-spec.ts',
-          'test/claim-concurrency.e2e-spec.ts',
-          'test/settlement-concurrency.e2e-spec.ts',
-          // BILL-016 Phase 2A: API-key direct-egress destination/cooldown runtime evidence
-          'test/api-key-direct-egress.e2e-spec.ts',
-          'test/api-key-direct-egress-concurrency.e2e-spec.ts',
-          // BILL-016 Phase 2B: quote-bound wallet-payment runtime evidence
-          'test/usdc-wallet-payment.e2e-spec.ts',
-          // Phase 3: payment/reconciliation integrity (cross-rail, cleanup lease, worker health)
-          'test/phase3-billing.e2e-spec.ts',
-          'test/billing-wallet-lifecycle.pg.e2e-spec.ts',
-        ];
-    const jestCode = await runCommand(
-      process.platform === 'win32' ? 'npx.cmd' : 'npx',
-      [
-        'jest',
-        '--config',
-        './test/jest-e2e.json',
-        '--runInBand',
-        ...billingSuites,
-      ],
-      childEnv,
-    );
-    exitCode = jestCode;
-  } catch (err) {
-    primaryError = err;
-    if (err instanceof BillingE2eRunnerError) {
-      exitCode = err.exitCode;
-    } else {
-      exitCode = 2;
-    }
-  } finally {
-    // Always attempt DROP when names were registered; never mask primaryError.
-    const cleaned = await destroyBillingE2eTarget(Client, adminUrl, provisionedNames);
-    if (!cleaned && exitCode === 0) {
-      exitCode = 1;
-    }
-  }
+      const target: BillingE2eDatabaseTarget = {
+        url: provisioned.targetUrl,
+        databaseName: provisioned.database,
+        runId: provisioned.runId,
+        expectedUser: provisioned.role,
+        expectedOwner: provisioned.role,
+        applicationName: provisioned.applicationName,
+      };
 
-  if (primaryError) {
-    console.error(`[billing-e2e-runner] ${redactErrorMessage(primaryError)}`);
+      // Child env: generated target only — never admin credentials.
+      const childEnv = buildBillingE2eChildEnv(target, process.env);
+
+      console.log(
+        `[billing-e2e-runner] suite=${path.basename(suite)} run_id=${provisioned.runId} (credentials omitted)`,
+      );
+
+      const migrateCode = await runCommand(
+        process.platform === 'win32' ? 'npx.cmd' : 'npx',
+        ['prisma', 'migrate', 'deploy'],
+        childEnv,
+      );
+      if (migrateCode !== 0) {
+        runnerFail('prisma migrate deploy failed against runner-provisioned target', migrateCode);
+      }
+
+      // Re-verify after migrate (still same generated target).
+      await withClient(Client, provisioned.targetUrl, async (client) => {
+        await assertBillingE2eDatabaseIdentity(target, async () => {
+          const res = await client.query(BILLING_E2E_IDENTITY_SQL);
+          return res.rows;
+        });
+      });
+
+      exitCode = await runCommand(
+        process.platform === 'win32' ? 'npx.cmd' : 'npx',
+        [
+          'jest',
+          '--config',
+          './test/jest-e2e.json',
+          '--runInBand',
+          '--runTestsByPath',
+          suite,
+        ],
+        childEnv,
+      );
+    } catch (err) {
+      primaryError = err;
+      exitCode = err instanceof BillingE2eRunnerError ? err.exitCode : 2;
+    } finally {
+      // Always attempt DROP when names were registered; never mask primaryError.
+      const cleaned = await destroyBillingE2eTarget(Client, adminUrl, provisionedNames);
+      if (!cleaned && exitCode === 0) exitCode = 1;
+    }
+
+    if (primaryError) {
+      console.error(`[billing-e2e-runner] ${redactErrorMessage(primaryError)}`);
+    }
+    if (exitCode !== 0) return exitCode;
   }
-  return exitCode;
+  return 0;
 }
 
 main()

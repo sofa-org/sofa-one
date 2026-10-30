@@ -1,112 +1,96 @@
-import { Body, Controller, Post, Get, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, ForbiddenException, Get, Header, HttpCode, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { OpenfortAuthGuard } from '../../common/guards/openfort-auth.guard';
+import { AppSessionGuard } from '../../common/guards/app-session.guard';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
-import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
 import { StepUpGuard } from '../../common/guards/step-up.guard';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
+import { AllowPendingMfa } from '../../common/decorators/allow-pending-mfa.decorator';
 import { RequireStepUp } from '../../common/decorators/step-up.decorator';
+import { AppSessionService } from '../app-session/app-session.service';
 import { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
 import { AgentRegistrationResultDto } from './dto/agent-registration-result.dto';
 import { AgentRegistrationTransactionDto } from './dto/agent-registration-transaction.dto';
 
 @Controller('auth')
-@UseGuards(OpenfortAuthGuard)
+@FrontendOnly()
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService, private readonly sessions: AppSessionService) {}
 
-  /**
-   * POST /auth/session
-   * Requires: Authorization: Bearer <openfort_iam_access_token>
-   * Returns: { userId, wallet, wallets }
-   */
+  /** The only dashboard login exchange: IAM proves identity, the opaque cookie grants app access. */
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Post('session')
-  async syncSession(@Req() req: any) {
-    return this.authService.syncOpenfortSession(
-      req.openfortUserId,
-      req.openfortEmail,
-      req.ip ?? undefined,
-      req.headers?.['user-agent'] ?? undefined,
+  @Header('Cache-Control', 'no-store')
+  @UseGuards(FrontendOnlyGuard, OpenfortAuthGuard)
+  async syncSession(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const synced = await this.authService.syncOpenfortSession(
+      req.openfortUserId!, req.openfortEmail, req.ip, req.headers['user-agent'],
     );
+    const { token, session } = await this.sessions.exchange(synced.userId, this.sessions.readToken(req));
+    this.sessions.setCookie(res, token, session.expiresAt);
+    return this.sessions.snapshot(session, token);
   }
 
-  /** Compatibility alias for older frontend builds. */
-  @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
-  @Post('social')
-  async socialLogin(@Req() req: any) {
-    return this.authService.syncOpenfortSession(
-      req.openfortUserId,
-      req.openfortEmail,
-      req.ip ?? undefined,
-      req.headers?.['user-agent'] ?? undefined,
-    );
+  @Get('session')
+  @AllowPendingMfa()
+  @Header('Cache-Control', 'no-store')
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
+  getSession(@Req() req: Request) {
+    return this.sessions.snapshot(req.appSession!, this.sessions.readToken(req)!);
   }
 
-  /**
-   * POST /auth/refresh-api-key
-   * Revokes all existing API keys and issues a new one.
-   * Returns: { apiKey }
-   *
-   * CSRF safety: requires a valid Openfort IAM token supplied as `Authorization: Bearer <token>`.
-   * Browsers cannot attach custom Authorization headers cross-origin without a preflight,
-   * so a forged cross-site request will never carry a valid token and will be rejected by
-   * OpenfortAuthGuard before reaching this handler.
-   */
-  @Throttle({ short: { ttl: 60000, limit: 3 }, medium: { ttl: 3600000, limit: 10 } })
-  @FrontendOnly()
+  @Delete('session')
+  @HttpCode(204)
+  @AllowPendingMfa()
+  @Header('Cache-Control', 'no-store')
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    await this.sessions.revoke(req.user!.id, req.appSession!.id);
+    this.sessions.clearCookie(res);
+  }
+
+  @Delete('sessions')
+  @HttpCode(204)
   @RequireStepUp()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard, StepUpGuard)
-  @Post('refresh-api-key')
-  async refreshApiKey(@Req() req: any) {
-    return this.authService.refreshApiKey(req.user.socialId);
+  @Header('Cache-Control', 'no-store')
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard, StepUpGuard)
+  async logoutAll(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    await this.sessions.revokeAll(req.user!.id, req.appSession!.id);
+    this.sessions.clearCookie(res);
   }
 
-  /**
-   * POST /auth/embedded-wallet/authorize
-   * Verifies an Openfort embedded EOA belongs to the Openfort IAM session,
-   * binds it as the user's asset account, and creates/returns backend agent registration details.
-   */
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Post('embedded-wallet/authorize')
-  async authorizeEmbeddedWallet(@Req() req: any, @Body() body: AuthorizeEmbeddedWalletDto) {
-    return this.authService.authorizeEmbeddedWallet(req.openfortUserId, req.openfortAccessToken, body);
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard, OpenfortAuthGuard)
+  async authorizeEmbeddedWallet(@Req() req: Request, @Body() body: AuthorizeEmbeddedWalletDto) {
+    // A fresh provider token may belong to a different wallet browser session.
+    // Never mutate either wallet unless it proves the immutable local identity.
+    if (req.openfortUserId !== req.user!.socialId) {
+      throw new ForbiddenException('Wallet identity does not match application session');
+    }
+    return this.authService.authorizeEmbeddedWallet(req.user!.socialId, req.openfortAccessToken!, body);
   }
 
-  /**
-   * POST /auth/embedded-wallet/registration-transaction
-   * Saves the submitted registerKey transaction hash so pending registration can be resumed.
-   */
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Post('embedded-wallet/registration-transaction')
-  async markAgentRegistrationTransaction(
-    @Req() req: any,
-    @Body() body: AgentRegistrationTransactionDto,
-  ) {
-    return this.authService.markAgentRegistrationTransaction(req.openfortUserId, body.chainId, body.txHash, body.walletId);
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
+  async markAgentRegistrationTransaction(@Req() req: Request, @Body() body: AgentRegistrationTransactionDto) {
+    return this.authService.markAgentRegistrationTransaction(req.user!.socialId, body.chainId, body.txHash, body.walletId);
   }
 
-  /**
-   * POST /auth/embedded-wallet/registration-result
-   * Records the final receipt result for the Calibur agent-key registration transaction.
-   */
   @Throttle({ short: { ttl: 60000, limit: 5 }, medium: { ttl: 3600000, limit: 20 } })
   @Post('embedded-wallet/registration-result')
-  async markAgentRegistrationResult(
-    @Req() req: any,
-    @Body() body: AgentRegistrationResultDto,
-  ) {
-    return this.authService.markAgentRegistrationResult(req.openfortUserId, body.chainId, body.status, body.txHash, body.walletId);
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
+  async markAgentRegistrationResult(@Req() req: Request, @Body() body: AgentRegistrationResultDto) {
+    return this.authService.markAgentRegistrationResult(req.user!.socialId, body.chainId, body.status, body.txHash, body.walletId);
   }
 
-  /**
-   * GET /auth/me
-   * Returns the current user's wallet info from DB.
-   * Protected by OpenfortAuthGuard (global defaults apply — no custom throttle).
-   */
+  /** Wallet projection/reconciliation is deliberately separate from session introspection. */
   @Get('me')
-  async getMe(@Req() req: any) {
-    return this.authService.getMe(req.openfortUserId);
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
+  async getMe(@Req() req: Request) {
+    return this.authService.getMe(req.user!.socialId);
   }
 }

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Sentiment",
+  "reviewedAt": "2026-10-24",
+  "batch": 50,
+  "status": "rejected",
+  "reason": "The current official website explicitly states that Sentiment has wound down. The linked official V2 SuperPool withdrawal guide independently states that the V2 interface was deprecated after the protocol wound down. The catalog lifecycle policy excludes wound-down protocols, including exit-only methods; old V1 or recovery contracts and unsupported successors cannot substitute for a maintained V2 lending product.",
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://www.sentiment.xyz/",
+      "observedAt": "2026-10-24",
+      "sourceType": "current official protocol homepage",
+      "observation": "Sentiment has wound down. To withdraw your funds, follow the instructions here: Withdrawal guide",
+      "links": [
+        "https://github.com/sentimentxyz/protocol-v2/blob/master/SUPERPOOL_WITHDRAW.md",
+        "https://www.onyx.live"
+      ],
+      "context": "The page retains older leverage lending marketing and points to Onyx for perps. The explicit current wind-down banner overrides older marketing; Onyx is not an authorized replacement or evidence that Sentiment V2 remains maintained."
+    },
+    {
+      "sourceRef": "https://raw.githubusercontent.com/sentimentxyz/protocol-v2/master/SUPERPOOL_WITHDRAW.md",
+      "observedAt": "2026-10-24",
+      "sourceType": "official V2 repository withdrawal guide linked by current homepage",
+      "title": "Withdrawing from Sentiment V2 SuperPools on HyperEVM",
+      "observation": "The Sentiment V2 interface has been deprecated after the protocol was wound down. If you still have funds lent through a Sentiment V2 SuperPool on HyperEVM, you can withdraw directly from the SuperPool contract on HyperEVMScan.",
+      "chainId": 999,
+      "limitations": [
+        "The guide explicitly covers HyperEVM chain 999, outside the allowed active chains. Its addresses are rejection context, not inventoried or admitted targets.",
+        "The homepage's wind-down statement is protocol-wide; the narrower HyperEVM guide alone would not establish shutdown of a different-chain deployment.",
+        "Withdrawal instructions and remaining callable methods do not override the no-exit-only-exception lifecycle policy."
+      ]
+    }
+  ],
+  "fetchLimitations": [
+    "The formerly indexed https://docs.sentiment.xyz/contracts/v2/Deployments redirected to https://www.sentiment.xyz/contracts/v2/Deployments and returned HTTP 404. That failed fetch is not the basis of rejection."
+  ],
+  "sourceRefs": [
+    "https://www.sentiment.xyz/",
+    "https://github.com/sentimentxyz/protocol-v2/blob/master/SUPERPOOL_WITHDRAW.md",
+    "https://raw.githubusercontent.com/sentimentxyz/protocol-v2/master/SUPERPOOL_WITHDRAW.md"
+  ],
+  "selectedFunctions": [],
+  "allFunctionDecisions": [],
+  "contracts": [],
+  "scope": "Lifecycle rejection before deployment/function admission. No ABI, deployment identity, live balances, successful execution, financial safety, or persistent runtime attestation is claimed."
+}

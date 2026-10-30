@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Satori",
+  "website": "https://satori.finance/",
+  "observedAt": "2026-10-24",
+  "status": "excluded",
+  "selectedFunctions": [],
+  "reason": "Official June16,2026 wind-down notice gives final shutdown July16,2026 23:59UTC. Exclude retired platform including exits; this Satori Finance is distinct from existing SATO.",
+  "sourceRefs": [
+    "https://x.com/SatoriFinance/status/2066909927973740797",
+    "https://api.vxtwitter.com/SatoriFinance/status/2066909927973740797",
+    "https://decrypt.co/371435/coinbase-backed-crypto-perps-exchange-satori-finance-shutting-down"
+  ],
+  "primaryNotice": {
+    "primaryUrl": "https://x.com/SatoriFinance/status/2066909927973740797",
+    "retrievalUrl": "https://api.vxtwitter.com/SatoriFinance/status/2066909927973740797",
+    "retrievalGrade": "Third-party mirror of original official @SatoriFinance notice; mirror identity/date/text are retained, distinct from original X rendered content and secondary reporting.",
+    "mirrorSnapshot": {
+      "allSameType": true,
+      "article": null,
+      "combinedMediaUrl": null,
+      "communityNote": null,
+      "conversationID": "2066909927973740797",
+      "date": "Tue Jun 16 15:45:02 +0000 2026",
+      "date_epoch": 1781624702,
+      "fetched_on": 1792826726,
+      "hasMedia": false,
+      "hashtags": [],
+      "lang": "en",
+      "likes": 55,
+      "mediaURLs": [],
+      "media_extended": [],
+      "pollData": null,
+      "possibly_sensitive": false,
+      "qrt": null,
+      "qrtURL": null,
+      "replies": 36,
+      "replyingTo": null,
+      "replyingToID": null,
+      "retweet": null,
+      "retweetURL": null,
+      "retweets": 9,
+      "text": "A Heartfelt Farewell from Satori Finance \n\nDear Satori Finance Users, \n\nAfter careful consideration, we have made the difficult decision to wind down Satori Finance operations. Our team has poured tremendous effort, passion, and countless hours into building and growing this platform. \n\nUnfortunately, due to prolonged unfavorable market conditions, our revenue has not been sufficient to sustain operations, and continuing to run the platform is no longer financially viable. \n\nWe want to reassure you that your assets remain fully safe and under your control throughout this transition period. There is no need for concern — this notice is simply to help you plan ahead and ensure a smooth, orderly withdrawal process. \n\nA withdrawal and position-closing window will be open from June 16, 2026, 23:59 UTC to July 16, 2026, 23:59 UTC. \n\nWe kindly encourage all users to close open positions and withdraw their assets at their earliest convenience during this period, to make the process as smooth as possible for everyone. \n\nPlease note that once this window closes at July 16, 2026, 23:59 UTC, the platform will no longer be operational, which means you may no longer be able to withdraw assets remaining on the platform after this point. \n\nTo everyone who has used, supported, and grown alongside Satori Finance — thank you. \n\nWhether you joined us early on or discovered us along the way, your trust meant everything to our team. While we wish circumstances allowed us to continue this journey together, we are grateful for every moment of it. \n\nThank you for being part of Satori Finance. \n\nThe Satori Finance Team",
+      "translation": null,
+      "tweetID": "2066909927973740797",
+      "tweetURL": "https://twitter.com/SatoriFinance/status/2066909927973740797",
+      "user_name": "Satori",
+      "user_profile_image_url": "https://pbs.twimg.com/profile_images/1521290732643831809/PAzBqfRG_normal.jpg",
+      "user_screen_name": "SatoriFinance"
+    },
+    "canonicalJsonSha256": "f04d3f2b57c7c6c19dc0eb07559b4fc96f37169b53bd388d863be71c9b4f7a7a"
+  },
+  "secondaryCorroboration": {
+    "sourceRef": "https://decrypt.co/371435/coinbase-backed-crypto-perps-exchange-satori-finance-shutting-down",
+    "publishedAt": "2026-06-17",
+    "observation": "Directly quotes and embeds same official wind-down notice and July16 cessation; not used as a replacement for original primary attribution."
+  },
+  "fetchLimitations": [
+    "Official website and docs DNS fail; this is not the shutdown basis. Original X request returns an application HTML shell; exact notice obtained through attributed mirror.",
+    "No historical contracts, final withdrawal window, version, chain alias or generic ERC20 transfers activated."
+  ],
+  "replacement": "Twyne, after approved D8X current-source deferral"
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Stakingverse",
+  "reviewedAt": "2026-10-24",
+  "status": "rejected",
+  "reason": "Ethereum product is an operator-branded StakeWise V3 vault, not a fresh independent protocol. StakeWise is already canonical; separate LUKSO own staking does not fit allowed chains.",
+  "chainId": 1,
+  "address": "0x8a93a876912c9f03f88bc9114847cf5b63c89f56",
+  "primaryEvidence": [
+    {
+      "sourceRef": "https://stakingverse.io/ethereum-staking",
+      "quotes": [
+        "Stake ETH in the Stakingverse vault on StakeWise V3.",
+        "Stakingverse operates a vault on StakeWise V3, a modular Ethereum staking protocol where each vault is an isolated, non-custodial smart contract.",
+        "Stake ETH Now links to https://app.stakewise.io/vault/mainnet/0x8a93a876912c9f03f88bc9114847cf5b63c89f56"
+      ]
+    },
+    {
+      "sourceRef": "https://docs.stakingverse.io/services-ethereum",
+      "finding": "Ethereum staking pool is hosted on StakeWise V3."
+    }
+  ],
+  "canonicalDuplicateEvidence": {
+    "path": "frontend/src/pages/supported-protocols.ts",
+    "canonical": "StakeWise",
+    "website": "https://stakewise.io"
+  },
+  "selectedFunctions": [],
+  "limitations": [
+    "Not a shutdown or inactivity finding.",
+    "No ABI inventory performed because fresh-protocol identity criterion fails before target admission."
+  ]
+}

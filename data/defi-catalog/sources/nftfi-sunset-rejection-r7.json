@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "protocol": "NFTfi",
+  "observedAt": "2026-10-24",
+  "status": "rejected",
+  "reason": "Official primary announcement dated June 2, 2026 explicitly sunsets NFTfi over the coming months. The admission lifecycle policy excludes sunset/wind-down protocols, including loan repayment or exit-only surfaces. No NFTfi deployment or capability is admitted.",
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://nftfi.com/blog/sunsetting-nftfi",
+      "title": "Sunsetting NFTfi",
+      "publishedAt": "2026-06-02",
+      "retrieval": "Primary-site text observed through web search index; direct HTTP retrieval returned 403 Cloudflare and reader retrieval of blog index returned 404. No claim of a full retrieved article snapshot.",
+      "observedPrimaryExcerpt": "We have decided to sunset NFTfi over the coming months"
+    },
+    {
+      "sourceRef": "https://nftfi.com/blog/nftfi-sunset-faq",
+      "title": "NFTfi Sunset – FAQ",
+      "publishedAt": "2026-06-02",
+      "retrieval": "Primary-site search index title; direct HTTP returned 403 Cloudflare."
+    },
+    {
+      "sourceRef": "https://nftfi.com/blog",
+      "retrieval": "Primary-site search index excerpt; direct reader returned 404.",
+      "observedPrimaryExcerpt": "After six years of pioneering peer-to-peer NFT lending, we have made the difficult decision to sunset the NFTfi protocol."
+    }
+  ],
+  "sourceRefs": [
+    "https://nftfi.com/blog/sunsetting-nftfi",
+    "https://nftfi.com/blog/nftfi-sunset-faq",
+    "https://nftfi.com/blog",
+    "https://docs.nftfi.com/smart-contracts/contract-addresses"
+  ],
+  "selectedFunctions": [],
+  "allFunctionDecisions": [],
+  "scopeNote": "Lifecycle rejected before deployment/function inventory. Historical v3 address documentation cannot override the later primary sunset announcement."
+}

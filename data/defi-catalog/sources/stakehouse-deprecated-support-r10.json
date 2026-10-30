@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Stakehouse",
+  "verifiedAt": "2026-10-24",
+  "status": "deferred",
+  "reason": "Primary product homepage explicitly says hosted service and support are deprecated. No current maintained successor own product established; do not admit the legacy deployment or an exit-only surface.",
+  "selectedFunctions": [],
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://joinstakehouse.com/",
+      "kind": "primary homepage search-index excerpt",
+      "quote": "The hosted service and support are deprecated. Please use decentralized infra on IPFS.",
+      "noticeLink": "https://gov.blockswap.network/t/notice-decentralized-frontends-infra/648",
+      "retrievalLimit": "Direct homepage fetch returns HTTP403; official homepage text and notice link obtained from search index. Linked governance notice fetch unavailable. This is not a claim the entire onchain protocol shut down."
+    },
+    {
+      "sourceRef": "https://github.com/stakehouse-dev/lsd-contracts",
+      "kind": "primary repository, fetched",
+      "quote": "Liquid Staking Derivative (LSD) Networks are permissionless networks deployed on top of the Stakehouse protocol that serves as an abstraction for consensus layer assets.",
+      "description": "Own SavETH/StakingFunds vault and giant pool architecture exists, but historical contract descriptions do not negate the current explicit support deprecation."
+    }
+  ],
+  "limitations": [
+    "No inference from failed site fetch or repository age alone.",
+    "Decentralized IPFS access may remain; persistent functionality alone does not establish maintained deployment under admission policy.",
+    "No claim of an attack, frozen funds, or complete protocol shutdown. No source/ABI activated."
+  ],
+  "sourceRefs": ["https://joinstakehouse.com/", "https://gov.blockswap.network/t/notice-decentralized-frontends-infra/648", "https://github.com/stakehouse-dev/lsd-contracts", "https://www.blockswap.network/"]
+}

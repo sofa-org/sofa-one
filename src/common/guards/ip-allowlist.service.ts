@@ -22,8 +22,8 @@ type IpAllowlistContext = {
 /**
  * Centralized IP allowlist enforcement with SecurityEvent audit trail.
  *
- * Replaces duplicated IP allowlist checks in ApiKeyAuthGuard, EitherAuthGuard,
- * and EoaExecutionPolicyService with a single service that also records
+ * Replaces duplicated IP allowlist checks in ApiKeyAuthGuard and
+ * EoaExecutionPolicyService with a single service that also records
  * SecurityEvent entries for IP rejections.
  */
 @Injectable()

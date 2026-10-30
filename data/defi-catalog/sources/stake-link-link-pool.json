@@ -1,0 +1,3298 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "protocol": "Stake.link",
+  "protocolId": "stake-link-link-pool",
+  "website": "https://stake.link/",
+  "scope": "Ethereum LINK queue deposit, caller stLINK distribution claim, unqueue/redemption, and finalized LINK withdrawal claim.",
+  "strategyDataInterpretationEvidence": {
+    "verifiedAt": "2026-10-22",
+    "decision": "Retain deposit and withdraw: downstream bytes encode uint64 vault index arrays, not user-selected call targets, selectors or executable calldata.",
+    "configurationObservation": {
+      "sourceRef": "https://ethereum-rpc.publicnode.com",
+      "method": "eth_call",
+      "blockNumber": 26247421,
+      "blockTag": "0x19080fd",
+      "calls": [
+        {"address": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA", "signature": "stakingPool()", "decodedResult": "0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5"},
+        {"address": "0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5", "signature": "getStrategies()", "decodedResult": ["0xAc12290b097f6893322F5430627e472131fBC1B5", "0x4852e48215A4785eE99B640CACED5378Cc39D2A4"]},
+        {"address": "0xAc12290b097f6893322F5430627e472131fBC1B5", "signature": "vaultDepositController()", "decodedResult": "0x15fbab6fd5d82fd7b326e4f3a1562a4d464ea1bc"},
+        {"address": "0x4852e48215A4785eE99B640CACED5378Cc39D2A4", "signature": "vaultDepositController()", "decodedResult": "0x15fbab6fd5d82fd7b326e4f3a1562a4d464ea1bc"}
+      ],
+      "limitations": "Configuration getters were read at this block only to bind downstream source review. This is not a transaction simulation, eth_getCode/bytecode comparison, storage/proxy-slot attestation, future configuration guarantee, liquidity check or successful execution claim. Etherscan readContract endpoint returned a challenge. A second RPC endpoint returned HTTP 525 and supplies no corroborating evidence."
+    },
+    "stakingPool": {
+      "address": "0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5",
+      "implementation": "0x431DDDA3b9262d6503f86f61AE2b199086bDFe4C",
+      "proxyResolutionSourceRef": "https://sourcify.dev/server/v2/contract/1/0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5?fields=all",
+      "abiAndSourceRef": "https://sourcify.dev/server/v2/contract/1/0x431DDDA3b9262d6503f86f61AE2b199086bDFe4C?fields=all",
+      "sourcePath": "contracts/core/StakingPool.sol",
+      "semantics": "_depositLiquidity loops strategies ascending; _withdrawLiquidity loops descending. Both derive strategy = IStrategy(strategies[index]) from configured storage, take strategyData = _data.length > 0 ? _data[index] : bytes(\"\") and invoke the fixed deposit(uint256,bytes) or withdraw(uint256,bytes) interface. The caller cannot encode a replacement strategy address or selector."
+    },
+    "strategies": [
+      {
+        "address": "0xAc12290b097f6893322F5430627e472131fBC1B5",
+        "name": "CommunityVCS",
+        "implementation": "0xB509ac0C49BdB3d74Dc6AffA04fCA5F17b8b5dC0",
+        "proxyResolutionSourceRef": "https://sourcify.dev/server/v2/contract/1/0xAc12290b097f6893322F5430627e472131fBC1B5?fields=all",
+        "abiAndSourceRef": "https://sourcify.dev/server/v2/contract/1/0xB509ac0C49BdB3d74Dc6AffA04fCA5F17b8b5dC0?fields=all",
+        "creationMatch": "exact_match",
+        "runtimeMatch": "exact_match",
+        "semantics": "CommunityVCS.deposit is onlyStakingPool/notDuringDepositUpdate, updates vault limits then delegatecalls stored vaultDepositController with abi.encodeWithSelector(VaultDepositController.deposit.selector, _amount, _data). withdraw is onlyStakingPool/notDuringDepositUpdate and calls the inherited fixed-selector controller withdrawal. Neither selector nor delegatecall target comes from _data."
+      },
+      {
+        "address": "0x4852e48215A4785eE99B640CACED5378Cc39D2A4",
+        "name": "OperatorVCS",
+        "implementation": "0x32019bA1f45Afc74482F785cd4e02F0F5AAA042b",
+        "proxyResolutionSourceRef": "https://sourcify.dev/server/v2/contract/1/0x4852e48215A4785eE99B640CACED5378Cc39D2A4?fields=all",
+        "abiAndSourceRef": "https://sourcify.dev/server/v2/contract/1/0x32019bA1f45Afc74482F785cd4e02F0F5AAA042b?fields=all",
+        "creationMatch": "exact_match",
+        "runtimeMatch": "exact_match",
+        "semantics": "Inherited VaultControllerStrategy deposit/withdraw are onlyStakingPool and delegatecall stored vaultDepositController using the corresponding compile-time VaultDepositController selector. Caller bytes are an argument, not a delegatecall target or arbitrary payload."
+      }
+    ],
+    "vaultDepositController": {
+      "address": "0x15fbab6fd5d82fd7b326e4f3a1562a4d464ea1bc",
+      "abiAndSourceRef": "https://sourcify.dev/server/v2/contract/1/0x15fbab6fd5d82fd7b326e4f3a1562a4d464ea1bc?fields=all",
+      "creationMatch": "exact_match",
+      "runtimeMatch": "exact_match",
+      "proxyResolution": {"isProxy": false, "proxyType": null, "implementations": []},
+      "sourcePath": "contracts/linkStaking/base/VaultControllerStrategy.sol",
+      "semantics": "Bound VaultDepositController.deposit and withdraw both execute uint64[] memory vaultIds = abi.decode(_data, (uint64[])). _depositToVaults validates the continuing groupDepositIndex and vaultIndex < globalState.depositIndex, loads IVault vault = vaults[vaultIndex], and calls vault.deposit(amount). Withdrawal validates continuing withdrawalIndex and membership in current unbonded group, loads IVault vault = vaults[vaultIds[i]], and invokes fixed getters and vault.withdraw(amount). No supplied bytes are forwarded as executable calldata to a user target. Vaults and controller remain administrator-configured storage, not caller-selected addresses. Malformed/missing per-strategy arrays or invalid/currently unavailable vault order may revert.",
+      "relevantAbi": [
+        {"type": "function", "name": "deposit", "stateMutability": "nonpayable", "inputs": [{"name": "_amount", "type": "uint256", "internalType": "uint256"}, {"name": "_data", "type": "bytes", "internalType": "bytes"}], "outputs": []},
+        {"type": "function", "name": "withdraw", "stateMutability": "nonpayable", "inputs": [{"name": "_amount", "type": "uint256", "internalType": "uint256"}, {"name": "_data", "type": "bytes", "internalType": "bytes"}], "outputs": []}
+      ]
+    },
+    "executionBoundary": "Evidence applies to the observed configured implementation/controller chain, not arbitrary future upgrades. Existing signing, authorization and nested execution rules are unchanged; no generic executor or delegatecall capability is introduced."
+  },
+  "lifecycleEvidence": {
+    "verifiedAt": "2026-10-22",
+    "decision": "eligible-active",
+    "sourceRefs": [
+      "https://docs.stake.link/resources/contracts-and-integrations/",
+      "https://docs.stake.link/core-staking-contracts/prioritypool/",
+      "https://docs.stake.link/core-staking-contracts/withdrawalpool/",
+      "https://api.github.com/repos/stakedotlink/contracts"
+    ],
+    "evidence": "Current official deployment table identifies Ethereum LINK PriorityPool and WithdrawalPool; current queue/withdrawal reference describes ordinary deposits, caller Merkle claims and FIFO withdrawals. Official repository archived=false, disabled=false, pushed_at=2026-10-16T14:43:44Z. No reviewed official source labels these LINK deployments retired, sunset or wind-down. Maintenance signals are not DAU, TVL or fresh runtime availability evidence."
+  },
+  "limitations": [
+    "Inventory admission only; block-specific configuration getter evidence does not attest runtime identity, funding, liquidity, pause-state or transaction execution.",
+    "LINK approval is separate; stLINK approval is required when redeeming stLINK. No permit/callback/executor capability is admitted.",
+    "Deposits may remain queued. reSDL priority and deposit-room availability govern processing; users without reSDL can wait indefinitely while prioritized users remain.",
+    "Merkle claims/unqueue may require current distribution amounts/shares and IPFS-derived proof; no oracle/root-update authority is admitted.",
+    "Queued withdrawal requires protocol finalization followed by fixed WithdrawalPool.withdraw with caller-owned request and correct batch IDs.",
+    "Strategy bytes[] only feeds configured staking strategies; it is not arbitrary address/calldata execution and does not expand existing execution scope."
+  ],
+  "contracts": [
+    {
+      "chainId": 1,
+      "address": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA",
+      "name": "priority",
+      "deploymentEvidence": {
+        "sourceRef": "https://docs.stake.link/resources/contracts-and-integrations/",
+        "verifiedAt": "2026-10-22",
+        "chainId": 1,
+        "address": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA",
+        "proxyResolution": {
+          "isProxy": true,
+          "proxyType": "EIP1967Proxy",
+          "implementations": [
+            {
+              "address": "0x855039B459Cea56707a61E641110097623dE1bc3",
+              "name": "PriorityPool"
+            }
+          ]
+        },
+        "proxyResolutionSourceRef": "https://sourcify.dev/server/v2/contract/1/0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA?fields=all",
+        "serviceDeployment": {
+          "transactionHash": "0x318546a389cb43804e0364a4f5b2379ebfc892ecc1da4400a98a8705513f6069",
+          "blockNumber": "18178346",
+          "transactionIndex": "101",
+          "deployer": "0x23c4602e63ACfe29b930c530B19d44a84AF0d767"
+        },
+        "evidence": "Official Ethereum LINK-specific deployment table, not POL/ESP pools; Sourcify exact address proxy resolution binds applicable implementation."
+      },
+      "abiEvidence": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x855039B459Cea56707a61E641110097623dE1bc3?fields=all",
+        "verifiedAt": "2026-10-22",
+        "chainId": 1,
+        "address": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA",
+        "implementationAddress": "0x855039B459Cea56707a61E641110097623dE1bc3",
+        "proxyResolution": {
+          "isProxy": true,
+          "proxyType": "EIP1967Proxy",
+          "implementations": [
+            {
+              "address": "0x855039B459Cea56707a61E641110097623dE1bc3",
+              "name": "PriorityPool"
+            }
+          ]
+        },
+        "proxySourceRef": "https://sourcify.dev/server/v2/contract/1/0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA?fields=all",
+        "reportedProxyCreationMatch": "exact_match",
+        "reportedProxyRuntimeMatch": "exact_match",
+        "reportedImplementationCreationMatch": "exact_match",
+        "reportedImplementationRuntimeMatch": "exact_match",
+        "sourceServiceVerifiedAt": "2026-06-09T20:36:10Z",
+        "compilation": {
+          "language": "Solidity",
+          "compiler": "solc",
+          "compilerVersion": "0.8.22+commit.4fc1097e",
+          "compilerSettings": {
+            "optimizer": {
+              "runs": 115,
+              "enabled": true
+            },
+            "evmVersion": "paris"
+          },
+          "name": "PriorityPool",
+          "fullyQualifiedName": "contracts/core/priorityPool/PriorityPool.sol:PriorityPool"
+        },
+        "evidence": "Full deployed implementation ABI and source from exact-address Sourcify response; match labels retained literally (match is not exact_match). Proxy ABI retained when supplied. V2 proxy absent from Sourcify, bound by Etherscan Exact Match TransparentUpgradeableProxy page displaying implementation. No generic ERC4626 interface, repository-only ABI or fresh RPC attestation."
+      },
+      "abi": [
+        {
+          "type": "constructor",
+          "inputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "CannotSetClosedStatus",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "DepositsDisabled",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "InsufficientBalance",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "InsufficientDepositRoom",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "InsufficientLiquidity",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "InsufficientQueuedTokens",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "InvalidAmount",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "InvalidProof",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "InvalidValue",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "NothingToClaim",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "SenderNotAuthorized",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "StatusAlreadySet",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "UnauthorizedToken",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "WithdrawFailed",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "WithdrawalsDisabled",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "AdminChanged",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "previousAdmin",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "newAdmin",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "BeaconUpgraded",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "beacon",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "ClaimLSDTokens",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "account",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountWithYield",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Deposit",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "account",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "instantAmount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "queueAmount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "DepositTokens",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "unusedTokensAmount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "queuedTokensAmount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Initialized",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "version",
+              "type": "uint8",
+              "indexed": false,
+              "internalType": "uint8"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "OwnershipTransferred",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "previousOwner",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "newOwner",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Paused",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "account",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "SetPoolStatus",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "status",
+              "type": "uint8",
+              "indexed": false,
+              "internalType": "enum PriorityPool.PoolStatus"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "SetQueueDepositParams",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "queueDepositMin",
+              "type": "uint128",
+              "indexed": false,
+              "internalType": "uint128"
+            },
+            {
+              "name": "queueDepositMax",
+              "type": "uint128",
+              "indexed": false,
+              "internalType": "uint128"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Unpaused",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "account",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "UnqueueTokens",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "account",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "UpdateDistribution",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "merkleRoot",
+              "type": "bytes32",
+              "indexed": false,
+              "internalType": "bytes32"
+            },
+            {
+              "name": "ipfsHash",
+              "type": "bytes32",
+              "indexed": false,
+              "internalType": "bytes32"
+            },
+            {
+              "name": "incrementalAmount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            },
+            {
+              "name": "incrementalSharesAmount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Upgraded",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "implementation",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Withdraw",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "account",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "allowInstantWithdrawals",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "bypassQueue",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_account",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_data",
+              "type": "bytes[]",
+              "internalType": "bytes[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "canWithdraw",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_account",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_distributionAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "checkUpkeep",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "claimLSDTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_sharesAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_merkleProof",
+              "type": "bytes32[]",
+              "internalType": "bytes32[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "deposit",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_shouldQueue",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "_data",
+              "type": "bytes[]",
+              "internalType": "bytes[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "depositQueuedTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_queueDepositMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_queueDepositMax",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_data",
+              "type": "bytes[]",
+              "internalType": "bytes[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "depositsSinceLastUpdate",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "distributionOracle",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "executeQueuedWithdrawals",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_data",
+              "type": "bytes[]",
+              "internalType": "bytes[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "getAccountData",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            },
+            {
+              "name": "",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getAccountIndex",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_account",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getAccounts",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address[]",
+              "internalType": "address[]"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getDepositsSinceLastUpdate",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getLSDTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_account",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_distributionShareAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getLSDTokensBatch",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_accounts",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "_distributionShareAmounts",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getQueuedTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_account",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_distributionAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "initialize",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_stakingPool",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_sdlPool",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_queueDepositMin",
+              "type": "uint128",
+              "internalType": "uint128"
+            },
+            {
+              "name": "_queueDepositMax",
+              "type": "uint128",
+              "internalType": "uint128"
+            },
+            {
+              "name": "_allowInstantWithdrawals",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "ipfsHash",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "merkleRoot",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "merkleTreeSize",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "onTokenTransfer",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_sender",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_value",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_calldata",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "owner",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "pauseForUpdate",
+          "type": "function",
+          "inputs": [],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "paused",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "performUpkeep",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_performData",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "poolStatus",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint8",
+              "internalType": "enum PriorityPool.PoolStatus"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "proxiableUUID",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "queueBypassController",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "queueDepositMax",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint128",
+              "internalType": "uint128"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "queueDepositMin",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint128",
+              "internalType": "uint128"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "rebaseController",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "renounceOwnership",
+          "type": "function",
+          "inputs": [],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "sdlPool",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "contract ISDLPool"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "setAllowInstantWithdrawals",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_allowInstantWithdrawals",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "setDistributionOracle",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_distributionOracle",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "setPoolStatus",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_status",
+              "type": "uint8",
+              "internalType": "enum PriorityPool.PoolStatus"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "setQueueBypassController",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_queueBypassController",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "setQueueDepositParams",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_queueDepositMin",
+              "type": "uint128",
+              "internalType": "uint128"
+            },
+            {
+              "name": "_queueDepositMax",
+              "type": "uint128",
+              "internalType": "uint128"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "setRebaseController",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_rebaseController",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "setWithdrawalPool",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_withdrawalPool",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "stakingPool",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "contract IStakingPool"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "token",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "contract IERC20Upgradeable"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "totalQueued",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "transferOwnership",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "newOwner",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "unqueueTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_amountToUnqueue",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_sharesAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_merkleProof",
+              "type": "bytes32[]",
+              "internalType": "bytes32[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "updateDistribution",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_merkleRoot",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "_ipfsHash",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "_amountDistributed",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_sharesAmountDistributed",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "upgradeTo",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "newImplementation",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "upgradeToAndCall",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "newImplementation",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "data",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "payable"
+        },
+        {
+          "name": "withdraw",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_amountToWithdraw",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_sharesAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_merkleProof",
+              "type": "bytes32[]",
+              "internalType": "bytes32[]"
+            },
+            {
+              "name": "_shouldUnqueue",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "_shouldQueueWithdrawal",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "_data",
+              "type": "bytes[]",
+              "internalType": "bytes[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "withdrawalPool",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "contract IWithdrawalPool"
+            }
+          ],
+          "stateMutability": "view"
+        }
+      ],
+      "proxyAbi": [
+        {
+          "type": "constructor",
+          "inputs": [
+            {
+              "name": "_logic",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_data",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "stateMutability": "payable"
+        },
+        {
+          "name": "AdminChanged",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "previousAdmin",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "newAdmin",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "BeaconUpgraded",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "beacon",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Upgraded",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "implementation",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "type": "fallback",
+          "stateMutability": "payable"
+        },
+        {
+          "type": "receive",
+          "stateMutability": "payable"
+        }
+      ],
+      "functionDecisions": [
+        {
+          "signature": "allowInstantWithdrawals()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only allowInstantWithdrawals getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "bypassQueue(address,uint256,bytes[])",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyQueueBypassController; not ordinary staking admission."
+        },
+        {
+          "signature": "canWithdraw(address,uint256)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only canWithdraw getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "checkUpkeep(bytes)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only checkUpkeep getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "claimLSDTokens(uint256,uint256,bytes32[])",
+          "stateMutability": "nonpayable",
+          "selected": true,
+          "reason": "Claim caller-owned distributed stLINK against current Merkle root."
+        },
+        {
+          "signature": "deposit(uint256,bool,bytes[])",
+          "stateMutability": "nonpayable",
+          "selected": true,
+          "reason": "Deposit LINK into fixed staking pool/queue; strategy data is forwarded only to the configured staking pool, not arbitrary target execution."
+        },
+        {
+          "signature": "depositQueuedTokens(uint256,uint256,bytes[])",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Pool-wide queued staking maintenance (including caller-supplied aggregate limits), not an individual user deposit."
+        },
+        {
+          "signature": "depositsSinceLastUpdate()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only depositsSinceLastUpdate getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "distributionOracle()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only distributionOracle getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "executeQueuedWithdrawals(uint256,bytes[])",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyWithdrawalPool; pool-wide withdrawal settlement is not a user claim."
+        },
+        {
+          "signature": "getAccountData()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getAccountData getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "getAccountIndex(address)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getAccountIndex getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "getAccounts()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getAccounts getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "getDepositsSinceLastUpdate()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getDepositsSinceLastUpdate getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "getLSDTokens(address,uint256)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getLSDTokens getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "getLSDTokensBatch(address[],uint256[])",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getLSDTokensBatch getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "getQueuedTokens(address,uint256)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getQueuedTokens getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "initialize(address,address,address,uint128,uint128,bool)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "One-time deployment initialization, not ordinary user staking."
+        },
+        {
+          "signature": "ipfsHash()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only ipfsHash getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "merkleRoot()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only merkleRoot getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "merkleTreeSize()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only merkleTreeSize getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "onTokenTransfer(address,uint256,bytes)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "ERC677 token callback; direct invocation is not an ordinary user deposit."
+        },
+        {
+          "signature": "owner()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only owner getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "pauseForUpdate()",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyDistributionOracle pauses distribution updates."
+        },
+        {
+          "signature": "paused()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only paused getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "performUpkeep(bytes)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Pool-wide keeper settlement/strategy execution, not an individual deposit or fixed claim."
+        },
+        {
+          "signature": "poolStatus()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only poolStatus getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "proxiableUUID()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only proxiableUUID getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "queueBypassController()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only queueBypassController getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "queueDepositMax()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only queueDepositMax getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "queueDepositMin()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only queueDepositMin getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "rebaseController()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only rebaseController getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "renounceOwnership()",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Ownership administration."
+        },
+        {
+          "signature": "sdlPool()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only sdlPool getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "setAllowInstantWithdrawals(bool)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyOwner pool configuration: setAllowInstantWithdrawals."
+        },
+        {
+          "signature": "setDistributionOracle(address)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyOwner pool configuration: setDistributionOracle."
+        },
+        {
+          "signature": "setPoolStatus(uint8)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Only owner or configured rebase controller may change pool status."
+        },
+        {
+          "signature": "setQueueBypassController(address)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyOwner pool configuration: setQueueBypassController."
+        },
+        {
+          "signature": "setQueueDepositParams(uint128,uint128)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyOwner pool configuration: setQueueDepositParams."
+        },
+        {
+          "signature": "setRebaseController(address)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyOwner pool configuration: setRebaseController."
+        },
+        {
+          "signature": "setWithdrawalPool(address)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyOwner pool configuration: setWithdrawalPool."
+        },
+        {
+          "signature": "stakingPool()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only stakingPool getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "token()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only token getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "totalQueued()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only totalQueued getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "transferOwnership(address)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Ownership administration."
+        },
+        {
+          "signature": "unqueueTokens(uint256,uint256,uint256,bytes32[])",
+          "stateMutability": "nonpayable",
+          "selected": true,
+          "reason": "Recover own pending LINK using distribution proof when required."
+        },
+        {
+          "signature": "updateDistribution(bytes32,bytes32,uint256,uint256)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyDistributionOracle controls distribution Merkle root and amounts."
+        },
+        {
+          "signature": "upgradeTo(address)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyOwner UUPS implementation upgrade."
+        },
+        {
+          "signature": "upgradeToAndCall(address,bytes)",
+          "stateMutability": "payable",
+          "selected": false,
+          "reason": "Implementation upgrade and initialization execution, not an ordinary product entry."
+        },
+        {
+          "signature": "withdraw(uint256,uint256,uint256,bytes32[],bool,bool,bytes[])",
+          "stateMutability": "nonpayable",
+          "selected": true,
+          "reason": "Withdraw own LINK, optionally unqueue own deposits or queue stLINK redemption; fixed pools and caller-bound Merkle proof."
+        },
+        {
+          "signature": "withdrawalPool()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only withdrawalPool getter/query; retained in full inventory, not admitted as transaction capability."
+        }
+      ],
+      "selectedFunctions": [
+        {
+          "abi": {
+            "name": "claimLSDTokens",
+            "type": "function",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "_sharesAmount",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "_merkleProof",
+                "type": "bytes32[]",
+                "internalType": "bytes32[]"
+              }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+          },
+          "capabilityId": "stake-link-link-pool:v1:1:0xddc796a66e8b83d0bccd97df33a6ccfba8fd60ea:claim-stlink",
+          "type": "contract_call",
+          "chainId": 1,
+          "contract": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA",
+          "functionName": "claimLSDTokens",
+          "signature": "claimLSDTokens(uint256,uint256,bytes32[])",
+          "status": "active",
+          "provenance": {
+            "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x855039B459Cea56707a61E641110097623dE1bc3?fields=all",
+            "status": "verified",
+            "verifiedAt": "2026-10-22"
+          },
+          "protocol": "Stake.link",
+          "operation": "claim-stlink",
+          "label": "Stake.link claim stlink",
+          "warnings": [
+            "Inventory admission only; block-specific configuration getter evidence does not attest runtime identity, funding, liquidity, pause-state or transaction execution.",
+            "LINK approval is separate; stLINK approval is required when redeeming stLINK. No permit/callback/executor capability is admitted.",
+            "Deposits may remain queued. reSDL priority and deposit-room availability govern processing; users without reSDL can wait indefinitely while prioritized users remain.",
+            "Merkle claims/unqueue may require current distribution amounts/shares and IPFS-derived proof; no oracle/root-update authority is admitted.",
+            "Queued withdrawal requires protocol finalization followed by fixed WithdrawalPool.withdraw with caller-owned request and correct batch IDs.",
+            "Strategy bytes[] only feeds configured staking strategies; it is not arbitrary address/calldata execution and does not expand existing execution scope."
+          ]
+        },
+        {
+          "abi": {
+            "name": "deposit",
+            "type": "function",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "_shouldQueue",
+                "type": "bool",
+                "internalType": "bool"
+              },
+              {
+                "name": "_data",
+                "type": "bytes[]",
+                "internalType": "bytes[]"
+              }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+          },
+          "capabilityId": "stake-link-link-pool:v1:1:0xddc796a66e8b83d0bccd97df33a6ccfba8fd60ea:deposit",
+          "type": "contract_call",
+          "chainId": 1,
+          "contract": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA",
+          "functionName": "deposit",
+          "signature": "deposit(uint256,bool,bytes[])",
+          "status": "active",
+          "provenance": {
+            "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x855039B459Cea56707a61E641110097623dE1bc3?fields=all",
+            "status": "verified",
+            "verifiedAt": "2026-10-22"
+          },
+          "protocol": "Stake.link",
+          "operation": "deposit",
+          "label": "Stake.link deposit",
+          "warnings": [
+            "Inventory admission only; block-specific configuration getter evidence does not attest runtime identity, funding, liquidity, pause-state or transaction execution.",
+            "LINK approval is separate; stLINK approval is required when redeeming stLINK. No permit/callback/executor capability is admitted.",
+            "Deposits may remain queued. reSDL priority and deposit-room availability govern processing; users without reSDL can wait indefinitely while prioritized users remain.",
+            "Merkle claims/unqueue may require current distribution amounts/shares and IPFS-derived proof; no oracle/root-update authority is admitted.",
+            "Queued withdrawal requires protocol finalization followed by fixed WithdrawalPool.withdraw with caller-owned request and correct batch IDs.",
+            "Strategy bytes[] only feeds configured staking strategies; it is not arbitrary address/calldata execution and does not expand existing execution scope."
+          ]
+        },
+        {
+          "abi": {
+            "name": "unqueueTokens",
+            "type": "function",
+            "inputs": [
+              {
+                "name": "_amountToUnqueue",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "_sharesAmount",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "_merkleProof",
+                "type": "bytes32[]",
+                "internalType": "bytes32[]"
+              }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+          },
+          "capabilityId": "stake-link-link-pool:v1:1:0xddc796a66e8b83d0bccd97df33a6ccfba8fd60ea:unqueue",
+          "type": "contract_call",
+          "chainId": 1,
+          "contract": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA",
+          "functionName": "unqueueTokens",
+          "signature": "unqueueTokens(uint256,uint256,uint256,bytes32[])",
+          "status": "active",
+          "provenance": {
+            "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x855039B459Cea56707a61E641110097623dE1bc3?fields=all",
+            "status": "verified",
+            "verifiedAt": "2026-10-22"
+          },
+          "protocol": "Stake.link",
+          "operation": "unqueue",
+          "label": "Stake.link unqueue",
+          "warnings": [
+            "Inventory admission only; block-specific configuration getter evidence does not attest runtime identity, funding, liquidity, pause-state or transaction execution.",
+            "LINK approval is separate; stLINK approval is required when redeeming stLINK. No permit/callback/executor capability is admitted.",
+            "Deposits may remain queued. reSDL priority and deposit-room availability govern processing; users without reSDL can wait indefinitely while prioritized users remain.",
+            "Merkle claims/unqueue may require current distribution amounts/shares and IPFS-derived proof; no oracle/root-update authority is admitted.",
+            "Queued withdrawal requires protocol finalization followed by fixed WithdrawalPool.withdraw with caller-owned request and correct batch IDs.",
+            "Strategy bytes[] only feeds configured staking strategies; it is not arbitrary address/calldata execution and does not expand existing execution scope."
+          ]
+        },
+        {
+          "abi": {
+            "name": "withdraw",
+            "type": "function",
+            "inputs": [
+              {
+                "name": "_amountToWithdraw",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "_sharesAmount",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "_merkleProof",
+                "type": "bytes32[]",
+                "internalType": "bytes32[]"
+              },
+              {
+                "name": "_shouldUnqueue",
+                "type": "bool",
+                "internalType": "bool"
+              },
+              {
+                "name": "_shouldQueueWithdrawal",
+                "type": "bool",
+                "internalType": "bool"
+              },
+              {
+                "name": "_data",
+                "type": "bytes[]",
+                "internalType": "bytes[]"
+              }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+          },
+          "capabilityId": "stake-link-link-pool:v1:1:0xddc796a66e8b83d0bccd97df33a6ccfba8fd60ea:withdraw",
+          "type": "contract_call",
+          "chainId": 1,
+          "contract": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA",
+          "functionName": "withdraw",
+          "signature": "withdraw(uint256,uint256,uint256,bytes32[],bool,bool,bytes[])",
+          "status": "active",
+          "provenance": {
+            "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x855039B459Cea56707a61E641110097623dE1bc3?fields=all",
+            "status": "verified",
+            "verifiedAt": "2026-10-22"
+          },
+          "protocol": "Stake.link",
+          "operation": "withdraw",
+          "label": "Stake.link withdraw",
+          "warnings": [
+            "Inventory admission only; block-specific configuration getter evidence does not attest runtime identity, funding, liquidity, pause-state or transaction execution.",
+            "LINK approval is separate; stLINK approval is required when redeeming stLINK. No permit/callback/executor capability is admitted.",
+            "Deposits may remain queued. reSDL priority and deposit-room availability govern processing; users without reSDL can wait indefinitely while prioritized users remain.",
+            "Merkle claims/unqueue may require current distribution amounts/shares and IPFS-derived proof; no oracle/root-update authority is admitted.",
+            "Queued withdrawal requires protocol finalization followed by fixed WithdrawalPool.withdraw with caller-owned request and correct batch IDs.",
+            "Strategy bytes[] only feeds configured staking strategies; it is not arbitrary address/calldata execution and does not expand existing execution scope."
+          ]
+        }
+      ],
+      "sourceSemantics": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x855039B459Cea56707a61E641110097623dE1bc3?fields=all",
+        "sourcePath": "contracts/core/priorityPool/PriorityPool.sol",
+        "content": "// SPDX-License-Identifier: GPL-3.0\npragma solidity 0.8.22;\n\nimport \"@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol\";\n\nimport \"../interfaces/IStakingPool.sol\";\nimport \"../interfaces/ISDLPool.sol\";\nimport \"../interfaces/IWithdrawalPool.sol\";\n\n/**\n * @title Priority Pool\n * @notice Allows users to queue asset tokens which are eventually deposited into the staking pool when space becomes available -\n * liquid staking tokens minted by the staking pool are then distributed using a merkle tree\n */\ncontract PriorityPool is UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable {\n    using SafeERC20Upgradeable for IERC20Upgradeable;\n\n    enum PoolStatus {\n        OPEN,\n        DRAINING,\n        CLOSED\n    }\n\n    // address of staking asset token\n    IERC20Upgradeable public token;\n    // address of staking pool and liquid staking token\n    IStakingPool public stakingPool;\n    // address of SDL pool\n    ISDLPool public sdlPool;\n    // address of oracle contract that handles LST distribution\n    address public distributionOracle;\n\n    // min amount of tokens that can be deposited into the staking pool strategies in a single tx\n    uint128 public queueDepositMin;\n    // max amount of tokens that can be deposited into the staking pool strategies in a single tx\n    uint128 public queueDepositMax;\n    // current status of the pool\n    PoolStatus public poolStatus;\n\n    // merkle root for the latest distribution tree\n    bytes32 public merkleRoot;\n    // ipfs hash where the latest distribution tree is stored\n    bytes32 public ipfsHash;\n    // number of entries in the latest distribution tree\n    uint256 public merkleTreeSize;\n\n    // total number of tokens queued for deposit into the staking pool\n    uint256 public totalQueued;\n    // total number of tokens deposited into the staking pool or swapped for LSTs since the last distribution\n    uint256 public depositsSinceLastUpdate;\n    // total number of shares received for depositsSinceLastUpdate\n    uint256 private sharesSinceLastUpdate;\n\n    // list of all accounts that have ever queued tokens\n    address[] private accounts;\n    // stores each account's index in the distribution tree\n    mapping(address => uint256) private accountIndexes;\n    // stores the lifetime amount of queued tokens for each account less any tokens that were unqueued\n    mapping(address => uint256) private accountQueuedTokens;\n    // stores the total amount of LSTs that each account has claimed\n    mapping(address => uint256) private accountClaimed;\n    // stored the total amount of LST shares that each account has claimed\n    mapping(address => uint256) private accountSharesClaimed;\n\n    // address with authorization to pause the pool\n    address public rebaseController;\n\n    // address of withdrawal pool\n    IWithdrawalPool public withdrawalPool;\n    // whether instant withdrawals are enabled\n    bool public allowInstantWithdrawals;\n\n    // address of queue bypass controller\n    address public queueBypassController;\n\n    event UnqueueTokens(address indexed account, uint256 amount);\n    event ClaimLSDTokens(address indexed account, uint256 amount, uint256 amountWithYield);\n    event Deposit(address indexed account, uint256 instantAmount, uint256 queueAmount);\n    event Withdraw(address indexed account, uint256 amount);\n    event UpdateDistribution(\n        bytes32 merkleRoot,\n        bytes32 ipfsHash,\n        uint256 incrementalAmount,\n        uint256 incrementalSharesAmount\n    );\n    event SetPoolStatus(PoolStatus status);\n    event SetQueueDepositParams(uint128 queueDepositMin, uint128 queueDepositMax);\n    event DepositTokens(uint256 unusedTokensAmount, uint256 queuedTokensAmount);\n\n    error InvalidValue();\n    error UnauthorizedToken();\n    error InsufficientQueuedTokens();\n    error InvalidProof();\n    error InsufficientBalance();\n    error NothingToClaim();\n    error DepositsDisabled();\n    error WithdrawalsDisabled();\n    error InsufficientDepositRoom();\n    error CannotSetClosedStatus();\n    error SenderNotAuthorized();\n    error InvalidAmount();\n    error StatusAlreadySet();\n    error InsufficientLiquidity();\n    error WithdrawFailed();\n\n    /// @custom:oz-upgrades-unsafe-allow constructor\n    constructor() {\n        _disableInitializers();\n    }\n\n    /**\n     * @notice Initializes contract\n     * @param _token address of staking asset token\n     * @param _stakingPool address of staking pool\n     * @param _sdlPool address of SDL pool\n     * @param _queueDepositMin min amount of tokens that can be deposited into the staking pool in a single tx\n     * @param _queueDepositMax mmaxin amount of tokens that can be deposited into the staking pool in a single tx\n     * @param _allowInstantWithdrawals whether instant withdrawals are enabled\n     **/\n    function initialize(\n        address _token,\n        address _stakingPool,\n        address _sdlPool,\n        uint128 _queueDepositMin,\n        uint128 _queueDepositMax,\n        bool _allowInstantWithdrawals\n    ) public initializer {\n        __UUPSUpgradeable_init();\n        __Ownable_init();\n        __Pausable_init();\n        token = IERC20Upgradeable(_token);\n        stakingPool = IStakingPool(_stakingPool);\n        sdlPool = ISDLPool(_sdlPool);\n        queueDepositMin = _queueDepositMin;\n        queueDepositMax = _queueDepositMax;\n        allowInstantWithdrawals = _allowInstantWithdrawals;\n        accounts.push(address(0));\n        token.safeIncreaseAllowance(_stakingPool, type(uint256).max);\n    }\n\n    /**\n     * @notice Reverts if sender is not distribution oracle\n     **/\n    modifier onlyDistributionOracle() {\n        if (msg.sender != distributionOracle) revert SenderNotAuthorized();\n        _;\n    }\n\n    /**\n     * @notice Reverts if sender is not withdrawal pool\n     **/\n    modifier onlyWithdrawalPool() {\n        if (msg.sender != address(withdrawalPool)) revert SenderNotAuthorized();\n        _;\n    }\n\n    /**\n     * @notice Reverts if sender is not queue bypass controller\n     **/\n    modifier onlyQueueBypassController() {\n        if (msg.sender != address(queueBypassController)) revert SenderNotAuthorized();\n        _;\n    }\n\n    /**\n     * @notice Returns a list of all accounts\n     * @dev accounts are returned in the same order as they are in the merkle tree\n     * @return list of accounts\n     */\n    function getAccounts() external view returns (address[] memory) {\n        return accounts;\n    }\n\n    /**\n     * @notice Returns the index of an account\n     * @dev this index represents an account's position in the merkle tree\n     * @param _account account address\n     * @return account index\n     */\n    function getAccountIndex(address _account) external view returns (uint256) {\n        return accountIndexes[_account];\n    }\n\n    /**\n     * @notice Returns an account's current amount of queued tokens\n     * @dev _distributionAmount is stored on IPFS\n     * @param _account account address\n     * @param _distributionAmount account's distribution amount from the latest distribution\n     * @return amount of queued tokens for an account\n     */\n    function getQueuedTokens(\n        address _account,\n        uint256 _distributionAmount\n    ) public view returns (uint256) {\n        return accountQueuedTokens[_account] - _distributionAmount;\n    }\n\n    /**\n     * @notice Returns an account's current amount of withdrawable liquid staking tokens\n     * @dev _distributionShareAmount is stored on IPFS\n     * @param _account account address\n     * @param _distributionShareAmount account's distribution share amounts from the latest distribution\n     * @return withdrawable LSD tokens for account\n     */\n    function getLSDTokens(\n        address _account,\n        uint256 _distributionShareAmount\n    ) external view returns (uint256) {\n        uint256 sharesToClaim = _distributionShareAmount - accountSharesClaimed[_account];\n        return stakingPool.getStakeByShares(sharesToClaim);\n    }\n\n    /**\n     * @notice Returns the current amount of withdrawable LSD tokens for multiple accounts\n     * @dev _distributionShareAmounts are stored on IPFS and should align with the provided accounts\n     * @param _accounts List of account addresses\n     * @param _distributionShareAmounts List of distribution share amounts corresponding to each account\n     * @return Array of withdrawable LSD token amounts for each account\n     */\n    function getLSDTokensBatch(\n        address[] calldata _accounts,\n        uint256[] calldata _distributionShareAmounts\n    ) external view returns (uint256[] memory) {\n        uint256[] memory withdrawableAmounts = new uint256[](_accounts.length);\n\n        for (uint256 i = 0; i < _accounts.length; i++) {\n            address account = _accounts[i];\n            uint256 sharesToClaim = _distributionShareAmounts[i] - accountSharesClaimed[account];\n            withdrawableAmounts[i] = stakingPool.getStakeByShares(sharesToClaim);\n        }\n\n        return withdrawableAmounts;\n    }\n\n    /**\n     * @notice Returns the total amount of asset tokens that an account can withdraw\n     * @dev includes account's queued tokens and LST balance and checks both priority pool\n     * and staking pool liquidity\n     * @dev _distributionAmount is stored on IPFS\n     * @param _account account address\n     * @param _distributionAmount account's distribution amount from the latest distribution\n     * @return amount of withdrawable tokens\n     */\n    function canWithdraw(\n        address _account,\n        uint256 _distributionAmount\n    ) external view returns (uint256) {\n        uint256 canUnqueue = paused()\n            ? 0\n            : MathUpgradeable.min(getQueuedTokens(_account, _distributionAmount), totalQueued);\n        uint256 stLINKCanWithdraw = poolStatus == PoolStatus.CLOSED\n            ? 0\n            : MathUpgradeable.min(\n                stakingPool.balanceOf(_account),\n                (\n                    ((allowInstantWithdrawals && withdrawalPool.getTotalQueuedWithdrawals() == 0) ||\n                        _account == address(withdrawalPool))\n                        ? stakingPool.canWithdraw()\n                        : 0\n                ) +\n                    totalQueued -\n                    canUnqueue\n            );\n        return canUnqueue + stLINKCanWithdraw;\n    }\n\n    /**\n     * @notice ERC677 implementation to receive a token deposit or withdrawal\n     * @dev can receive both asset tokens (deposit) and liquid staking tokens (withdrawal)\n     * @param _sender of the token transfer\n     * @param _value of the token transfer\n     * @param _calldata encoded shouldQueue (bool) and deposit/withdrawal data to pass to\n     * staking pool strategies (bytes[])\n     **/\n    function onTokenTransfer(address _sender, uint256 _value, bytes calldata _calldata) external {\n        if (_value == 0) revert InvalidValue();\n\n        (bool shouldQueue, bytes[] memory data) = abi.decode(_calldata, (bool, bytes[]));\n\n        if (msg.sender == address(token)) {\n            _deposit(_sender, _value, shouldQueue, data);\n        } else if (msg.sender == address(stakingPool)) {\n            uint256 amountWithdrawn = _withdraw(_sender, _value, shouldQueue, true, data);\n            token.safeTransfer(_sender, amountWithdrawn);\n        } else {\n            revert UnauthorizedToken();\n        }\n    }\n\n    /**\n     * @notice Deposits asset tokens into the staking pool and/or queues them\n     * @param _amount amount to deposit\n     * @param _shouldQueue whether tokens should be queued if there's no room in the staking pool\n     * @param _data deposit data passed to staking pool strategies\n     */\n    function deposit(uint256 _amount, bool _shouldQueue, bytes[] calldata _data) external {\n        if (_amount == 0) revert InvalidAmount();\n        token.safeTransferFrom(msg.sender, address(this), _amount);\n        _deposit(msg.sender, _amount, _shouldQueue, _data);\n    }\n\n    /**\n     * @notice Withdraws asset tokens\n     * @dev will unqueue sender's asset tokens before swapping liquid staking tokens if there is\n     * sufficient liquidity and _shouldUnqueue is set to true\n     * @param _amountToWithdraw amount of tokens to withdraw\n     * @param _amount amount as recorded in sender's merkle tree entry (stored on IPFS)\n     * @param _sharesAmount shares amount as recorded in sender's merkle tree entry (stored on IPFS)\n     * @param _merkleProof merkle proof for sender's merkle tree entry (generated using IPFS data)\n     * @param _shouldUnqueue whether tokens should be unqueued before taking LSD tokens\n     * @param _shouldQueueWithdrawal whether a withdrawal should be queued if the full withdrawal amount cannot be satisfied\n     * @param _data list of withdrawal data passed to staking pool strategies if executing instant withdrawal\n     */\n    function withdraw(\n        uint256 _amountToWithdraw,\n        uint256 _amount,\n        uint256 _sharesAmount,\n        bytes32[] calldata _merkleProof,\n        bool _shouldUnqueue,\n        bool _shouldQueueWithdrawal,\n        bytes[] calldata _data\n    ) external {\n        if (_amountToWithdraw == 0) revert InvalidAmount();\n\n        uint256 toWithdraw = _amountToWithdraw;\n        address account = msg.sender;\n\n        // attempt to unqueue tokens before withdrawing if flag is set\n        if (_shouldUnqueue == true) {\n            _requireNotPaused();\n\n            if (_merkleProof.length != 0) {\n                bytes32 node = keccak256(\n                    bytes.concat(keccak256(abi.encode(account, _amount, _sharesAmount)))\n                );\n                if (!MerkleProofUpgradeable.verify(_merkleProof, merkleRoot, node))\n                    revert InvalidProof();\n            } else if (accountIndexes[account] != 0 && accountIndexes[account] < merkleTreeSize) {\n                revert InvalidProof();\n            }\n\n            uint256 queuedTokens = getQueuedTokens(account, _amount);\n            uint256 canUnqueue = queuedTokens <= totalQueued ? queuedTokens : totalQueued;\n            uint256 amountToUnqueue = toWithdraw <= canUnqueue ? toWithdraw : canUnqueue;\n\n            if (amountToUnqueue != 0) {\n                accountQueuedTokens[account] -= amountToUnqueue;\n                totalQueued -= amountToUnqueue;\n                toWithdraw -= amountToUnqueue;\n                emit UnqueueTokens(account, amountToUnqueue);\n            }\n        }\n\n        // attempt to withdraw if tokens remain after unqueueing\n        if (toWithdraw != 0) {\n            IERC20Upgradeable(address(stakingPool)).safeTransferFrom(\n                account,\n                address(this),\n                toWithdraw\n            );\n            toWithdraw -= _withdraw(\n                account,\n                toWithdraw,\n                _shouldQueueWithdrawal,\n                toWithdraw == _amountToWithdraw,\n                _data\n            );\n        }\n\n        token.safeTransfer(account, _amountToWithdraw - toWithdraw);\n    }\n\n    /**\n     * @notice Unqueues queued tokens\n     * @param _amountToUnqueue amount of tokens to unqueue\n     * @param _amount amount as recorded in sender's merkle tree entry (stored on IPFS)\n     * @param _sharesAmount shares amount as recorded in sender's merkle tree entry (stored on IPFS)\n     * @param _merkleProof merkle proof for sender's merkle tree entry (generated from IPFS data)\n     */\n    function unqueueTokens(\n        uint256 _amountToUnqueue,\n        uint256 _amount,\n        uint256 _sharesAmount,\n        bytes32[] calldata _merkleProof\n    ) external whenNotPaused {\n        if (_amountToUnqueue == 0) revert InvalidAmount();\n        if (_amountToUnqueue > totalQueued) revert InsufficientQueuedTokens();\n\n        address account = msg.sender;\n\n        // verify merkle proof only if sender is included in tree\n        if (accountIndexes[account] != 0 && accountIndexes[account] < merkleTreeSize) {\n            bytes32 node = keccak256(\n                bytes.concat(keccak256(abi.encode(account, _amount, _sharesAmount)))\n            );\n            if (!MerkleProofUpgradeable.verify(_merkleProof, merkleRoot, node))\n                revert InvalidProof();\n        }\n\n        if (_amountToUnqueue > getQueuedTokens(account, _amount)) revert InsufficientBalance();\n\n        accountQueuedTokens[account] -= _amountToUnqueue;\n        totalQueued -= _amountToUnqueue;\n        token.safeTransfer(account, _amountToUnqueue);\n\n        emit UnqueueTokens(account, _amountToUnqueue);\n    }\n\n    /**\n     * @notice Claims withdrawable liquid staking tokens\n     * @param _amount amount as recorded in sender's merkle tree entry (stored on IPFS)\n     * @param _sharesAmount shares amount as recorded in sender's merkle tree entry (stored on IPFS)\n     * @param _merkleProof merkle proof for sender's merkle tree entry (generated from IPFS data)\n     */\n    function claimLSDTokens(\n        uint256 _amount,\n        uint256 _sharesAmount,\n        bytes32[] calldata _merkleProof\n    ) external {\n        address account = msg.sender;\n\n        bytes32 node = keccak256(\n            bytes.concat(keccak256(abi.encode(account, _amount, _sharesAmount)))\n        );\n        if (!MerkleProofUpgradeable.verify(_merkleProof, merkleRoot, node)) revert InvalidProof();\n\n        uint256 amountToClaim = _amount - accountClaimed[account];\n        uint256 sharesAmountToClaim = _sharesAmount - accountSharesClaimed[account];\n        uint256 amountToClaimWithYield = stakingPool.getStakeByShares(sharesAmountToClaim);\n\n        if (amountToClaimWithYield == 0) revert NothingToClaim();\n\n        accountClaimed[account] = _amount;\n        accountSharesClaimed[account] = _sharesAmount;\n        IERC20Upgradeable(address(stakingPool)).safeTransfer(account, amountToClaimWithYield);\n\n        emit ClaimLSDTokens(account, amountToClaim, amountToClaimWithYield);\n    }\n\n    /**\n     * @notice Deposits queued tokens and/or unused tokens sitting in staking pool\n     * @dev allows bypassing of the stored deposit limits\n     * @param _queueDepositMin min amount of tokens required for deposit into staking pool strategies\n     * @param _queueDepositMax max amount of tokens that can be deposited into staking pool strategies at once\n     * @param _data list of deposit data passed to staking pool strategies\n     */\n    function depositQueuedTokens(\n        uint256 _queueDepositMin,\n        uint256 _queueDepositMax,\n        bytes[] calldata _data\n    ) external {\n        _depositQueuedTokens(_queueDepositMin, _queueDepositMax, _data);\n    }\n\n    /**\n     * @notice Returns whether a call should be made to performUpkeep to deposit queued/unused tokens\n     * into staking pool strategies\n     * @return true if performUpkeep should be called, false otherwise\n     * @return encoded amount of tokens to be deposited\n     */\n    function checkUpkeep(bytes calldata) external view returns (bool, bytes memory) {\n        uint256 strategyDepositRoom = stakingPool.getStrategyDepositRoom();\n        uint256 unusedDeposits = stakingPool.getUnusedDeposits();\n\n        if (poolStatus != PoolStatus.OPEN) return (false, \"\");\n        if (\n            strategyDepositRoom < queueDepositMin ||\n            (totalQueued + unusedDeposits) < queueDepositMin\n        ) return (false, \"\");\n\n        return (\n            true,\n            abi.encode(\n                MathUpgradeable.min(\n                    MathUpgradeable.min(strategyDepositRoom, totalQueued + unusedDeposits),\n                    queueDepositMax\n                )\n            )\n        );\n    }\n\n    /**\n     * @notice Deposits queued and/or unused tokens into staking pool strategies\n     * @dev will revert if less than queueDepositMin tokens can be deposited\n     * @param _performData encoded list of deposit data to be passed to staking pool strategies (bytes[])\n     */\n    function performUpkeep(bytes calldata _performData) external {\n        bytes[] memory depositData = abi.decode(_performData, (bytes[]));\n        _depositQueuedTokens(queueDepositMin, queueDepositMax, depositData);\n    }\n\n    /**\n     * @notice Returns the total number of tokens deposited into the staking pool or swapped for LSTs since\n     * the last call to updateDistribution and the amount of shares received for those tokens\n     * @return amount of deposits\n     * @return amount of shares\n     */\n    function getDepositsSinceLastUpdate() external view returns (uint256, uint256) {\n        return (depositsSinceLastUpdate, sharesSinceLastUpdate);\n    }\n\n    /**\n     * @notice Returns account data used for calculating a new merkle tree\n     * @dev merkle tree is calculated based on users' reSDL balance and the number of tokens they have queued\n     * @dev accounts are returned in the same order as they are in the merkle tree\n     * @return accounts list of all accounts that have ever queued tokens\n     * @return sdlBalances list of SDL balances for each account\n     * @return queuedBalances list of queued token amounts for each account (ignores previously distributed\n     * liquid staking tokens)\n     */\n    function getAccountData()\n        external\n        view\n        returns (address[] memory, uint256[] memory, uint256[] memory)\n    {\n        uint256[] memory reSDLBalances = new uint256[](accounts.length);\n        uint256[] memory queuedBalances = new uint256[](accounts.length);\n\n        for (uint256 i = 0; i < reSDLBalances.length; ++i) {\n            address account = accounts[i];\n            reSDLBalances[i] = address(sdlPool) == address(0)\n                ? 0\n                : sdlPool.effectiveBalanceOf(account);\n            queuedBalances[i] = accountQueuedTokens[account];\n        }\n\n        return (accounts, reSDLBalances, queuedBalances);\n    }\n\n    /**\n     * @notice Distributes a new batch of liquid staing tokens to users that have queued tokens\n     * @param _merkleRoot new merkle root for the distribution tree\n     * @param _ipfsHash new ipfs hash for the distribution tree (CIDv0, no prefix - only hash)\n     * @param _amountDistributed amount of tokens distributed in this distribution\n     * @param _sharesAmountDistributed amount of shares distributed in this distribution\n     */\n    function updateDistribution(\n        bytes32 _merkleRoot,\n        bytes32 _ipfsHash,\n        uint256 _amountDistributed,\n        uint256 _sharesAmountDistributed\n    ) external onlyDistributionOracle {\n        _unpause();\n\n        depositsSinceLastUpdate -= _amountDistributed;\n        sharesSinceLastUpdate -= _sharesAmountDistributed;\n        merkleRoot = _merkleRoot;\n        ipfsHash = _ipfsHash;\n        merkleTreeSize = accounts.length;\n\n        emit UpdateDistribution(\n            _merkleRoot,\n            _ipfsHash,\n            _amountDistributed,\n            _sharesAmountDistributed\n        );\n    }\n\n    /**\n     * @notice Pauses queueing and unqueueing so a new merkle tree can be generated\n     */\n    function pauseForUpdate() external onlyDistributionOracle {\n        _pause();\n    }\n\n    /**\n     * @notice Executes a batch of withdrawals that have been queued in the withdrawal pool\n     * @dev withdraws tokens from the staking pool and sends them to the withdrawal pool\n     * @param _amount total amount to withdraw\n     * @param _data list of withdrawal data passed to staking pool strategies\n     */\n    function executeQueuedWithdrawals(\n        uint256 _amount,\n        bytes[] calldata _data\n    ) external onlyWithdrawalPool {\n        IERC20Upgradeable(address(stakingPool)).safeTransferFrom(\n            msg.sender,\n            address(this),\n            _amount\n        );\n        stakingPool.withdraw(address(this), address(this), _amount, _data);\n        token.safeTransfer(msg.sender, _amount);\n    }\n\n    /**\n     * @notice Deposits tokens directly into the staking pool bypassing the queue\n     * @param _account account to deposit for\n     * @param _amount amount to stake\n     * @param _data deposit data passed to staking pool strategies\n     */\n    function bypassQueue(\n        address _account,\n        uint256 _amount,\n        bytes[] calldata _data\n    ) external onlyQueueBypassController {\n        if (poolStatus != PoolStatus.OPEN) revert DepositsDisabled();\n\n        token.safeTransferFrom(msg.sender, address(this), _amount);\n\n        uint256 strategyDepositRoom = stakingPool.getStrategyDepositRoom();\n        if (strategyDepositRoom < _amount) revert InsufficientDepositRoom();\n\n        stakingPool.deposit(_account, _amount, _data);\n    }\n\n    /**\n     * @notice Sets the pool's status\n     * @param _status pool status\n     */\n    function setPoolStatus(PoolStatus _status) external {\n        if (msg.sender != owner() && msg.sender != rebaseController) revert SenderNotAuthorized();\n        if (_status == poolStatus) revert StatusAlreadySet();\n        poolStatus = _status;\n        emit SetPoolStatus(_status);\n    }\n\n    /**\n     * @notice Sets the minimum and maximum amount that can be deposited into strategies at once\n     * @param _queueDepositMin minimum amount of tokens required for deposit into staking pool strategies\n     * @param _queueDepositMax maximum amount of tokens that can be deposited into staking pool strategies at once\n     */\n    function setQueueDepositParams(\n        uint128 _queueDepositMin,\n        uint128 _queueDepositMax\n    ) external onlyOwner {\n        queueDepositMin = _queueDepositMin;\n        queueDepositMax = _queueDepositMax;\n        emit SetQueueDepositParams(_queueDepositMin, _queueDepositMax);\n    }\n\n    /**\n     * @notice Sets whether instant withdrawals are enabled\n     * @dev if disabled, all withdrawals will be queued through the withdrawal pool\n     * event if there is withdrawal room in the staking pool\n     * @param _allowInstantWithdrawals true to allow instant withdrawals, false otherwise\n     */\n    function setAllowInstantWithdrawals(bool _allowInstantWithdrawals) external onlyOwner {\n        allowInstantWithdrawals = _allowInstantWithdrawals;\n    }\n\n    /**\n     * @notice Sets the distribution oracle\n     * @param _distributionOracle address of oracle\n     */\n    function setDistributionOracle(address _distributionOracle) external onlyOwner {\n        distributionOracle = _distributionOracle;\n    }\n\n    /**\n     * @notice Sets the address of the rebase controller\n     * @dev this address has authorization to close the pool in case of emergency\n     * @param _rebaseController address of rebase controller\n     */\n    function setRebaseController(address _rebaseController) external onlyOwner {\n        rebaseController = _rebaseController;\n    }\n\n    /**\n     * @notice Sets the withdrawal pool\n     * @param _withdrawalPool address of withdrawal pool\n     */\n    function setWithdrawalPool(address _withdrawalPool) external onlyOwner {\n        if (address(withdrawalPool) != address(0)) {\n            IERC20Upgradeable(address(stakingPool)).safeApprove(address(withdrawalPool), 0);\n            token.safeApprove(address(withdrawalPool), 0);\n        }\n\n        IERC20Upgradeable(address(stakingPool)).safeApprove(_withdrawalPool, type(uint256).max);\n        token.safeApprove(_withdrawalPool, type(uint256).max);\n\n        withdrawalPool = IWithdrawalPool(_withdrawalPool);\n    }\n\n    /**\n     * @notice Sets the address of the queue bypass controller\n     * @dev this address has authorization to stake LINK while bypassing the queue\n     * @param _queueBypassController address of queue bypass controller\n     */\n    function setQueueBypassController(address _queueBypassController) external onlyOwner {\n        queueBypassController = _queueBypassController;\n    }\n\n    /**\n     * @notice Deposits asset tokens into the withdrawal pool, staking pool, and/or queues them\n     * @dev tokens will be deposited into the withdrawal pool if there are queued withdrawals, then the\n     * staking pool if there is deposit room. Remaining tokens will then be queued if `_shouldQueue`\n     * is true, or otherwise returned to sender\n     * @param _account account to deposit for\n     * @param _amount amount to deposit\n     * @param _shouldQueue whether tokens should be queued\n     * @param _data deposit data passed to staking pool strategies\n     **/\n    function _deposit(\n        address _account,\n        uint256 _amount,\n        bool _shouldQueue,\n        bytes[] memory _data\n    ) internal {\n        if (poolStatus != PoolStatus.OPEN) revert DepositsDisabled();\n\n        uint256 toDeposit = _amount;\n\n        if (totalQueued == 0) {\n            uint256 queuedWithdrawals = withdrawalPool.getTotalQueuedWithdrawals();\n            if (queuedWithdrawals != 0) {\n                uint256 toDepositIntoQueue = toDeposit <= queuedWithdrawals\n                    ? toDeposit\n                    : queuedWithdrawals;\n                withdrawalPool.deposit(toDepositIntoQueue);\n                toDeposit -= toDepositIntoQueue;\n                IERC20Upgradeable(address(stakingPool)).safeTransfer(_account, toDepositIntoQueue);\n            }\n\n            if (toDeposit != 0) {\n                uint256 canDeposit = stakingPool.canDeposit();\n                if (canDeposit != 0) {\n                    uint256 toDepositIntoPool = toDeposit <= canDeposit ? toDeposit : canDeposit;\n                    stakingPool.deposit(_account, toDepositIntoPool, _data);\n                    toDeposit -= toDepositIntoPool;\n                }\n            }\n        }\n\n        if (toDeposit != 0) {\n            if (_shouldQueue) {\n                _requireNotPaused();\n                if (accountIndexes[_account] == 0) {\n                    accounts.push(_account);\n                    accountIndexes[_account] = accounts.length - 1;\n                }\n                accountQueuedTokens[_account] += toDeposit;\n                totalQueued += toDeposit;\n            } else {\n                token.safeTransfer(_account, toDeposit);\n            }\n        }\n\n        emit Deposit(_account, _amount - toDeposit, _shouldQueue ? toDeposit : 0);\n    }\n\n    /**\n     * @notice Withdraws asset tokens\n     * @dev will swap liquid staking tokens for queued tokens if there are any queued, then\n     * remaining tokens will be queued for withdrawal in the withdrawal pool if\n     * `_shouldQueueWithdrawal` is true, otherwise function will revert\n     * @param _account account to withdraw for\n     * @param _amount amount to withdraw\n     * @param _shouldQueueWithdrawal whether a withdrawal should be queued if the the full amount cannot be satisfied\n     * @param _shouldRevertOnZero whether call should revert if nothing is withdrawn or queued for withdrawal\n     * @param _data list of withdrawal data passed to staking pool strategies if executing instant withdrawal\n     * @return the amount of tokens that were withdrawn\n     **/\n    function _withdraw(\n        address _account,\n        uint256 _amount,\n        bool _shouldQueueWithdrawal,\n        bool _shouldRevertOnZero,\n        bytes[] memory _data\n    ) internal returns (uint256) {\n        if (poolStatus == PoolStatus.CLOSED) revert WithdrawalsDisabled();\n        if (_amount == 0) revert InvalidAmount();\n\n        uint256 toWithdraw = _amount;\n        uint256 queued;\n\n        if (totalQueued != 0) {\n            uint256 toWithdrawFromQueue = toWithdraw <= totalQueued ? toWithdraw : totalQueued;\n\n            totalQueued -= toWithdrawFromQueue;\n            depositsSinceLastUpdate += toWithdrawFromQueue;\n            sharesSinceLastUpdate += stakingPool.getSharesByStake(toWithdrawFromQueue);\n            toWithdraw -= toWithdrawFromQueue;\n        }\n\n        if (\n            toWithdraw != 0 &&\n            allowInstantWithdrawals &&\n            withdrawalPool.getTotalQueuedWithdrawals() == 0\n        ) {\n            uint256 toWithdrawFromPool = MathUpgradeable.min(stakingPool.canWithdraw(), toWithdraw);\n            if (toWithdrawFromPool != 0) {\n                stakingPool.withdraw(address(this), address(this), toWithdrawFromPool, _data);\n                toWithdraw -= toWithdrawFromPool;\n            }\n        }\n\n        if (toWithdraw != 0) {\n            if (!_shouldQueueWithdrawal) revert InsufficientLiquidity();\n\n            if (toWithdraw >= withdrawalPool.minWithdrawalAmount()) {\n                withdrawalPool.queueWithdrawal(_account, toWithdraw);\n                queued = toWithdraw;\n            } else {\n                IERC20Upgradeable(address(stakingPool)).safeTransfer(_account, toWithdraw);\n            }\n        }\n\n        uint256 withdrawn = _amount - toWithdraw;\n\n        if (_shouldRevertOnZero && withdrawn + queued == 0) revert WithdrawFailed();\n        if (withdrawn != 0) emit Withdraw(_account, withdrawn);\n\n        return withdrawn;\n    }\n\n    /**\n     * @notice Deposits queued and/or unused tokens\n     * @dev will prioritize unused staking pool deposits, then queued deposits\n     * @param _depositMin min amount of tokens required to deposit\n     * @param _depositMax max amount of tokens that can be deposited into at once\n     * @param _data deposit data passed to staking pool strategies\n     **/\n    function _depositQueuedTokens(\n        uint256 _depositMin,\n        uint256 _depositMax,\n        bytes[] memory _data\n    ) internal {\n        if (poolStatus != PoolStatus.OPEN) revert DepositsDisabled();\n\n        uint256 strategyDepositRoom = stakingPool.getStrategyDepositRoom();\n        if (strategyDepositRoom == 0 || strategyDepositRoom < _depositMin)\n            revert InsufficientDepositRoom();\n\n        uint256 _totalQueued = totalQueued;\n        uint256 unusedDeposits = stakingPool.getUnusedDeposits();\n        uint256 canDeposit = _totalQueued + unusedDeposits;\n        if (canDeposit == 0 || canDeposit < _depositMin) revert InsufficientQueuedTokens();\n\n        uint256 toDepositFromStakingPool = MathUpgradeable.min(\n            MathUpgradeable.min(unusedDeposits, strategyDepositRoom),\n            _depositMax\n        );\n        uint256 toDepositFromQueue = MathUpgradeable.min(\n            MathUpgradeable.min(_totalQueued, strategyDepositRoom - toDepositFromStakingPool),\n            _depositMax - toDepositFromStakingPool\n        );\n\n        stakingPool.deposit(address(this), toDepositFromQueue, _data);\n        _totalQueued -= toDepositFromQueue;\n\n        if (_totalQueued != totalQueued) {\n            uint256 diff = totalQueued - _totalQueued;\n            depositsSinceLastUpdate += diff;\n            sharesSinceLastUpdate += stakingPool.getSharesByStake(diff);\n            totalQueued = _totalQueued;\n        }\n\n        emit DepositTokens(toDepositFromStakingPool, toDepositFromQueue);\n    }\n\n    /**\n     * @dev Checks authorization for contract upgrades\n     */\n    function _authorizeUpgrade(address) internal override onlyOwner {}\n}\n",
+        "review": "Every ABI function classified. Claim ownership, queue/proof conditions and role/keeper exclusions recorded per signature; configuration, callback, initialization, upgrades and settlement are not ordinary user capabilities."
+      }
+    },
+    {
+      "chainId": 1,
+      "address": "0xa60B5146E44ff755e32BD51532842ceB41D0C248",
+      "name": "withdrawal",
+      "deploymentEvidence": {
+        "sourceRef": "https://docs.stake.link/resources/contracts-and-integrations/",
+        "verifiedAt": "2026-10-22",
+        "chainId": 1,
+        "address": "0xa60B5146E44ff755e32BD51532842ceB41D0C248",
+        "proxyResolution": {
+          "isProxy": true,
+          "proxyType": "EIP1967Proxy",
+          "implementations": [
+            {
+              "address": "0x9e00fd7e4754cC0DeCA4d653c61190380318ED17",
+              "name": "WithdrawalPool"
+            }
+          ]
+        },
+        "proxyResolutionSourceRef": "https://sourcify.dev/server/v2/contract/1/0xa60B5146E44ff755e32BD51532842ceB41D0C248?fields=all",
+        "serviceDeployment": {
+          "transactionHash": "0x3772ab314d9c9f900883df36fa82b027f1a322e2af626f9cc3bd4e52e6641690",
+          "blockNumber": "21789083",
+          "transactionIndex": "129",
+          "deployer": "0x57F1Bf47174C7562c62D8F55807bB4F93b76A1BD"
+        },
+        "evidence": "Official Ethereum LINK-specific deployment table, not POL/ESP pools; Sourcify exact address proxy resolution binds applicable implementation."
+      },
+      "abiEvidence": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x9e00fd7e4754cC0DeCA4d653c61190380318ED17?fields=all",
+        "verifiedAt": "2026-10-22",
+        "chainId": 1,
+        "address": "0xa60B5146E44ff755e32BD51532842ceB41D0C248",
+        "implementationAddress": "0x9e00fd7e4754cC0DeCA4d653c61190380318ED17",
+        "proxyResolution": {
+          "isProxy": true,
+          "proxyType": "EIP1967Proxy",
+          "implementations": [
+            {
+              "address": "0x9e00fd7e4754cC0DeCA4d653c61190380318ED17",
+              "name": "WithdrawalPool"
+            }
+          ]
+        },
+        "proxySourceRef": "https://sourcify.dev/server/v2/contract/1/0xa60B5146E44ff755e32BD51532842ceB41D0C248?fields=all",
+        "reportedProxyCreationMatch": "exact_match",
+        "reportedProxyRuntimeMatch": "exact_match",
+        "reportedImplementationCreationMatch": "exact_match",
+        "reportedImplementationRuntimeMatch": "exact_match",
+        "sourceServiceVerifiedAt": "2026-02-06T13:07:00Z",
+        "compilation": {
+          "language": "Solidity",
+          "compiler": "solc",
+          "compilerVersion": "0.8.15+commit.e14f2714",
+          "compilerSettings": {
+            "libraries": {},
+            "optimizer": {
+              "runs": 115,
+              "enabled": true
+            }
+          },
+          "name": "WithdrawalPool",
+          "fullyQualifiedName": "contracts/core/priorityPool/WithdrawalPool.sol:WithdrawalPool"
+        },
+        "evidence": "Full deployed implementation ABI and source from exact-address Sourcify response; match labels retained literally (match is not exact_match). Proxy ABI retained when supplied. V2 proxy absent from Sourcify, bound by Etherscan Exact Match TransparentUpgradeableProxy page displaying implementation. No generic ERC4626 interface, repository-only ABI or fresh RPC attestation."
+      },
+      "abi": [
+        {
+          "type": "constructor",
+          "inputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "AmountTooSmall",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "InvalidWithdrawalId",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "NoUpkeepNeeded",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "SenderNotAuthorized",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "AdminChanged",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "previousAdmin",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            },
+            {
+              "name": "newAdmin",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "BeaconUpgraded",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "beacon",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Initialized",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "version",
+              "type": "uint8",
+              "indexed": false,
+              "internalType": "uint8"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "OwnershipTransferred",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "previousOwner",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "newOwner",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "QueueWithdrawal",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "account",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "SetMinTimeBetweenWithdrawals",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "minTimeBetweenWithdrawals",
+              "type": "uint64",
+              "indexed": false,
+              "internalType": "uint64"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "SetMinWithdrawalAmount",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "minWithdrawalAmount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Upgraded",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "implementation",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "Withdraw",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "account",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "WithdrawalsFinalized",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "amount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "name": "checkUpkeep",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "deposit",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "forceWithdraw",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_withdrawalIds",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            },
+            {
+              "name": "_batchIds",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "getAccountTotalQueuedWithdrawals",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_account",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getBatchIds",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_withdrawalIds",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getFinalizedWithdrawalIdsByOwner",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_account",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            },
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getTotalQueuedWithdrawals",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getWithdrawalIdsByOwner",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_account",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getWithdrawals",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_withdrawalIds",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "sharesRemaining",
+                  "type": "uint128",
+                  "internalType": "uint128"
+                },
+                {
+                  "name": "partiallyWithdrawableAmount",
+                  "type": "uint128",
+                  "internalType": "uint128"
+                }
+              ],
+              "internalType": "struct WithdrawalPool.Withdrawal[]"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "indexOfNextWithdrawal",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "initialize",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_lst",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_priorityPool",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_minWithdrawalAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "_minTimeBetweenWithdrawals",
+              "type": "uint64",
+              "internalType": "uint64"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "lst",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "contract IERC20Upgradeable"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "minTimeBetweenWithdrawals",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint64",
+              "internalType": "uint64"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "minWithdrawalAmount",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "owner",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "performUpkeep",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_performData",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "priorityPool",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "contract IPriorityPool"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "proxiableUUID",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "queueWithdrawal",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_account",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "renounceOwnership",
+          "type": "function",
+          "inputs": [],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "setMinTimeBetweenWithdrawals",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_minTimeBetweenWithdrawals",
+              "type": "uint64",
+              "internalType": "uint64"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "setMinWithdrawalAmount",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_minWithdrawalAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "timeOfLastWithdrawal",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint64",
+              "internalType": "uint64"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "token",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "contract IERC20Upgradeable"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "transferOwnership",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "newOwner",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "updateWithdrawalBatchIdCutoff",
+          "type": "function",
+          "inputs": [],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "upgradeTo",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "newImplementation",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "upgradeToAndCall",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "newImplementation",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "data",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "payable"
+        },
+        {
+          "name": "withdraw",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_withdrawalIds",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            },
+            {
+              "name": "_batchIds",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "withdrawalBatchIdCutoff",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint128",
+              "internalType": "uint128"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "withdrawalIdCutoff",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint128",
+              "internalType": "uint128"
+            }
+          ],
+          "stateMutability": "view"
+        }
+      ],
+      "proxyAbi": [
+        {
+          "type": "constructor",
+          "inputs": [
+            {
+              "name": "implementation",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_data",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "stateMutability": "payable"
+        },
+        {
+          "name": "AddressEmptyCode",
+          "type": "error",
+          "inputs": [
+            {
+              "name": "target",
+              "type": "address",
+              "internalType": "address"
+            }
+          ]
+        },
+        {
+          "name": "ERC1967InvalidImplementation",
+          "type": "error",
+          "inputs": [
+            {
+              "name": "implementation",
+              "type": "address",
+              "internalType": "address"
+            }
+          ]
+        },
+        {
+          "name": "ERC1967NonPayable",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "FailedInnerCall",
+          "type": "error",
+          "inputs": []
+        },
+        {
+          "name": "Upgraded",
+          "type": "event",
+          "inputs": [
+            {
+              "name": "implementation",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+            }
+          ],
+          "anonymous": false
+        },
+        {
+          "type": "fallback",
+          "stateMutability": "payable"
+        }
+      ],
+      "functionDecisions": [
+        {
+          "signature": "checkUpkeep(bytes)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only checkUpkeep getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "deposit(uint256)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyPriorityPool withdrawal settlement funding; not a public user deposit."
+        },
+        {
+          "signature": "forceWithdraw(uint256[],uint256[])",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyOwner administrative forced settlement; ordinary claim uses withdraw."
+        },
+        {
+          "signature": "getAccountTotalQueuedWithdrawals(address)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getAccountTotalQueuedWithdrawals getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "getBatchIds(uint256[])",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getBatchIds getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "getFinalizedWithdrawalIdsByOwner(address)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getFinalizedWithdrawalIdsByOwner getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "getTotalQueuedWithdrawals()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getTotalQueuedWithdrawals getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "getWithdrawalIdsByOwner(address)",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getWithdrawalIdsByOwner getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "getWithdrawals(uint256[])",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only getWithdrawals getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "indexOfNextWithdrawal()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only indexOfNextWithdrawal getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "initialize(address,address,address,uint256,uint64)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "One-time deployment initialization, not ordinary user staking."
+        },
+        {
+          "signature": "lst()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only lst getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "minTimeBetweenWithdrawals()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only minTimeBetweenWithdrawals getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "minWithdrawalAmount()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only minWithdrawalAmount getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "owner()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only owner getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "performUpkeep(bytes)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Pool-wide keeper settlement/strategy execution, not an individual deposit or fixed claim."
+        },
+        {
+          "signature": "priorityPool()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only priorityPool getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "proxiableUUID()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only proxiableUUID getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "queueWithdrawal(address,uint256)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyPriorityPool; ordinary users request through admitted PriorityPool.withdraw."
+        },
+        {
+          "signature": "renounceOwnership()",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Ownership administration."
+        },
+        {
+          "signature": "setMinTimeBetweenWithdrawals(uint64)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyOwner pool configuration: setMinTimeBetweenWithdrawals."
+        },
+        {
+          "signature": "setMinWithdrawalAmount(uint256)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyOwner pool configuration: setMinWithdrawalAmount."
+        },
+        {
+          "signature": "timeOfLastWithdrawal()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only timeOfLastWithdrawal getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "token()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only token getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "transferOwnership(address)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Ownership administration."
+        },
+        {
+          "signature": "updateWithdrawalBatchIdCutoff()",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "Permissionless bookkeeping optimization for all queue batches, not user withdrawal/claim."
+        },
+        {
+          "signature": "upgradeTo(address)",
+          "stateMutability": "nonpayable",
+          "selected": false,
+          "reason": "onlyOwner UUPS implementation upgrade."
+        },
+        {
+          "signature": "upgradeToAndCall(address,bytes)",
+          "stateMutability": "payable",
+          "selected": false,
+          "reason": "Implementation upgrade and initialization execution, not an ordinary product entry."
+        },
+        {
+          "signature": "withdraw(uint256[],uint256[])",
+          "stateMutability": "nonpayable",
+          "selected": true,
+          "reason": "Claim finalized LINK withdrawal requests owned by msg.sender; batch identifiers must correspond to requests."
+        },
+        {
+          "signature": "withdrawalBatchIdCutoff()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only withdrawalBatchIdCutoff getter/query; retained in full inventory, not admitted as transaction capability."
+        },
+        {
+          "signature": "withdrawalIdCutoff()",
+          "stateMutability": "view",
+          "selected": false,
+          "reason": "Read-only withdrawalIdCutoff getter/query; retained in full inventory, not admitted as transaction capability."
+        }
+      ],
+      "selectedFunctions": [
+        {
+          "abi": {
+            "name": "withdraw",
+            "type": "function",
+            "inputs": [
+              {
+                "name": "_withdrawalIds",
+                "type": "uint256[]",
+                "internalType": "uint256[]"
+              },
+              {
+                "name": "_batchIds",
+                "type": "uint256[]",
+                "internalType": "uint256[]"
+              }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+          },
+          "capabilityId": "stake-link-link-pool:v1:1:0xa60b5146e44ff755e32bd51532842ceb41d0c248:claim-link",
+          "type": "contract_call",
+          "chainId": 1,
+          "contract": "0xa60B5146E44ff755e32BD51532842ceB41D0C248",
+          "functionName": "withdraw",
+          "signature": "withdraw(uint256[],uint256[])",
+          "status": "active",
+          "provenance": {
+            "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x9e00fd7e4754cC0DeCA4d653c61190380318ED17?fields=all",
+            "status": "verified",
+            "verifiedAt": "2026-10-22"
+          },
+          "protocol": "Stake.link",
+          "operation": "claim-link",
+          "label": "Stake.link claim link",
+          "warnings": [
+            "Inventory admission only; block-specific configuration getter evidence does not attest runtime identity, funding, liquidity, pause-state or transaction execution.",
+            "LINK approval is separate; stLINK approval is required when redeeming stLINK. No permit/callback/executor capability is admitted.",
+            "Deposits may remain queued. reSDL priority and deposit-room availability govern processing; users without reSDL can wait indefinitely while prioritized users remain.",
+            "Merkle claims/unqueue may require current distribution amounts/shares and IPFS-derived proof; no oracle/root-update authority is admitted.",
+            "Queued withdrawal requires protocol finalization followed by fixed WithdrawalPool.withdraw with caller-owned request and correct batch IDs.",
+            "Strategy bytes[] only feeds configured staking strategies; it is not arbitrary address/calldata execution and does not expand existing execution scope."
+          ]
+        }
+      ],
+      "sourceSemantics": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x9e00fd7e4754cC0DeCA4d653c61190380318ED17?fields=all",
+        "sourcePath": "contracts/core/priorityPool/WithdrawalPool.sol",
+        "content": "// SPDX-License-Identifier: GPL-3.0\npragma solidity 0.8.15;\n\nimport \"@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol\";\n\nimport \"../interfaces/IStakingPool.sol\";\nimport \"../interfaces/IPriorityPool.sol\";\n\n/**\n * @title Withdrawal Pool\n * @notice Allows users to queue LST withdrawals if there is insufficient liquidity to satisfy the withdrawal amount.\n * @dev LST withdrawals will be added to a FIFO queue and will be fulfuilled as funds become available.\n */\ncontract WithdrawalPool is UUPSUpgradeable, OwnableUpgradeable {\n    using SafeERC20Upgradeable for IERC20Upgradeable;\n\n    // a withdrawal request made by an account\n    struct Withdrawal {\n        // number of LST shares remaining (may be withdrawable or not)\n        uint128 sharesRemaining;\n        // number of tokens that can be withdrawn\n        uint128 partiallyWithdrawableAmount;\n    }\n\n    // a withdrawal batch created when some withdrawals were finalized\n    struct WithdrawalBatch {\n        // index of last withdrawal that was finalized in this batch\n        uint128 indexOfLastWithdrawal;\n        // the exchange rate of LSTs per underlying shares at the time of this batch\n        uint128 stakePerShares;\n    }\n\n    // address of staking token\n    IERC20Upgradeable public token;\n    // address of liquid staking token\n    IERC20Upgradeable public lst;\n    // address of priority pool\n    IPriorityPool public priorityPool;\n\n    // list of withdrawal requests in order of creation\n    Withdrawal[] internal queuedWithdrawals;\n    // stores a list of withdrawal requests for each account\n    mapping(address => uint256[]) internal queuedWithdrawalsByAccount;\n    // mapping of withdrawal request index to the request owner\n    mapping(uint256 => address) internal withdrawalOwners;\n\n    // total number of LST shares queued for withdrawal\n    uint256 internal totalQueuedShareWithdrawals;\n    // index of the withdrawal that's at the front of the queue\n    uint256 public indexOfNextWithdrawal;\n\n    // list of withdrawal batches in order of creation\n    WithdrawalBatch[] internal withdrawalBatches;\n    // all batches before this index have had all withdrawal requests fully withdrawn\n    uint128 public withdrawalBatchIdCutoff;\n    // all withdrawal requests before this index have been fully withdrawn\n    uint128 public withdrawalIdCutoff;\n\n    // min amount of LSTs that can be queued for withdrawal\n    uint256 public minWithdrawalAmount;\n\n    // min amount of time between execution of withdrawals\n    uint64 public minTimeBetweenWithdrawals;\n    // time of last execution of withdrawals\n    uint64 public timeOfLastWithdrawal;\n\n    event QueueWithdrawal(address indexed account, uint256 amount);\n    event Withdraw(address indexed account, uint256 amount);\n    event WithdrawalsFinalized(uint256 amount);\n    event SetMinWithdrawalAmount(uint256 minWithdrawalAmount);\n    event SetMinTimeBetweenWithdrawals(uint64 minTimeBetweenWithdrawals);\n\n    error SenderNotAuthorized();\n    error InvalidWithdrawalId();\n    error AmountTooSmall();\n    error NoUpkeepNeeded();\n\n    /// @custom:oz-upgrades-unsafe-allow constructor\n    constructor() {\n        _disableInitializers();\n    }\n\n    /**\n     * @notice Initializes contract\n     * @param _token address of asset token\n     * @param _lst address of liquid staking token\n     * @param _priorityPool address of priority pool\n     * @param _minWithdrawalAmount minimum amount of LSTs that can be queued for withdrawal\n     * @param _minTimeBetweenWithdrawals min amount of time between execution of withdrawals\n     */\n    function initialize(\n        address _token,\n        address _lst,\n        address _priorityPool,\n        uint256 _minWithdrawalAmount,\n        uint64 _minTimeBetweenWithdrawals\n    ) public initializer {\n        __UUPSUpgradeable_init();\n        __Ownable_init();\n        token = IERC20Upgradeable(_token);\n        lst = IERC20Upgradeable(_lst);\n        lst.safeApprove(_priorityPool, type(uint256).max);\n        priorityPool = IPriorityPool(_priorityPool);\n        minWithdrawalAmount = _minWithdrawalAmount;\n        withdrawalBatches.push(WithdrawalBatch(0, 0));\n        queuedWithdrawals.push(Withdrawal(0, 0));\n        minTimeBetweenWithdrawals = _minTimeBetweenWithdrawals;\n        timeOfLastWithdrawal = uint64(block.timestamp);\n    }\n\n    /**\n     * @notice Reverts if sender is not priority pool\n     */\n    modifier onlyPriorityPool() {\n        if (msg.sender != address(priorityPool)) revert SenderNotAuthorized();\n        _;\n    }\n\n    /**\n     * @notice Returns the total amount of liquid staking tokens queued for withdrawal\n     * @return total amount queued for withdrawal\n     */\n    function getTotalQueuedWithdrawals() external view returns (uint256) {\n        return _getStakeByShares(totalQueuedShareWithdrawals);\n    }\n\n    /**\n     * @notice Returns the total amount of liquid staking tokens queued for withdrawal by an account\n     * @param _account address of account\n     * @return total amount queued across all account's withdrawals\n     */\n    function getAccountTotalQueuedWithdrawals(address _account) external view returns (uint256) {\n        uint256[] memory withdrawalIds = getWithdrawalIdsByOwner(_account);\n        uint256[] memory batchIds = getBatchIds(withdrawalIds);\n\n        uint256 totalUnfinalizedWithdrawals;\n        for (uint256 i = 0; i < batchIds.length; ++i) {\n            Withdrawal memory withdrawal = queuedWithdrawals[withdrawalIds[i]];\n\n            if (batchIds[i] == 0) {\n                totalUnfinalizedWithdrawals += uint256(withdrawal.sharesRemaining);\n            }\n        }\n\n        return _getStakeByShares(totalUnfinalizedWithdrawals);\n    }\n\n    /**\n     * @notice Returns a list of withdrawals\n     * @param _withdrawalIds list of withdrawal ids\n     * @return list of withdrawals corresponding to withdrawal ids\n     */\n    function getWithdrawals(\n        uint256[] calldata _withdrawalIds\n    ) external view returns (Withdrawal[] memory) {\n        Withdrawal[] memory withdrawals = new Withdrawal[](_withdrawalIds.length);\n\n        for (uint256 i = 0; i < _withdrawalIds.length; ++i) {\n            withdrawals[i] = queuedWithdrawals[_withdrawalIds[i]];\n        }\n\n        return withdrawals;\n    }\n\n    /**\n     * @notice Returns batch ids for a list of withdrawals\n     * @param _withdrawalIds list of withrawal ids\n     * @return list of batch ids corresponding to withdrawal ids\n     */\n    function getBatchIds(uint256[] memory _withdrawalIds) public view returns (uint256[] memory) {\n        uint256[] memory batchIds = new uint256[](_withdrawalIds.length);\n\n        for (uint256 i = 0; i < _withdrawalIds.length; ++i) {\n            uint256 batchId;\n            uint256 withdrawalId = _withdrawalIds[i];\n\n            for (uint256 j = withdrawalBatchIdCutoff; j < withdrawalBatches.length; ++j) {\n                uint256 indexOfLastWithdrawal = withdrawalBatches[j].indexOfLastWithdrawal;\n\n                if (withdrawalId <= indexOfLastWithdrawal) {\n                    batchId = j;\n                    break;\n                }\n            }\n\n            batchIds[i] = batchId;\n        }\n\n        return batchIds;\n    }\n\n    /**\n     * @notice Returns a list of withdrawal ids owned by an account\n     * @param _account address of account\n     * @return list of withdrawal ids\n     */\n    function getWithdrawalIdsByOwner(address _account) public view returns (uint256[] memory) {\n        uint256[] memory activeWithdrawals = new uint256[](\n            queuedWithdrawalsByAccount[_account].length\n        );\n        uint256 totalActiveWithdrawals;\n\n        for (uint256 i = 0; i < activeWithdrawals.length; ++i) {\n            uint256 withdrawalId = queuedWithdrawalsByAccount[_account][i];\n            Withdrawal memory withdrawal = queuedWithdrawals[withdrawalId];\n            if (withdrawal.sharesRemaining != 0 || withdrawal.partiallyWithdrawableAmount != 0) {\n                activeWithdrawals[i] = withdrawalId;\n                totalActiveWithdrawals++;\n            }\n        }\n\n        uint256[] memory withdrawalIds = new uint256[](totalActiveWithdrawals);\n        uint256 withdrawalIdsAdded;\n        for (uint256 i = 0; i < activeWithdrawals.length; ++i) {\n            if (activeWithdrawals[i] != 0) {\n                withdrawalIds[withdrawalIdsAdded] = activeWithdrawals[i];\n                withdrawalIdsAdded++;\n            }\n        }\n\n        return withdrawalIds;\n    }\n\n    /**\n     * @notice Returns a list of finalized and partially finalized withdrawal ids owned by an account\n     * @dev these withdrawals have funds available for the owner to withdraw\n     * @param _account address of account\n     * @return list of withdrawal ids\n     * @return total withdrawable across all account's withdrawals\n     */\n    function getFinalizedWithdrawalIdsByOwner(\n        address _account\n    ) external view returns (uint256[] memory, uint256) {\n        uint256[] memory withdrawalIds = getWithdrawalIdsByOwner(_account);\n        uint256[] memory batchIds = getBatchIds(withdrawalIds);\n\n        uint256[] memory finalizedWithdrawals = new uint256[](withdrawalIds.length);\n        uint256 totalFinalizedWithdrawals;\n        uint256 totalWithdrawable;\n        for (uint256 i = 0; i < batchIds.length; ++i) {\n            Withdrawal memory withdrawal = queuedWithdrawals[withdrawalIds[i]];\n\n            if (batchIds[i] != 0 || withdrawal.partiallyWithdrawableAmount != 0) {\n                finalizedWithdrawals[i] = withdrawalIds[i];\n                totalFinalizedWithdrawals++;\n                totalWithdrawable += withdrawal.partiallyWithdrawableAmount;\n\n                if (batchIds[i] != 0) {\n                    totalWithdrawable +=\n                        (uint256(withdrawalBatches[batchIds[i]].stakePerShares) *\n                            uint256(withdrawal.sharesRemaining)) /\n                        1e18;\n                }\n            } else {\n                break;\n            }\n        }\n\n        uint256[] memory retFinalizedWithdrawals = new uint256[](totalFinalizedWithdrawals);\n        uint256 withdrawalsAdded;\n        for (uint256 i = 0; i < totalFinalizedWithdrawals; ++i) {\n            uint256 withdrawalId = finalizedWithdrawals[i];\n\n            if (withdrawalId != 0) {\n                retFinalizedWithdrawals[withdrawalsAdded] = withdrawalId;\n                withdrawalsAdded++;\n            }\n        }\n\n        return (retFinalizedWithdrawals, totalWithdrawable);\n    }\n\n    /**\n     * @notice Executes a group of fully and/or partially finalized withdrawals owned by the sender\n     * @param _withdrawalIds list of withdrawal ids to execute\n     * @param _batchIds list of batch ids corresponding to withdrawal ids\n     */\n    function withdraw(uint256[] calldata _withdrawalIds, uint256[] calldata _batchIds) external {\n        address owner = msg.sender;\n        uint256 amountToWithdraw;\n\n        for (uint256 i = 0; i < _withdrawalIds.length; ++i) {\n            uint256 withdrawalId = _withdrawalIds[i];\n            Withdrawal memory withdrawal = queuedWithdrawals[_withdrawalIds[i]];\n            uint256 batchId = _batchIds[i];\n            WithdrawalBatch memory batch = withdrawalBatches[batchId];\n\n            if (withdrawalOwners[withdrawalId] != owner) revert SenderNotAuthorized();\n            if (\n                batchId != 0 && withdrawalId <= withdrawalBatches[batchId - 1].indexOfLastWithdrawal\n            ) revert InvalidWithdrawalId();\n            if (\n                batchId != 0 &&\n                withdrawalId > batch.indexOfLastWithdrawal &&\n                withdrawal.partiallyWithdrawableAmount == 0\n            ) revert InvalidWithdrawalId();\n\n            if (withdrawalId <= batch.indexOfLastWithdrawal) {\n                amountToWithdraw +=\n                    withdrawal.partiallyWithdrawableAmount +\n                    (uint256(batch.stakePerShares) * uint256(withdrawal.sharesRemaining)) /\n                    1e18;\n                delete queuedWithdrawals[withdrawalId];\n                delete withdrawalOwners[withdrawalId];\n            } else {\n                amountToWithdraw += withdrawal.partiallyWithdrawableAmount;\n                queuedWithdrawals[withdrawalId].partiallyWithdrawableAmount = 0;\n            }\n        }\n\n        token.safeTransfer(owner, amountToWithdraw);\n        emit Withdraw(owner, amountToWithdraw);\n    }\n\n    /**\n     * @notice Executes a group of fully finalized withdrawals\n     * @dev used by owner in the case that withdrawalBatchIdCutoff cannot be updated due to\n     * outstanding withdrawals\n     * @param _withdrawalIds list of withdrawal ids to execute\n     * @param _batchIds list of batch ids corresponding to withdrawal ids\n     */\n    function forceWithdraw(\n        uint256[] calldata _withdrawalIds,\n        uint256[] calldata _batchIds\n    ) external onlyOwner {\n        for (uint256 i = 0; i < _withdrawalIds.length; ++i) {\n            uint256 withdrawalId = _withdrawalIds[i];\n            Withdrawal memory withdrawal = queuedWithdrawals[_withdrawalIds[i]];\n            uint256 batchId = _batchIds[i];\n            WithdrawalBatch memory batch = withdrawalBatches[batchId];\n            address owner = withdrawalOwners[withdrawalId];\n\n            if (withdrawalId <= withdrawalBatches[batchId - 1].indexOfLastWithdrawal)\n                revert InvalidWithdrawalId();\n            if (withdrawalId > batch.indexOfLastWithdrawal) revert InvalidWithdrawalId();\n\n            uint256 amountToWithdraw = withdrawal.partiallyWithdrawableAmount +\n                (uint256(batch.stakePerShares) * uint256(withdrawal.sharesRemaining)) /\n                1e18;\n            delete queuedWithdrawals[withdrawalId];\n            delete withdrawalOwners[withdrawalId];\n\n            token.safeTransfer(owner, amountToWithdraw);\n            emit Withdraw(owner, amountToWithdraw);\n        }\n    }\n\n    /**\n     * @notice Queues a withdrawal of liquid staking tokens for an account\n     * @param _account address of account\n     * @param _amount amount of LST\n     */\n    function queueWithdrawal(address _account, uint256 _amount) external onlyPriorityPool {\n        if (_amount < minWithdrawalAmount) revert AmountTooSmall();\n\n        lst.safeTransferFrom(msg.sender, address(this), _amount);\n\n        uint256 sharesAmount = _getSharesByStake(_amount);\n        queuedWithdrawals.push(Withdrawal(uint128(sharesAmount), 0));\n        totalQueuedShareWithdrawals += sharesAmount;\n\n        uint256 withdrawalId = queuedWithdrawals.length - 1;\n        queuedWithdrawalsByAccount[_account].push(withdrawalId);\n        withdrawalOwners[withdrawalId] = _account;\n\n        emit QueueWithdrawal(_account, _amount);\n    }\n\n    /**\n     * @notice Deposits asset tokens in exchange for liquid staking tokens, finalizing withdrawals\n     * starting from the front of the queue\n     * @param _amount amount of tokens to deposit\n     */\n    function deposit(uint256 _amount) external onlyPriorityPool {\n        token.safeTransferFrom(msg.sender, address(this), _amount);\n        lst.safeTransfer(msg.sender, _amount);\n        _finalizeWithdrawals(_amount);\n    }\n\n    /**\n     * @notice Returns whether withdrawals should be executed based on available withdrawal space\n     * @return true if withdrawal should be executed, false otherwise\n     */\n    function checkUpkeep(bytes calldata) external view returns (bool, bytes memory) {\n        if (\n            _getStakeByShares(totalQueuedShareWithdrawals) != 0 &&\n            priorityPool.canWithdraw(address(this), 0) != 0 &&\n            block.timestamp > timeOfLastWithdrawal + minTimeBetweenWithdrawals\n        ) {\n            return (true, \"\");\n        }\n        return (false, \"\");\n    }\n\n    /**\n     * @notice Executes withdrawals if there is sufficient available withdrawal space\n     * @param _performData encoded list of withdrawal data passed to staking pool strategies\n     */\n    function performUpkeep(bytes calldata _performData) external {\n        uint256 canWithdraw = priorityPool.canWithdraw(address(this), 0);\n        uint256 totalQueued = _getStakeByShares(totalQueuedShareWithdrawals);\n        if (\n            totalQueued == 0 ||\n            canWithdraw == 0 ||\n            block.timestamp <= timeOfLastWithdrawal + minTimeBetweenWithdrawals\n        ) revert NoUpkeepNeeded();\n\n        timeOfLastWithdrawal = uint64(block.timestamp);\n\n        uint256 toWithdraw = totalQueued > canWithdraw ? canWithdraw : totalQueued;\n        bytes[] memory data = abi.decode(_performData, (bytes[]));\n\n        priorityPool.executeQueuedWithdrawals(toWithdraw, data);\n        _finalizeWithdrawals(toWithdraw);\n    }\n\n    /**\n     * @notice Updates the withdrawalBatchIdCutoff\n     * @dev this value is used to more efficiently return data in getBatchIds by skipping old withdrawal batches\n     */\n    function updateWithdrawalBatchIdCutoff() external {\n        uint256 numWithdrawals = queuedWithdrawals.length;\n        uint256 newWithdrawalIdCutoff = withdrawalIdCutoff;\n\n        // find the first withdrawal that has funds remaining\n        for (uint256 i = newWithdrawalIdCutoff; i < numWithdrawals; ++i) {\n            newWithdrawalIdCutoff = i;\n\n            Withdrawal memory withdrawal = queuedWithdrawals[i];\n            if (withdrawal.sharesRemaining != 0 || withdrawal.partiallyWithdrawableAmount != 0) {\n                break;\n            }\n        }\n\n        uint256 numBatches = withdrawalBatches.length;\n        uint256 newWithdrawalBatchIdCutoff = withdrawalBatchIdCutoff;\n\n        // find the last batch where all withdrawals have no funds remaining\n        for (uint256 i = newWithdrawalBatchIdCutoff; i < numBatches; ++i) {\n            newWithdrawalBatchIdCutoff = i;\n\n            if (withdrawalBatches[i].indexOfLastWithdrawal >= newWithdrawalIdCutoff) {\n                break;\n            }\n        }\n\n        withdrawalIdCutoff = uint128(newWithdrawalIdCutoff);\n        withdrawalBatchIdCutoff = uint128(newWithdrawalBatchIdCutoff);\n    }\n\n    /**\n     * @notice Sets the minimum amount of liquid staking tokens that can be queued for withdrawal\n     * @param _minWithdrawalAmount minimum token amount\n     */\n    function setMinWithdrawalAmount(uint256 _minWithdrawalAmount) external onlyOwner {\n        minWithdrawalAmount = _minWithdrawalAmount;\n        emit SetMinWithdrawalAmount(_minWithdrawalAmount);\n    }\n\n    /**\n     * @notice Sets the minimum amount of of time between calls to performUpkeep to finalize withdrawals\n     * @param _minTimeBetweenWithdrawals minimum time\n     */\n    function setMinTimeBetweenWithdrawals(uint64 _minTimeBetweenWithdrawals) external onlyOwner {\n        minTimeBetweenWithdrawals = _minTimeBetweenWithdrawals;\n        emit SetMinTimeBetweenWithdrawals(_minTimeBetweenWithdrawals);\n    }\n\n    /**\n     * @notice Finalizes withdrawal accounting after withdrawals have been executed\n     * @param _amount amount to finalize\n     */\n    function _finalizeWithdrawals(uint256 _amount) internal {\n        uint256 sharesToWithdraw = _getSharesByStake(_amount);\n        uint256 numWithdrawals = queuedWithdrawals.length;\n\n        totalQueuedShareWithdrawals -= sharesToWithdraw;\n\n        for (uint256 i = indexOfNextWithdrawal; i < numWithdrawals; ++i) {\n            uint256 sharesRemaining = queuedWithdrawals[i].sharesRemaining;\n\n            if (sharesRemaining < sharesToWithdraw) {\n                // fully finalize withdrawal\n                sharesToWithdraw -= sharesRemaining;\n                continue;\n            }\n\n            if (sharesRemaining > sharesToWithdraw) {\n                // partially finalize withdrawal\n                queuedWithdrawals[i] = Withdrawal(\n                    uint128(sharesRemaining - sharesToWithdraw),\n                    uint128(\n                        queuedWithdrawals[i].partiallyWithdrawableAmount +\n                            _getStakeByShares(sharesToWithdraw)\n                    )\n                );\n\n                // handle remaining dust\n                if (queuedWithdrawals[i].sharesRemaining < 100) {\n                    totalQueuedShareWithdrawals -= queuedWithdrawals[i].sharesRemaining;\n                    delete queuedWithdrawals[i].sharesRemaining;\n                }\n\n                indexOfNextWithdrawal = i;\n                withdrawalBatches.push(\n                    WithdrawalBatch(uint128(i - 1), uint128(_getStakeByShares(1 ether)))\n                );\n            } else {\n                // fully finalize withdrawal\n                indexOfNextWithdrawal = i + 1;\n                withdrawalBatches.push(\n                    WithdrawalBatch(uint128(i), uint128(_getStakeByShares(1 ether)))\n                );\n            }\n\n            sharesToWithdraw = 0;\n            break;\n        }\n\n        // entire amount must be accounted for\n        assert(sharesToWithdraw == 0);\n\n        emit WithdrawalsFinalized(_amount);\n    }\n\n    /**\n     * @notice Returns the amount of LST that corresponds to an amount of shares\n     * @param _sharesAmount amount of shares\n     * @return amount of stake\n     */\n    function _getStakeByShares(uint256 _sharesAmount) internal view virtual returns (uint256) {\n        return IStakingPool(address(lst)).getStakeByShares(_sharesAmount);\n    }\n\n    /**\n     * @notice Returns the amount of shares that corresponds to an amount of LST\n     * @param _amount amount of stake\n     * @return amount of shares\n     */\n    function _getSharesByStake(uint256 _amount) internal view virtual returns (uint256) {\n        return IStakingPool(address(lst)).getSharesByStake(_amount);\n    }\n\n    /**\n     * @dev Checks authorization for contract upgrades\n     */\n    function _authorizeUpgrade(address) internal override onlyOwner {}\n}\n",
+        "review": "Every ABI function classified. Claim ownership, queue/proof conditions and role/keeper exclusions recorded per signature; configuration, callback, initialization, upgrades and settlement are not ordinary user capabilities."
+      }
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "name": "claimLSDTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_sharesAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_merkleProof",
+            "type": "bytes32[]",
+            "internalType": "bytes32[]"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "stake-link-link-pool:v1:1:0xddc796a66e8b83d0bccd97df33a6ccfba8fd60ea:claim-stlink",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA",
+      "functionName": "claimLSDTokens",
+      "signature": "claimLSDTokens(uint256,uint256,bytes32[])",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x855039B459Cea56707a61E641110097623dE1bc3?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Stake.link",
+      "operation": "claim-stlink",
+      "label": "Stake.link claim stlink",
+      "warnings": [
+        "Inventory admission only; block-specific configuration getter evidence does not attest runtime identity, funding, liquidity, pause-state or transaction execution.",
+        "LINK approval is separate; stLINK approval is required when redeeming stLINK. No permit/callback/executor capability is admitted.",
+        "Deposits may remain queued. reSDL priority and deposit-room availability govern processing; users without reSDL can wait indefinitely while prioritized users remain.",
+        "Merkle claims/unqueue may require current distribution amounts/shares and IPFS-derived proof; no oracle/root-update authority is admitted.",
+        "Queued withdrawal requires protocol finalization followed by fixed WithdrawalPool.withdraw with caller-owned request and correct batch IDs.",
+        "Strategy bytes[] only feeds configured staking strategies; it is not arbitrary address/calldata execution and does not expand existing execution scope."
+      ]
+    },
+    {
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_shouldQueue",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "_data",
+            "type": "bytes[]",
+            "internalType": "bytes[]"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "stake-link-link-pool:v1:1:0xddc796a66e8b83d0bccd97df33a6ccfba8fd60ea:deposit",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,bool,bytes[])",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x855039B459Cea56707a61E641110097623dE1bc3?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Stake.link",
+      "operation": "deposit",
+      "label": "Stake.link deposit",
+      "warnings": [
+        "Inventory admission only; block-specific configuration getter evidence does not attest runtime identity, funding, liquidity, pause-state or transaction execution.",
+        "LINK approval is separate; stLINK approval is required when redeeming stLINK. No permit/callback/executor capability is admitted.",
+        "Deposits may remain queued. reSDL priority and deposit-room availability govern processing; users without reSDL can wait indefinitely while prioritized users remain.",
+        "Merkle claims/unqueue may require current distribution amounts/shares and IPFS-derived proof; no oracle/root-update authority is admitted.",
+        "Queued withdrawal requires protocol finalization followed by fixed WithdrawalPool.withdraw with caller-owned request and correct batch IDs.",
+        "Strategy bytes[] only feeds configured staking strategies; it is not arbitrary address/calldata execution and does not expand existing execution scope."
+      ]
+    },
+    {
+      "abi": {
+        "name": "unqueueTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_amountToUnqueue",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_sharesAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_merkleProof",
+            "type": "bytes32[]",
+            "internalType": "bytes32[]"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "stake-link-link-pool:v1:1:0xddc796a66e8b83d0bccd97df33a6ccfba8fd60ea:unqueue",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA",
+      "functionName": "unqueueTokens",
+      "signature": "unqueueTokens(uint256,uint256,uint256,bytes32[])",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x855039B459Cea56707a61E641110097623dE1bc3?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Stake.link",
+      "operation": "unqueue",
+      "label": "Stake.link unqueue",
+      "warnings": [
+        "Inventory admission only; block-specific configuration getter evidence does not attest runtime identity, funding, liquidity, pause-state or transaction execution.",
+        "LINK approval is separate; stLINK approval is required when redeeming stLINK. No permit/callback/executor capability is admitted.",
+        "Deposits may remain queued. reSDL priority and deposit-room availability govern processing; users without reSDL can wait indefinitely while prioritized users remain.",
+        "Merkle claims/unqueue may require current distribution amounts/shares and IPFS-derived proof; no oracle/root-update authority is admitted.",
+        "Queued withdrawal requires protocol finalization followed by fixed WithdrawalPool.withdraw with caller-owned request and correct batch IDs.",
+        "Strategy bytes[] only feeds configured staking strategies; it is not arbitrary address/calldata execution and does not expand existing execution scope."
+      ]
+    },
+    {
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_amountToWithdraw",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_sharesAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_merkleProof",
+            "type": "bytes32[]",
+            "internalType": "bytes32[]"
+          },
+          {
+            "name": "_shouldUnqueue",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "_shouldQueueWithdrawal",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "_data",
+            "type": "bytes[]",
+            "internalType": "bytes[]"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "stake-link-link-pool:v1:1:0xddc796a66e8b83d0bccd97df33a6ccfba8fd60ea:withdraw",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xDdC796a66E8b83d0BcCD97dF33A6CcFBA8fd60eA",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,uint256,uint256,bytes32[],bool,bool,bytes[])",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x855039B459Cea56707a61E641110097623dE1bc3?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Stake.link",
+      "operation": "withdraw",
+      "label": "Stake.link withdraw",
+      "warnings": [
+        "Inventory admission only; block-specific configuration getter evidence does not attest runtime identity, funding, liquidity, pause-state or transaction execution.",
+        "LINK approval is separate; stLINK approval is required when redeeming stLINK. No permit/callback/executor capability is admitted.",
+        "Deposits may remain queued. reSDL priority and deposit-room availability govern processing; users without reSDL can wait indefinitely while prioritized users remain.",
+        "Merkle claims/unqueue may require current distribution amounts/shares and IPFS-derived proof; no oracle/root-update authority is admitted.",
+        "Queued withdrawal requires protocol finalization followed by fixed WithdrawalPool.withdraw with caller-owned request and correct batch IDs.",
+        "Strategy bytes[] only feeds configured staking strategies; it is not arbitrary address/calldata execution and does not expand existing execution scope."
+      ]
+    },
+    {
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_withdrawalIds",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          },
+          {
+            "name": "_batchIds",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "stake-link-link-pool:v1:1:0xa60b5146e44ff755e32bd51532842ceb41d0c248:claim-link",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xa60B5146E44ff755e32BD51532842ceB41D0C248",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256[],uint256[])",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x9e00fd7e4754cC0DeCA4d653c61190380318ED17?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Stake.link",
+      "operation": "claim-link",
+      "label": "Stake.link claim link",
+      "warnings": [
+        "Inventory admission only; block-specific configuration getter evidence does not attest runtime identity, funding, liquidity, pause-state or transaction execution.",
+        "LINK approval is separate; stLINK approval is required when redeeming stLINK. No permit/callback/executor capability is admitted.",
+        "Deposits may remain queued. reSDL priority and deposit-room availability govern processing; users without reSDL can wait indefinitely while prioritized users remain.",
+        "Merkle claims/unqueue may require current distribution amounts/shares and IPFS-derived proof; no oracle/root-update authority is admitted.",
+        "Queued withdrawal requires protocol finalization followed by fixed WithdrawalPool.withdraw with caller-owned request and correct batch IDs.",
+        "Strategy bytes[] only feeds configured staking strategies; it is not arbitrary address/calldata execution and does not expand existing execution scope."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2806 @@
+{
+  "schemaVersion": 1,
+  "chainId": 8453,
+  "address": "0x776F95321a0285F8BCde149E3264D16DC08da69a",
+  "protocol": "Spectra",
+  "protocolId": "spectra-gami-usdc-metavault",
+  "website": "https://spectra.finance/",
+  "scope": "Spectra Gami Spectra USDC MetaVault on Base: exact user-facing MetaVaultWrapper async request, decrease, deposit-share claim and redemption-asset claim. No APWine legacy, Safe/Zodiac executors, generic Spectra router, bridge, pool or curator action.",
+  "lifecycleEvidence": {
+    "verifiedAt": "2026-10-22",
+    "decision": "eligible-active",
+    "sourceRefs": [
+      "https://app.spectra.finance/metavaults/base:0x5e93e1193a5e297cba0856e9b3f22b6e05429b9a",
+      "https://dev.spectra.finance/docs/metavaults/architecture",
+      "https://dev.spectra.finance/docs/metavaults/guides/depositing-and-redeeming",
+      "https://dev.spectra.finance/docs/metavaults/deployed-contracts"
+    ],
+    "evidence": "Official current Spectra app exposes Gami Spectra USDC with deposit UI, VISIBLE server-rendered status and ongoing settlement epochs. Official current MetaVault architecture and guide describe this ERC7540 user-wrapper product, distinct from APWine legacy. Reviewed official sources provide no retirement/wind-down notice for this market. App displayed approximately $3.0M market TVL; this is a product-specific UI snapshot, not independently attested vault balance or DAU. No high-DAU or protocol-wide TVL claim is made."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://app.spectra.finance/metavaults/base:0x5e93e1193a5e297cba0856e9b3f22b6e05429b9a",
+    "verifiedAt": "2026-10-22",
+    "chainId": 8453,
+    "address": "0x776F95321a0285F8BCde149E3264D16DC08da69a",
+    "deployment": {
+      "transactionHash": "0x8cd35b654efc5e32b08e50ae40fd430aa62118e4eaf50a53a3ea30685880736e",
+      "blockNumber": "39302509",
+      "transactionIndex": "193",
+      "deployer": "0x41AE8c8E372741a29dc90af982215290e74Dce2E"
+    },
+    "proxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0x8C4f97Ce5B2Eea713728729AEC08E48BCE588216",
+          "name": "MetaVaultWrapper"
+        }
+      ]
+    },
+    "evidence": "Official app __NEXT_DATA__ METAVAULT_QUERY data binds chainId 8453, Safe market address 0x5e93e1193a5e297cba0856e9b3f22b6e05429b9a, vault user-wrapper 0x776f95321a0285f8bcde149e3264d16dc08da69a, infraVault 0xc62734aecb095d2cb74b3ccebfdf973ec23fbaa1 and Base USDC 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913. Exact wrapper Sourcify proxyResolution identifies MetaVaultWrapper implementation 0x8C4f97Ce5B2Eea713728729AEC08E48BCE588216. Safe and infrastructure vault are NOT admitted targets. Constructor initialization calldata separately binds Safe owner, infrastructure vault and USDC; initial implementation 0x82b7eea41638fc59eda9a3c12e11419079b8ecd1 is historical, not substituted for resolved applicable implementation.",
+    "constructorArguments": "0x00000000000000000000000082b7eea41638fc59eda9a3c12e11419079b8ecd1000000000000000000000000e59d75c87ed608e4f5f22c9f9affb7b6fd02cc7c0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000012483b435890000000000000000000000005e93e1193a5e297cba0856e9b3f22b6e05429b9a000000000000000000000000c62734aecb095d2cb74b3ccebfdf973ec23fbaa1000000000000000000000000833589fcd6edb6e08f4c7c32d4f71b54bda0291300000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000000947616d6920555344430000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000967616d697355534443000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "initialImplementationAddress": "0x82b7eea41638fc59eda9a3c12e11419079b8ecd1"
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x8C4f97Ce5B2Eea713728729AEC08E48BCE588216?fields=all",
+    "verifiedAt": "2026-10-22",
+    "chainId": 8453,
+    "address": "0x776F95321a0285F8BCde149E3264D16DC08da69a",
+    "implementationAddress": "0x8C4f97Ce5B2Eea713728729AEC08E48BCE588216",
+    "proxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0x8C4f97Ce5B2Eea713728729AEC08E48BCE588216",
+          "name": "MetaVaultWrapper"
+        }
+      ]
+    },
+    "reportedProxyCreationMatch": "exact_match",
+    "reportedProxyRuntimeMatch": "exact_match",
+    "reportedImplementationCreationMatch": "exact_match",
+    "reportedImplementationRuntimeMatch": "exact_match",
+    "sourceServiceProxyVerifiedAt": "2025-12-10T19:19:26Z",
+    "sourceServiceImplementationVerifiedAt": "2026-06-29T21:43:58Z",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.22+commit.4fc1097e",
+      "compilerSettings": {
+        "viaIR": false,
+        "metadata": {
+          "appendCBOR": true,
+          "bytecodeHash": "ipfs",
+          "useLiteralContent": false
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "shanghai",
+        "remappings": [
+          "ds-test/=lib/forge-std/lib/ds-test/src/",
+          "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+          "forge-std/=lib/forge-std/src/",
+          "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+          "openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
+          "openzeppelin-erc20-basic/=lib/openzeppelin-contracts/contracts/token/ERC20/",
+          "openzeppelin-erc20-extensions/=lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/",
+          "openzeppelin-erc20/=lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/",
+          "openzeppelin-math/=lib/openzeppelin-contracts/contracts/utils/math/",
+          "openzeppelin-proxy/=lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/",
+          "openzeppelin-utils/=lib/openzeppelin-contracts/contracts/utils/",
+          "composable-cow/=lib/composable-cow/src/",
+          "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+          "cowprotocol/=lib/composable-cow/lib/cowprotocol/src/",
+          "safe/=lib/composable-cow/lib/safe/contracts/",
+          "config/=lib/spectra-contracts-configs/script/",
+          "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+          "forge-std-1.9.7/=lib/spectra-contracts-configs/dependencies/forge-std-1.9.7/src/",
+          "murky/=lib/composable-cow/lib/murky/src/",
+          "openzeppelin/=lib/composable-cow/lib/@openzeppelin/contracts/",
+          "spectra-contracts-configs/=lib/spectra-contracts-configs/src/"
+        ]
+      },
+      "name": "MetaVaultWrapper",
+      "fullyQualifiedName": "src/MetaVaultWrapper.sol:MetaVaultWrapper"
+    },
+    "evidence": "Full applicable implementation ABI and source obtained from the exact deployed implementation through Sourcify v2, resolved from exact proxy. Match labels are recorded verbatim. No generic ERC4626 ABI substitution and no fresh RPC identity/execution assertion."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "AddressEmptyCode",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "AddressInsufficientBalance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "Blacklisted",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "DecreaseAmountExceedsPending",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "pendingAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "decreaseAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InsufficientAllowance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "allowance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InsufficientBalance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "balance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidApprover",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "approver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidReceiver",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSpender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxDeposit",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxMint",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxRedeem",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxWithdraw",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC7540ExceededMaxDeposit",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC7540ExceededMaxRedeem",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC7540InvalidOperator",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "EnforcedPause",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ExpectedPause",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "FailedInnerCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidInitialization",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidUnderlying",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "MathOverflowedMulDiv",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "NoClaimAvailable",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "NotInitializing",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OwnableInvalidOwner",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "OwnableUnauthorizedAccount",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ReentrancyGuardReentrantCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RequestIdNotClaimable",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "SafeERC20FailedOperation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ZeroAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ZeroAssets",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ZeroDecreaseAmount",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ZeroShares",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ClaimPendingDeposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "epochId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "assetsClaimed",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "wrapperSharesReceived",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ClaimPendingRedeem",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "epochId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "wrapperSharesClaimed",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "assetsReceived",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DecreaseDepositRequest",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "epochId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "previousRequestedAssets",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newRequestedAssets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DecreaseRedeemRequest",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "epochId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "previousRequestedShares",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newRequestedShares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DepositRequest",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Initialized",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MetaVaultWrapperInitialized",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "infraVault",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "wrapper",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Migrate",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "currentVault",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newVault",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OperatorSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "operator",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "approved",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OwnershipTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Paused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RedeemRequest",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Unpaused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UserBlacklisted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UserUnblacklisted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "asset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "blacklist",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claimableDepositRequest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "claimableRedeemRequest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "requestID",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "requestID",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "requestID",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decreaseDepositRequest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "decreaseRedeemRequest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "epochId",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getInfraVault",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_initialOwner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_infraVault",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_underlying",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "isBlacklisted",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isOperator",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "operator",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "status",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "lastUserDepositRequestEpoch",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "lastUserRedeemRequestEpoch",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "migrate",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "paused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pendingDepositRequest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pendingRedeemRequest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "requestDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "requestRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "controller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setOperator",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "operator",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "approved",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "share",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "supportsInterface",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalVaultShares",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferOwnership",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unblacklist",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateEpochID",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "proxyAbi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_logic",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "initialOwner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "AddressEmptyCode",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967InvalidAdmin",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "admin",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967InvalidImplementation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC1967NonPayable",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "FailedInnerCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ProxyDeniedAdminAccess",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Upgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "fallback",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionDecisions": [
+    {
+      "signature": "allowance(address,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "allowance(address,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "approve(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "ERC20 allowance authorization is outside reviewed vault entry/exit scope; no generic approval capability added."
+    },
+    {
+      "signature": "asset()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "asset() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "balanceOf(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "balanceOf(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "blacklist(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOwner changes user blacklist eligibility; not a user deposit/exit action."
+    },
+    {
+      "signature": "claimableDepositRequest(uint256,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "claimableDepositRequest(uint256,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "claimableRedeemRequest(uint256,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "claimableRedeemRequest(uint256,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "convertToAssets(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "convertToAssets(uint256) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "convertToAssets(uint256,uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "convertToAssets(uint256,uint256) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "convertToShares(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "convertToShares(uint256) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "convertToShares(uint256,uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "convertToShares(uint256,uint256) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "decimals()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "decimals() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "decreaseDepositRequest(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Original caller may reduce current unsettled deposit balance and receive USDC refund; amount must be nonzero and within pending balance."
+    },
+    {
+      "signature": "decreaseRedeemRequest(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Original caller reduces own current pending redemption; infrastructure request decreases and wrapper shares are reminted to caller."
+    },
+    {
+      "signature": "deposit(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Controller or its operator claims all settled wrapper shares to receiver; assets argument is ignored and blacklist/pause checks apply."
+    },
+    {
+      "signature": "deposit(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "deposit(uint256,address) is inherited ERC4626 synchronous behavior calling an overridden preview that always reverts NotImplemented(); use reviewed async request/claim methods instead."
+    },
+    {
+      "signature": "epochId()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "epochId() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "getInfraVault()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "getInfraVault() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "initialize(address,address,address,string,string)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Deployment-only initializer changes critical vault identity/configuration; not an ordinary user action."
+    },
+    {
+      "signature": "isBlacklisted(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "isBlacklisted(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "isOperator(address,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "isOperator(address,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "lastUserDepositRequestEpoch(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "lastUserDepositRequestEpoch(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "lastUserRedeemRequestEpoch(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "lastUserRedeemRequestEpoch(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "maxDeposit(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "maxDeposit(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "maxMint(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "maxMint(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "maxRedeem(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "maxRedeem(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "maxWithdraw(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "maxWithdraw(address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "migrate(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOwner empty migration hook in this implementation; not a functioning ordinary migration or depositor action."
+    },
+    {
+      "signature": "mint(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "mint(uint256,address) is inherited ERC4626 synchronous behavior calling an overridden preview that always reverts NotImplemented(); use reviewed async request/claim methods instead."
+    },
+    {
+      "signature": "mint(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Explicit implementation unconditionally reverts NotImplemented(); no usable mint-claim entrypoint."
+    },
+    {
+      "signature": "name()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "name() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "owner()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "owner() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "paused()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "paused() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "pendingDepositRequest(uint256,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "pendingDepositRequest(uint256,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "pendingRedeemRequest(uint256,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "pendingRedeemRequest(uint256,address) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "previewDeposit(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "previewDeposit(uint256) is deliberately disabled by this deployed asynchronous-vault implementation and unconditionally reverts; not an ordinary supported preview."
+    },
+    {
+      "signature": "previewMint(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "previewMint(uint256) is deliberately disabled by this deployed asynchronous-vault implementation and unconditionally reverts; not an ordinary supported preview."
+    },
+    {
+      "signature": "previewRedeem(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "previewRedeem(uint256) is deliberately disabled by this deployed asynchronous-vault implementation and unconditionally reverts; not an ordinary supported preview."
+    },
+    {
+      "signature": "previewWithdraw(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "previewWithdraw(uint256) is deliberately disabled by this deployed asynchronous-vault implementation and unconditionally reverts; not an ordinary supported preview."
+    },
+    {
+      "signature": "redeem(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Controller or operator receives all settled redemption USDC to receiver; shares argument is ignored and blacklist/pause checks apply."
+    },
+    {
+      "signature": "renounceOwnership()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Owner-only administration relinquishes control; not a depositor action."
+    },
+    {
+      "signature": "requestDeposit(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Queues caller/approved owner USDC for controller with nonzero assets, blacklist and pause checks; transfers to the fixed infrastructure vault."
+    },
+    {
+      "signature": "requestRedeem(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Queues nonzero wrapper shares of owner or approved operator for controller; burns shares and requests infrastructure redemption with blacklist/pause checks."
+    },
+    {
+      "signature": "setOperator(address,bool)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Persistent ERC7540 operator authorization is outside this direct-user vault workflow; existing valid operator checks are preserved, not granted."
+    },
+    {
+      "signature": "share()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "share() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "supportsInterface(bytes4)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "supportsInterface(bytes4) is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "symbol()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "symbol() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "totalAssets()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "totalAssets() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "totalSupply()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "totalSupply() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "totalVaultShares()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "totalVaultShares() is read-only metadata/accounting/introspection, retained in complete ABI inventory but not activated as a transaction capability or implied read API."
+    },
+    {
+      "signature": "transfer(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "ERC20 share transfer is outside reviewed vault deposit/redemption scope."
+    },
+    {
+      "signature": "transferFrom(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "ERC20 third-party share transfer is outside reviewed vault deposit/redemption scope."
+    },
+    {
+      "signature": "transferOwnership(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Owner-only administration transfers protocol ownership; not a depositor action."
+    },
+    {
+      "signature": "unblacklist(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOwner changes user blacklist eligibility; not a user deposit/exit action."
+    },
+    {
+      "signature": "updateEpochID()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Public epoch-accounting synchronization helper, invoked internally by admitted requests/claims; standalone maintenance is not a user asset operation."
+    },
+    {
+      "signature": "withdraw(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "withdraw(uint256,address,address) is inherited ERC4626 synchronous behavior calling an overridden preview that always reverts NotImplemented(); use reviewed async request/claim methods instead."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "name": "decreaseDepositRequest",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "spectra-gami-usdc-metavault:v1:8453:0x776f95321a0285f8bcde149e3264d16dc08da69a:decrease-deposit-request",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x776F95321a0285F8BCde149E3264D16DC08da69a",
+      "functionName": "decreaseDepositRequest",
+      "signature": "decreaseDepositRequest(uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/spectra-gami-usdc-metavault.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Spectra",
+      "operation": "decrease-deposit-request",
+      "label": "Decrease pending deposit",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Base USDC async ERC-7540 wrapper; settlement is accountant-dependent with no guaranteed deadline. No Safe, Zodiac, bridge, router, underlying curator executor or arbitrary calldata is admitted.",
+        "Caller/controller/owner/receiver blacklist checks and owner-or-approved-operator checks remain enforced; no eligibility bypass.",
+        "deposit(uint256,address,address) ignores assets and claims ALL settled shares; redeem(uint256,address,address) ignores shares and returns ALL settled assets. These are claims, not synchronous deposit/withdraw.",
+        "The official app identifies the market by its Safe address 0x5e93e1193a5e297cba0856e9b3f22b6e05429b9a; the admitted USER wrapper is the distinct vault field 0x776f95321a0285f8bcde149e3264d16dc08da69a."
+      ]
+    },
+    {
+      "abi": {
+        "name": "decreaseRedeemRequest",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "spectra-gami-usdc-metavault:v1:8453:0x776f95321a0285f8bcde149e3264d16dc08da69a:decrease-redeem-request",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x776F95321a0285F8BCde149E3264D16DC08da69a",
+      "functionName": "decreaseRedeemRequest",
+      "signature": "decreaseRedeemRequest(uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/spectra-gami-usdc-metavault.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Spectra",
+      "operation": "decrease-redeem-request",
+      "label": "Decrease pending redemption",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Base USDC async ERC-7540 wrapper; settlement is accountant-dependent with no guaranteed deadline. No Safe, Zodiac, bridge, router, underlying curator executor or arbitrary calldata is admitted.",
+        "Caller/controller/owner/receiver blacklist checks and owner-or-approved-operator checks remain enforced; no eligibility bypass.",
+        "deposit(uint256,address,address) ignores assets and claims ALL settled shares; redeem(uint256,address,address) ignores shares and returns ALL settled assets. These are claims, not synchronous deposit/withdraw.",
+        "The official app identifies the market by its Safe address 0x5e93e1193a5e297cba0856e9b3f22b6e05429b9a; the admitted USER wrapper is the distinct vault field 0x776f95321a0285f8bcde149e3264d16dc08da69a."
+      ]
+    },
+    {
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "controller",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "spectra-gami-usdc-metavault:v1:8453:0x776f95321a0285f8bcde149e3264d16dc08da69a:claim-deposit",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x776F95321a0285F8BCde149E3264D16DC08da69a",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/spectra-gami-usdc-metavault.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Spectra",
+      "operation": "claim-deposit",
+      "label": "Claim all settled deposit shares",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Base USDC async ERC-7540 wrapper; settlement is accountant-dependent with no guaranteed deadline. No Safe, Zodiac, bridge, router, underlying curator executor or arbitrary calldata is admitted.",
+        "Caller/controller/owner/receiver blacklist checks and owner-or-approved-operator checks remain enforced; no eligibility bypass.",
+        "deposit(uint256,address,address) ignores assets and claims ALL settled shares; redeem(uint256,address,address) ignores shares and returns ALL settled assets. These are claims, not synchronous deposit/withdraw.",
+        "The official app identifies the market by its Safe address 0x5e93e1193a5e297cba0856e9b3f22b6e05429b9a; the admitted USER wrapper is the distinct vault field 0x776f95321a0285f8bcde149e3264d16dc08da69a."
+      ]
+    },
+    {
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "controller",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "spectra-gami-usdc-metavault:v1:8453:0x776f95321a0285f8bcde149e3264d16dc08da69a:claim-redeem",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x776F95321a0285F8BCde149E3264D16DC08da69a",
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/spectra-gami-usdc-metavault.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Spectra",
+      "operation": "claim-redeem",
+      "label": "Claim all settled redemption assets",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Base USDC async ERC-7540 wrapper; settlement is accountant-dependent with no guaranteed deadline. No Safe, Zodiac, bridge, router, underlying curator executor or arbitrary calldata is admitted.",
+        "Caller/controller/owner/receiver blacklist checks and owner-or-approved-operator checks remain enforced; no eligibility bypass.",
+        "deposit(uint256,address,address) ignores assets and claims ALL settled shares; redeem(uint256,address,address) ignores shares and returns ALL settled assets. These are claims, not synchronous deposit/withdraw.",
+        "The official app identifies the market by its Safe address 0x5e93e1193a5e297cba0856e9b3f22b6e05429b9a; the admitted USER wrapper is the distinct vault field 0x776f95321a0285f8bcde149e3264d16dc08da69a."
+      ]
+    },
+    {
+      "abi": {
+        "name": "requestDeposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "controller",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "requestId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "spectra-gami-usdc-metavault:v1:8453:0x776f95321a0285f8bcde149e3264d16dc08da69a:request-deposit",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x776F95321a0285F8BCde149E3264D16DC08da69a",
+      "functionName": "requestDeposit",
+      "signature": "requestDeposit(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/spectra-gami-usdc-metavault.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Spectra",
+      "operation": "request-deposit",
+      "label": "Request USDC deposit",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Base USDC async ERC-7540 wrapper; settlement is accountant-dependent with no guaranteed deadline. No Safe, Zodiac, bridge, router, underlying curator executor or arbitrary calldata is admitted.",
+        "Caller/controller/owner/receiver blacklist checks and owner-or-approved-operator checks remain enforced; no eligibility bypass.",
+        "deposit(uint256,address,address) ignores assets and claims ALL settled shares; redeem(uint256,address,address) ignores shares and returns ALL settled assets. These are claims, not synchronous deposit/withdraw.",
+        "The official app identifies the market by its Safe address 0x5e93e1193a5e297cba0856e9b3f22b6e05429b9a; the admitted USER wrapper is the distinct vault field 0x776f95321a0285f8bcde149e3264d16dc08da69a."
+      ]
+    },
+    {
+      "abi": {
+        "name": "requestRedeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "controller",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "requestId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "spectra-gami-usdc-metavault:v1:8453:0x776f95321a0285f8bcde149e3264d16dc08da69a:request-redeem",
+      "type": "contract_call",
+      "chainId": 8453,
+      "contract": "0x776F95321a0285F8BCde149E3264D16DC08da69a",
+      "functionName": "requestRedeem",
+      "signature": "requestRedeem(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/spectra-gami-usdc-metavault.json",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Spectra",
+      "operation": "request-redeem",
+      "label": "Request share redemption",
+      "warnings": [
+        "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+        "Base USDC async ERC-7540 wrapper; settlement is accountant-dependent with no guaranteed deadline. No Safe, Zodiac, bridge, router, underlying curator executor or arbitrary calldata is admitted.",
+        "Caller/controller/owner/receiver blacklist checks and owner-or-approved-operator checks remain enforced; no eligibility bypass.",
+        "deposit(uint256,address,address) ignores assets and claims ALL settled shares; redeem(uint256,address,address) ignores shares and returns ALL settled assets. These are claims, not synchronous deposit/withdraw.",
+        "The official app identifies the market by its Safe address 0x5e93e1193a5e297cba0856e9b3f22b6e05429b9a; the admitted USER wrapper is the distinct vault field 0x776f95321a0285f8bcde149e3264d16dc08da69a."
+      ]
+    }
+  ],
+  "sourceCode": {
+    "src/MetaVaultWrapper.sol": "// SPDX-License-Identifier: BUSL-1.1\npragma solidity 0.8.22;\n\nimport {IMetaVaultWrapper} from \"./interfaces/IMetaVaultWrapper.sol\";\nimport {IERC7540, IERC7540Deposit, IERC7540Operator, IERC7540Redeem} from \"./interfaces/I7540.sol\";\nimport {IAmphor} from \"./interfaces/IAmphor.sol\";\nimport {IERC7575} from \"./interfaces/IERC7575.sol\";\nimport {AccessManagedUpgradeable} from \"@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol\";\nimport {ReentrancyGuardUpgradeable} from \"@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol\";\nimport {Initializable} from \"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol\";\nimport {OwnableUpgradeable} from \"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\";\nimport {ERC4626Upgradeable} from \"@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol\";\nimport {IERC4626} from \"@openzeppelin/contracts/interfaces/IERC4626.sol\";\nimport {IERC20Metadata, IERC20} from \"@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol\";\nimport {ERC20PausableUpgradeable} from \"@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol\";\nimport {ERC20Upgradeable} from \"@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol\";\nimport {SafeERC20} from \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\nimport {Math} from \"@openzeppelin/contracts/utils/math/Math.sol\";\nimport {IERC165} from \"@openzeppelin/contracts/utils/introspection/IERC165.sol\";\n\n/**\n * @title MetaVaultWrapper\n * @notice A wrapper contract for interacting with an underlying vault (e.g., Amphor).\n * This contract implements the IERC7540 and IMetaVaultWrapper interfaces.\n * It provides functionalities for deposit and redeem requests, as well as\n * conversion between shares and assets, while managing specific infrastrucure vault state.\n */\n\ncontract MetaVaultWrapper is\n    Initializable,\n    IMetaVaultWrapper,\n    OwnableUpgradeable,\n    ERC4626Upgradeable,\n    ERC20PausableUpgradeable,\n    ReentrancyGuardUpgradeable\n{\n    using SafeERC20 for IERC20;\n    using Math for uint256;\n\n    /* ---------------------------------------------------------- */\n    /*                            WRAPPER STATE                    */\n    /* ---------------------------------------------------------- */\n\n    /// @custom:storage-location erc7201:metavault.storage.Common\n    // Struct to hold wrapper state variables independent of the infra vault\n    struct WrapperState {\n        // Address of the underlying infrastructure vault\n        address infraVault;\n        // Address of the underlying asset token\n        address underlying;\n        // Mapping to track operator permissions for controllers\n        mapping(address controller => mapping(address operator => bool)) isOperator;\n        // Mapping to track blacklisted users\n        mapping(address user => bool) blacklisted;\n    }\n\n    // keccak256(abi.encode(uint256(keccak256(\"spectra.storage.Wrapper\")) - 1)) & ~bytes32(uint256(0xff))\n    bytes32 private constant SpectraWrapperStorageLocation =\n        0x9f2ce3581e00a5f2a3e8507d8fe8424f0f0b6e6b01ed8c453b67ed8f268a8a00;\n\n    // Function to get wrapper storage reference\n    function _getWrapperStorage() private pure returns (WrapperState storage $) {\n        assembly {\n            $.slot := SpectraWrapperStorageLocation\n        }\n    }\n\n    /// @dev Reverts if the user is blacklisted.\n    function _requireNotBlacklisted(address user) internal view {\n        if (_getWrapperStorage().blacklisted[user]) {\n            revert Blacklisted(user);\n        }\n    }\n\n    modifier notBlacklisted(address user) {\n        _requireNotBlacklisted(user);\n        _;\n    }\n\n    /* ---------------------------------------------------------- */\n    /*                            INFRA VAULT STATE               */\n    /* ---------------------------------------------------------- */\n\n    // Struct to hold epoch-specific data\n    struct EpochData {\n        // Mapping of deposit request balances per user\n        mapping(address => uint256) depositRequestBalance;\n        // Mapping of redeem request balances per user\n        mapping(address => uint256) redeemRequestBalance;\n    }\n\n    /// @custom:storage-location erc7201:metavault.storage.Amphor\n    // Struct to hold Amphor-specific state\n    struct AmphorState {\n        // Current epoch ID\n        uint256 epochId;\n        // Mapping of epoch data\n        mapping(uint256 => EpochData) epochs;\n        // Last deposit request epoch per user\n        mapping(address => uint256) lastDepositRequestId;\n        // Last redeem request epoch per user\n        mapping(address => uint256) lastRedeemRequestId;\n    }\n\n    // keccak256(abi.encode(uint256(keccak256(\"metavault.storage.Amphor\")) - 1)) & ~bytes32(uint256(0xff))\n    bytes32 private constant AmphorStorageLocation =\n        0x001ae2f54bddf076415b2cf5703ed08fd8787093486498094c64c02e67ad6f00;\n\n    // pointer to Amphor-specific state used in this wrapper. Upon migration to another infra vault, this\n    // storage pointer can be deprecated and a new one can be created.\n    function _getAmphorStorage() private pure returns (AmphorState storage $) {\n        assembly {\n            $.slot := AmphorStorageLocation\n        }\n    }\n\n    constructor() {\n        _disableInitializers();\n    }\n\n    /// @notice Initializer for the MetaVaultWrapper\n    /// @param _initialOwner    Owner of the MetaVaultWrapper\n    /// @param _infraVault      Address of the current infrastructure vault (e.g. Amphor)\n    /// @param _underlying      Underlying ERC20\n    function initialize(\n        address _initialOwner,\n        address _infraVault,\n        address _underlying,\n        string memory name,\n        string memory symbol\n    ) external initializer {\n        __Ownable_init(_initialOwner);\n        __ReentrancyGuard_init();\n        __ERC4626_init(IERC20(_underlying));\n        __ERC20_init(name, symbol);\n        __ERC20Pausable_init();\n\n        WrapperState storage W = _getWrapperStorage();\n        // Validate addresses are not zero\n        if (_infraVault == address(0) || _underlying == address(0)) {\n            revert IERC7540.ZeroAddress();\n        }\n        // Validate underlying matches infra vault asset\n        if (_underlying != IERC7540(_infraVault).asset()) {\n            revert InvalidUnderlying();\n        }\n\n        // Set infrastructure vault address\n        W.infraVault = _infraVault;\n        // Set underlying asset address\n        W.underlying = _underlying;\n\n        // approve infra-vault to pull underlying from wrapper\n        IERC20(_underlying).approve(_infraVault, 0);\n        IERC20(_underlying).approve(_infraVault, type(uint256).max);\n\n        // --- set amphor-specific state ---\n        AmphorState storage A = _getAmphorStorage();\n        // Initialize epoch ID to 1 (epoch 0 doesn't exist)\n        A.epochId = 1;\n\n        emit MetaVaultWrapperInitialized(_initialOwner, _infraVault, address(this));\n    }\n\n    // -------------------------------------- Getter Functions --------------------------------------\n\n    // Function to get infrastructure vault address\n    function getInfraVault() public view returns (address) {\n        return _getWrapperStorage().infraVault;\n    }\n\n    // Function to check if operator is approved for controller\n    function isOperator(\n        address controller,\n        address operator\n    ) external view override returns (bool status) {\n        WrapperState storage W = _getWrapperStorage();\n        return W.isOperator[controller][operator];\n    }\n\n    // Function to get total vault shares held by wrapper\n    function totalVaultShares() public view override returns (uint256) {\n        WrapperState storage W = _getWrapperStorage();\n        return IERC20(W.infraVault).balanceOf(address(this));\n    }\n\n    // Function to get current epoch ID from infra vault\n    function epochId() external view returns (uint256) {\n        return IAmphor(getInfraVault()).epochId();\n    }\n\n    function lastUserDepositRequestEpoch(address user) external view returns (uint256) {\n        AmphorState storage A = _getAmphorStorage();\n        return A.lastDepositRequestId[user];\n    }\n\n    function lastUserRedeemRequestEpoch(address user) external view returns (uint256) {\n        AmphorState storage A = _getAmphorStorage();\n        return A.lastRedeemRequestId[user];\n    }\n\n    // Function to convert assets to shares for specific epoch ID\n    function convertToShares(\n        uint256 assets,\n        uint256 requestID\n    ) external view returns (uint256 shares) {\n        // Convert assets to infra vault shares then wrap\n        return _previewWrap(_amphorConvertToShares(assets, requestID));\n    }\n\n    // Function to convert assets to shares using current epoch\n    function convertToShares(\n        uint256 assets\n    ) public view override(ERC4626Upgradeable, IERC4626) returns (uint256 shares) {\n        // Get current epoch ID from infra vault\n        uint256 epochId = IAmphor(getInfraVault()).epochId();\n        // Convert using previous epoch (epochId - 1)\n        return _previewWrap(_amphorConvertToShares(assets, epochId - 1));\n    }\n\n    function convertToAssets(\n        uint256 shares\n    ) public view override(ERC4626Upgradeable, IERC4626) returns (uint256 assets) {\n        // Convert wrapper shares to infra vault shares\n        uint256 infraVaultShares = _previewUnwrap(shares);\n        // Get current epoch ID from infra vault\n        uint256 epochId = IAmphor(getInfraVault()).epochId();\n        // Convert infra vault shares to assets using previous epoch\n        return _amphorConvertToAssets(infraVaultShares, epochId - 1);\n    }\n\n    // Function to convert shares to assets for specific epoch ID\n    function convertToAssets(\n        uint256 shares,\n        uint256 requestID\n    ) external view returns (uint256 assets) {\n        // Convert wrapper shares to infra vault shares\n        uint256 infraVaultShares = _previewUnwrap(shares);\n        // Convert infra vault shares to assets for specific epoch\n        return _amphorConvertToAssets(infraVaultShares, requestID);\n    }\n\n    // Function to get maximum deposit amount for receiver\n    function maxDeposit(\n        address receiver\n    ) public view override(ERC4626Upgradeable, IERC4626) returns (uint256 maxAssets) {\n        // Return 0 if contract is paused\n        if (paused()) {\n            return 0;\n        }\n\n        uint256 currentAmphorEpoch = IAmphor(_getWrapperStorage().infraVault).epochId();\n\n        // Get user's last deposit request epoch\n        uint256 userEpoch = _getAmphorStorage().lastDepositRequestId[receiver];\n        if (userEpoch == currentAmphorEpoch) {\n            return 0;\n        }\n        // Return claimable deposit balance for that epoch\n        return _getAmphorStorage().epochs[userEpoch].depositRequestBalance[receiver];\n    }\n\n    // Function to get maximum redeem amount for owner\n    function maxRedeem(\n        address owner\n    ) public view override(ERC4626Upgradeable, IERC4626) returns (uint256 maxShares) {\n        // Return 0 if contract is paused\n        if (paused()) {\n            return 0;\n        }\n\n        uint256 currentAmphorEpoch = IAmphor(_getWrapperStorage().infraVault).epochId();\n\n        // Get user's last redeem request epoch\n        uint256 userEpoch = _getAmphorStorage().lastRedeemRequestId[owner];\n        if (userEpoch == currentAmphorEpoch) {\n            return 0;\n        }\n        // Return claimable redeem balance for that epoch\n        return _getAmphorStorage().epochs[userEpoch].redeemRequestBalance[owner];\n    }\n\n    // Function to get pending deposit request assets amount\n    // @param requestId The ID of the deposit request (not used in current implementation)\n    // @param controller The address of the controller whose pending deposit is being queried\n    function pendingDepositRequest(\n        uint256 requestId,\n        address controller\n    ) external view override returns (uint256 assets) {\n        // Get current epoch ID from infra vault\n        uint256 currentEpochId = IAmphor(getInfraVault()).epochId();\n        // Return requested deposit balance for current epoch\n        return _getAmphorStorage().epochs[currentEpochId].depositRequestBalance[controller];\n    }\n\n    // Function to get claimable deposit request amount\n    // @param requestId The ID of the deposit request (not used in current implementation)\n    // @param controller The address of the controller whose claimable deposit is being queried\n    function claimableDepositRequest(\n        uint256 requestId,\n        address controller\n    ) external view override returns (uint256 assets) {\n        // Use internal preview function for claimable deposit\n        return _amphorPreviewClaimDeposit(controller);\n    }\n\n    // Function to get pending redeem request amount\n    function pendingRedeemRequest(\n        uint256 requestId,\n        address controller\n    ) external view override returns (uint256 shares) {\n        // Get current epoch ID from infra vault\n        uint256 currentEpochId = IAmphor(getInfraVault()).epochId();\n        // Return redeem balance for current epoch\n        return _getAmphorStorage().epochs[currentEpochId].redeemRequestBalance[controller];\n    }\n\n    // Function to get claimable redeem request amount\n    function claimableRedeemRequest(\n        uint256 requestID,\n        address controller\n    ) external view override returns (uint256 shares) {\n        // Use internal preview function for claimable redeem\n        return _amphorPreviewClaimRedeem(controller);\n    }\n\n    // Function to preview deposit (not implemented as specified by IERC7540 for async vaults)\n    function previewDeposit(\n        uint256 assets\n    ) public view override(ERC4626Upgradeable, IERC4626) returns (uint256 shares) {\n        revert(\"NotImplemented()\");\n    }\n\n    // Function to preview redeem (not implemented as specified by IERC7540 for async vaults)\n    function previewRedeem(\n        uint256 shares\n    ) public view override(ERC4626Upgradeable, IERC4626) returns (uint256 assets) {\n        revert(\"NotImplemented()\");\n    }\n\n    // Function to preview withdraw (not implemented as specified by IERC7540 for async vaults)\n    function previewWithdraw(\n        uint256 assets\n    ) public view override(ERC4626Upgradeable, IERC4626) returns (uint256 shares) {\n        revert(\"NotImplemented()\");\n    }\n\n    // Function to preview mint (not implemented as specified by IERC7540 for async vaults)\n    function previewMint(\n        uint256 shares\n    ) public view override(ERC4626Upgradeable, IERC4626) returns (uint256 assets) {\n        revert(\"NotImplemented()\");\n    }\n\n    /**\n     * @notice The `totalAssets` function returns an estimate of the total assets of the wrapper using the last settled epoch rate\n     */\n    function totalAssets() public view override(ERC4626Upgradeable, IERC4626) returns (uint256) {\n        return convertToAssets(totalSupply());\n    }\n\n    /* -------------------------------------- External Functions -------------------------------------- */\n\n    // Function to set operator approval\n    function setOperator(address operator, bool approved) external override notBlacklisted(msg.sender) returns (bool) {\n        WrapperState storage W = _getWrapperStorage();\n        // Set operator approval for msg.sender\n        W.isOperator[msg.sender][operator] = approved;\n        emit OperatorSet(msg.sender, operator, approved);\n        return true;\n    }\n\n    /* -------------------------------------- Blacklist Functions -------------------------------------- */\n\n    /// @inheritdoc IMetaVaultWrapper\n    function blacklist(address user) external onlyOwner {\n        WrapperState storage W = _getWrapperStorage();\n        W.blacklisted[user] = true;\n        emit UserBlacklisted(user);\n    }\n\n    /// @inheritdoc IMetaVaultWrapper\n    function unblacklist(address user) external onlyOwner {\n        WrapperState storage W = _getWrapperStorage();\n        W.blacklisted[user] = false;\n        emit UserUnblacklisted(user);\n    }\n\n    /// @inheritdoc IMetaVaultWrapper\n    function isBlacklisted(address user) external view returns (bool) {\n        return _getWrapperStorage().blacklisted[user];\n    }\n\n    /// @notice Request deposit on the underlying infra-vault, tracked controller in wrapper \"amphor\" state.\n    function requestDeposit(\n        uint256 assets,\n        address controller,\n        address owner\n    ) external nonReentrant whenNotPaused returns (uint256 requestId) {\n        _requireNotBlacklisted(msg.sender);\n        _requireNotBlacklisted(controller);\n        _requireNotBlacklisted(owner);\n\n        WrapperState storage W = _getWrapperStorage();\n        AmphorState storage A = _getAmphorStorage();\n\n        // Validate assets amount is not zero\n        if (assets == 0) {\n            revert IERC7540.ZeroAssets();\n        }\n        // Validate addresses are not zero\n        if (owner == address(0) || controller == address(0)) {\n            revert IERC7540.ZeroAddress();\n        }\n        // Validate caller is owner or approved operator\n        if (!(owner == msg.sender || W.isOperator[owner][msg.sender])) {\n            revert IERC7540.ERC7540InvalidOperator();\n        }\n\n        // Update internal epoch tracking before making request\n        _updateEpochID();\n        // Claim any pending deposits if available\n        if (_amphorPreviewClaimDeposit(controller) > 0) {\n            _claimPendingDeposit(controller, controller);\n        }\n\n        // Transfer assets from owner to wrapper\n        IERC20(W.underlying).safeTransferFrom(owner, address(this), assets);\n\n        // Request deposit on infra vault\n        IAmphor(W.infraVault).requestDeposit(assets, address(this), address(this), \"\");\n\n        // Update wrapper state for this request\n        A.lastDepositRequestId[controller] = A.epochId;\n        // Add assets to epoch deposit balance of the controller\n        A.epochs[A.epochId].depositRequestBalance[controller] += assets;\n\n        // Emit deposit request event\n        emit DepositRequest(controller, owner, 0, msg.sender, assets);\n\n        // Return request ID (always 0 for this implementation as it is not used)\n        return 0;\n    }\n\n    // Function to decrease deposit request amount\n    function decreaseDepositRequest(uint256 assets) external nonReentrant whenNotPaused notBlacklisted(msg.sender) {\n        // Update internal epoch tracking\n        _updateEpochID();\n\n        AmphorState storage A = _getAmphorStorage();\n        WrapperState storage W = _getWrapperStorage();\n        // Get current epoch ID\n        uint256 eid = A.epochId;\n\n        // Get pending deposit balance for caller\n        uint256 pending = A.epochs[eid].depositRequestBalance[msg.sender];\n\n        // Validate decrease amount is not zero\n        if (assets == 0) {\n            revert ZeroDecreaseAmount();\n        }\n\n        // Validate decrease amount doesn't exceed pending\n        if (assets > pending) {\n            revert DecreaseAmountExceedsPending(pending, assets);\n        }\n\n        // Update pending balance\n        A.epochs[eid].depositRequestBalance[msg.sender] = pending - assets;\n\n        // Decrease request on infra vault\n        IAmphor(W.infraVault).decreaseDepositRequest(assets);\n\n        // Refund assets to caller\n        IERC20(W.underlying).safeTransfer(msg.sender, assets);\n\n        // Emit decrease event\n        emit DecreaseDepositRequest(\n            eid,\n            msg.sender,\n            pending,\n            A.epochs[eid].depositRequestBalance[msg.sender]\n        );\n    }\n    /**\n     * @notice The `assets` amount parameter is not used in this function because there is no reason for the user not to claim all claimable shares.\n     */\n    function deposit(\n        uint256 assets,\n        address receiver,\n        address controller\n    ) external override nonReentrant whenNotPaused returns (uint256 shares) {\n        _requireNotBlacklisted(msg.sender);\n        _requireNotBlacklisted(controller);\n        _requireNotBlacklisted(receiver);\n\n        AmphorState storage A = _getAmphorStorage();\n        WrapperState storage W = _getWrapperStorage();\n\n        // Validate addresses are not zero\n        if (receiver == address(0) || controller == address(0)) {\n            revert IERC7540.ZeroAddress();\n        }\n\n        // Validate caller is controller or approved operator\n        if (!(controller == msg.sender || W.isOperator[controller][msg.sender])) {\n            revert IERC7540.ERC7540InvalidOperator();\n        }\n\n        // Update internal epoch tracking\n        _updateEpochID();\n\n        // Claim pending deposit and get results\n        uint256 assetsClaimable;\n        (shares, assetsClaimable) = _claimPendingDeposit(controller, receiver);\n\n        // Emit deposit event\n        emit Deposit(controller, receiver, assetsClaimable, shares);\n    }\n\n    // Function to request redeem of shares\n    function requestRedeem(\n        uint256 shares,\n        address controller,\n        address owner\n    ) external nonReentrant whenNotPaused returns (uint256 requestId) {\n        _requireNotBlacklisted(msg.sender);\n        _requireNotBlacklisted(controller);\n        _requireNotBlacklisted(owner);\n\n        WrapperState storage W = _getWrapperStorage();\n        AmphorState storage A = _getAmphorStorage();\n\n        // Validate shares amount is not zero\n        if (shares == 0) {\n            revert IERC7540.ZeroShares();\n        }\n        // Validate addresses are not zero\n        if (owner == address(0) || controller == address(0)) {\n            revert IERC7540.ZeroAddress();\n        }\n        // Validate caller is owner or approved operator\n        if (!(owner == msg.sender || W.isOperator[owner][msg.sender])) {\n            revert IERC7540.ERC7540InvalidOperator();\n        }\n\n        // Update internal epoch tracking\n        _updateEpochID();\n        // Claim any pending redeems if available\n        if (_amphorPreviewClaimRedeem(controller) > 0) {\n            _claimPendingRedeem(controller, controller);\n        }\n\n        // Get current epoch ID\n        uint256 currentEpochId = A.epochId;\n\n        // Get pending redeem balance for caller\n        uint256 pending = A.epochs[currentEpochId].redeemRequestBalance[msg.sender];\n\n        // request the redeem from the infra vault\n        address infraVault = getInfraVault();\n        // Convert wrapper shares to infra vault shares\n        uint256 infraVaultShares = _previewUnwrap(pending + shares) - _previewUnwrap(pending);\n\n        // Burn shares from owner\n        _burn(owner, shares);\n\n        // Request redeem on infra vault\n        IAmphor(infraVault).requestRedeem(infraVaultShares, address(this), address(this), \"\");\n\n        // Update last redeem request epoch if different\n        if (A.lastRedeemRequestId[controller] != currentEpochId) {\n            A.lastRedeemRequestId[controller] = currentEpochId;\n        }\n\n        // Get epoch data reference\n        EpochData storage E = A.epochs[currentEpochId];\n        // Add shares to user redeem balance\n        E.redeemRequestBalance[controller] += shares;\n\n        // Emit redeem request event\n        emit RedeemRequest(controller, owner, requestId, msg.sender, shares);\n    }\n\n    // Function to decrease redeem request amount\n    function decreaseRedeemRequest(uint256 shares) external nonReentrant whenNotPaused notBlacklisted(msg.sender) {\n        // Update internal epoch tracking\n        _updateEpochID();\n\n        AmphorState storage A = _getAmphorStorage();\n        WrapperState storage W = _getWrapperStorage();\n        // Get current epoch ID\n        uint256 eid = A.epochId;\n\n        // Get pending redeem balance for caller\n        uint256 pending = A.epochs[eid].redeemRequestBalance[msg.sender];\n\n        // Validate decrease amount is not zero\n        if (shares == 0) {\n            revert ZeroDecreaseAmount();\n        }\n\n        // Validate decrease amount doesn't exceed pending\n        if (shares > pending) {\n            revert DecreaseAmountExceedsPending(pending, shares);\n        }\n\n        // Update pending balance\n        A.epochs[eid].redeemRequestBalance[msg.sender] = pending - shares;\n\n        uint256 amphorSharesDelta = _previewUnwrap(pending) - _previewUnwrap(pending - shares);\n\n        // Decrease request on infra vault\n        IAmphor(W.infraVault).decreaseRedeemRequest(amphorSharesDelta);\n\n        // Mint shares back to caller as refund\n        _mint(msg.sender, shares);\n\n        emit DecreaseRedeemRequest(\n            eid,\n            msg.sender,\n            pending,\n            A.epochs[eid].redeemRequestBalance[msg.sender]\n        );\n    }\n\n    /// @notice The `shares` amount parameter is not used in this function because there is no reason for the user not to claim all claimable assets.\n    function redeem(\n        uint256 shares,\n        address receiver,\n        address controller\n    ) public override(ERC4626Upgradeable, IERC4626) nonReentrant whenNotPaused returns (uint256) {\n        _requireNotBlacklisted(msg.sender);\n        _requireNotBlacklisted(controller);\n        _requireNotBlacklisted(receiver);\n\n        // Validate addresses are not zero\n        if (receiver == address(0) || controller == address(0)) {\n            revert IERC7540.ZeroAddress();\n        }\n        // Validate caller is controller or approved operator\n        if (\n            !(controller == msg.sender || _getWrapperStorage().isOperator[controller][msg.sender])\n        ) {\n            revert IERC7540.ERC7540InvalidOperator();\n        }\n\n        // Update internal epoch tracking\n        _updateEpochID();\n\n        // Claim pending redeem and get results\n        (uint256 claimableShares, uint256 assets) = _claimPendingRedeem(controller, receiver);\n\n        emit IERC4626.Withdraw(address(this), receiver, controller, assets, claimableShares);\n\n        return assets;\n    }\n\n    // Function to mint shares (not implemented)\n    function mint(\n        uint256,\n        /*shares*/\n        address,\n        /*receiver*/\n        address /*controller*/\n    ) external override nonReentrant whenNotPaused notBlacklisted(msg.sender) returns (uint256 assets) {\n        revert(\"NotImplemented()\");\n    }\n\n    // Function to migrate to new vault (not implemented before actual migration and next vault logic)\n    function migrate(address /*newVault*/) external override nonReentrant onlyOwner {}\n\n    /// @notice External function to synchronise the epoch with amphor's epoch.\n    function updateEpochID() external {\n        _updateEpochID();\n    }\n\n    /* -------------------------------------------------------------------------- */\n    /*                                Internal Functions                          */\n    /* -------------------------------------------------------------------------- */\n\n    // Function to check if request ID is current epoch\n    function _isCurrentEpoch(uint256 requestId) internal view returns (bool) {\n        // Compare with infra vault's current epoch\n        return requestId == IAmphor(getInfraVault()).epochId();\n    }\n\n    // Function to update internal epoch ID to match infra vault\n    function _updateEpochID() internal {\n        WrapperState storage W = _getWrapperStorage();\n        AmphorState storage A = _getAmphorStorage();\n        // Get current epoch from infra vault\n        uint256 currentAmphorEpoch = IAmphor(W.infraVault).epochId();\n        // Update if different from stored epoch\n        if (A.epochId != currentAmphorEpoch) {\n            A.epochId = currentAmphorEpoch;\n        }\n    }\n\n    /* ---------------------------------------------------------- */\n    /*                          AMPHOR STATE                      */\n    /* ---------------------------------------------------------- */\n\n    /// @notice Preview how many assets the controller can claim now (from its last request epoch).\n    /// @return assetsClaimable Pending assets recorded for that epoch\n    function _amphorPreviewClaimDeposit(\n        address controller\n    ) internal view returns (uint256 assetsClaimable) {\n        AmphorState storage A = _getAmphorStorage();\n        // Get current epoch ID from infra vault\n        uint256 currentEpochId = IAmphor(getInfraVault()).epochId();\n\n        // Get user's last deposit request epoch\n        uint256 claimEpoch = A.lastDepositRequestId[controller];\n        // Return 0 if no request or current epoch request\n        if (claimEpoch == 0 || claimEpoch == currentEpochId) {\n            return 0;\n        }\n\n        // Get claimable assets from epoch data\n        assetsClaimable = A.epochs[claimEpoch].depositRequestBalance[controller];\n        return assetsClaimable;\n    }\n\n    /// @notice Preview how many shares the controller can claim now (from its last redeem request epoch).\n    /// @return sharesClaimable Pending shares recorded for that epoch\n    function _amphorPreviewClaimRedeem(\n        address controller\n    ) internal view returns (uint256 sharesClaimable) {\n        AmphorState storage A = _getAmphorStorage();\n        // Get current epoch ID from infra vault\n        uint256 currentEpochId = IAmphor(getInfraVault()).epochId();\n\n        // Get user's last redeem request epoch\n        uint256 claimEpoch = A.lastRedeemRequestId[controller];\n        if (claimEpoch == 0 || claimEpoch == currentEpochId) {\n            // Nothing claimable if never requested or request is for current epoch\n            return 0;\n        }\n\n        // Get claimable shares from epoch data\n        sharesClaimable = A.epochs[claimEpoch].redeemRequestBalance[controller];\n        return sharesClaimable;\n    }\n\n    /// @notice applies the rate between wrapper shares and the infra IBT shares.\n    function _previewWrap(uint256 vaultShares) internal view virtual returns (uint256) {\n        // An initial rate of 1:1, before migration this rate should be revised.\n        return vaultShares;\n    }\n\n    // Function to preview unwrapping wrapper shares to infra vault shares\n    function _previewUnwrap(uint256 wrapperShares) internal view returns (uint256) {\n        return wrapperShares;\n    }\n\n    /// @notice Convert `assets` to Amphor shares.\n    /// @dev Floor rounding: shares = assets * (totSupply+1) / (totAssets+1)\n    function _amphorConvertToShares(\n        uint256 assets,\n        uint256 epoch\n    ) internal view returns (uint256 shares) {\n        // Use Amphor's conversion function for specific epoch\n        return IAmphor(getInfraVault()).convertToShares(assets, epoch);\n    }\n\n    // Function to convert Amphor shares to assets for specific epoch\n    function _amphorConvertToAssets(\n        uint256 shares,\n        uint256 epoch\n    ) private view returns (uint256 assets) {\n        // Use Amphor's conversion function for specific epoch\n        return IAmphor(getInfraVault()).convertToAssets(shares, epoch);\n    }\n\n    /**\n     * @dev _claimPenidngDeposit is used to claim the pending deposit.\n     * @param controller The address of the user that requested the deposit.\n     * @param receiver The address of the user that will receive the shares.\n     * @return shares The amount of shares requested by the user.\n     * @return assetsClaimable The amount of assets claimable by the user.\n     */\n    function _claimPendingDeposit(\n        address controller,\n        address receiver\n    ) internal returns (uint256 shares, uint256 assetsClaimable) {\n        AmphorState storage A = _getAmphorStorage();\n\n        // Claim any pending deposits from Amphor\n        _claimPendingAmphorDeposit();\n\n        // Revert if trying to claim current epoch request\n        if (A.lastDepositRequestId[controller] == A.epochId) {\n            revert IAmphor.NoClaimAvailable(controller);\n        }\n\n        // Get claimable assets amount\n        assetsClaimable = _amphorPreviewClaimDeposit(controller);\n        // Get user's last epoch\n        uint256 lastUserEpoch = A.lastDepositRequestId[controller];\n        // Convert assets to infra vault shares\n        uint256 infraShares = _amphorConvertToShares(assetsClaimable, lastUserEpoch);\n\n        // Clear claimable balance\n        A.epochs[A.lastDepositRequestId[controller]].depositRequestBalance[controller] = 0;\n        // Update user's last deposit epoch\n        A.lastDepositRequestId[controller] = A.epochId;\n\n        // Convert infra shares to wrapper shares\n        shares = _previewWrap(infraShares);\n        // Mint wrapper shares to receiver\n        _mint(receiver, shares);\n    }\n\n    // Function to claim pending deposits from Amphor once per epoch\n    function _claimPendingAmphorDeposit() internal {\n        WrapperState storage W = _getWrapperStorage();\n        // Preview claimable deposit amount\n        uint256 claimableDeposit = IAmphor(W.infraVault).claimableDepositBalanceInAsset(\n            address(this)\n        );\n        // Process claim if amount is greater than 0\n        if (claimableDeposit > 0) {\n            // Claim deposit from Amphor\n            uint256 shares = IAmphor(W.infraVault).claimDeposit(address(this));\n\n            // Emit claim event to track the claim wrapper shares to assets rate\n            emit ClaimPendingDeposit(\n                _getAmphorStorage().epochId,\n                claimableDeposit,\n                _previewWrap(shares)\n            );\n        }\n    }\n\n    /**\n     * @notice Claim pending redeem requests from the infra vault\n     */\n    function _claimPendingRedeem(\n        address controller,\n        address receiver\n    ) internal returns (uint256 claimableShares, uint256 assets) {\n        AmphorState storage A = _getAmphorStorage();\n        // Claim any pending redeems from Amphor\n        _claimPendingAmphorRedeem();\n\n        // Get user's redeem epoch\n        uint256 currentEpochId = A.lastRedeemRequestId[controller];\n\n        // Revert if trying to claim current epoch request\n        if (currentEpochId == A.epochId) {\n            revert IAmphor.NoClaimAvailable(controller);\n        }\n\n        // Get claimable shares amount\n        claimableShares = _amphorPreviewClaimRedeem(controller);\n        EpochData storage E = A.epochs[currentEpochId];\n        E.redeemRequestBalance[controller] -= claimableShares;\n\n        // Convert shares to assets\n        assets = _amphorConvertToAssets(_previewUnwrap(claimableShares), currentEpochId);\n\n        // Update user's last redeem epoch\n        A.lastRedeemRequestId[controller] = A.epochId;\n\n        // Transfer assets to receiver\n        IERC20(asset()).safeTransfer(receiver, assets);\n    }\n\n    // Function to claim pending redeem requests from Amphor once per epoch\n    function _claimPendingAmphorRedeem() internal {\n        WrapperState storage W = _getWrapperStorage();\n        // Get claimable redeem amount\n        uint256 claimableRedeem = IAmphor(W.infraVault).claimableRedeemRequest(address(this));\n        // Process claim if amount is greater than 0\n        if (claimableRedeem > 0) {\n            // Claim redeem from Amphor\n            uint256 assets = IAmphor(W.infraVault).claimRedeem(address(this));\n\n            // Emit claim event to track the claim wrapper shares to assets rate\n            emit ClaimPendingRedeem(\n                _getAmphorStorage().epochId,\n                _previewWrap(claimableRedeem),\n                assets\n            );\n        }\n    }\n\n    /* ---------------------------------------------------------- */\n    /*                          ERC20 OVERRIDES                   */\n    /* ---------------------------------------------------------- */\n\n    function _update(\n        address from,\n        address to,\n        uint256 value\n    ) internal virtual override(ERC20Upgradeable, ERC20PausableUpgradeable) {\n        WrapperState storage W = _getWrapperStorage();\n        // Block transfers from blacklisted users (from == address(0) is mint)\n        if (from != address(0) && W.blacklisted[from]) {\n            revert Blacklisted(from);\n        }\n        // Block transfers to blacklisted users (to == address(0) is burn)\n        if (to != address(0) && W.blacklisted[to]) {\n            revert Blacklisted(to);\n        }\n        ERC20PausableUpgradeable._update(from, to, value);\n    }\n\n    function decimals()\n        public\n        view\n        virtual\n        override(IERC20Metadata, ERC20Upgradeable, ERC4626Upgradeable)\n        returns (uint8)\n    {\n        return IERC20Metadata(asset()).decimals();\n    }\n\n    /* ---------------------------------------------------------- */\n    /*                            EIP7575                         */\n    /* ---------------------------------------------------------- */\n\n    function share() external view returns (address) {\n        return (address(this));\n    }\n\n    /* ---------------------------------------------------------- */\n    /*                            EIP165                          */\n    /* ---------------------------------------------------------- */\n\n    function supportsInterface(bytes4 interfaceId) public view returns (bool) {\n        return\n            interfaceId == type(IERC165).interfaceId ||\n            interfaceId == type(IERC7540).interfaceId ||\n            interfaceId == type(IERC7575).interfaceId ||\n            interfaceId == type(IERC7540Deposit).interfaceId ||\n            interfaceId == type(IERC7540Redeem).interfaceId ||\n            interfaceId == type(IERC7540Operator).interfaceId;\n    }\n}\n",
+    "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/extensions/ERC4626.sol)\n\npragma solidity ^0.8.20;\n\nimport {IERC20} from \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\nimport {IERC20Metadata} from \"@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol\";\nimport {ERC20Upgradeable} from \"../ERC20Upgradeable.sol\";\nimport {SafeERC20} from \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\nimport {IERC4626} from \"@openzeppelin/contracts/interfaces/IERC4626.sol\";\nimport {Math} from \"@openzeppelin/contracts/utils/math/Math.sol\";\nimport {Initializable} from \"../../../proxy/utils/Initializable.sol\";\n\n/**\n * @dev Implementation of the ERC4626 \"Tokenized Vault Standard\" as defined in\n * https://eips.ethereum.org/EIPS/eip-4626[EIP-4626].\n *\n * This extension allows the minting and burning of \"shares\" (represented using the ERC20 inheritance) in exchange for\n * underlying \"assets\" through standardized {deposit}, {mint}, {redeem} and {burn} workflows. This contract extends\n * the ERC20 standard. Any additional extensions included along it would affect the \"shares\" token represented by this\n * contract and not the \"assets\" token which is an independent contract.\n *\n * [CAUTION]\n * ====\n * In empty (or nearly empty) ERC-4626 vaults, deposits are at high risk of being stolen through frontrunning\n * with a \"donation\" to the vault that inflates the price of a share. This is variously known as a donation or inflation\n * attack and is essentially a problem of slippage. Vault deployers can protect against this attack by making an initial\n * deposit of a non-trivial amount of the asset, such that price manipulation becomes infeasible. Withdrawals may\n * similarly be affected by slippage. Users can protect against this attack as well as unexpected slippage in general by\n * verifying the amount received is as expected, using a wrapper that performs these checks such as\n * https://github.com/fei-protocol/ERC4626#erc4626router-and-base[ERC4626Router].\n *\n * Since v4.9, this implementation uses virtual assets and shares to mitigate that risk. The `_decimalsOffset()`\n * corresponds to an offset in the decimal representation between the underlying asset's decimals and the vault\n * decimals. This offset also determines the rate of virtual shares to virtual assets in the vault, which itself\n * determines the initial exchange rate. While not fully preventing the attack, analysis shows that the default offset\n * (0) makes it non-profitable, as a result of the value being captured by the virtual shares (out of the attacker's\n * donation) matching the attacker's expected gains. With a larger offset, the attack becomes orders of magnitude more\n * expensive than it is profitable. More details about the underlying math can be found\n * xref:erc4626.adoc#inflation-attack[here].\n *\n * The drawback of this approach is that the virtual shares do capture (a very small) part of the value being accrued\n * to the vault. Also, if the vault experiences losses, the users try to exit the vault, the virtual shares and assets\n * will cause the first user to exit to experience reduced losses in detriment to the last users that will experience\n * bigger losses. Developers willing to revert back to the pre-v4.9 behavior just need to override the\n * `_convertToShares` and `_convertToAssets` functions.\n *\n * To learn more, check out our xref:ROOT:erc4626.adoc[ERC-4626 guide].\n * ====\n */\nabstract contract ERC4626Upgradeable is Initializable, ERC20Upgradeable, IERC4626 {\n    using Math for uint256;\n\n    /// @custom:storage-location erc7201:openzeppelin.storage.ERC4626\n    struct ERC4626Storage {\n        IERC20 _asset;\n        uint8 _underlyingDecimals;\n    }\n\n    // keccak256(abi.encode(uint256(keccak256(\"openzeppelin.storage.ERC4626\")) - 1)) & ~bytes32(uint256(0xff))\n    bytes32 private constant ERC4626StorageLocation = 0x0773e532dfede91f04b12a73d3d2acd361424f41f76b4fb79f090161e36b4e00;\n\n    function _getERC4626Storage() private pure returns (ERC4626Storage storage $) {\n        assembly {\n            $.slot := ERC4626StorageLocation\n        }\n    }\n\n    /**\n     * @dev Attempted to deposit more assets than the max amount for `receiver`.\n     */\n    error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);\n\n    /**\n     * @dev Attempted to mint more shares than the max amount for `receiver`.\n     */\n    error ERC4626ExceededMaxMint(address receiver, uint256 shares, uint256 max);\n\n    /**\n     * @dev Attempted to withdraw more assets than the max amount for `receiver`.\n     */\n    error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);\n\n    /**\n     * @dev Attempted to redeem more shares than the max amount for `receiver`.\n     */\n    error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);\n\n    /**\n     * @dev Set the underlying asset contract. This must be an ERC20-compatible contract (ERC20 or ERC777).\n     */\n    function __ERC4626_init(IERC20 asset_) internal onlyInitializing {\n        __ERC4626_init_unchained(asset_);\n    }\n\n    function __ERC4626_init_unchained(IERC20 asset_) internal onlyInitializing {\n        ERC4626Storage storage $ = _getERC4626Storage();\n        (bool success, uint8 assetDecimals) = _tryGetAssetDecimals(asset_);\n        $._underlyingDecimals = success ? assetDecimals : 18;\n        $._asset = asset_;\n    }\n\n    /**\n     * @dev Attempts to fetch the asset decimals. A return value of false indicates that the attempt failed in some way.\n     */\n    function _tryGetAssetDecimals(IERC20 asset_) private view returns (bool, uint8) {\n        (bool success, bytes memory encodedDecimals) = address(asset_).staticcall(\n            abi.encodeCall(IERC20Metadata.decimals, ())\n        );\n        if (success && encodedDecimals.length >= 32) {\n            uint256 returnedDecimals = abi.decode(encodedDecimals, (uint256));\n            if (returnedDecimals <= type(uint8).max) {\n                return (true, uint8(returnedDecimals));\n            }\n        }\n        return (false, 0);\n    }\n\n    /**\n     * @dev Decimals are computed by adding the decimal offset on top of the underlying asset's decimals. This\n     * \"original\" value is cached during construction of the vault contract. If this read operation fails (e.g., the\n     * asset has not been created yet), a default of 18 is used to represent the underlying asset's decimals.\n     *\n     * See {IERC20Metadata-decimals}.\n     */\n    function decimals() public view virtual override(IERC20Metadata, ERC20Upgradeable) returns (uint8) {\n        ERC4626Storage storage $ = _getERC4626Storage();\n        return $._underlyingDecimals + _decimalsOffset();\n    }\n\n    /** @dev See {IERC4626-asset}. */\n    function asset() public view virtual returns (address) {\n        ERC4626Storage storage $ = _getERC4626Storage();\n        return address($._asset);\n    }\n\n    /** @dev See {IERC4626-totalAssets}. */\n    function totalAssets() public view virtual returns (uint256) {\n        ERC4626Storage storage $ = _getERC4626Storage();\n        return $._asset.balanceOf(address(this));\n    }\n\n    /** @dev See {IERC4626-convertToShares}. */\n    function convertToShares(uint256 assets) public view virtual returns (uint256) {\n        return _convertToShares(assets, Math.Rounding.Floor);\n    }\n\n    /** @dev See {IERC4626-convertToAssets}. */\n    function convertToAssets(uint256 shares) public view virtual returns (uint256) {\n        return _convertToAssets(shares, Math.Rounding.Floor);\n    }\n\n    /** @dev See {IERC4626-maxDeposit}. */\n    function maxDeposit(address) public view virtual returns (uint256) {\n        return type(uint256).max;\n    }\n\n    /** @dev See {IERC4626-maxMint}. */\n    function maxMint(address) public view virtual returns (uint256) {\n        return type(uint256).max;\n    }\n\n    /** @dev See {IERC4626-maxWithdraw}. */\n    function maxWithdraw(address owner) public view virtual returns (uint256) {\n        return _convertToAssets(balanceOf(owner), Math.Rounding.Floor);\n    }\n\n    /** @dev See {IERC4626-maxRedeem}. */\n    function maxRedeem(address owner) public view virtual returns (uint256) {\n        return balanceOf(owner);\n    }\n\n    /** @dev See {IERC4626-previewDeposit}. */\n    function previewDeposit(uint256 assets) public view virtual returns (uint256) {\n        return _convertToShares(assets, Math.Rounding.Floor);\n    }\n\n    /** @dev See {IERC4626-previewMint}. */\n    function previewMint(uint256 shares) public view virtual returns (uint256) {\n        return _convertToAssets(shares, Math.Rounding.Ceil);\n    }\n\n    /** @dev See {IERC4626-previewWithdraw}. */\n    function previewWithdraw(uint256 assets) public view virtual returns (uint256) {\n        return _convertToShares(assets, Math.Rounding.Ceil);\n    }\n\n    /** @dev See {IERC4626-previewRedeem}. */\n    function previewRedeem(uint256 shares) public view virtual returns (uint256) {\n        return _convertToAssets(shares, Math.Rounding.Floor);\n    }\n\n    /** @dev See {IERC4626-deposit}. */\n    function deposit(uint256 assets, address receiver) public virtual returns (uint256) {\n        uint256 maxAssets = maxDeposit(receiver);\n        if (assets > maxAssets) {\n            revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);\n        }\n\n        uint256 shares = previewDeposit(assets);\n        _deposit(_msgSender(), receiver, assets, shares);\n\n        return shares;\n    }\n\n    /** @dev See {IERC4626-mint}.\n     *\n     * As opposed to {deposit}, minting is allowed even if the vault is in a state where the price of a share is zero.\n     * In this case, the shares will be minted without requiring any assets to be deposited.\n     */\n    function mint(uint256 shares, address receiver) public virtual returns (uint256) {\n        uint256 maxShares = maxMint(receiver);\n        if (shares > maxShares) {\n            revert ERC4626ExceededMaxMint(receiver, shares, maxShares);\n        }\n\n        uint256 assets = previewMint(shares);\n        _deposit(_msgSender(), receiver, assets, shares);\n\n        return assets;\n    }\n\n    /** @dev See {IERC4626-withdraw}. */\n    function withdraw(uint256 assets, address receiver, address owner) public virtual returns (uint256) {\n        uint256 maxAssets = maxWithdraw(owner);\n        if (assets > maxAssets) {\n            revert ERC4626ExceededMaxWithdraw(owner, assets, maxAssets);\n        }\n\n        uint256 shares = previewWithdraw(assets);\n        _withdraw(_msgSender(), receiver, owner, assets, shares);\n\n        return shares;\n    }\n\n    /** @dev See {IERC4626-redeem}. */\n    function redeem(uint256 shares, address receiver, address owner) public virtual returns (uint256) {\n        uint256 maxShares = maxRedeem(owner);\n        if (shares > maxShares) {\n            revert ERC4626ExceededMaxRedeem(owner, shares, maxShares);\n        }\n\n        uint256 assets = previewRedeem(shares);\n        _withdraw(_msgSender(), receiver, owner, assets, shares);\n\n        return assets;\n    }\n\n    /**\n     * @dev Internal conversion function (from assets to shares) with support for rounding direction.\n     */\n    function _convertToShares(uint256 assets, Math.Rounding rounding) internal view virtual returns (uint256) {\n        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), totalAssets() + 1, rounding);\n    }\n\n    /**\n     * @dev Internal conversion function (from shares to assets) with support for rounding direction.\n     */\n    function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view virtual returns (uint256) {\n        return shares.mulDiv(totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);\n    }\n\n    /**\n     * @dev Deposit/mint common workflow.\n     */\n    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual {\n        ERC4626Storage storage $ = _getERC4626Storage();\n        // If _asset is ERC777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the\n        // `tokensToSend` hook. On the other hand, the `tokenReceived` hook, that is triggered after the transfer,\n        // calls the vault, which is assumed not malicious.\n        //\n        // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the\n        // assets are transferred and before the shares are minted, which is a valid state.\n        // slither-disable-next-line reentrancy-no-eth\n        SafeERC20.safeTransferFrom($._asset, caller, address(this), assets);\n        _mint(receiver, shares);\n\n        emit Deposit(caller, receiver, assets, shares);\n    }\n\n    /**\n     * @dev Withdraw/redeem common workflow.\n     */\n    function _withdraw(\n        address caller,\n        address receiver,\n        address owner,\n        uint256 assets,\n        uint256 shares\n    ) internal virtual {\n        ERC4626Storage storage $ = _getERC4626Storage();\n        if (caller != owner) {\n            _spendAllowance(owner, caller, shares);\n        }\n\n        // If _asset is ERC777, `transfer` can trigger a reentrancy AFTER the transfer happens through the\n        // `tokensReceived` hook. On the other hand, the `tokensToSend` hook, that is triggered before the transfer,\n        // calls the vault, which is assumed not malicious.\n        //\n        // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the\n        // shares are burned and after the assets are transferred, which is a valid state.\n        _burn(owner, shares);\n        SafeERC20.safeTransfer($._asset, receiver, assets);\n\n        emit Withdraw(caller, receiver, owner, assets, shares);\n    }\n\n    function _decimalsOffset() internal view virtual returns (uint8) {\n        return 0;\n    }\n}\n"
+  },
+  "warnings": [
+    "Catalog review records static deployment/ABI evidence only; no fresh RPC bytecode/storage attestation, funding/liquidity check or successful execution is asserted. Independent authorization, pause, calldata and execution controls remain mandatory.",
+    "Base USDC async ERC-7540 wrapper; settlement is accountant-dependent with no guaranteed deadline. No Safe, Zodiac, bridge, router, underlying curator executor or arbitrary calldata is admitted.",
+    "Caller/controller/owner/receiver blacklist checks and owner-or-approved-operator checks remain enforced; no eligibility bypass.",
+    "deposit(uint256,address,address) ignores assets and claims ALL settled shares; redeem(uint256,address,address) ignores shares and returns ALL settled assets. These are claims, not synchronous deposit/withdraw.",
+    "The official app identifies the market by its Safe address 0x5e93e1193a5e297cba0856e9b3f22b6e05429b9a; the admitted USER wrapper is the distinct vault field 0x776f95321a0285f8bcde149e3264d16dc08da69a."
+  ],
+  "officialAppData": {
+    "address": "0x5e93e1193a5e297cba0856e9b3f22b6e05429b9a",
+    "vault": "0x776f95321a0285f8bcde149e3264d16dc08da69a",
+    "infraVault": "0xc62734aecb095d2cb74b3ccebfdf973ec23fbaa1",
+    "chainId": 8453,
+    "name": "gamisUSDC",
+    "symbol": "gamisUSDC",
+    "status": "VISIBLE",
+    "underlying": {
+      "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 6,
+      "chainId": 8453,
+      "price": {
+        "usd": 0.9996789767357028
+      },
+      "logoURI": "https://tokens.spectra.finance/images/tokens/8453/0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.svg",
+      "tags": []
+    },
+    "createdAt": 1765392271,
+    "feeStructure": {
+      "management": 0,
+      "performance": 10
+    }
+  },
+  "proxySourceCode": {
+    "lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.0.0) (proxy/transparent/TransparentUpgradeableProxy.sol)\n\npragma solidity ^0.8.20;\n\nimport {ERC1967Utils} from \"../ERC1967/ERC1967Utils.sol\";\nimport {ERC1967Proxy} from \"../ERC1967/ERC1967Proxy.sol\";\nimport {IERC1967} from \"../../interfaces/IERC1967.sol\";\nimport {ProxyAdmin} from \"./ProxyAdmin.sol\";\n\n/**\n * @dev Interface for {TransparentUpgradeableProxy}. In order to implement transparency, {TransparentUpgradeableProxy}\n * does not implement this interface directly, and its upgradeability mechanism is implemented by an internal dispatch\n * mechanism. The compiler is unaware that these functions are implemented by {TransparentUpgradeableProxy} and will not\n * include them in the ABI so this interface must be used to interact with it.\n */\ninterface ITransparentUpgradeableProxy is IERC1967 {\n    function upgradeToAndCall(address, bytes calldata) external payable;\n}\n\n/**\n * @dev This contract implements a proxy that is upgradeable through an associated {ProxyAdmin} instance.\n *\n * To avoid https://medium.com/nomic-labs-blog/malicious-backdoors-in-ethereum-proxies-62629adf3357[proxy selector\n * clashing], which can potentially be used in an attack, this contract uses the\n * https://blog.openzeppelin.com/the-transparent-proxy-pattern/[transparent proxy pattern]. This pattern implies two\n * things that go hand in hand:\n *\n * 1. If any account other than the admin calls the proxy, the call will be forwarded to the implementation, even if\n * that call matches the {ITransparentUpgradeableProxy-upgradeToAndCall} function exposed by the proxy itself.\n * 2. If the admin calls the proxy, it can call the `upgradeToAndCall` function but any other call won't be forwarded to\n * the implementation. If the admin tries to call a function on the implementation it will fail with an error indicating\n * the proxy admin cannot fallback to the target implementation.\n *\n * These properties mean that the admin account can only be used for upgrading the proxy, so it's best if it's a\n * dedicated account that is not used for anything else. This will avoid headaches due to sudden errors when trying to\n * call a function from the proxy implementation. For this reason, the proxy deploys an instance of {ProxyAdmin} and\n * allows upgrades only if they come through it. You should think of the `ProxyAdmin` instance as the administrative\n * interface of the proxy, including the ability to change who can trigger upgrades by transferring ownership.\n *\n * NOTE: The real interface of this proxy is that defined in `ITransparentUpgradeableProxy`. This contract does not\n * inherit from that interface, and instead `upgradeToAndCall` is implicitly implemented using a custom dispatch\n * mechanism in `_fallback`. Consequently, the compiler will not produce an ABI for this contract. This is necessary to\n * fully implement transparency without decoding reverts caused by selector clashes between the proxy and the\n * implementation.\n *\n * NOTE: This proxy does not inherit from {Context} deliberately. The {ProxyAdmin} of this contract won't send a\n * meta-transaction in any way, and any other meta-transaction setup should be made in the implementation contract.\n *\n * IMPORTANT: This contract avoids unnecessary storage reads by setting the admin only during construction as an\n * immutable variable, preventing any changes thereafter. However, the admin slot defined in ERC-1967 can still be\n * overwritten by the implementation logic pointed to by this proxy. In such cases, the contract may end up in an\n * undesirable state where the admin slot is different from the actual admin.\n *\n * WARNING: It is not recommended to extend this contract to add additional external functions. If you do so, the\n * compiler will not check that there are no selector conflicts, due to the note above. A selector clash between any new\n * function and the functions declared in {ITransparentUpgradeableProxy} will be resolved in favor of the new one. This\n * could render the `upgradeToAndCall` function inaccessible, preventing upgradeability and compromising transparency.\n */\ncontract TransparentUpgradeableProxy is ERC1967Proxy {\n    // An immutable address for the admin to avoid unnecessary SLOADs before each call\n    // at the expense of removing the ability to change the admin once it's set.\n    // This is acceptable if the admin is always a ProxyAdmin instance or similar contract\n    // with its own ability to transfer the permissions to another account.\n    address private immutable _admin;\n\n    /**\n     * @dev The proxy caller is the current admin, and can't fallback to the proxy target.\n     */\n    error ProxyDeniedAdminAccess();\n\n    /**\n     * @dev Initializes an upgradeable proxy managed by an instance of a {ProxyAdmin} with an `initialOwner`,\n     * backed by the implementation at `_logic`, and optionally initialized with `_data` as explained in\n     * {ERC1967Proxy-constructor}.\n     */\n    constructor(address _logic, address initialOwner, bytes memory _data) payable ERC1967Proxy(_logic, _data) {\n        _admin = address(new ProxyAdmin(initialOwner));\n        // Set the storage value and emit an event for ERC-1967 compatibility\n        ERC1967Utils.changeAdmin(_proxyAdmin());\n    }\n\n    /**\n     * @dev Returns the admin of this proxy.\n     */\n    function _proxyAdmin() internal virtual returns (address) {\n        return _admin;\n    }\n\n    /**\n     * @dev If caller is the admin process the call internally, otherwise transparently fallback to the proxy behavior.\n     */\n    function _fallback() internal virtual override {\n        if (msg.sender == _proxyAdmin()) {\n            if (msg.sig != ITransparentUpgradeableProxy.upgradeToAndCall.selector) {\n                revert ProxyDeniedAdminAccess();\n            } else {\n                _dispatchUpgradeToAndCall();\n            }\n        } else {\n            super._fallback();\n        }\n    }\n\n    /**\n     * @dev Upgrade the implementation of the proxy. See {ERC1967Utils-upgradeToAndCall}.\n     *\n     * Requirements:\n     *\n     * - If `data` is empty, `msg.value` must be zero.\n     */\n    function _dispatchUpgradeToAndCall() private {\n        (address newImplementation, bytes memory data) = abi.decode(msg.data[4:], (address, bytes));\n        ERC1967Utils.upgradeToAndCall(newImplementation, data);\n    }\n}\n"
+  }
+}

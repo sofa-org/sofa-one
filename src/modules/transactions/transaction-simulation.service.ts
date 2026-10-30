@@ -136,7 +136,7 @@ export class TransactionSimulationService {
       throw new AssetFlowSimulationUnavailableError();
     }
 
-    if (input.executionMode !== 'session_key' && input.executionMode !== 'eoa') {
+    if (input.executionMode !== 'session_key') {
       throw new AssetFlowSimulationUnavailableError();
     }
 

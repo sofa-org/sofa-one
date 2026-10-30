@@ -1,0 +1,3 @@
+# Velora Augustus RFQ Ethereum fixture
+
+Isolated Catalog/Policy fixture for four fixed, nonpayable methods on the documented Ethereum Augustus RFQ address: `fillOrder`, `partialFillOrder`, `cancelOrder`, and `cancelOrders`. ABI records are copied from the pinned Velora DEX library and cross-checked against the verified Etherscan source/ABI bundle. Raw v7 source status remains inactive; the builder is not runtime-wired or automatically granted. Batch, NFT, permit, and other WithTarget entrypoints are outside this selected subset. See [source research](../../../../../docs/defi-research/expansion55-velora-v7.md).

@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "enzyme",
+      "familyVersion": "sulu-v4@65ec056b",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x3714E016690aC209aB173A2B4b86Aaa1c8f48327",
+          "status": "inactive",
+          "contractName": "Enzyme Ethereum Comptroller",
+          "sourceRefs": ["enzyme-comptroller-deployment-logs", "enzyme-sdk-comptroller-abi", "enzyme-comptroller-implementation-source"],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "buyShares",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "_investmentAmount", "type": "uint256", "internalType": "uint256" },
+                { "name": "_minSharesQuantity", "type": "uint256", "internalType": "uint256" }
+              ],
+              "outputs": [{ "name": "sharesReceived_", "type": "uint256", "internalType": "uint256" }],
+              "sourceId": "enzyme-sdk-comptroller-abi"
+            },
+            {
+              "type": "function",
+              "name": "redeemSharesInKind",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "_recipient", "type": "address", "internalType": "address" },
+                { "name": "_sharesQuantity", "type": "uint256", "internalType": "uint256" },
+                { "name": "_additionalAssets", "type": "address[]", "internalType": "address[]" },
+                { "name": "_assetsToSkip", "type": "address[]", "internalType": "address[]" }
+              ],
+              "outputs": [
+                { "name": "payoutAssets_", "type": "address[]", "internalType": "address[]" },
+                { "name": "payoutAmounts_", "type": "uint256[]", "internalType": "uint256[]" }
+              ],
+              "sourceId": "enzyme-sdk-comptroller-abi"
+            },
+            {
+              "type": "function",
+              "name": "redeemSharesForSpecificAssets",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "_recipient", "type": "address", "internalType": "address" },
+                { "name": "_sharesQuantity", "type": "uint256", "internalType": "uint256" },
+                { "name": "_payoutAssets", "type": "address[]", "internalType": "address[]" },
+                { "name": "_payoutAssetPercentages", "type": "uint256[]", "internalType": "uint256[]" }
+              ],
+              "outputs": [{ "name": "payoutAmounts_", "type": "uint256[]", "internalType": "uint256[]" }],
+              "sourceId": "enzyme-sdk-comptroller-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "enzyme-comptroller-deployment-logs",
+      "url": "https://eth.blockscout.com/tx/0xb223b5870622bd952f42acd7f0e857121823c18267db72436029ac956a915bfb/logs",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Dated NewFundCreated plus VaultProxySet/AccessorSet evidence maps user Comptroller 0x3714E016690aC209aB173A2B4b86Aaa1c8f48327 to vault proxy 0x0468AcaBf15f4B933491B5B3C4DcCaacb63f7eF4 and fund deployer 0x4f1c53f096533c04d8157efb6bca3eb22ddc6360. Creation block 25750487 (0x188ebd7), hash 0x8646506d224e71dd2e1076ddf6c62743deac9925ab7a90b7e0728b4337b3e6bc, timestamp 2026-08-14T03:08:35Z. This is dated role evidence, not proof of current open purchases, runtime state, liquidity, or all-fund coverage."
+    },
+    {
+      "sourceId": "enzyme-sdk-comptroller-abi",
+      "url": "https://github.com/enzymefinance/sdk/blob/65ec056bd3656c8a7ae841b4ec8600d9dd7ecdf9/packages/abis/abis/IComptrollerLib.abi.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official Enzyme SDK ABI supplies the complete selected buyShares, redeemSharesInKind, and redeemSharesForSpecificAssets signatures, primitive internal types, mutability, and output names/types. Other ABI operations are excluded."
+    },
+    {
+      "sourceId": "enzyme-comptroller-implementation-source",
+      "url": "https://github.com/enzymefinance/protocol/blob/7200e4d3cb76603af2e52aca97f15088853af532/contracts/release/core/fund/comptroller/ComptrollerLib.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned effective ComptrollerLib source implements ordinary user buyShares and share redemption. Source documents caller-owned redemption, share-action timelock, unique address arrays, percentage/allocation checks, policy behavior, and in-kind skipped-balance implications as protocol semantics, not platform-added filters."
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import type { Address, Hex } from 'viem';
-import { CALIBUR_ADDRESS, CALIBUR_ADDRESSES, LEGACY_CALIBUR_ADDRESS } from './calibur';
+import { CALIBUR_ADDRESS, CALIBUR_ADDRESSES, LEGACY_CALIBUR_ADDRESS } from '../../../src/common/calibur/calibur-primitives';
 
 // Verified 2026-10-02 by bytecode identity: v1.1 is 22,020 bytes
 // (SHA-256 91d278eed4489e727fa971fa851c88cb28a62504d48c0e15b3c9af9df7fbbc74),

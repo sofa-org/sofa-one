@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { useUser } from '@openfort/react';
+import { useAppSession } from '@/components/AppSessionProvider'
 import {
   Activity,
   AlertCircle,
@@ -476,17 +476,12 @@ function MetricCard({
 }
 
 export default function BillingPage() {
-  const { getAccessToken, isAuthenticated, isLoading: authLoading } = useUser();
+  const { session, loading: authLoading } = useAppSession()
+  const sessionId = session?.sessionId;
   const [walletChoices, setWalletChoices] = useState<Array<{ id: string; walletAddress: string | null; isDefault?: boolean; status: string }>>([]);
   const [walletChoicesError, setWalletChoicesError] = useState<string | null>(null);
-  const getToken = useCallback(async () => {
-    const token = await getAccessToken();
-    if (!token) {
-      throw new Error('Openfort session is not ready. Refresh and sign in again.');
-    }
-    return token;
-  }, [getAccessToken]);
-  useEffect(() => { let live = true; void import('@/lib/api').then(({ getMe }) => getMe(getToken)).then((session) => { if (live) { setWalletChoices(session.wallets ?? [session.wallet]); setWalletChoicesError(null); } }).catch((error: unknown) => { if (live) setWalletChoicesError(getApiErrorMessage(error)); }); return () => { live = false; }; }, [getToken]);
+  
+  useEffect(() => { let live = true; void import('@/lib/api').then(({ getMe }) => getMe()).then((session) => { if (live) { setWalletChoices(session.wallets ?? [session.wallet]); setWalletChoicesError(null); } }).catch((error: unknown) => { if (live) setWalletChoicesError(getApiErrorMessage(error)); }); return () => { live = false; }; }, []);
 
   const [period, setPeriod] = useState<string>(getCurrentUtcMonth);
 
@@ -640,7 +635,7 @@ export default function BillingPage() {
       setPlansLoading(true);
       setPlansError(null);
       try {
-        const data = await getBillingPlansAuth(getToken, signal);
+        const data = await getBillingPlansAuth(signal);
         if (!signal?.aborted) setPlans(data);
       } catch (err: unknown) {
         if (!signal?.aborted) setPlansError(getApiErrorMessage(err));
@@ -648,7 +643,7 @@ export default function BillingPage() {
         if (!signal?.aborted) setPlansLoading(false);
       }
     },
-    [getToken],
+    [],
   );
 
   const loadSummary = useCallback(
@@ -656,7 +651,7 @@ export default function BillingPage() {
       setSummaryLoading(true);
       setSummaryError(null);
       try {
-        const data = await getBillingSummaryAuth(getToken, period, signal);
+        const data = await getBillingSummaryAuth(period, signal);
         if (!signal?.aborted) setSummary(data);
       } catch (err: unknown) {
         if (!signal?.aborted) setSummaryError(getApiErrorMessage(err));
@@ -664,7 +659,7 @@ export default function BillingPage() {
         if (!signal?.aborted) setSummaryLoading(false);
       }
     },
-    [getToken, period],
+    [period],
   );
 
   const loadInvoices = useCallback(
@@ -690,11 +685,8 @@ export default function BillingPage() {
       setInvoicesLoading(true);
       setInvoicesError(null);
       try {
-        const data = await listBillingInvoicesAuth(
-          getToken,
-          { limit: INVOICE_PAGE_SIZE },
-          controller.signal,
-        );
+        const data = await listBillingInvoicesAuth({ limit: INVOICE_PAGE_SIZE },
+        controller.signal,);
         if (
           isMountedRef.current &&
           !controller.signal.aborted &&
@@ -727,7 +719,7 @@ export default function BillingPage() {
         }
       }
     },
-    [getToken],
+    [],
   );
 
   /**
@@ -769,11 +761,8 @@ export default function BillingPage() {
         const results = await Promise.all(
           targets.map(async (inv) => {
             try {
-              const status = await getInvoicePaymentStatusAuth(
-                getToken,
-                inv.id,
-                controller.signal,
-              );
+              const status = await getInvoicePaymentStatusAuth(inv.id,
+              controller.signal,);
               return { id: inv.id, status, error: false as const };
             } catch {
               return { id: inv.id, status: null, error: true as const };
@@ -821,7 +810,7 @@ export default function BillingPage() {
         }
       }
     },
-    [getToken],
+    [],
   );
 
   const refreshInvoicesSilently = useCallback(
@@ -843,11 +832,8 @@ export default function BillingPage() {
       }
 
       try {
-        const data = await listBillingInvoicesAuth(
-          getToken,
-          { limit: INVOICE_PAGE_SIZE },
-          controller.signal,
-        );
+        const data = await listBillingInvoicesAuth({ limit: INVOICE_PAGE_SIZE },
+        controller.signal,);
         if (controller.signal.aborted || requestId !== invoiceLoadGenerationRef.current) {
           return false;
         }
@@ -885,7 +871,7 @@ export default function BillingPage() {
         }
       }
     },
-    [getToken],
+    [],
   );
 
   // Keep a synchronous mirror of the invoice list for polling logic.
@@ -896,13 +882,13 @@ export default function BillingPage() {
   // After the initial invoice list settles, load invoice-level payment statuses.
   useEffect(() => {
     if (invoicesLoading || invoicesError) return;
-    if (!isAuthenticated || authLoading) return;
+    if (!sessionId || authLoading) return;
     const controller = new AbortController();
     void loadPaymentStatusesForInvoices(invoices, controller.signal);
     return () => controller.abort();
   }, [
     authLoading,
-    isAuthenticated,
+    sessionId,
     invoices,
     invoicesError,
     invoicesLoading,
@@ -1102,7 +1088,7 @@ export default function BillingPage() {
         message:
           "Payment is being processed. We're checking for confirmation and will update the invoice automatically.",
       });
-      if (!authLoading && isAuthenticated) {
+      if (!authLoading && sessionId) {
         void startPaymentConfirmationPolling();
       } else {
         pendingReturnSuccessRef.current = true;
@@ -1134,17 +1120,17 @@ export default function BillingPage() {
     location.pathname,
     location.hash,
     authLoading,
-    isAuthenticated,
+    sessionId,
     startPaymentConfirmationPolling,
   ]);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!isAuthenticated) return;
+    if (!sessionId) return;
     if (!pendingReturnSuccessRef.current) return;
     pendingReturnSuccessRef.current = false;
     void startPaymentConfirmationPolling();
-  }, [authLoading, isAuthenticated, startPaymentConfirmationPolling]);
+  }, [authLoading, sessionId, startPaymentConfirmationPolling]);
 
   // Abort any in-flight invoice load or payment polling when the page unmounts.
   useEffect(() => {
@@ -1246,7 +1232,7 @@ export default function BillingPage() {
       setCheckoutLoadingId(invoice.id);
       setCheckoutError(null);
       try {
-        const response = await createBillingCheckoutSessionAuth(getToken, invoice.id);
+        const response = await createBillingCheckoutSessionAuth(invoice.id);
         sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, invoice.id);
         window.location.href = response.checkoutUrl;
       } catch (err: unknown) {
@@ -1255,7 +1241,7 @@ export default function BillingPage() {
         setCheckoutLoadingId(null);
       }
     },
-    [getToken, paymentStatusByInvoiceId],
+    [paymentStatusByInvoiceId],
   );
 
   /**
@@ -1290,11 +1276,8 @@ export default function BillingPage() {
       setCheckoutError(null);
 
       try {
-        const result = await cancelUsdcQuoteAuth(
-          getToken,
-          invoice.id,
-          attempt.paymentAttemptId,
-        );
+        const result = await cancelUsdcQuoteAuth(invoice.id,
+        attempt.paymentAttemptId,);
         if (!isMountedRef.current) return;
 
         setUsdcCancelNotice({
@@ -1352,13 +1335,10 @@ export default function BillingPage() {
         if (isMountedRef.current) setUsdcCancelLoadingId(null);
       }
     },
-    [
-      getToken,
-      loadPaymentStatusesForInvoices,
-      paymentStatusByInvoiceId,
-      refreshInvoicesSilently,
-      usdcCancelLoadingId,
-    ],
+    [loadPaymentStatusesForInvoices,
+    paymentStatusByInvoiceId,
+    refreshInvoicesSilently,
+    usdcCancelLoadingId,],
   );
 
   const handleDownloadPdf = useCallback(
@@ -1367,7 +1347,7 @@ export default function BillingPage() {
       setPdfLoadingId(invoice.id);
       setPdfError(null);
       try {
-        const blob = await getBillingInvoicePdfAuth(getToken, invoice.id);
+        const blob = await getBillingInvoicePdfAuth(invoice.id);
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -1382,7 +1362,7 @@ export default function BillingPage() {
         setPdfLoadingId(null);
       }
     },
-    [getToken, pdfLoadingId],
+    [pdfLoadingId],
   );
 
   const refreshBillingAfterPlanEvent = useCallback(() => {
@@ -1415,7 +1395,7 @@ export default function BillingPage() {
       setPlanChangeLoading(true);
       setPlanChangeNotice(null);
       try {
-        const result = await assignBillingPlanAuth(getToken, planCode);
+        const result = await assignBillingPlanAuth(planCode);
 
         if (result.outcome === 'unchanged') {
           setPendingUpgradeState(null);
@@ -1470,15 +1450,12 @@ export default function BillingPage() {
         setPlanChangeLoading(false);
       }
     },
-    [
-      getToken,
-      plans?.currentPlanId,
-      plans?.plans,
-      planChangeLoading,
-      pendingUpgrade,
-      setPendingUpgradeState,
-      refreshBillingAfterPlanEvent,
-    ],
+    [plans?.currentPlanId,
+    plans?.plans,
+    planChangeLoading,
+    pendingUpgrade,
+    setPendingUpgradeState,
+    refreshBillingAfterPlanEvent,],
   );
 
   const handleCancelScheduledPlan = useCallback(async () => {
@@ -1493,7 +1470,7 @@ export default function BillingPage() {
     setPlanChangeLoading(true);
     setPlanChangeNotice(null);
     try {
-      const result = await cancelBillingPlanAuth(getToken);
+      const result = await cancelBillingPlanAuth();
 
       if (result.outcome === 'unchanged') {
         setPlanChangeNotice({
@@ -1526,14 +1503,11 @@ export default function BillingPage() {
     } finally {
       setPlanChangeLoading(false);
     }
-  }, [
-    getToken,
-    plans?.scheduledPlan,
-    plans?.currentPlanId,
-    plans?.plans,
-    planChangeLoading,
-    refreshBillingAfterPlanEvent,
-  ]);
+  }, [plans?.scheduledPlan,
+  plans?.currentPlanId,
+  plans?.plans,
+  planChangeLoading,
+  refreshBillingAfterPlanEvent,]);
 
   const handleCancelPendingUpgrade = useCallback(async () => {
     if (!pendingUpgrade || pendingUpgradePaid || planChangeLoading) return;
@@ -1546,7 +1520,7 @@ export default function BillingPage() {
     setPlanChangeLoading(true);
     setPlanChangeNotice(null);
     try {
-      const result = await cancelBillingPlanUpgradeAuth(getToken);
+      const result = await cancelBillingPlanUpgradeAuth();
 
       if (result.outcome === 'unchanged') {
         setPlanChangeNotice({
@@ -1580,16 +1554,13 @@ export default function BillingPage() {
     } finally {
       setPlanChangeLoading(false);
     }
-  }, [
-    getToken,
-    pendingUpgrade,
-    pendingUpgradePaid,
-    plans?.currentPlanId,
-    plans?.plans,
-    planChangeLoading,
-    setPendingUpgradeState,
-    refreshBillingAfterPlanEvent,
-  ]);
+  }, [pendingUpgrade,
+  pendingUpgradePaid,
+  plans?.currentPlanId,
+  plans?.plans,
+  planChangeLoading,
+  setPendingUpgradeState,
+  refreshBillingAfterPlanEvent,]);
 
   const handlePayUpgradeInvoice = useCallback(async () => {
     if (!pendingUpgrade) return;
@@ -1628,7 +1599,7 @@ export default function BillingPage() {
     setCheckoutLoadingId(pendingUpgrade.invoiceId);
     setCheckoutError(null);
     try {
-      const response = await createBillingCheckoutSessionAuth(getToken, pendingUpgrade.invoiceId);
+      const response = await createBillingCheckoutSessionAuth(pendingUpgrade.invoiceId);
       sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, pendingUpgrade.invoiceId);
       window.location.href = response.checkoutUrl;
     } catch (err: unknown) {
@@ -1636,11 +1607,11 @@ export default function BillingPage() {
     } finally {
       setCheckoutLoadingId(null);
     }
-  }, [getToken, pendingUpgrade, pendingUpgradeInvoice, paymentStatusByInvoiceId]);
+  }, [pendingUpgrade, pendingUpgradeInvoice, paymentStatusByInvoiceId]);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!isAuthenticated) {
+    if (!sessionId) {
       setPlansLoading(false);
       setSummaryLoading(false);
       setInvoicesLoading(false);
@@ -1654,7 +1625,7 @@ export default function BillingPage() {
     return () => controller.abort();
   }, [
     authLoading,
-    isAuthenticated,
+    sessionId,
     loadPlans,
     loadSummary,
     loadInvoices,
@@ -2062,7 +2033,6 @@ export default function BillingPage() {
                   return canShowUpgradeUsdc ? (
                     <UsdcPaymentPanel
                       invoice={pendingUpgradeInvoice}
-                      getToken={getToken}
                       wallets={walletChoices}
                       walletChoicesError={walletChoicesError}
                       onChange={async () => {
@@ -2705,7 +2675,6 @@ export default function BillingPage() {
                           <td colSpan={5} className="bg-brand-bg/30 px-4 py-4">
                             <UsdcPaymentPanel
                               invoice={invoice}
-                              getToken={getToken}
                               wallets={walletChoices}
                               walletChoicesError={walletChoicesError}
                               onChange={refreshInvoicesSilently}

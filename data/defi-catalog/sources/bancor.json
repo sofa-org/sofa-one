@@ -1,0 +1,367 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "bancor-v3",
+      "familyVersion": "v3@97d7905b8548470e79d40ce02e09b006f555aa11",
+      "chains": [
+        {
+          "chainId": 1,
+          "status": "inactive",
+          "contracts": [
+            {
+              "address": "0xeEF417e1D5CC832e619ae18D2F140De2999dD4fB",
+              "status": "inactive",
+              "contractName": "Bancor V3 Network (Ethereum user proxy)",
+              "sourceRefs": [
+                "bancor-v3-official-docs",
+                "bancor-v3-network-interface",
+                "bancor-v3-network-implementation",
+                "bancor-v3-mainnet-deployment"
+              ],
+              "functions": [
+                {
+                  "capabilityId": "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:cancel-withdrawal",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xeEF417e1D5CC832e619ae18D2F140De2999dD4fB",
+                  "functionName": "cancelWithdrawal",
+                  "signature": "cancelWithdrawal(uint256)",
+                  "abi": {
+                    "inputs": [
+                      {
+                        "internalType": "uint256",
+                        "name": "id",
+                        "type": "uint256"
+                      }
+                    ],
+                    "name": "cancelWithdrawal",
+                    "outputs": [
+                      {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                      }
+                    ],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "bancor-v3-mainnet-deployment",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Bancor V3",
+                  "operation": "cancel-withdrawal",
+                  "label": "Bancor cancel withdrawal request",
+                  "warnings": [
+                    "This is an explicitly source-qualified test fixture only; it is inactive candidate source and is not production admission, current runtime-code verification, or funded-execution proof.",
+                    "All ABI financial and recipient arguments remain caller-selected. There are no platform amount/token/pool/beneficiary/deadline allowlists or caps, owner checks, price-feed screening, eligibility checks, or automatic approval pairing. ERC-20 approvals are independent capabilities and are not included or automatic.",
+                    "Only the six fixed user methods on the exact network proxy are represented; this is not a pool inventory, complete workflow, liquidity, pool eligibility, safety, or transaction-success guarantee.",
+                    "initWithdrawal returns a request ID; cancelWithdrawal and withdraw use protocol request state, and withdraw requires an eligible request. The request/claim sequence can be asynchronous and subject to protocol timing and liquidity; no completion or payout is guaranteed."
+                  ]
+                },
+                {
+                  "capabilityId": "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:deposit",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xeEF417e1D5CC832e619ae18D2F140De2999dD4fB",
+                  "functionName": "deposit",
+                  "signature": "deposit(address,uint256)",
+                  "abi": {
+                    "inputs": [
+                      {
+                        "internalType": "contract Token",
+                        "name": "pool",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "tokenAmount",
+                        "type": "uint256"
+                      }
+                    ],
+                    "name": "deposit",
+                    "outputs": [
+                      {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                      }
+                    ],
+                    "stateMutability": "payable",
+                    "type": "function"
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "bancor-v3-mainnet-deployment",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Bancor V3",
+                  "operation": "deposit",
+                  "label": "Bancor liquidity deposit",
+                  "warnings": [
+                    "This is an explicitly source-qualified test fixture only; it is inactive candidate source and is not production admission, current runtime-code verification, or funded-execution proof.",
+                    "All ABI financial and recipient arguments remain caller-selected. There are no platform amount/token/pool/beneficiary/deadline allowlists or caps, owner checks, price-feed screening, eligibility checks, or automatic approval pairing. ERC-20 approvals are independent capabilities and are not included or automatic.",
+                    "Only the six fixed user methods on the exact network proxy are represented; this is not a pool inventory, complete workflow, liquidity, pool eligibility, safety, or transaction-success guarantee.",
+                    "deposit(pool, tokenAmount) uses a Token address for the Bancor pool/base-token side and returns pool-token amount; it does not take the pool-token receipt. initWithdrawal separately accepts IPoolToken receipts."
+                  ]
+                },
+                {
+                  "capabilityId": "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:init-withdrawal",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xeEF417e1D5CC832e619ae18D2F140De2999dD4fB",
+                  "functionName": "initWithdrawal",
+                  "signature": "initWithdrawal(address,uint256)",
+                  "abi": {
+                    "inputs": [
+                      {
+                        "internalType": "contract IPoolToken",
+                        "name": "poolToken",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "poolTokenAmount",
+                        "type": "uint256"
+                      }
+                    ],
+                    "name": "initWithdrawal",
+                    "outputs": [
+                      {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                      }
+                    ],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "bancor-v3-mainnet-deployment",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Bancor V3",
+                  "operation": "init-withdrawal",
+                  "label": "Bancor initiate asynchronous withdrawal",
+                  "warnings": [
+                    "This is an explicitly source-qualified test fixture only; it is inactive candidate source and is not production admission, current runtime-code verification, or funded-execution proof.",
+                    "All ABI financial and recipient arguments remain caller-selected. There are no platform amount/token/pool/beneficiary/deadline allowlists or caps, owner checks, price-feed screening, eligibility checks, or automatic approval pairing. ERC-20 approvals are independent capabilities and are not included or automatic.",
+                    "Only the six fixed user methods on the exact network proxy are represented; this is not a pool inventory, complete workflow, liquidity, pool eligibility, safety, or transaction-success guarantee.",
+                    "initWithdrawal returns a request ID; cancelWithdrawal and withdraw use protocol request state, and withdraw requires an eligible request. The request/claim sequence can be asynchronous and subject to protocol timing and liquidity; no completion or payout is guaranteed."
+                  ]
+                },
+                {
+                  "capabilityId": "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:trade-by-source-amount",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xeEF417e1D5CC832e619ae18D2F140De2999dD4fB",
+                  "functionName": "tradeBySourceAmount",
+                  "signature": "tradeBySourceAmount(address,address,uint256,uint256,uint256,address)",
+                  "abi": {
+                    "inputs": [
+                      {
+                        "internalType": "contract Token",
+                        "name": "sourceToken",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "contract Token",
+                        "name": "targetToken",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "sourceAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "minReturnAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "deadline",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "beneficiary",
+                        "type": "address"
+                      }
+                    ],
+                    "name": "tradeBySourceAmount",
+                    "outputs": [
+                      {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                      }
+                    ],
+                    "stateMutability": "payable",
+                    "type": "function"
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "bancor-v3-mainnet-deployment",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Bancor V3",
+                  "operation": "trade-by-source-amount",
+                  "label": "Bancor trade by source amount",
+                  "warnings": [
+                    "This is an explicitly source-qualified test fixture only; it is inactive candidate source and is not production admission, current runtime-code verification, or funded-execution proof.",
+                    "All ABI financial and recipient arguments remain caller-selected. There are no platform amount/token/pool/beneficiary/deadline allowlists or caps, owner checks, price-feed screening, eligibility checks, or automatic approval pairing. ERC-20 approvals are independent capabilities and are not included or automatic.",
+                    "Only the six fixed user methods on the exact network proxy are represented; this is not a pool inventory, complete workflow, liquidity, pool eligibility, safety, or transaction-success guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:trade-by-target-amount",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xeEF417e1D5CC832e619ae18D2F140De2999dD4fB",
+                  "functionName": "tradeByTargetAmount",
+                  "signature": "tradeByTargetAmount(address,address,uint256,uint256,uint256,address)",
+                  "abi": {
+                    "inputs": [
+                      {
+                        "internalType": "contract Token",
+                        "name": "sourceToken",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "contract Token",
+                        "name": "targetToken",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "targetAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "maxSourceAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "deadline",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "beneficiary",
+                        "type": "address"
+                      }
+                    ],
+                    "name": "tradeByTargetAmount",
+                    "outputs": [
+                      {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                      }
+                    ],
+                    "stateMutability": "payable",
+                    "type": "function"
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "bancor-v3-mainnet-deployment",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Bancor V3",
+                  "operation": "trade-by-target-amount",
+                  "label": "Bancor trade by target amount",
+                  "warnings": [
+                    "This is an explicitly source-qualified test fixture only; it is inactive candidate source and is not production admission, current runtime-code verification, or funded-execution proof.",
+                    "All ABI financial and recipient arguments remain caller-selected. There are no platform amount/token/pool/beneficiary/deadline allowlists or caps, owner checks, price-feed screening, eligibility checks, or automatic approval pairing. ERC-20 approvals are independent capabilities and are not included or automatic.",
+                    "Only the six fixed user methods on the exact network proxy are represented; this is not a pool inventory, complete workflow, liquidity, pool eligibility, safety, or transaction-success guarantee."
+                  ]
+                },
+                {
+                  "capabilityId": "bancor-v3:v3:1:0xeef417e1d5cc832e619ae18d2f140de2999dd4fb:withdraw",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0xeEF417e1D5CC832e619ae18D2F140De2999dD4fB",
+                  "functionName": "withdraw",
+                  "signature": "withdraw(uint256)",
+                  "abi": {
+                    "inputs": [
+                      {
+                        "internalType": "uint256",
+                        "name": "id",
+                        "type": "uint256"
+                      }
+                    ],
+                    "name": "withdraw",
+                    "outputs": [
+                      {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                      }
+                    ],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "bancor-v3-mainnet-deployment",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Bancor V3",
+                  "operation": "withdraw",
+                  "label": "Bancor complete eligible withdrawal",
+                  "warnings": [
+                    "This is an explicitly source-qualified test fixture only; it is inactive candidate source and is not production admission, current runtime-code verification, or funded-execution proof.",
+                    "All ABI financial and recipient arguments remain caller-selected. There are no platform amount/token/pool/beneficiary/deadline allowlists or caps, owner checks, price-feed screening, eligibility checks, or automatic approval pairing. ERC-20 approvals are independent capabilities and are not included or automatic.",
+                    "Only the six fixed user methods on the exact network proxy are represented; this is not a pool inventory, complete workflow, liquidity, pool eligibility, safety, or transaction-success guarantee.",
+                    "initWithdrawal returns a request ID; cancelWithdrawal and withdraw use protocol request state, and withdraw requires an eligible request. The request/claim sequence can be asynchronous and subject to protocol timing and liquidity; no completion or payout is guaranteed."
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "bancor-v3-official-docs",
+      "url": "https://docs.bancor.network/",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official Bancor documentation for the V3 protocol and its user-facing network role; the exact Ethereum user proxy is cross-checked against the project-owned pinned mainnet deployment artifact below."
+    },
+    {
+      "sourceId": "bancor-v3-network-interface",
+      "url": "https://github.com/bancorprotocol/contracts-v3/blob/97d7905b8548470e79d40ce02e09b006f555aa11/contracts/network/interfaces/IBancorNetwork.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Owned Bancor contracts-v3 commit 97d7905b8548470e79d40ce02e09b006f555aa11 interface declares the selected six user methods, exact typed parameters, mutability, and unnamed uint256 outputs. Excludes tradeBy*Arb, depositFor, flashloan, and administrative methods."
+    },
+    {
+      "sourceId": "bancor-v3-network-implementation",
+      "url": "https://github.com/bancorprotocol/contracts-v3/blob/97d7905b8548470e79d40ce02e09b006f555aa11/contracts/network/BancorNetwork.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Owned Bancor implementation at the same pinned commit confirms the declared deposit and withdrawal flow: deposit accepts a Token pool/base-token argument and amount and returns pool-token amount; initWithdrawal accepts IPoolToken receipt amount and returns request ID; cancellation/completion are ID-based and completion requires eligible request state."
+    },
+    {
+      "sourceId": "bancor-v3-mainnet-deployment",
+      "url": "https://github.com/bancorprotocol/contracts-v3/blob/97d7905b8548470e79d40ce02e09b006f555aa11/deployments/mainnet/BancorNetwork.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Owned mainnet artifact at the same commit maps the BancorNetwork user proxy role to Ethereum chain 1 address 0xeEF417e1D5CC832e619ae18D2F140De2999dD4fB and contains the exact full ABI selected below. Snapshot role and interface evidence do not prove current runtime implementation or funded execution."
+    }
+  ],
+  "unresolved": []
+}

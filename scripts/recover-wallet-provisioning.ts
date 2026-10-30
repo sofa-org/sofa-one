@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import Openfort, { getAccountsV2 } from '@openfort/openfort-node';
 import { padHex, getAddress } from 'viem';
-import { hashKey, KeyType } from '../src/common/calibur/calibur';
+import { hashKey, KeyType } from '../src/common/calibur/calibur-primitives';
 import { bindProvisionedAccount, findRawProviderAccount } from '../src/modules/wallet-provisioning-recovery/bind-recovery';
 
 function args(argv: string[]) {

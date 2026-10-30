@@ -204,11 +204,11 @@ run('auth provisioning PostgreSQL crash windows', () => {
       await expect(normal).rejects.toThrow(/safely recorded/i);
 
       const bound = await prisma.walletProvisioningIntent.findUniqueOrThrow({ where: { walletId: wallet.id } });
-      expect(bound).toMatchObject({ status: 'provisioned', agentOpenfortAccountId: `operator-agent-${user.id}`, agentWalletAddress: operatorAddress, agentKeyHash: `0x${'c'.repeat(64)}`, resolution: 'operator_bound' });
+      expect(bound).toMatchObject({ status: 'provisioned', agentOpenfortAccountId: `operator-agent-${user.id}`, signerAddress: operatorAddress, agentKeyHash: `0x${'c'.repeat(64)}`, resolution: 'operator_bound' });
       expect(await prisma.securityEvent.count({ where: { userId: user.id, walletId: wallet.id, eventType: 'wallet.provisioning.recovered' } })).toBe(1);
       await expect(auth.authorizeEmbeddedWallet(user.socialId, 'token', { embeddedWalletAddress: address })).resolves.toBeDefined();
       const activated = await prisma.userWallet.findUniqueOrThrow({ where: { id: wallet.id } });
-      expect(activated).toMatchObject({ status: 'active', agentOpenfortAccountId: `operator-agent-${user.id}`, agentWalletAddress: operatorAddress, agentKeyHash: `0x${'c'.repeat(64)}` });
+      expect(activated).toMatchObject({ status: 'active', agentOpenfortAccountId: `operator-agent-${user.id}`, signerAddress: operatorAddress, agentKeyHash: `0x${'c'.repeat(64)}` });
       expect(await prisma.walletProvisioningIntent.count({ where: { walletId: wallet.id, status: 'completed' } })).toBe(1);
       expect(await prisma.securityEvent.count({ where: { userId: user.id, walletId: wallet.id, eventType: 'wallet.provisioning.recovered' } })).toBe(1);
       expect(create).toHaveBeenCalledTimes(1);
@@ -225,13 +225,13 @@ run('auth provisioning PostgreSQL crash windows', () => {
       const starts = Array.from({ length: 10 }, (_, i) => prisma!.userWallet.create({ data: {
         userId: user.id, status: 'active', walletAddress: `0x${(i + 1).toString(16).padStart(40, '0')}`,
         openfortAccountId: `existing-${i}-${user.id}`, agentOpenfortAccountId: `legacy-agent-${i}-${user.id}`,
-        agentWalletAddress: `0x${(i + 101).toString(16).padStart(40, '0')}`, agentKeyHash: `0x${(i + 1).toString(16).padStart(64, '0')}`,
+        signerAddress: `0x${(i + 101).toString(16).padStart(40, '0')}`, agentKeyHash: `0x${(i + 1).toString(16).padStart(64, '0')}`,
       } }));
       await Promise.all(starts);
       const legacy = await prisma.userWallet.create({ data: {
         userId: user.id, status: 'active', openfortAccountId: `legacy-embedded-${user.id}`,
         agentOpenfortAccountId: `legacy-agent-missing-address-${user.id}`,
-        agentWalletAddress: `0x${'f'.repeat(40)}`, agentKeyHash: `0x${'e'.repeat(64)}`,
+        signerAddress: `0x${'f'.repeat(40)}`, agentKeyHash: `0x${'e'.repeat(64)}`,
       } });
       const before = await prisma.billingAccount.findUniqueOrThrow({ where: { userId: user.id } });
       await expect(auth.authorizeEmbeddedWallet(user.socialId, 'token', { embeddedWalletAddress: address })).rejects.toThrow(/quota|cap|included/i);
@@ -253,7 +253,7 @@ run('auth provisioning PostgreSQL crash windows', () => {
     try {
       const legacy = await prisma.userWallet.create({ data: {
         userId: user.id, isDefault: true, status: 'active', openfortAccountId: `legacy-embedded-${user.id}`,
-        agentOpenfortAccountId: `legacy-agent-${user.id}`, agentWalletAddress: `0x${'f'.repeat(40)}`, agentKeyHash: `0x${'a'.repeat(64)}`,
+        agentOpenfortAccountId: `legacy-agent-${user.id}`, signerAddress: `0x${'f'.repeat(40)}`, agentKeyHash: `0x${'a'.repeat(64)}`,
       } });
       await auth.authorizeEmbeddedWallet(user.socialId, 'token', { embeddedWalletAddress: address });
       const first = await prisma.userWallet.findUniqueOrThrow({ where: { id: legacy.id } });
@@ -281,7 +281,7 @@ run('auth provisioning PostgreSQL crash windows', () => {
     try {
       const legacy = await prisma.userWallet.create({ data: {
         userId: user.id, status: 'active', openfortAccountId: `legacy-embedded-${user.id}`,
-        agentOpenfortAccountId: `legacy-agent-${user.id}`, agentWalletAddress: `0x${'b'.repeat(40)}`, agentKeyHash: `0x${'9'.repeat(64)}`,
+        agentOpenfortAccountId: `legacy-agent-${user.id}`, signerAddress: `0x${'b'.repeat(40)}`, agentKeyHash: `0x${'9'.repeat(64)}`,
       } });
       expect(await prisma.billingAccount.findUnique({ where: { userId: user.id } })).toBeNull();
       await auth.authorizeEmbeddedWallet(user.socialId, 'token', { embeddedWalletAddress: address });
@@ -305,7 +305,7 @@ run('auth provisioning PostgreSQL crash windows', () => {
     try {
       const wallet = await prisma.userWallet.create({ data: {
         userId: user.id, isDefault: true, status: 'active', openfortAccountId: `embedded-${user.id}`, walletAddress: address,
-        agentOpenfortAccountId: `agent-${user.id}`, agentWalletAddress: `0x${'2'.repeat(40)}`, agentKeyHash: `0x${'3'.repeat(64)}`,
+        agentOpenfortAccountId: `agent-${user.id}`, signerAddress: `0x${'2'.repeat(40)}`, agentKeyHash: `0x${'3'.repeat(64)}`,
       } });
       await prisma.walletChainAuthorization.create({ data: { walletId: wallet.id, chainId: BigInt(chainId), status: 'registration_failed', registrationTxHash: `0x${'4'.repeat(64)}`, expiresAt: new Date(Date.now() - 60_000) } });
       const expiry = new Date(Date.now() + 60 * 60_000).toISOString();
@@ -334,7 +334,7 @@ run('auth provisioning PostgreSQL crash windows', () => {
     try {
       const wallet = await prisma.userWallet.create({ data: {
         userId: user.id, isDefault: true, status: 'active', openfortAccountId: `embedded-${user.id}`, walletAddress: address,
-        agentOpenfortAccountId: `agent-${user.id}`, agentWalletAddress: `0x${'7'.repeat(40)}`, agentKeyHash: `0x${'8'.repeat(64)}`,
+        agentOpenfortAccountId: `agent-${user.id}`, signerAddress: `0x${'7'.repeat(40)}`, agentKeyHash: `0x${'8'.repeat(64)}`,
       } });
       await prisma.walletChainAuthorization.create({ data: { walletId: wallet.id, chainId: BigInt(chainId), status: 'registration_failed', registrationTxHash: `0x${'9'.repeat(64)}`, expiresAt: new Date(Date.now() - 60_000) } });
       const reauthorize = auth.authorizeEmbeddedWallet(user.socialId, 'token', { embeddedWalletAddress: address, chainId, agentExpiresAt: new Date(Date.now() + 3600_000).toISOString() });

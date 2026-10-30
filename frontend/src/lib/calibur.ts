@@ -2,7 +2,6 @@ import {
   encodeAbiParameters,
   encodeFunctionData,
   getAddress,
-  keccak256,
   parseAbi,
   parseAbiParameters,
   serializeSignature,
@@ -13,80 +12,27 @@ import {
   type Hex,
   type SignableMessage,
 } from 'viem';
-import { entryPoint08Abi, entryPoint08Address, getUserOperationTypedData, toSmartAccount } from 'viem/account-abstraction';
+import { entryPoint08Abi, getUserOperationTypedData, toSmartAccount } from 'viem/account-abstraction';
+import {
+  CALIBUR_ADDRESS,
+  ENTRYPOINT_V08_ADDRESS,
+  encodeCaliburExecuteUserOpCalls,
+} from '../../../src/common/calibur/calibur-primitives';
 import { getChainId, readContract } from 'viem/actions';
 
 const caliburAbi = parseAbi([
-  'function register((uint8 keyType, bytes publicKey) key)',
-  'function update(bytes32 keyHash, uint256 settings)',
   'function execute(((address to, uint256 value, bytes data)[] calls, bool revertOnFailure) batchedCall) payable',
 ]);
 
 const ROOT_KEY = `0x${'00'.repeat(32)}` as const;
 const STUB_SIG =
   '0xfffffffffffffffffffffff0000000000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c' as const;
-const CALIBUR_EXECUTE_USER_OP_SELECTOR = '0x8dd7712f' as const;
-
-export const CALIBUR_ADDRESS = '0x000000005c84F8Fd50b21CAC312528A64437030e' as const;
-export const LEGACY_CALIBUR_ADDRESS = '0x000000009b1d0af20d8c6d0a44e162d11f9b8f00' as const;
-export const CALIBUR_ADDRESSES = [CALIBUR_ADDRESS, LEGACY_CALIBUR_ADDRESS] as const;
-export const CALIBUR_DELEGATION_CODE = `0xef0100${CALIBUR_ADDRESS.slice(2)}` as const;
-export const CALIBUR_DELEGATION_CODES = CALIBUR_ADDRESSES.map(
-  (address) => `0xef0100${address.slice(2)}` as const,
-);
-
-export enum KeyType {
-  P256 = 0,
-  WebAuthnP256 = 1,
-  Secp256k1 = 2,
-}
-
-export type CaliburKey = {
-  keyType: KeyType;
-  publicKey: Hex;
-};
-
-export type KeySettings = {
-  isAdmin: boolean;
-  expiration: number;
-  hook: Address;
-};
 
 export type CaliburCall = {
   to: Address;
   value: bigint;
   data: Hex;
 };
-
-export function hashKey(key: CaliburKey): Hex {
-  return keccak256(
-    encodeAbiParameters(parseAbiParameters('uint8, bytes32'), [key.keyType, keccak256(key.publicKey)]),
-  );
-}
-
-export function packSettings(settings: KeySettings): bigint {
-  const admin = settings.isAdmin ? 1n : 0n;
-  const expiration = BigInt(settings.expiration);
-  const hook = BigInt(getAddress(settings.hook));
-
-  return (admin << 200n) | (expiration << 160n) | hook;
-}
-
-export function encodeRegisterKey(key: CaliburKey): Hex {
-  return encodeFunctionData({
-    abi: caliburAbi,
-    functionName: 'register',
-    args: [key],
-  });
-}
-
-export function encodeUpdateKeySettings(keyHash: Hex, settings: KeySettings): Hex {
-  return encodeFunctionData({
-    abi: caliburAbi,
-    functionName: 'update',
-    args: [keyHash, packSettings(settings)],
-  });
-}
 
 export function encodeSelfCall(data: Hex): CaliburCall {
   return {
@@ -102,15 +48,6 @@ export function encodeExecute(calls: CaliburCall[]): Hex {
     functionName: 'execute',
     args: [{ calls, revertOnFailure: true }],
   });
-}
-
-function encodeExecuteUserOp(calls: CaliburCall[]): Hex {
-  // IAccountExecute callData is selector + ABI-encoded BatchedCall, not a
-  // normal executeUserOp(...) ABI call. EntryPoint v0.8 rewrites this selector
-  // into executeUserOp(PackedUserOperation, bytes32) on the account.
-  return `${CALIBUR_EXECUTE_USER_OP_SELECTOR}${encodeAbiParameters(parseAbiParameters('((address to, uint256 value, bytes data)[], bool)'), [
-    [calls, true],
-  ]).slice(2)}` as Hex;
 }
 
 function normalizeSignature(sig: Hex): Hex {
@@ -137,7 +74,7 @@ export async function createCaliburAccount({
     client,
     entryPoint: {
       abi: entryPoint08Abi,
-      address: entryPoint08Address,
+      address: ENTRYPOINT_V08_ADDRESS,
       version: '0.8',
     },
     authorization: {
@@ -146,11 +83,11 @@ export async function createCaliburAccount({
     },
     getAddress: async () => getAddress(owner.address),
     getFactoryArgs: async () => ({ factory: '0x7702' as Address, factoryData: '0x' as Hex }),
-    encodeCalls: async (calls: readonly { to: Hex; data?: Hex; value?: bigint }[]) => encodeExecuteUserOp(calls as CaliburCall[]),
+    encodeCalls: async (calls: readonly { to: Address; data?: Hex; value?: bigint }[]) => encodeCaliburExecuteUserOpCalls(calls),
     getNonce: async () => {
       return readContract(client, {
         abi: entryPoint08Abi,
-        address: entryPoint08Address,
+        address: ENTRYPOINT_V08_ADDRESS,
         functionName: 'getNonce',
         args: [owner.address, 0n],
       });
@@ -164,7 +101,7 @@ export async function createCaliburAccount({
       const chainId = userOperation.chainId ?? (await getChainId(client));
       const typedData = getUserOperationTypedData({
         chainId,
-        entryPointAddress: entryPoint08Address,
+        entryPointAddress: ENTRYPOINT_V08_ADDRESS,
         userOperation: userOperation as never,
       });
       const sig = normalizeSignature(await owner.signTypedData!(typedData as never));

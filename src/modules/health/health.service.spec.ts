@@ -1,5 +1,9 @@
 import { ServiceUnavailableException } from '@nestjs/common';
-import { HealthService, BillingWorkerHealth } from './health.service';
+import { HealthService } from './health.service';
+import type { BillingWorkerHealth } from './health.service';
+import type { ConfigService } from '@nestjs/config';
+import type { PrismaService } from '../../core/database/prisma.service';
+import type { ResilientThrottlerStorage } from '../../common/throttler/resilient-throttler-storage';
 
 describe('HealthService', () => {
   const prisma = {
@@ -14,6 +18,8 @@ describe('HealthService', () => {
   const config = {
     get: jest.fn(),
   };
+  const distributed = { status: 'ok', mode: 'distributed', reason: null } as const;
+  const rateLimitStorage = { getHealth: jest.fn() };
   let service: HealthService;
 
   const row = (overrides: Record<string, unknown> = {}) => ({
@@ -70,7 +76,12 @@ describe('HealthService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new HealthService(prisma as any, config as any);
+    rateLimitStorage.getHealth.mockReturnValue(distributed);
+    // Partial dependency doubles only implement the behavior exercised here.
+    const database = prisma as unknown as PrismaService;
+    const configuration = config as unknown as ConfigService;
+    const limiter = rateLimitStorage as unknown as ResilientThrottlerStorage;
+    service = new HealthService(database, configuration, limiter);
     prisma.$queryRaw.mockResolvedValue([{ '?column?': 1 }]);
     prisma.billingWorkerHeartbeat.findMany.mockResolvedValue([]);
     mockCounts(0);
@@ -87,11 +98,44 @@ describe('HealthService', () => {
     await expect(service.ready()).resolves.toEqual({
       status: 'ok',
       timestamp: expect.any(String),
-      checks: { database: 'ok', billingWorker: disabledShape },
+      checks: { database: 'ok', billingWorker: disabledShape, rateLimit: distributed },
     });
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
     // A disabled worker requires no heartbeat row.
     expect(prisma.billingWorkerHeartbeat.findMany).not.toHaveBeenCalled();
+  });
+
+  it('reports degraded per-instance limiting without evicting an otherwise ready production API', async () => {
+    productionWorkerEnabled();
+    prisma.billingWorkerHeartbeat.findMany.mockResolvedValue([row()]);
+    const degraded = { status: 'degraded', mode: 'memory', reason: 'redis_unavailable' };
+    rateLimitStorage.getHealth.mockReturnValue(degraded);
+
+    await expect(service.ready()).resolves.toMatchObject({
+      status: 'degraded',
+      checks: { database: 'ok', rateLimit: degraded, billingWorker: { status: 'healthy' } },
+    });
+
+    rateLimitStorage.getHealth.mockReturnValue(distributed);
+    await expect(service.ready()).resolves.toMatchObject({
+      status: 'ok',
+      checks: { rateLimit: distributed },
+    });
+  });
+
+  it('does not weaken database or billing readiness while rate limiting is degraded', async () => {
+    productionWorkerEnabled();
+    rateLimitStorage.getHealth.mockReturnValue({
+      status: 'degraded', mode: 'memory', reason: 'redis_unavailable',
+    });
+    prisma.billingWorkerHeartbeat.findMany.mockResolvedValue([row({ status: 'failed' })]);
+    await expect(service.ready()).rejects.toMatchObject({
+      response: { status: 'error', checks: { database: 'ok', rateLimit: { status: 'degraded' } } },
+    });
+    prisma.$queryRaw.mockRejectedValue(new Error('postgresql://user:secret@private/db'));
+    await expect(service.ready()).rejects.toMatchObject({
+      response: { status: 'error', checks: { database: 'unavailable' } },
+    });
   });
 
   it('reports a fresh healthy worker as ready and aggregates needsReviewCount', async () => {

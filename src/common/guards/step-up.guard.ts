@@ -1,5 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 import { StepUpService } from '../../modules/step-up/step-up.service';
 import { STEP_UP_KEY } from '../decorators/step-up.decorator';
 
@@ -7,7 +8,7 @@ import { STEP_UP_KEY } from '../decorators/step-up.decorator';
  * Guard that validates a step-up proof token from the X-Step-Up-Token header.
  * Only activates on routes marked with @RequireStepUp() decorator.
  *
- * The proof token must be valid, not expired, and belong to the authenticated user.
+ * The proof must belong to this exact live, full-MFA application session.
  */
 @Injectable()
 export class StepUpGuard implements CanActivate {
@@ -26,19 +27,20 @@ export class StepUpGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const proofToken = request.headers['x-step-up-token'] as string | undefined;
+    const request = context.switchToHttp().getRequest<Request>();
+    const proofToken = request.headers['x-step-up-token'];
     const userId = request.user?.id;
+    const sessionId = request.appSession?.id;
 
-    if (!proofToken) {
+    if (typeof proofToken !== 'string' || !proofToken) {
       throw new ForbiddenException('Step-up verification required. Provide X-Step-Up-Token header.');
     }
 
-    if (!userId) {
+    if (!userId || !sessionId) {
       throw new ForbiddenException('Authentication required before step-up verification.');
     }
 
-    const isValid = await this.stepUpService.validateProof(proofToken, userId, 'totp_mfa');
+    const isValid = await this.stepUpService.validateProof(proofToken, userId, sessionId, 'totp_mfa');
     if (!isValid) {
       throw new ForbiddenException('Invalid or expired step-up verification. Please verify again.');
     }

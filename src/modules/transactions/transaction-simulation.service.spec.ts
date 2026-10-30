@@ -177,6 +177,20 @@ describe('TransactionSimulationService', () => {
       rpcUrl,
     };
 
+    it('rejects legacy EOA evidence requests before creating an RPC client', async () => {
+      // This fixture implements the only security-event operation used by simulation.
+      const events = securityEvents as unknown as ConstructorParameters<typeof TransactionSimulationService>[0];
+      const service = new TransactionSimulationService(events);
+      // Deliberately bypass the typed request boundary for the fail-closed regression.
+      const legacyInput = { ...baseInput, executionMode: 'eoa' } as unknown as Parameters<
+        TransactionSimulationService['simulateAssetFlowEvidence']
+      >[0];
+      await expect(service.simulateAssetFlowEvidence(legacyInput))
+        .rejects.toBeInstanceOf(AssetFlowSimulationUnavailableError);
+      expect(mockCreatePublicClient).not.toHaveBeenCalled();
+      expect(mockSimulateCalls).not.toHaveBeenCalled();
+    });
+
     function mockSuccessPayload(overrides: Record<string, unknown> = {}) {
       return {
         results: [{ status: 'success', data: '0xdead', gasUsed: 21000n, logs: [] }],

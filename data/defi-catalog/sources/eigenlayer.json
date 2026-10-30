@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "eigenlayer",
+      "familyVersion": "v1-4-1@ef8f9799",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x858646372CC42E1A627fcE94aa7A7033e7CF075A",
+          "status": "inactive",
+          "contractName": "EigenLayer StrategyManager",
+          "sourceRefs": [
+            "eigenlayer-mainnet-deployment",
+            "eigenlayer-strategy-manager-interface",
+            "eigenlayer-contract-implementation"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "depositIntoStrategy",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "strategy",
+                  "type": "address",
+                  "internalType": "contract IStrategy"
+                },
+                {
+                  "name": "token",
+                  "type": "address",
+                  "internalType": "contract IERC20"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "depositShares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "sourceId": "eigenlayer-strategy-manager-interface"
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0x39053D51B77DC0d36036Fc1fCc8Cb819df8Ef37A",
+          "status": "inactive",
+          "contractName": "EigenLayer DelegationManager",
+          "sourceRefs": [
+            "eigenlayer-mainnet-deployment",
+            "eigenlayer-delegation-manager-interface",
+            "eigenlayer-contract-implementation"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "queueWithdrawals",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "params",
+                  "type": "tuple[]",
+                  "internalType": "struct IDelegationManagerTypes.QueuedWithdrawalParams[]",
+                  "components": [
+                    {
+                      "name": "strategies",
+                      "type": "address[]",
+                      "internalType": "contract IStrategy[]"
+                    },
+                    {
+                      "name": "depositShares",
+                      "type": "uint256[]",
+                      "internalType": "uint256[]"
+                    },
+                    {
+                      "name": "__deprecated_withdrawer",
+                      "type": "address",
+                      "internalType": "address"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "bytes32[]",
+                  "internalType": "bytes32[]"
+                }
+              ],
+              "sourceId": "eigenlayer-delegation-manager-interface"
+            },
+            {
+              "type": "function",
+              "name": "completeQueuedWithdrawal",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "withdrawal",
+                  "type": "tuple",
+                  "internalType": "struct IDelegationManagerTypes.Withdrawal",
+                  "components": [
+                    {
+                      "name": "staker",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "delegatedTo",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "withdrawer",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "nonce",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "startBlock",
+                      "type": "uint32",
+                      "internalType": "uint32"
+                    },
+                    {
+                      "name": "strategies",
+                      "type": "address[]",
+                      "internalType": "contract IStrategy[]"
+                    },
+                    {
+                      "name": "scaledShares",
+                      "type": "uint256[]",
+                      "internalType": "uint256[]"
+                    }
+                  ]
+                },
+                {
+                  "name": "tokens",
+                  "type": "address[]",
+                  "internalType": "contract IERC20[]"
+                },
+                {
+                  "name": "receiveAsTokens",
+                  "type": "bool",
+                  "internalType": "bool"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "eigenlayer-delegation-manager-interface"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "eigenlayer-mainnet-deployment",
+      "url": "https://github.com/Layr-Labs/eigenlayer-contracts/blob/ef8f97992241338cb88335b9d74295e33321b780/script/configs/mainnet/mainnet-addresses.config.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official mainnet address config identifies chainId 1, deploymentBlock 22434239, semver v1.4.1, StrategyManager proxy 0x858646372CC42E1A627fcE94aa7A7033e7CF075A, and DelegationManager proxy 0x39053D51B77DC0d36036Fc1fCc8Cb819df8Ef37A. The separately listed stETH strategy is metadata and not a capability."
+    },
+    {
+      "sourceId": "eigenlayer-strategy-manager-interface",
+      "url": "https://github.com/Layr-Labs/eigenlayer-contracts/blob/ef8f97992241338cb88335b9d74295e33321b780/src/contracts/interfaces/IStrategyManager.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned IStrategyManager declares the selected nonpayable depositIntoStrategy(IStrategy,IERC20,uint256) returning depositShares. Other deposit/withdraw methods excluded."
+    },
+    {
+      "sourceId": "eigenlayer-delegation-manager-interface",
+      "url": "https://github.com/Layr-Labs/eigenlayer-contracts/blob/ef8f97992241338cb88335b9d74295e33321b780/src/contracts/interfaces/IDelegationManager.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned IDelegationManager and IDelegationManagerTypes declare the selected nonpayable queueWithdrawals(QueuedWithdrawalParams[]) returning bytes32[] and completeQueuedWithdrawal(Withdrawal,address[],bool) with no outputs. Full tuple fields and contract-array internalTypes retained."
+    },
+    {
+      "sourceId": "eigenlayer-contract-implementation",
+      "url": "https://github.com/Layr-Labs/eigenlayer-contracts/blob/ef8f97992241338cb88335b9d74295e33321b780/src/contracts/core/DelegationManager.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned DelegationManager implementation informs intrinsic protocol queue, delay/slashing, and completion caller/staker requirements; inclusion does not add platform owner, strategy, or financial constraints and does not certify any withdrawal lifecycle."
+    }
+  ]
+}

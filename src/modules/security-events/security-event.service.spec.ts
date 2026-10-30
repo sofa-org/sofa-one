@@ -209,6 +209,18 @@ describe('SecurityEventService', () => {
     expect(exporter.exportSecurityEvent).toHaveBeenCalledWith(event);
   });
 
+  it('defers transactional SIEM export until the caller confirms commit', async () => {
+    const event = { id: 'event-deferred', eventType: 'defi.capability_allowed' };
+    const tx = { securityEvent: { create: jest.fn().mockResolvedValue(event) } };
+    service = new SecurityEventService(prisma as never, requestContext as never, undefined, undefined, exporter as never);
+
+    const created = await service.record({ actorType: 'api_key', eventType: 'defi.capability_allowed' }, tx, { deferExport: true });
+    expect(created).toEqual(event);
+    expect(exporter.exportSecurityEvent).not.toHaveBeenCalled();
+    await service.exportCommitted(created);
+    expect(exporter.exportSecurityEvent).toHaveBeenCalledWith(event);
+  });
+
   it('does not fail security-event writes when SIEM export fails', async () => {
     const event = {
       id: 'event-7',

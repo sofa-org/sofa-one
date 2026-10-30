@@ -14,6 +14,7 @@ type ExceptionResponse = {
   code?: string;
   error?: string;
   message?: string | string[];
+  retryAfterSeconds?: unknown;
 };
 
 @Catch()
@@ -32,6 +33,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const exceptionResponse =
       exception instanceof HttpException ? exception.getResponse() : 'Internal server error';
     const payload = this.toPayload(status, exceptionResponse);
+
+    if (status === HttpStatus.TOO_MANY_REQUESTS && 'retryAfterSeconds' in payload) {
+      response.setHeader?.('Retry-After', String(payload.retryAfterSeconds));
+    }
 
     if (status >= 500) {
       this.logger.error(
@@ -73,10 +78,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // so it can correctly identify validation errors
     const codeSource: string | string[] = details ?? String(rawMessage);
 
+    const retryAfterSeconds = status === HttpStatus.TOO_MANY_REQUESTS && Number.isFinite(response.retryAfterSeconds) && Number.isInteger(response.retryAfterSeconds) && Number(response.retryAfterSeconds) > 0
+      ? Number(response.retryAfterSeconds)
+      : undefined;
     return {
       code: response.code ?? resolveApiErrorCode(status, codeSource),
       message,
       ...(details ? { details } : {}),
+      ...(retryAfterSeconds !== undefined ? { retryAfterSeconds } : {}),
     };
   }
 }

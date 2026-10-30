@@ -8,11 +8,11 @@ validated environment configuration into a running application exposing two dist
 surfaces:
 
 - **Public API-key surface** (documented in `openapi.yaml`): `POST /v1/wallets/sign`,
-  `POST /v1/transactions/send`, `GET /v1/transactions/:id` — programmatic, authenticated
+  `POST /v1/transactions`, `GET /v1/transactions/:id`, `GET /v1/wallets` — programmatic, authenticated
   by `X-API-Key`.
 - **Frontend-only dashboard surface** (intentionally omitted from `openapi.yaml`): wallet
-  balances/deposit/withdraw, API-key management, billing, MFA, security notifications,
-  auth/onboarding — authenticated by Openfort IAM bearer token plus origin/referer checks.
+  balances/deposit/withdraw, API-key management and DeFi bundle metadata, billing, MFA, security notifications,
+  auth/onboarding — authenticated by local application-session cookie/MFA plus Origin/CSRF; Openfort bearer is only explicit login/wallet identity proof.
 
 The root owns no business logic itself; it composes the layers below (`config`, `common`,
 `core`, `modules`, `types`) and enforces cross-cutting concerns (validation, error
@@ -28,7 +28,7 @@ formatting, throttling, request correlation) globally.
 | `config/` | Single source of truth for env vars: `configuration.ts` factory + `env.validation.ts` fail-fast class-validator schema. |
 | `common/` | Shared cross-cutting building blocks: guards, decorators, filters, middleware, throttler, request-context, utils, errors, chains, calibur, api-key, agent. |
 | `core/` | Infrastructure layer: `database/` (Prisma global module) and `openfort/` (Openfort SDK + viem/ERC-4337 facade). |
-| `modules/` | Feature modules: auth, api-key, wallet, transactions, health, step-up, mfa, security-events, security-notifications, billing, eoa-execution, session-key. |
+| `modules/` | Feature modules including app-session (opaque cookie/session lifecycle), auth/onboarding, MFA/step-up, API keys, wallets, transactions, billing and security. |
 | `types/` | Global ambient Express type augmentation (`express.d.ts`) for request-scoped fields. |
 | `scripts/recover-wallet-provisioning.ts` | Operator-only recovery utility for binding an existing provider account to its provisioning intent; outside NestJS and not an HTTP endpoint. |
 
@@ -57,11 +57,8 @@ formatting, throttling, request correlation) globally.
   `validateSync`; any invalid/missing required env aborts startup. Optional integrations
   (Stripe, USDC billing, SIEM/step-up webhooks) are validated whenever present but required
   only when their feature flag is enabled (fail-closed, never silently disabled).
-- **Three distinct auth models** (in `common/guards`): `OpenfortUserGuard` (dashboard, IAM
-  bearer only), `ApiKeyAuthGuard` (public, `X-API-Key` only, with Argon2id prefix-candidate
-  verification, freeze/IP-allowlist/suspicious-use checks, and durable billing metering),
-  and `EitherAuthGuard` (legacy dual-auth, currently unused in production controllers).
-  Public routes never accept IAM tokens; dashboard routes never accept API keys.
+- **Separate authentication audiences**: AppSessionGuard resolves local dashboard cookies and requires MFA; ApiKeyAuthGuard handles public X-API-Key only. OpenfortAuthGuard verifies provider identity only at login exchange/fresh wallet authorization.
+- Pending MFA has an explicit bootstrap allowlist; unsafe cookie requests independently require trusted Origin and CSRF. Public API routes reject cookie/IAM substitutes.
 - **Metadata-driven access control.** Thin decorators (`@Public()`, `@FrontendOnly()`,
   `@RequireStepUp()`, `@RequireApiKeyPermission()`, `@CurrentUser()`) stamp metadata that
   guards read via `Reflector`; enforcement lives in guards/services, not decorators.
@@ -70,6 +67,7 @@ formatting, throttling, request correlation) globally.
   `EoaExecutionPolicyService`, `SessionKeyPolicyService`) isolate high-risk rules and record
   `SecurityEvent` telemetry; `@Optional()` injection lets optional security/billing services
   degrade gracefully (never fail-open).
+- **DeFi catalog and scoped authorization.** Production loads the generated static v3 catalog: 349 exact functions (326 actions, 23 independent approvals), preserving all 315 M2 definitions and adding 34 source-qualified functions. Thirteen closed scopes cover seven same-target NPM multicall wrappers and six empty-callback Morpho methods. Nine literal version 1.0.0 profiles contain 75 unique IDs and never auto-grant. The IAM/frontend-only `GET /defi-capability-bundles` is omitted from public OpenAPI; key grant mutation retains its existing explicit replacement and step-up. The mandatory final M3 gate remains pending. The current M3 coverage projection is `FALSE`: nine target-scoped function rows are complete and seven are population-incomplete, not nine complete products. Historical M2 market/workflow data remain preserved; 144 workflow rows is an M2 snapshot, not an M3 result. See [`majority-catalog-v3.md`](../docs/defi-research/majority-catalog-v3.md), [`majority-m2-delivery.md`](../docs/defi-research/majority-m2-delivery.md), and the [capability matrix](../docs/defi-capability-matrix.md).
 - **Unified security telemetry.** `security-events` is the single write path for
   `security_events` rows, with deterministic rule-based risk scoring (`SecurityRiskService`),
   multi-factor risk evaluation + enforcement (`RiskEvaluationService`), dashboard alert
@@ -79,9 +77,9 @@ formatting, throttling, request correlation) globally.
   returns a standardized `{ statusCode, code, message, requestId, timestamp, path }` envelope
   with sanitized messages (no hashes/URLs/paths/stacks leak).
 - **Resilient throttling.** `ResilientThrottlerStorage` uses Redis when available and
-  fail-closed to in-memory otherwise; `ApiKeyThrottlerGuard` buckets by API-key prefix (or IP
-  for JWT auth); named `short` (20/10s) and `medium` (100/60s) throttlers with route-level
-  overrides.
+  degrades to per-instance memory limits otherwise; this does not preserve a global
+  distributed limit. `ApiKeyThrottlerGuard` buckets by API-key prefix or client IP;
+  named `short` (20/10s) and `medium` (100/60s) throttlers have route-level overrides.
 
 ## Flow
 
@@ -96,13 +94,13 @@ formatting, throttling, request correlation) globally.
 3. **Public API-key path** (`sign`/`send`/`status`): `ApiKeyAuthGuard` (Argon2 verify every
    prefix candidate, reject frozen, IP allowlist, suspicious-use freeze, billing metering) →
    `ApiKeyPermissionGuard` (`canSign`/`canSendTransaction`/`canReadTransactionStatus`) →
-   service re-asserts permission → execution-mode strategy (`session_key` via Calibur agent
-   UserOp, or `eoa` via backend EOA gated by `EoaExecutionPolicyService`) → policy checks →
-   risk evaluation → wallet/chain-authorization readiness → idempotency → optional simulation
-   → Openfort submission → safe response shaping.
+   service re-asserts permission → sends require the user's registered, unexpired
+   Calibur session key and submit a UserOperation; restricted EOA typed-data signing
+   remains a separate policy-gated, non-broadcast path. Risk, grants, freeze,
+   destination/billing checks, idempotency and safe response shaping remain enforced.
 4. **Dashboard path** (wallets, transactions history, billing, MFA, API-key mgmt, security
-   notifications, auth): `OpenfortUserGuard` + `FrontendOnlyGuard`; sensitive routes
-   (withdraw, withdrawal-addresses, API-key create/revoke, refresh-api-key, step-up) add
+   notifications, auth): `AppSessionGuard` + `FrontendOnlyGuard`; sensitive routes
+    (withdrawals, withdrawal-addresses, API-key mutations/rotation, step-up) add
    `StepUpGuard` (TOTP proof via `X-Step-Up-Token`).
 5. **Cross-domain data flow.** Auth provisions `User`/`UserWallet`/`WalletChainAuthorization`
    (agent-key registration state machine `registration_required → pending_registration →
@@ -139,13 +137,14 @@ formatting, throttling, request correlation) globally.
   delegated to the Openfort TEE; the backend only holds agent-key hashes and Calibur key
   hashes.
 - **Access-control split is enforced.** Public API-key routes are the only ones in
-  `openapi.yaml`; frontend-only routes require IAM bearer + `FrontendOnlyGuard` origin/referer
+  openapi.yaml; frontend-only routes require local MFA cookies plus FrontendOnlyGuard/unsafe CSRF
   checks; API-key management is never callable by API keys; `FrontendOnlyGuard` is never added
   to public routes.
-- **Fail-closed everywhere.** Env validation aborts startup; trust-proxy/CORS required in
-  production; throttling falls back to in-memory (never bypassed); on-chain session-key and
-  EOA policy checks deny on RPC/policy unavailability; billing metering blocks (503) if it
-  cannot persist and surfaces quota as 429.
+- **Fail-closed authorization and persistence.** Env validation aborts startup;
+  trust-proxy/CORS are required in production; on-chain session-key and EOA policy
+  checks deny on RPC/policy unavailability; billing metering blocks (503) if it cannot
+  persist and surfaces quota as 429. Redis loss degrades to per-instance throttling,
+  not globally fail-closed rate limiting. Shutdown signals invoke Nest cleanup hooks.
 - **Safe responses and telemetry.** Public transaction status never exposes calldata,
   `requestHash`, or `interactionsHash`; error messages are sanitized; security-event metadata
   and SIEM payloads never contain raw keys, secrets, full calldata/typed data, or signatures.

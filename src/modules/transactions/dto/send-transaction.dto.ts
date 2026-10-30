@@ -13,9 +13,10 @@ import {
   ValidateNested,
   IsIn,
   IsUUID,
+  ValidateIf,
 } from 'class-validator';
 
-export type ExecutionMode = 'session_key' | 'eoa';
+export type ExecutionMode = 'session_key';
 export type SponsorshipMode = 'required' | 'none';
 
 export const MAX_TRANSACTION_INTERACTIONS = 10;
@@ -50,10 +51,10 @@ export class SendTransactionDto {
   @IsUUID()
   walletId?: string;
 
-  /** Which backend wallet authority executes: session key (default) or the user's EOA backend wallet. */
-  @IsOptional()
-  @IsIn(['session_key', 'eoa'], {
-    message: 'executionMode must be session_key or eoa',
+  /** Calibur session-key execution only; omission defaults to session_key. */
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsIn(['session_key'], {
+    message: 'executionMode must be session_key',
   })
   executionMode?: ExecutionMode;
 

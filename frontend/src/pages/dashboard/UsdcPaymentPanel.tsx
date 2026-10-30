@@ -534,13 +534,12 @@ function walletPayStatusDisplay(result: UsdcWalletPayResult): {
 
 interface UsdcPaymentPanelProps {
   invoice: BillingInvoice;
-  getToken: () => Promise<string | null>;
   onChange: () => Promise<boolean> | boolean;
   wallets?: Array<{ id: string; walletAddress: string | null; isDefault?: boolean; status: string }>;
   walletChoicesError?: string | null;
 }
 
-export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], walletChoicesError }: UsdcPaymentPanelProps) {
+export function UsdcPaymentPanel({ invoice, onChange, wallets = [], walletChoicesError }: UsdcPaymentPanelProps) {
   const [payerWalletId, setPayerWalletId] = useState(() => wallets.length === 1 ? wallets[0].id : '');
   const payerChoices = wallets.filter((wallet) => wallet.walletAddress && wallet.status === 'active');
   const payerChoiceSignature = payerChoices.map((wallet) => wallet.id).join(',');
@@ -725,12 +724,9 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
       if (opts?.showSpinner) setStatusRefreshing(true);
 
       try {
-        const data = await getUsdcPaymentStatusAuth(
-          getToken,
-          invoice.id,
-          paymentAttemptId,
-          opts?.signal,
-        );
+        const data = await getUsdcPaymentStatusAuth(invoice.id,
+        paymentAttemptId,
+        opts?.signal,);
         if (opts?.signal?.aborted) return null;
         if (requestId !== statusRequestIdRef.current) return null;
         if (!isMountedRef.current) return null;
@@ -751,7 +747,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
         }
       }
     },
-    [applyWalletPayResult, enterPaymentRecovery, getToken, invoice.id],
+    [applyWalletPayResult, enterPaymentRecovery, invoice.id],
   );
 
   const startStatusPolling = useCallback(
@@ -812,7 +808,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
       setInvoiceStatusError(null);
 
       try {
-        const data = await getInvoicePaymentStatusAuth(getToken, invoice.id, signal);
+        const data = await getInvoicePaymentStatusAuth(invoice.id, signal);
         if (signal?.aborted) return null;
         if (requestId !== invoiceStatusRequestIdRef.current) return null;
         if (!isMountedRef.current) return null;
@@ -853,7 +849,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
         }
       }
     },
-    [getToken, invoice.id, onChange],
+    [invoice.id, onChange],
   );
 
   // On open/refresh: restore server payment state only — never auto-create a quote.
@@ -954,7 +950,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
           return;
         }
 
-        const data = await createUsdcQuoteAuth(getToken, invoice.id, selectedChainId, signal, payerId || undefined);
+        const data = await createUsdcQuoteAuth(invoice.id, selectedChainId, signal, payerId || undefined);
         if (signal?.aborted) return;
         if (requestId !== quoteRequestIdRef.current) return; // stale response
         if (payerSelectionRef.current.signature !== choicesSnapshot || payerSelectionRef.current.id !== payerSnapshot.id) return;
@@ -964,12 +960,9 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
 
         // Restore reserved/in-flight wallet payment from server status (no auto-submit).
         try {
-          const status = await getUsdcPaymentStatusAuth(
-            getToken,
-            invoice.id,
-            data.paymentAttemptId,
-            signal,
-          );
+          const status = await getUsdcPaymentStatusAuth(invoice.id,
+          data.paymentAttemptId,
+          signal,);
           if (signal?.aborted) return;
           if (requestId !== quoteRequestIdRef.current) return;
           if (!isMountedRef.current) return;
@@ -1018,7 +1011,6 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
       applyWalletPayResult,
       clearPaymentRecovery,
       enterPaymentRecovery,
-      getToken,
       invoice.id,
       isActiveWalletPayment,
       loadInvoicePaymentStatus,
@@ -1060,17 +1052,14 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
       // Reuse session proof when valid; otherwise prompt via existing step-up helper.
       let stepUpToken = getDashboardStepUpToken();
       if (!stepUpToken) {
-        stepUpToken = await requestStepUpToken(getToken);
+        stepUpToken = await requestStepUpToken();
       }
       if (!stepUpToken) {
         throw new Error('Step-up verification cancelled.');
       }
-      const data = await payUsdcFromWalletAuth(
-        getToken,
-        invoice.id,
-        quote.paymentAttemptId,
-        stepUpToken,
-      );
+      const data = await payUsdcFromWalletAuth(invoice.id,
+      quote.paymentAttemptId,
+      stepUpToken,);
       if (!isMountedRef.current) return;
 
       const applied = applyWalletPayResult(data);
@@ -1173,7 +1162,6 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
     clearPaymentRecovery,
     enterPaymentRecovery,
     fetchPaymentStatus,
-    getToken,
     invoice.id,
     onChange,
     quote,
@@ -1229,7 +1217,7 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
       setClaimError(null);
 
       try {
-        const result = await cancelUsdcQuoteAuth(getToken, invoice.id, paymentAttemptId);
+        const result = await cancelUsdcQuoteAuth(invoice.id, paymentAttemptId);
         if (!isMountedRef.current) return;
 
         // Success: clear local quote/attempt UI and refresh server payment status.
@@ -1300,7 +1288,6 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
       claimLoading,
       clearPaymentRecovery,
       fetchPaymentStatus,
-      getToken,
       invoice.id,
       loadInvoicePaymentStatus,
       onChange,
@@ -1322,12 +1309,9 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
       setClaimResult(null);
       setWalletPayError(null);
       try {
-        const data = await createUsdcClaimAuth(
-          getToken,
-          invoice.id,
-          quote.paymentAttemptId,
-          txHash.trim(),
-        );
+        const data = await createUsdcClaimAuth(invoice.id,
+        quote.paymentAttemptId,
+        txHash.trim(),);
         setClaimResult(data);
         // Refresh invoice list after claim; only claimResult.paid drives settlement copy.
         void onChange();
@@ -1413,7 +1397,6 @@ export function UsdcPaymentPanel({ invoice, getToken, onChange, wallets = [], wa
     },
     [
       fetchPaymentStatus,
-      getToken,
       invoice.id,
       onChange,
       quote,

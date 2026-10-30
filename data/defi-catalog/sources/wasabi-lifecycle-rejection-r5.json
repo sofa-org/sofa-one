@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Wasabi",
+  "reviewedAt": "2026-10-24",
+  "batch": 50,
+  "status": "rejected",
+  "reason": "The current official application explicitly reports an exploit affecting Wasabi's EVM deployments and states deposits and trading are paused. The catalog lifecycle policy excludes hacked frozen/recovery-only products. No supported-chain maintained replacement deployment was established; unsupported Solana is not a fallback.",
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://app.wasabi.xyz/earn?vault=sUSDC&network=base",
+      "observedAt": "2026-10-24",
+      "sourceType": "current official rendered application, accessed without wallet connection",
+      "observation": "Wasabi deployments on EVM chains was exploited on April 30. Deposits and trading paused. Read latest update.",
+      "noticeLink": "https://x.com/wasabi_protocol",
+      "context": "The current official marketing homepage still advertises trading and earning, but the actual linked EVM application presents this explicit exploit/paused notice. No funds were deposited and no transactions were executed."
+    },
+    {
+      "sourceRef": "https://docs.wasabi.xyz/_/overview/technical-documentation/smart-contracts.md",
+      "observedAt": "2026-10-24",
+      "sourceType": "official deployment documentation",
+      "observation": "The docs list long and short pools on Ethereum and Base, as well as unsupported Blast, Berachain and Solana. The active app's EVM-wide exploit/pause notice overrides treating these historical deployment references alone as evidence of maintained financial operations.",
+      "limitations": ["No listed address was inventoried or admitted as a callable target."]
+    }
+  ],
+  "sourceRefs": [
+    "https://wasabi.xyz/",
+    "https://app.wasabi.xyz/earn?vault=sUSDC&network=base",
+    "https://docs.wasabi.xyz/_/overview/technical-documentation/smart-contracts.md"
+  ],
+  "selectedFunctions": [],
+  "allFunctionDecisions": [],
+  "contracts": [],
+  "scope": "Primary-notice lifecycle exclusion, not a claim of team disbandment, protocol-wide permanent shutdown, full exploit forensics, live balances or future recovery status. No source ABI or persistent runtime attestation is claimed."
+}
