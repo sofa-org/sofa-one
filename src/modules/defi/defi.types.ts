@@ -36,7 +36,8 @@ export type DefiExecutionScope =
   | Readonly<{ kind: 'enso-static-weiroll-v1'; allowedChildren: readonly EnsoStaticWeirollChildBinding[] }>
   | Readonly<{ kind: 'polymarket-pusd-wrap-v1'; asset: string; recipientPolicy: 'withdrawal-allowlist-v1' }>
   | Readonly<{ kind: 'uniswap-universal-router-2.1.2-v1' }>
-  | Readonly<{ kind: 'uniswap-v4-position-manager-v1' }>;
+  | Readonly<{ kind: 'uniswap-v4-position-manager-v1' }>
+  | Readonly<{ kind: 'uniswap-v4-position-manager-primitive-v1' }>;
 
 export type MulticallChildBinding = Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>;
 export type FinancialMulticallChildBinding = MulticallChildBinding & Readonly<{ executionScopeHash?: `0x${string}` }>;

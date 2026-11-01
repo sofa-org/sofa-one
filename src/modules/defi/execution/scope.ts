@@ -179,7 +179,7 @@ export function executionScopeHash(scope: DefiExecutionScope): `0x${string}` {
     }).sort((a, b) => cmp(a.capabilityId, b.capabilityId));
     if (children.length !== ENSO_STATIC_WEIROLL_CHILD_IDENTITIES.length || new Set(children.map((child) => child.capabilityId)).size !== children.length) throw new TypeError('Invalid DeFi execution scope');
     normalized = { kind: scope.kind, allowedChildren: children };
-  } else if (scope.kind === 'uniswap-universal-router-2.1.2-v1' || scope.kind === 'uniswap-v4-position-manager-v1') {
+  } else if (scope.kind === 'uniswap-universal-router-2.1.2-v1' || scope.kind === 'uniswap-v4-position-manager-v1' || scope.kind === 'uniswap-v4-position-manager-primitive-v1') {
     if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid Uniswap execution scope');
     normalized = { kind: scope.kind };
   } else if (scope.kind === 'polymarket-pusd-wrap-v1') {

@@ -19,7 +19,7 @@ const mint = (recipient = OWNER): Hex => encodeFunctionData({ abi: [UNISWAP_V4_P
   enc('address,address', [ZERO, OWNER]),
 ]]), 2_000_000_000n] });
 const context = (chainId = 1): DefiExecutionContext => ({ userId: 'user', walletId: 'wallet', apiKeyId: '00000000-0000-4000-8000-000000000001', chainId, executionMode: 'session_key', executionOwner: OWNER, capabilityMode: 'all', allowedCapabilityIds: [] });
-const capability = (chainId: number, contract: string) => PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.chainId === chainId && fn.contract.toLowerCase() === contract)!;
+const capability = (chainId: number, contract: string) => PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.chainId === chainId && fn.contract.toLowerCase() === contract && fn.signature === (contract === UNISWAP_DEPLOYMENTS[chainId].router ? 'execute(bytes,bytes[],uint256)' : 'modifyLiquidities(bytes,uint256)'))!;
 function setup() {
   const state = { id: 'global', pausedScopeKeys: [] as string[] };
   const key = { userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, capabilityMode: 'all', allowedCapabilityIds: [] as string[] };

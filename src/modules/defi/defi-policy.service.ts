@@ -18,6 +18,7 @@ import { polymarketDepositBatchDigest, validatePolymarketDepositBatch, type Vali
 import { assertCapabilityConfiguration, hasCapability, normalizeCapabilityMode } from './capability-grants';
 import { validateUniversalRouter } from './execution/uniswap-router';
 import { validateV4PositionManager } from './execution/uniswap-v4';
+import { validateV4PositionManagerPrimitive } from './execution/uniswap-v4-primitive';
 import { uniswapIdentityKind, validateUniswapBinding } from './execution/uniswap-identity';
 import type { UniswapExecutionResult } from './execution/uniswap-deployments';
 
@@ -305,6 +306,18 @@ export class DefiPolicyService {
         nodes.push(...this.expandExecution(interaction, child, context, [...path, index], alreadyPlanned + nodes.length, uniswapPlan, context.executionOwner));
       }
       return nodes;
+    }
+    if (scope?.kind === 'uniswap-v4-position-manager-primitive-v1') {
+      if (path.length !== 1 || callerAddress !== undefined) this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, rootFn);
+      this.assertNativeValue(root, rootFn, context);
+      let parsed: UniswapExecutionResult;
+      try {
+        parsed = validateV4PositionManagerPrimitive(root.data, rootFn.signature, { chainId: context.chainId, executionOwner: context.executionOwner, nativeValue: BigInt(root.value ?? '0') });
+      } catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
+      uniswapPlan.operations += parsed.operationCount;
+      if (uniswapPlan.operations > 64 || alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      for (const target of parsed.touchedContracts) uniswapPlan.targets.add(target.toLowerCase());
+      return [rootNode];
     }
     if (uniswapKind) {
       this.assertNativeValue(root, rootFn, context);

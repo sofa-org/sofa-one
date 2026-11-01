@@ -41202,6 +41202,49 @@
         "abi": [
           {
             "type": "function",
+            "name": "initializePool",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "currency0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "currency1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickSpacing",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "hooks",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "int24"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "modifyLiquidities",
             "stateMutability": "payable",
             "inputs": [
@@ -41232,6 +41275,70 @@
                 "type": "bytes[]"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -59082,6 +59189,49 @@
         "abi": [
           {
             "type": "function",
+            "name": "initializePool",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "currency0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "currency1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickSpacing",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "hooks",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "int24"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "modifyLiquidities",
             "stateMutability": "payable",
             "inputs": [
@@ -59112,6 +59262,70 @@
                 "type": "bytes[]"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -75399,6 +75613,49 @@
         "abi": [
           {
             "type": "function",
+            "name": "initializePool",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "currency0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "currency1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickSpacing",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "hooks",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "int24"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "modifyLiquidities",
             "stateMutability": "payable",
             "inputs": [
@@ -75429,6 +75686,70 @@
                 "type": "bytes[]"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -84094,6 +84415,49 @@
         "abi": [
           {
             "type": "function",
+            "name": "initializePool",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "currency0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "currency1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickSpacing",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "hooks",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "int24"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "modifyLiquidities",
             "stateMutability": "payable",
             "inputs": [
@@ -84124,6 +84488,70 @@
                 "type": "bytes[]"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -94390,6 +94818,49 @@
         "abi": [
           {
             "type": "function",
+            "name": "initializePool",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "currency0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "currency1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickSpacing",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "hooks",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "int24"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "modifyLiquidities",
             "stateMutability": "payable",
             "inputs": [
@@ -94420,6 +94891,70 @@
                 "type": "bytes[]"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -113081,6 +113616,49 @@
         "abi": [
           {
             "type": "function",
+            "name": "initializePool",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "currency0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "currency1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickSpacing",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "hooks",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "int24"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "modifyLiquidities",
             "stateMutability": "payable",
             "inputs": [
@@ -113111,6 +113689,70 @@
                 "type": "bytes[]"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -142938,6 +143580,49 @@
         "abi": [
           {
             "type": "function",
+            "name": "initializePool",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "key",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "currency0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "currency1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickSpacing",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "hooks",
+                    "type": "address"
+                  }
+                ]
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "int24"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "modifyLiquidities",
             "stateMutability": "payable",
             "inputs": [
@@ -142968,6 +143653,70 @@
                 "type": "bytes[]"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "id",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },

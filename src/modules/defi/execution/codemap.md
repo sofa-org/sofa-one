@@ -13,6 +13,11 @@ provider or financial-safety responsibilities.
 - `uniswap-identity.ts` reserves the known router/position-manager identities;
   the Uniswap wire/action decoders retain their own shared 64-operation budget,
   recipient, hook-data, settlement, full-drain and touched-target rules.
+- `uniswap-v4-primitive.ts` binds direct-only pool initialization and incoming
+  approved NFT transfers to exact PM ABIs, zero native value, hookless keys,
+  wallet-only NFT recipients and empty safe-transfer bytes. PoolManager and
+  supplied initialization currencies join initial/final pause checks; stored
+  subscribers and receiver callbacks remain possible.
 
 Finite self-delegatecall wrappers bind same-chain/same-target active children
 by capability ID, ABI hash and, where applicable, execution-scope hash.
