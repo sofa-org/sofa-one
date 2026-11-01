@@ -1581,3 +1581,15 @@ The same review removes every capability at the two officially deprecated Polygo
 
 Verification: scoped non-fixing ESLint, generate/check and six targeted suites (80 tests) passed. Production-policy/public-download smoke authorized and final-rechecked all 105 additions with 765 expected denials, including cross-chain peer-grant isolation and nonempty callback rejection. The existing Morpho execution test's obsolete inventory pin was deleted; meaningful native-value, callback and final-recheck coverage now also handles liquidation. Full verify/build/E2E, real database locking, funded execution and Openfort broadcast were not run.
 
+## Supported-protocol continuation, cycle 13 — fixed financial and liquidity interfaces (2026-11-01)
+
+Three independently reviewed evidence records add 281 functions: 66 in `sources/sushi-v3-liquidity-capability-support.json`, 144 in `sources/pancake-supported-deployment-parity.json`, and 71 in `sources/pendle-supported-deployment-parity.json`.
+
+Sushi V3 adds 11 ordinary liquidity/lifecycle methods at each of six official position managers, including explicit pool initialization, custody settlement and standard NFT transfer with empty receiver data. Pancake closes its maintained supported-chain V2/router/position-manager maps and direct financial helper variants. Pendle closes its finite RouterV3 map, resolves actual selector-to-facet dispatch at recorded blocks, and includes fixed-typed Simple methods while preserving their internal-use/interface-instability notices.
+
+Actual source qualifications are retained: notably Pancake Base's position manager is runtime-only `match` with no creation match and a Similar Match/constructor caveat; Monad bindings use each exact explorer deployment, not copied cross-chain ABI. Pendle's installed facets can differ from the static official map; independently resolved dispatch evidence is authoritative for the reviewed selector inventory. Existing closed multicall children, grants, profiles and execution languages are not expanded.
+
+The generator rejected incorrect SHA256-derived runtime ABI hashes and overlength unpublished Pancake IDs during integration. Only new policy hash fields/IDs were corrected: runtime hashes remain generator-derived Keccak-256 and new IDs fit the unchanged 160-character limit. Existing IDs, fixed ABIs, fingerprints and scopes are preserved; no validator was relaxed.
+
+Verification: generate/check, eight targeted suites (90 tests), and production-policy/public-download smoke passed all 281 additions with 1829 expected denials. Three obsolete existing Pancake helper-exclusion warnings were then corrected without changing ABI/authority; regeneration/check and the real catalog metadata service confirmed the corrected copy. Full verify/build/E2E, real database locking, funded execution and Openfort broadcast were not run.
+
