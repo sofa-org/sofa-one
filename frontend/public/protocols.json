@@ -2439,6 +2439,27 @@
           },
           {
             "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "redeem",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -10561,6 +10582,31 @@
           },
           {
             "type": "function",
+            "name": "liquidateBorrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "repayAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "cTokenCollateral",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "mint",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -10656,6 +10702,46 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "supply",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -10672,9 +10758,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -11293,6 +11511,58 @@
         "address": "0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b",
         "protocol": "compound-v2",
         "abi": [
+          {
+            "type": "function",
+            "name": "claimComp",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "holder",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimComp",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "holder",
+                "type": "address"
+              },
+              {
+                "name": "cTokens",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimComp",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "holders",
+                "type": "address[]"
+              },
+              {
+                "name": "cTokens",
+                "type": "address[]"
+              },
+              {
+                "name": "borrowers",
+                "type": "bool"
+              },
+              {
+                "name": "suppliers",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
           {
             "type": "function",
             "name": "enterMarkets",
@@ -12781,6 +13051,22 @@
           },
           {
             "type": "function",
+            "name": "liquidateBorrow",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "cTokenCollateral",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "mint",
             "stateMutability": "payable",
             "inputs": [],
@@ -12825,6 +13111,18 @@
             "name": "repayBorrow",
             "stateMutability": "payable",
             "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "repayBorrowBehalf",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "borrower",
+                "type": "address"
+              }
+            ],
             "outputs": []
           }
         ]
@@ -14674,6 +14972,31 @@
           },
           {
             "type": "function",
+            "name": "liquidateBorrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "repayAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "cTokenCollateral",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "mint",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -15916,6 +16239,41 @@
         "abi": [
           {
             "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "exactInputSingle",
             "stateMutability": "payable",
             "inputs": [
@@ -15957,6 +16315,146 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapTokensForExactTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "amountInMax",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
                 "type": "uint256"
               }
             ]
@@ -23575,6 +24073,46 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "supply",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -23591,9 +24129,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -28460,6 +29130,40 @@
           },
           {
             "type": "function",
+            "name": "manageUserBalance",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "ops",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "asset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "swap",
             "stateMutability": "payable",
             "inputs": [
@@ -29287,6 +29991,68 @@
           },
           {
             "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "max_loss",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "max_loss",
+                "type": "uint256"
+              },
+              {
+                "name": "strategies",
+                "type": "address[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -29301,6 +30067,68 @@
               {
                 "name": "owner",
                 "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "max_loss",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              },
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "max_loss",
+                "type": "uint256"
+              },
+              {
+                "name": "strategies",
+                "type": "address[]"
               }
             ],
             "outputs": [
@@ -30866,6 +31694,22 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "buyCollateral",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -30933,6 +31777,50 @@
             "name": "supplyTo",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
               {
                 "name": "dst",
                 "type": "address"
@@ -37565,6 +38453,45 @@
         "abi": [
           {
             "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "exactInputSingle",
             "stateMutability": "payable",
             "inputs": [
@@ -37610,6 +38537,96 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
                 "type": "uint256"
               }
             ]
@@ -39431,6 +40448,31 @@
               {
                 "name": "borrowAmount",
                 "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "liquidateBorrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "repayAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "cTokenCollateral",
+                "type": "address"
               }
             ],
             "outputs": [
@@ -41638,6 +42680,46 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "supply",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -41654,9 +42736,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -41987,6 +43201,41 @@
         "abi": [
           {
             "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "exactInputSingle",
             "stateMutability": "payable",
             "inputs": [
@@ -42028,6 +43277,146 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapTokensForExactTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "amountInMax",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
                 "type": "uint256"
               }
             ]
@@ -42864,6 +44253,46 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "supply",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -42880,9 +44309,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -43467,6 +45028,40 @@
                   {
                     "name": "fromInternalBalance",
                     "type": "bool"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "manageUserBalance",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "ops",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "asset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
                   }
                 ]
               }
@@ -44274,6 +45869,46 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "supply",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -44290,9 +45925,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -44337,6 +46104,45 @@
         "address": "0xe592427a0aece92de3edee1f18e0157c05861564",
         "protocol": "uniswap-v3",
         "abi": [
+          {
+            "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
           {
             "type": "function",
             "name": "exactInputSingle",
@@ -44384,6 +46190,96 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
                 "type": "uint256"
               }
             ]
@@ -46221,6 +48117,45 @@
         "abi": [
           {
             "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "exactInputSingle",
             "stateMutability": "payable",
             "inputs": [
@@ -46266,6 +48201,96 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
                 "type": "uint256"
               }
             ]
@@ -50795,6 +52820,41 @@
         "abi": [
           {
             "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "exactInputSingle",
             "stateMutability": "payable",
             "inputs": [
@@ -50836,6 +52896,88 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
                 "type": "uint256"
               }
             ]
@@ -51001,6 +53143,40 @@
                   {
                     "name": "fromInternalBalance",
                     "type": "bool"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "manageUserBalance",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "ops",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "asset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
                   }
                 ]
               }
@@ -56078,6 +58254,41 @@
         "abi": [
           {
             "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "exactInputSingle",
             "stateMutability": "payable",
             "inputs": [
@@ -56119,6 +58330,146 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapTokensForExactTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "amountInMax",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
                 "type": "uint256"
               }
             ]
@@ -58232,6 +60583,46 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "supply",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -58248,9 +60639,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -58423,6 +60946,40 @@
                   {
                     "name": "fromInternalBalance",
                     "type": "bool"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "manageUserBalance",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "ops",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "asset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
                   }
                 ]
               }
@@ -59548,6 +62105,45 @@
         "abi": [
           {
             "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "exactInputSingle",
             "stateMutability": "payable",
             "inputs": [
@@ -59596,6 +62192,96 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
@@ -59603,6 +62289,46 @@
         "address": "0xf25212e676d1f7f89cd72ffee66158f541246445",
         "protocol": "Compound III",
         "abi": [
+          {
+            "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
           {
             "type": "function",
             "name": "supply",
@@ -59621,9 +62347,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -63665,6 +66523,41 @@
         "abi": [
           {
             "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "exactInputSingle",
             "stateMutability": "payable",
             "inputs": [
@@ -63706,6 +66599,146 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapTokensForExactTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "amountInMax",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
                 "type": "uint256"
               }
             ]
@@ -64624,6 +67657,27 @@
             "outputs": [
               {
                 "name": "shares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
                 "type": "uint256"
               }
             ]
@@ -66081,6 +69135,41 @@
         "abi": [
           {
             "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "exactInputSingle",
             "stateMutability": "payable",
             "inputs": [
@@ -66122,6 +69211,88 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
                 "type": "uint256"
               }
             ]
@@ -66937,6 +70108,46 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "supply",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -66953,9 +70164,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -71329,6 +74672,46 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "supply",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -71345,9 +74728,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -71844,6 +75359,40 @@
                   {
                     "name": "fromInternalBalance",
                     "type": "bool"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "manageUserBalance",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "ops",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "asset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
                   }
                 ]
               }
@@ -79844,6 +83393,41 @@
         "abi": [
           {
             "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "exactInputSingle",
             "stateMutability": "payable",
             "inputs": [
@@ -79885,6 +83469,146 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapExactTokensForTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "name": "amountOutMin",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "swapTokensForExactTokens",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              },
+              {
+                "name": "amountInMax",
+                "type": "uint256"
+              },
+              {
+                "name": "path",
+                "type": "address[]"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
                 "type": "uint256"
               }
             ]
@@ -80156,6 +83880,46 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "supply",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -80172,9 +83936,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -81516,6 +85412,46 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "supply",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -81532,9 +85468,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -82638,6 +86706,40 @@
                   {
                     "name": "fromInternalBalance",
                     "type": "bool"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "manageUserBalance",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "ops",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "kind",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "asset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sender",
+                    "type": "address"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
                   }
                 ]
               }
@@ -83826,6 +87928,46 @@
         "abi": [
           {
             "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "supply",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -83842,9 +87984,141 @@
           },
           {
             "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "withdraw",
             "stateMutability": "nonpayable",
             "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
               {
                 "name": "asset",
                 "type": "address"
@@ -84200,6 +88474,45 @@
         "abi": [
           {
             "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "exactInputSingle",
             "stateMutability": "payable",
             "inputs": [
@@ -84245,6 +88558,96 @@
             "outputs": [
               {
                 "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
                 "type": "uint256"
               }
             ]

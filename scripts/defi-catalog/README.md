@@ -1482,3 +1482,15 @@ Morpho liquidation explicitly requires the existing `empty-callback-data-v1` sco
 
 Verification: additions-only diff, generate/check, all 65 focused backend tests and public-ABI/production-policy smoke over 51 additions passed, with 745 expected denials. A separate two-path Morpho smoke also rejected nonempty callback data on both chains. No new execution language, signing scope, token approval or API-key grant. Full verify/build/E2E gates, real database locking, funded execution and Openfort broadcast were not run.
 
+## Supported-protocol completion, cycle 5 — deployment parity (2026-11-01)
+
+Three evidence files complete 165 additional exact financial functions at existing targets:
+
+- `sources/router-swap-capability-completion.json`: 46 swaps across original Uniswap V3, SwapRouter02 and Pancake V3. Every deployment has its own ABI/source binding; Monad's source-service 404 is resolved through its exact explorer and official deployment evidence. Router02 V2 swaps remain excluded where constructor `factoryV2` is zero.
+- `sources/compound-financial-capability-completion.json`: 107 Comet/CToken financial functions, including twelve-market supply/withdraw/purchase parity, thirteen-market collateral/debt transfer and liquidation, native behalf repayment, and configured Comptroller reward claims. Custom proxy/diamond-style resolution is not inferred from a sibling deployment.
+- `sources/vault-balance-capability-completion.json`: six Balancer finite balance-operation methods, four Yearn loss/registered-queue exits and two actual Morpho Vault V2 mint methods. Four Yearn records receive updated evidence/warnings with unchanged fixed ABI and IDs. Yearn omitted loss tolerance is 0 for withdraw but 10000 bps for redeem; Morpho's conservative maxMint=0 getter does not make its implemented mint body a stub.
+
+Existing sender/relayer/owner allowances remain prerequisites, not newly installed authority. Balancer's selector includes external as well as internal balance transfers. Packed swap paths, contract-balance sentinels, partial fills, native surplus/router custody, Compound error-code returns and collateral seizure, vault loss limits and mutable gates/strategies remain explicit. No permit, role/relayer approval, multicall, callback entrypoint, public sweep or new execution language is admitted.
+
+Verification: generate/check, 65 focused backend tests and production-policy/public-ABI smoke passed all 165 additions with 945 expected denials. Each addition was authorized and final-rechecked; common all-mode, four-scope pause and final revocation/grant-removal boundaries were also exercised. Source input normalization restores computed optional ABI hashes; no fixed ABI or existing capability ID changed. Full verify/build/E2E gates, real database locks, funded execution and Openfort broadcast were not run.
+
