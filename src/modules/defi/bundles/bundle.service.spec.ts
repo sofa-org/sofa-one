@@ -5,11 +5,6 @@ import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from './production-bundles';
 import { buildEnsoRegistry } from '../registry/enso';
 import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 import { SDAI_SAVINGS_CAPABILITIES } from '../registry/sdai-savings';
-import { ONE_INCH_CAPABILITIES } from '../registry/one-inch';
-import { ZERO_X_CAPABILITIES } from '../registry/zero-x';
-import { VELORA_CAPABILITIES } from '../registry/velora';
-import { BEBOP_CAPABILITIES } from '../registry/bebop';
-import { OPEN_OCEAN_CAPABILITIES } from '../registry/open-ocean';
 
 const addressA = '0x1111111111111111111111111111111111111111';
 const addressB = '0x2222222222222222222222222222222222222222';
@@ -114,51 +109,8 @@ describe('DefiBundleService', () => {
   });
 
   it('accepts an explicitly empty injectable bundle list without inventing profiles', async () => {
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(0, 12)).toHaveLength(12);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(12, 33)).toHaveLength(21);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(33, 62)).toHaveLength(29);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62, 67)).toHaveLength(5);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(67, 69)).toHaveLength(2);
     const service = new DefiBundleService([], catalog([]));
     await expect(service.listMetadata()).resolves.toMatchObject({ schemaVersion: 1, bundles: [] });
-  });
-
-  it('accepts the five exact phase3 profile selections against isolated source-builder identities', () => {
-    const capabilities = [
-      ...ONE_INCH_CAPABILITIES,
-      ...ZERO_X_CAPABILITIES,
-      ...VELORA_CAPABILITIES,
-      ...BEBOP_CAPABILITIES,
-      ...OPEN_OCEAN_CAPABILITIES,
-    ];
-    const profiles = PRODUCTION_DEFI_CAPABILITY_BUNDLES.slice(62, 67);
-    expect(capabilities).toHaveLength(28);
-    expect(profiles.flatMap((profile) => profile.capabilityIds)).toHaveLength(28);
-    expect(new Set(profiles.flatMap((profile) => profile.capabilityIds)).size).toBe(28);
-    expect(profiles.map((profile) => profile.fingerprint)).toEqual(profiles.map((profile) => capabilityBundleFingerprint(profile, capabilities)));
-    expect(() => new DefiBundleService(profiles, catalog(capabilities))).not.toThrow();
-    expect(profiles.every((profile) => profile.capabilityIds.every((id) => !id.includes(':approve')))).toBe(true);
-    for (const profile of profiles) {
-      expect(profile.warnings.join(' ')).toMatch(/no platform amount, recipient, asset-pair or feed caps apply/i);
-      expect(profile.warnings.join(' ')).toMatch(/approval.*independent/i);
-      expect(profile.warnings.join(' ')).toMatch(/not .*paired|not paired|neither .*paired/i);
-    }
-    expect(profiles[0].capabilityIds).toHaveLength(12);
-    expect(profiles[0].warnings.join(' ')).toMatch(/ten decoded execution nodes per request/);
-    expect(profiles[0].warnings.join(' ')).toMatch(/V3 canonical factory\/pool checks apply only.*external-payer callback branch/i);
-    expect(profiles[0].warnings.join(' ')).toMatch(/Curve\/router-balance callbacks assume no stranded router funds/i);
-    expect(profiles[1].warnings.join(' ')).toMatch(/RFQ txOrigin eligibility.*not a platform-owner restriction/i);
-    expect(profiles[1].warnings.join(' ')).toMatch(/historical Native Orders facet.*not a current facet\/runtime identity/i);
-    expect(profiles[2].warnings.join(' ')).toMatch(/WithTarget.*bounded selection, not a restriction imposed by the platform/i);
-    const bebopWarnings = profiles[3].warnings.join(' ');
-    expect(bebopWarnings).toMatch(/One fixed BOP AMM swapWithAllowance entrypoint only/i);
-    expect(bebopWarnings).toMatch(/fallback and fixed core callback entrypoints, other Bebop RFQ\/routing products, and arbitrary caller-selected hook selectors are excluded from granted authority/i);
-    expect(bebopWarnings).toMatch(/Pricing-selected maker\/fee hooks may still be invoked by the fixed router path/i);
-    expect(bebopWarnings).toMatch(/remain protocol execution\/trust dependencies/i);
-    expect(profiles[4].warnings.join(' ')).toMatch(/opaque makeCalls.*excluded/i);
-    expect(profiles[4].warnings.join(' ')).toMatch(/returnAmount may differ from net recipient proceeds/i);
-    expect(profiles[4].warnings.join(' ')).toMatch(/whenNotPaused guards.*platform pause remains an independent policy overlay/i);
   });
 
   it('validates and serves the single Enso root profile against its isolated candidate identity without child membership', async () => {

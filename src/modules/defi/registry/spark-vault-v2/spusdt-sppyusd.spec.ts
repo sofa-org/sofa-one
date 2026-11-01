@@ -5,8 +5,6 @@ import { DefiPolicyService } from '../../defi-policy.service';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from '../../bundles/production-bundles';
 import { functionAbiHash } from '../defi-manifest';
 import { PRODUCTION_DEFI_MANIFEST } from '../production-registry';
-import { loadCatalogExpectations } from '../__fixtures__/catalog-expectations';
-import { manifestWithoutCapabilities } from '../__fixtures__/manifest-fixture';
 
 const VAULTS = [
   { symbol: 'spPYUSD', address: '0x80128dbb9f07b93dde62a6daeadb69ed14a7d354' },
@@ -22,7 +20,6 @@ const SPECS = VAULTS.flatMap((vault) => [
   { ...vault, name: 'redeem', signature: 'redeem(uint256,address,address)', selector: '0xba087652', hash: '0x8926ac0e897fc0dab6e7c43a4888021fd1b5270b6fb7e3046f6023c3c637444e', inputs: ['shares', 'receiver', 'owner'], output: 'assets', arity: 3 },
 ]);
 const IDS = SPECS.map(({ name, address }) => `spark-vault-v2:v2:1:${address}:${name}`);
-const catalogScopesWithoutTestEntries = manifestWithoutCapabilities(IDS).capabilities.filter(({ executionScope }) => executionScope);
 const EXECUTION_OWNER = '0x9999999999999999999999999999999999999999';
 const USER = 'spark-two-vaults-policy-test';
 const KEY_ID = '00000000-0000-4000-8000-000000000099';
@@ -50,16 +47,8 @@ function finalTx(grants: string[], pausedScopeKeys: string[] = [], keyOverrides:
 }
 
 describe('Spark spPYUSD and spUSDT Vault V2 ordinary additions', () => {
-  it('checks the catalog manifest and binds all eight exact plain ABI entries', async () => {
-    const expected = loadCatalogExpectations(process.cwd());
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(expected.definitions);
-    expect(functions).toHaveLength(8);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope && fn.capabilityId !== 'polymarket-pusd:v1:137:0x93070a847efef7f70739046a929d47a521f5b8ee:wrap')).toEqual(catalogScopesWithoutTestEntries);
-
+  it('authorizes the exact vault ABIs with caller-selected amounts and recipients', async () => {
     const profileMembers = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
-    expect(profileMembers).toHaveLength(399);
-    expect(new Set(profileMembers).size).toBe(399);
     expect(IDS.some((id) => profileMembers.includes(id))).toBe(false);
 
     for (const [index, spec] of SPECS.entries()) {

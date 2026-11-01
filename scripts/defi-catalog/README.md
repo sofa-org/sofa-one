@@ -1524,3 +1524,28 @@ ZeroEx's known recovered selectors are bound individually; its non-enumerable re
 
 Verification: generate/check, all 65 focused backend tests and production-policy/public-ABI smoke passed 157 additions with 915 expected denials. Each addition was authorized and final-rechecked. Full verify/build/E2E gates, real database locks, funded execution and Openfort broadcast were not run.
 
+## Supported-protocol completion, cycle 9 — final parity and interface cutovers (2026-11-01)
+
+The final four evidence records are `sources/partial-interface-one-completion.json`, `sources/partial-interface-three-completion.json`, `sources/sushi-target-parity-completion.json` and `sources/maple-target-parity-completion.json`. They add 197 exact functions, remove seven invalid/obsolete functions, and preserve independently bound source/ABI evidence. The last parity pass operates on chain/address targets, not just protocol brands: it closes four additional Sushi roots and the existing Maple/syrup roots, including withdrawal-request transitions and preauthorized share operations.
+
+Two existing integrations require an explicit clean cutover:
+
+- **Idle:** `0x493c57c4763932315a328269e1adad09653b9081` is a bZx LoanToken deployment, not an Idle vault. Remove both misattributed IDs and the misleading standalone fixture. Bind the maintained Idle DAI root `0x3fe7940616e5bc47b0775a0dccf6237893353bb4` to its independently resolved proxy/implementation evidence. The new profile selects the exact ordinary mint/redeem replacements; the other reviewed redemption variants remain independently selectable.
+- **Symbiotic:** the existing root resolves to VaultV2 implementation `0x41069a712facc421fe194caa59667456863a780e`. Remove the five absent V1 selectors and their standalone fixture; admit the four source-bound ERC4626 entrypoints with new IDs.
+
+Both affected profiles are explicitly republished as `2.0.0` with recomputed fingerprints. Historical source reports are marked superseded. There are no compatibility aliases, implicit approvals, saved-grant rewrites or automatic retargeting: obsolete grants fail closed, and each new exact capability needs independent authorization.
+
+Verification: generate/check passed. Production-policy/public-ABI smoke authorized and final-rechecked all 197 additions with 1141 expected denials. A separate Node.js 20 runtime smoke constructed the real production catalog and bundle service, validated the static profile fingerprints and returned both corrected version-2 profiles as available. Scoped non-fixing ESLint passed the 32 affected TypeScript files. The actual public directory rendered filtered Idle/Symbiotic cards, and its catalog download returned HTTP 200 in Chromium. These checks use in-memory policy state; they do not prove real database locking, funded chain execution or Openfort broadcast.
+
+Scoped Jest verification passed across 41 files in separate runs: the 40-file selection accounts for 198 passing tests after the three affected historical-exclusion files were corrected and rerun; `production-registry.spec.ts` passed separately. The new cutover regression failed against the former catalog and now rejects all seven obsolete selectors and prevents saved custom grants from authorizing replacement IDs. Obsolete count/copy/wording and “not yet supported” assertions were removed, not repinned to the expanded inventory; grant, calldata/value, pause, revocation and final-recheck boundaries remain exercised.
+
+The first combined smoke/test command reached its 300-second deadline after the smoke and production-registry test had passed; the remaining scoped tests were subsequently completed separately. Full `verify`, backend/frontend verify, build and E2E gates were deliberately not run, per the repository's local verification defaults.
+
+## Completion boundary
+
+Across nine committed admission batches, the catalog moves from 2,886 to 3,730 capabilities: 851 additions and seven removals, retaining 417 existing protocol labels and 712 chain/address targets after the corrective Idle replacement. Every admission still passes through the ordinary authorization, pause and execution controls; catalog membership is not an API-key grant or a claim of executable, funded or financially safe transactions.
+
+The repeated review joined retained source inventories to exact supported targets, expanded partial interfaces, resolved delegated implementations/facets where evidence was obtainable, and repeated per-target parity checks after the brand-level pass. No further source-bound admissible additions were found within the reviewed deployments and the existing authorization/execution model. This is not an assertion that every protocol's global or future interface is enumerable.
+
+Concrete unresolved prerequisites remain: an authoritative complete selector inventory for ZeroEx's non-enumerable registry; exact current implementation/source binding for the unresolved Lista target despite alternate official/explorer/provider paths; and supported closed execution/callback/bridge models for methods whose nested effects cannot currently be bounded. Deprecated deployments, authority/admin/permit methods and opaque executors are not relabeled as ordinary financial capabilities to hide those gaps.
+

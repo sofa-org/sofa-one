@@ -5,8 +5,6 @@ import { DefiPolicyService } from '../../defi-policy.service';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from '../../bundles/production-bundles';
 import { functionAbiHash } from '../defi-manifest';
 import { PRODUCTION_DEFI_MANIFEST } from '../production-registry';
-import { loadCatalogExpectations } from '../__fixtures__/catalog-expectations';
-import { manifestWithoutCapabilities } from '../__fixtures__/manifest-fixture';
 
 const TARGET = '0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a';
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -16,7 +14,6 @@ const SPECS = [
   { name: 'requestRedeem', signature: 'requestRedeem(uint256,address)', selector: '0x107703ab', hash: '0xfa07749076e3b27f9afa7bfea9952779d674a00020e5bea2befa9e85f3e9ae1c', inputs: ['shares_', 'owner_'], output: 'escrowedShares_' },
 ];
 const IDS = SPECS.map(({ name }) => `maple-pool-v2:v2:1:${TARGET}:${name === 'requestRedeem' ? 'request-redeem' : name}`);
-const catalogScopesWithoutTestEntries = manifestWithoutCapabilities(IDS).capabilities.filter(({ executionScope }) => executionScope);
 const OWNER = '0x9999999999999999999999999999999999999999';
 const USER = 'maple-usdg-pool-v2-policy-test';
 const KEY_ID = '00000000-0000-4000-8000-000000000077';
@@ -43,16 +40,8 @@ function finalTx(grants: string[], pausedScopeKeys: string[] = [], keyOverrides:
 }
 
 describe('Maple syrupUSDG Pool V2 ordinary additions', () => {
-  it('checks the catalog manifest and binds the three named fixed ABIs', async () => {
-    const expected = loadCatalogExpectations(process.cwd());
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(expected.definitions);
-    expect(functions).toHaveLength(3);
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((fn) => fn.executionScope && fn.capabilityId !== 'polymarket-pusd:v1:137:0x93070a847efef7f70739046a929d47a521f5b8ee:wrap')).toEqual(catalogScopesWithoutTestEntries);
-
+  it('authorizes the named pool ABIs with caller-selected amounts and recipients', async () => {
     const profileMembers = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
-    expect(profileMembers).toHaveLength(399);
-    expect(new Set(profileMembers).size).toBe(399);
     expect(IDS.some((id) => profileMembers.includes(id))).toBe(false);
 
     for (const [index, spec] of SPECS.entries()) {

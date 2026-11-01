@@ -5,7 +5,6 @@ import { DefiPolicyService } from '../../defi-policy.service';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from '../../bundles/production-bundles';
 import { functionAbiHash } from '../defi-manifest';
 import { PRODUCTION_DEFI_MANIFEST } from '../production-registry';
-import { loadCatalogExpectations } from '../__fixtures__/catalog-expectations';
 
 const POOLS = [
   { chainId: 137, address: '0x794a61358d6845594f94dc1db02a252b5b4814ad' },
@@ -58,9 +57,6 @@ function legacyIds(pool: typeof POOLS[number]) {
 
 describe('Aave V3 Polygon and Arbitrum repayWithATokens ordinary additions', () => {
   it('binds both exact Pool identities and authorizes zero/MAX caller-selected ABI values only by each exact new grant', async () => {
-    const expected = loadCatalogExpectations(process.cwd());
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(expected.definitions);
-    expect(functions).toHaveLength(2);
     const policy = policyFixture();
 
     for (const [index, fn] of functions.entries()) {

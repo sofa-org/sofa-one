@@ -2,7 +2,7 @@ import type { DefiCapabilityBundle } from "./types";
 
 export const DEFI_CAPABILITY_BUNDLES = Symbol("DEFI_CAPABILITY_BUNDLES");
 
-/** Reviewed immutable 1.0.0 exact-membership profiles; changes require explicit republication. */
+/** Reviewed versioned exact-membership profiles; changes require explicit republication. */
 export const PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[] = Object.freeze([
   {
     "bundleId": "uniswap-v3-positions-1",
@@ -1302,26 +1302,26 @@ export const PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[]
   },
   {
     "bundleId": "symbiotic-phase2-1",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "label": "Symbiotic · selected source-qualified calls",
     "chainIds": [
       1
     ],
     "capabilityIds": [
-      "symbiotic:v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:claim",
-      "symbiotic:v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:claim-batch",
-      "symbiotic:v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:deposit",
-      "symbiotic:v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:redeem",
-      "symbiotic:v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:withdraw"
+      "symbiotic:interface-completion-v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:deposit-8d4e212c2f",
+      "symbiotic:interface-completion-v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:mint-ef5a2ab1f4",
+      "symbiotic:interface-completion-v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:redeem-d4dae70dcb",
+      "symbiotic:interface-completion-v1:1:0x007e0b8e99c6134e81a1eaae754460e3202cb671:withdraw-df75ccd762"
     ],
     "warnings": [
       "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
-      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant.",
+      "Version 2 selects the source-resolved VaultV2 ERC4626 interface, not the absent V1 epoch/claim selectors. Existing custom grants are not migrated; each new exact ID requires explicit authorization."
     ],
     "limitations": [
       "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
     ],
-    "fingerprint": "sha256:32648ba097507a8b69566baa0daae1099250d944c4d790671dcddab8e789a98a"
+    "fingerprint": "sha256:d8093293393fc530819338414b21b2872bb44c08bbc68afd4765f6148ebfc3a8"
   },
   {
     "bundleId": "harvest-phase2-1",
@@ -1345,23 +1345,24 @@ export const PRODUCTION_DEFI_CAPABILITY_BUNDLES: readonly DefiCapabilityBundle[]
   },
   {
     "bundleId": "idle-phase2-1",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "label": "Idle · selected source-qualified calls",
     "chainIds": [
       1
     ],
     "capabilityIds": [
-      "idle:v3-1:1:0x493c57c4763932315a328269e1adad09653b9081:mint-idle-token",
-      "idle:v3-1:1:0x493c57c4763932315a328269e1adad09653b9081:redeem-idle-token"
+      "idle:corrected-dai-v1:1:0x3fe7940616e5bc47b0775a0dccf6237893353bb4:0x2befabbf",
+      "idle:corrected-dai-v1:1:0x3fe7940616e5bc47b0775a0dccf6237893353bb4:0x8b30b516"
     ],
     "warnings": [
       "Only these selected source-qualified ABI calls are listed; this is not a complete workflow, current-runtime identity, liquidity, transaction-success, or funded-execution guarantee.",
-      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant."
+      "Approvals are separate authority and are not included, automatic, or paired with these calls; each capability still requires an independent explicit grant.",
+      "Version 2 replaces the misattributed LoanToken selections with the source-bound Idle DAI deployment. Old custom grants are not retargeted; each replacement ID needs an independent grant."
     ],
     "limitations": [
       "This is a bounded declared-call profile, not a broad product, market-coverage, or whole-workflow claim."
     ],
-    "fingerprint": "sha256:3baf03b3481413c50ea91a82fdf4e2924556a3171a909ef7c5681be45a4391a0"
+    "fingerprint": "sha256:93d3bc98d6e6afa7a8db18f1510cb1895485abb7adc2fdbe162f8bf053241079"
   },
   {
     "bundleId": "origin-phase2-1",

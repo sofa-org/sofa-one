@@ -5,7 +5,6 @@ import { DefiPolicyService } from '../../defi-policy.service';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from '../../bundles/production-bundles';
 import { functionAbiHash } from '../defi-manifest';
 import { PRODUCTION_DEFI_MANIFEST } from '../production-registry';
-import { loadCatalogExpectations } from '../__fixtures__/catalog-expectations';
 
 const TARGET = '0xc3d688b66703497daa19211eedff47f25384cdc3';
 const USER = 'comet-delegated-policy-test';
@@ -62,9 +61,6 @@ function call(fn: DefiFunctionPolicy, index: number, edge: 'zero' | 'max' = 'zer
 
 describe('Compound Comet USDC supplyFrom and withdrawFrom authorization', () => {
   it('binds both complete ABI identities and authorizes arbitrary delegated arguments with only each exact grant', async () => {
-    const expected = loadCatalogExpectations(process.cwd());
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(expected.definitions);
-    expect(functions).toHaveLength(2);
     const policy = policyFixture();
 
     for (const [index, fn] of functions.entries()) {

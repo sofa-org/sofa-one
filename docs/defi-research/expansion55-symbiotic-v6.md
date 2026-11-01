@@ -1,4 +1,8 @@
-# Symbiotic vault — v6 source candidate
+# Historical Symbiotic vault candidate — superseded interface binding
+
+**Superseded on 2026-11-01.** Source resolution binds this root to VaultV2 implementation `0x41069a712facc421fe194caa59667456863a780e`, whose ERC4626 interface does not contain the five V1 selectors below. Their capability IDs and the standalone fixture have been removed rather than retained with warnings.
+
+Current binding, full pooled ABI/source evidence and method dispositions are recorded in `data/defi-catalog/sources/partial-interface-three-completion.json`. The replacement ERC4626 profile is version 2.0.0, and new exact IDs require independent grants. The remaining report describes the historical V1 candidate only, not the active runtime interface.
 
 ## Qualified candidate
 

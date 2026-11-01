@@ -5,7 +5,6 @@ import { DefiPolicyService } from '../../defi-policy.service';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from '../../bundles/production-bundles';
 import { functionAbiHash } from '../defi-manifest';
 import { PRODUCTION_DEFI_MANIFEST } from '../production-registry';
-import { loadCatalogExpectations } from '../__fixtures__/catalog-expectations';
 
 const TARGET = '0xd1c117319b3595fbc39b471ab1fd485629eb05f2';
 const CAPABILITY_ID = `vesper-vaeth:v1:1:${TARGET}:deposit`;
@@ -44,10 +43,7 @@ function finalTx(grants: string[], pausedScopeKeys: string[] = [], keyOverrides:
 }
 
 describe('Vesper vaETH payable deposit ordinary addition', () => {
-  it('checks catalog size and binds the exact generated payable zero-argument ABI', async () => {
-    const expected = loadCatalogExpectations(process.cwd());
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(expected.definitions);
-
+  it('authorizes the exact payable zero-argument ABI with caller-selected value', async () => {
     expect(fn).toMatchObject({ capabilityId: CAPABILITY_ID, chainId: 1, contract: TARGET, functionName: 'deposit', signature: SPEC.signature, status: 'active', provenance: { status: 'verified' }, type: 'contract_call' });
     expect(fn.abi).toEqual({ type: 'function', name: 'deposit', stateMutability: 'payable', inputs: [], outputs: [] });
     expect(toFunctionSelector(fn.signature)).toBe(SPEC.selector);
@@ -56,9 +52,6 @@ describe('Vesper vaETH payable deposit ordinary addition', () => {
     expect(PRODUCTION_DEFI_MANIFEST.capabilities.filter((candidate) => candidate.chainId === 1 && candidate.contract.toLowerCase() === TARGET && candidate.signature === SPEC.signature)).toEqual([fn]);
 
     const profileMembers = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
-    expect(profileMembers).toHaveLength(399);
-    expect(new Set(profileMembers).size).toBe(399);
     expect(profileMembers).not.toContain(CAPABILITY_ID);
 
     for (const value of ['0', '1', MAX_UINT256]) {

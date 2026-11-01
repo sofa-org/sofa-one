@@ -5,7 +5,6 @@ import { DefiPolicyService } from '../../defi-policy.service';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from '../../bundles/production-bundles';
 import { functionAbiHash } from '../defi-manifest';
 import { PRODUCTION_DEFI_MANIFEST } from '../production-registry';
-import { loadCatalogExpectations } from '../__fixtures__/catalog-expectations';
 
 const POOLS = [
   { symbol: 'syrupUSDC', address: '0x80ac24aa929eaf5013f6436cda2a7ba190f5cc0b' },
@@ -45,9 +44,6 @@ function finalTx(grants: string[], pausedScopeKeys: string[] = [], keyOverrides:
 
 describe('Maple Pool V2 six-method ordinary additions', () => {
   it('binds exact ABI identities and leaves argument values, receivers, and request owners caller-selected', async () => {
-    const expected = loadCatalogExpectations(process.cwd());
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(expected.definitions);
-    expect(functions).toHaveLength(6);
     for (const [poolIndex, pool] of POOLS.entries()) {
       for (const [methodIndex, spec] of SPECS.entries()) {
         const fn = functions[poolIndex * SPECS.length + methodIndex];

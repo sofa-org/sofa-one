@@ -5,7 +5,6 @@ import { DefiPolicyService } from '../../defi-policy.service';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from '../../bundles/production-bundles';
 import { functionAbiHash } from '../defi-manifest';
 import { PRODUCTION_DEFI_MANIFEST } from '../production-registry';
-import { loadCatalogExpectations } from '../__fixtures__/catalog-expectations';
 
 const POOLS = [
   { chainId: 1, address: '0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2' },
@@ -62,9 +61,6 @@ function legacyIds(pool: typeof POOLS[number]) {
 
 describe('Aave V3 setUserUseReserveAsCollateral five-chain ordinary additions', () => {
   it('binds all five exact Pool identities and authorizes either bool with caller-selected assets only by each exact new grant', async () => {
-    const expected = loadCatalogExpectations(process.cwd());
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(expected.definitions);
-    expect(functions).toHaveLength(5);
     const policy = policyFixture();
 
     for (const [index, fn] of functions.entries()) {

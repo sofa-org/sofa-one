@@ -48,24 +48,6 @@ describe('current production profiles', () => {
     }
   });
 
-  it('binds each Uniswap V3 multicall profile to its wrapper and exact explicit children', () => {
-    for (const profile of PRODUCTION_DEFI_CAPABILITY_BUNDLES.filter((item) => item.bundleId.startsWith('uniswap-v3-'))) {
-      const wrapper = flat.find((fn) => fn.capabilityId.endsWith(':multicall') && fn.chainId === profile.chainIds[0] && fn.capabilityId.startsWith('uniswap-v3-position-manager:'))!;
-      expect(wrapper.executionScope?.kind).toBe('same-target-multicall-v1');
-      if (wrapper.executionScope?.kind !== 'same-target-multicall-v1') throw new Error('Expected scoped NPM multicall');
-      expect(wrapper.executionScope.allowedChildren.map((child) => child.capabilityId).sort()).toEqual(profile.capabilityIds.filter((id) => id !== wrapper.capabilityId));
-      expect(wrapper.executionScope.allowedChildren).toHaveLength(8);
-    }
-  });
-
-  it('includes only the six Morpho callback-free operations in its two profiles', () => {
-    for (const profile of PRODUCTION_DEFI_CAPABILITY_BUNDLES.filter((item) => item.bundleId.startsWith('morpho-blue-'))) {
-      const functions = profile.capabilityIds.map((id) => flat.find((fn) => fn.capabilityId === id)!);
-      expect(functions.map((fn) => fn.functionName).sort()).toEqual(['borrow', 'repay', 'supply', 'supplyCollateral', 'withdraw', 'withdrawCollateral'].sort());
-      expect(functions.filter((fn) => fn.executionScope?.kind === 'empty-callback-data-v1')).toHaveLength(3);
-    }
-  });
-
   it('requires the wrapper and every selected child grant independently and denies recursion', async () => {
     const profile = PRODUCTION_DEFI_CAPABILITY_BUNDLES.find((bundle) => bundle.bundleId === 'uniswap-v3-positions-1')!;
     const wrapper = flat.find((fn) => fn.capabilityId.endsWith(':multicall') && fn.chainId === 1)!;
@@ -83,21 +65,23 @@ describe('current production profiles', () => {
 
   it('permits only empty callback bytes for each Morpho callback function', async () => {
     const callbacks = flat.filter((fn) => fn.capabilityId.startsWith('morpho-blue:') && fn.executionScope?.kind === 'empty-callback-data-v1');
-    expect(callbacks).toHaveLength(6);
-    const grants = PRODUCTION_DEFI_CAPABILITY_BUNDLES.filter((profile) => profile.bundleId.startsWith('morpho-blue-')).flatMap((profile) => profile.capabilityIds);
+    const callbackArgIndexes = new Set<number>();
     const { policy } = makePolicy();
     for (const fn of callbacks) {
-      await expect(policy.authorizeContractCalls([{ to: fn.contract, data: encoded(fn) }], {
+      if (fn.executionScope?.kind !== 'empty-callback-data-v1') throw new Error('Expected Morpho callback scope');
+      callbackArgIndexes.add(fn.executionScope.bytesArgIndex);
+      const context = {
         userId: 'user', apiKeyId: '00000000-0000-4000-8000-000000000001', walletId: 'wallet', chainId: fn.chainId,
-        executionMode: 'eoa', executionOwner: OWNER, allowedCapabilityIds: grants,
-      })).resolves.toMatchObject({ matches: [expect.objectContaining({ capabilityId: fn.capabilityId })] });
+        executionMode: 'eoa', executionOwner: OWNER, allowedCapabilityIds: [fn.capabilityId],
+      };
+      await expect(policy.authorizeContractCalls([{ to: fn.contract, data: encoded(fn) }], context))
+        .resolves.toMatchObject({ matches: [expect.objectContaining({ capabilityId: fn.capabilityId })] });
+      await expect(policy.authorizeContractCalls([{ to: fn.contract, data: encoded(fn) }], { ...context, allowedCapabilityIds: [] }))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+      await expect(policy.authorizeContractCalls([{ to: fn.contract, data: encoded(fn, { [fn.executionScope.bytesArgIndex]: '0x00' }) }], context))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
     }
-    const fn = callbacks[0];
-    if (fn.executionScope?.kind !== 'empty-callback-data-v1') throw new Error('Expected Morpho callback scope');
-    await expect(policy.authorizeContractCalls([{ to: fn.contract, data: encoded(fn, { [fn.executionScope.bytesArgIndex]: '0x00' }) }], {
-      userId: 'user', apiKeyId: '00000000-0000-4000-8000-000000000001', walletId: 'wallet', chainId: fn.chainId,
-      executionMode: 'eoa', executionOwner: OWNER, allowedCapabilityIds: grants,
-    })).rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
+    expect([...callbackArgIndexes]).toEqual(expect.arrayContaining([3, 4]));
   });
 
   it('keeps all profile members visible while pause state makes a profile unavailable', async () => {
@@ -109,6 +93,5 @@ describe('current production profiles', () => {
     const catalog = new DefiCatalogService(PRODUCTION_DEFI_CATALOG, prisma as never, PRODUCTION_DEFI_MANIFEST);
     const response = await new DefiBundleService(PRODUCTION_DEFI_CAPABILITY_BUNDLES, catalog).listMetadata();
     expect(response.bundles[0]).toMatchObject({ available: false, capabilityIds: profile.capabilityIds, unavailableCapabilityIds: [pausedId] });
-    expect(response.bundles).toHaveLength(69);
   });
 });

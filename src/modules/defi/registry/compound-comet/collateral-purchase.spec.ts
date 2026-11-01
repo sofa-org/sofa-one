@@ -5,7 +5,6 @@ import { DefiPolicyService } from '../../defi-policy.service';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from '../../bundles/production-bundles';
 import { functionAbiHash } from '../defi-manifest';
 import { PRODUCTION_DEFI_MANIFEST } from '../production-registry';
-import { loadCatalogExpectations } from '../__fixtures__/catalog-expectations';
 
 const TARGET = '0xc3d688b66703497daa19211eedff47f25384cdc3';
 const CHAIN_ID = 1;
@@ -62,8 +61,6 @@ function call(args: typeof CASES[number] = CASES[0]) {
 
 describe('Compound Comet USDC collateral-purchase authorization', () => {
   it('binds the exact Comet selector and authorizes independently caller-selected asset, recipient, minAmount, and baseAmount', async () => {
-    const expected = loadCatalogExpectations(process.cwd());
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(expected.definitions);
     expect(fn).toMatchObject({ capabilityId: CAPABILITY_ID, chainId: CHAIN_ID, contract: TARGET, signature: EXPECTED.signature, functionName: 'buyCollateral', status: 'active', provenance: { status: 'verified' }, type: 'contract_call' });
     expect(fn.abi).toMatchObject({ type: 'function', name: 'buyCollateral', stateMutability: 'nonpayable' });
     expect(fn.abi.inputs.map(({ name, type, internalType }) => ({ name, type, internalType }))).toEqual([

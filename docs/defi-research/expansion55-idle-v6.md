@@ -1,4 +1,8 @@
-# Idle v6 source candidate: Ethereum iDAI
+# Historical Idle candidate — superseded deployment attribution
+
+**Superseded on 2026-11-01.** The address below is a bZx LoanToken/LoanTokenLogicV4_Chai deployment, not an Idle vault. It was an integrated receipt-token address in the historical Idle configuration; that does not bind the Idle ABI to this target. Both old capability IDs and the standalone fixture have been removed.
+
+The corrected Idle DAI root is `0x3fe7940616e5bc47b0775a0dccf6237893353bb4`. Current proxy/implementation binding, pooled evidence and explicit dispositions are recorded in `data/defi-catalog/sources/partial-interface-one-completion.json`. Replacement IDs require fresh explicit authorization; no custom grant is retargeted. The remaining report is retained only as an audit trail of the rejected historical attribution.
 
 ## Exact selection
 

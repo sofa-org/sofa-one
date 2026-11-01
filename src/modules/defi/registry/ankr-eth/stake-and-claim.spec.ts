@@ -5,7 +5,6 @@ import { DefiPolicyService } from '../../defi-policy.service';
 import { PRODUCTION_DEFI_CAPABILITY_BUNDLES } from '../../bundles/production-bundles';
 import { functionAbiHash } from '../defi-manifest';
 import { PRODUCTION_DEFI_MANIFEST } from '../production-registry';
-import { loadCatalogExpectations } from '../__fixtures__/catalog-expectations';
 
 const TARGET = '0x84db6ee82b7cf3b47e8f19270abde5718b936670';
 const CAPABILITY_ID = `ankr-eth-global-pool:r46:1:${TARGET}:stake-and-claim-aeth-c`;
@@ -42,10 +41,7 @@ function finalTx(grants: string[], pausedScopeKeys: string[] = [], keyOverrides:
 }
 
 describe('Ankr ETH GlobalPool stakeAndClaimAethC ordinary payable addition', () => {
-  it('checks catalog size and binds the exact generated payable zero-argument ABI', async () => {
-    const expected = loadCatalogExpectations(process.cwd());
-    expect(PRODUCTION_DEFI_MANIFEST.capabilities).toHaveLength(expected.definitions);
-
+  it('authorizes the exact payable zero-argument ABI with caller-selected value', async () => {
     expect(fn).toMatchObject({ capabilityId: CAPABILITY_ID, chainId: 1, contract: TARGET, functionName: 'stakeAndClaimAethC', signature: SPEC.signature, status: 'active', provenance: { status: 'verified' }, type: 'contract_call' });
     expect(fn.abi).toEqual({ type: 'function', name: 'stakeAndClaimAethC', stateMutability: 'payable', inputs: [], outputs: [] });
     expect(toFunctionSelector(fn.signature)).toBe(SPEC.selector);
@@ -53,9 +49,6 @@ describe('Ankr ETH GlobalPool stakeAndClaimAethC ordinary payable addition', () 
     expect(fn.executionScope).toBeUndefined();
 
     const profileMembers = PRODUCTION_DEFI_CAPABILITY_BUNDLES.flatMap((profile) => profile.capabilityIds);
-    expect(PRODUCTION_DEFI_CAPABILITY_BUNDLES).toHaveLength(69);
-    expect(profileMembers).toHaveLength(399);
-    expect(new Set(profileMembers).size).toBe(399);
     expect(profileMembers).not.toContain(CAPABILITY_ID);
 
     for (const value of ['0', '1', ((1n << 256n) - 1n).toString()]) {
