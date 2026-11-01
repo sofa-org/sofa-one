@@ -20066,9 +20066,93 @@
         "abi": [
           {
             "type": "function",
+            "name": "claimAETH",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimFETH",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "stake",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "stakeAndClaimAethB",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "stakeAndClaimAethC",
             "stateMutability": "payable",
             "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unstakeAETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unstakeAETHFor",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unstakeFETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unstakeFETHFor",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
             "outputs": []
           }
         ]
@@ -21055,10 +21139,64 @@
         "abi": [
           {
             "type": "function",
+            "name": "claimRedeemRequests",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_redeemRequestIds",
+                "type": "uint32[]"
+              },
+              {
+                "name": "_withdrawalEventIds",
+                "type": "uint32[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "claimStatuses",
+                "type": "uint8[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "deposit",
             "stateMutability": "payable",
             "inputs": [],
             "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositAndTransfer",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "requestRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_lsETHAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "_recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_redeemRequestId",
+                "type": "uint32"
+              }
+            ]
           }
         ]
       },
@@ -32355,6 +32493,27 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_receiver",
+                "type": "address"
+              },
+              {
+                "name": "_referralId",
+                "type": "string"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
@@ -32799,6 +32958,97 @@
             "name": "deposit",
             "stateMutability": "payable",
             "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositAndClaim",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "depositAndClaim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "whitelistedWithdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawAndClaim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawETH",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawETHAndClaim",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ],
             "outputs": []
           }
         ]
@@ -36582,6 +36832,18 @@
         "abi": [
           {
             "type": "function",
+            "name": "claimUnstakeRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "unstakeRequestID",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "stake",
             "stateMutability": "payable",
             "inputs": [
@@ -36591,6 +36853,27 @@
               }
             ],
             "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unstakeRequest",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "methAmount",
+                "type": "uint128"
+              },
+              {
+                "name": "minETHAmount",
+                "type": "uint128"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
