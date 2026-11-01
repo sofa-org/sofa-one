@@ -1494,3 +1494,13 @@ Existing sender/relayer/owner allowances remain prerequisites, not newly install
 
 Verification: generate/check, 65 focused backend tests and production-policy/public-ABI smoke passed all 165 additions with 945 expected denials. Each addition was authorized and final-rechecked; common all-mode, four-scope pause and final revocation/grant-removal boundaries were also exercised. Source input normalization restores computed optional ABI hashes; no fixed ABI or existing capability ID changed. Full verify/build/E2E gates, real database locks, funded execution and Openfort broadcast were not run.
 
+## Supported-protocol completion, cycle 6 — lifecycle and preauthorized positions (2026-11-01)
+
+`sources/financial-lifecycle-completion.json` adds 47 source-bound functions: 88mph funding (3), Meta Pool LP methods (5), Factor incentive claims (4), InfinityPools existing-permission LP operations (5), shMonad isolated/queued/preauthorized exits and zero-yield conversions (13), and infiniFi ordinary issuance/redemption/locking/unwinding (17). Twenty-eight existing records receive warning-only corrections; direct-siUSD disabled methods and cross-chain routes remain excluded.
+
+`sources/aave-preauthorized-position-support.json` adds sixteen collateral/eMode transitions across eight existing Pools. These consume `onlyPositionManager(onBehalfOf)` approvals; they do not install them. This supersedes the previous core batch's scope-only deferral, not its authority-management, permit or executor exclusions. A caller without the independently existing approval still reverts.
+
+Funding speculation, asynchronous queues, stored agent/completor eligibility, top-up exposure, share conversions, reward proof/dependency availability and mutable configuration remain explicit. shMonad request-uncommit selectors that configure top-up thresholds or completor approvals remain excluded. No new wallet permission, execution language, signing or bridge scope was introduced.
+
+Verification: generate/check, all 65 focused backend tests, and production-policy/public-ABI smoke passed all 63 additions with 383 expected denials. Every addition was authorized and final-rechecked; shared mode/pause/revocation boundaries were exercised separately. Full verify/build/E2E gates, real database locks, funded execution and Openfort broadcast were not run.
+

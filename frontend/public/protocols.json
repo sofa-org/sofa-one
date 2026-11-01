@@ -3679,6 +3679,22 @@
           },
           {
             "type": "function",
+            "name": "setUserEModeOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "setUserUseReserveAsCollateral",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -3689,6 +3705,26 @@
               {
                 "name": "useAsCollateral",
                 "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateralOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
               }
             ],
             "outputs": []
@@ -4656,6 +4692,93 @@
                 "name": "depositID",
                 "type": "uint64"
               },
+              {
+                "name": "interestAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "fund",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositID",
+                "type": "uint64"
+              },
+              {
+                "name": "fundAmount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "fundingID",
+                "type": "uint64"
+              },
+              {
+                "name": "fundingMultitokensMinted",
+                "type": "uint256"
+              },
+              {
+                "name": "actualFundAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "principalFunded",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "fund",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "depositID",
+                "type": "uint64"
+              },
+              {
+                "name": "fundAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minPrincipalFunded",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "fundingID",
+                "type": "uint64"
+              },
+              {
+                "name": "fundingMultitokensMinted",
+                "type": "uint256"
+              },
+              {
+                "name": "actualFundAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "principalFunded",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "payInterestToFunders",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "fundingID",
+                "type": "uint64"
+              }
+            ],
+            "outputs": [
               {
                 "name": "interestAmount",
                 "type": "uint256"
@@ -11798,6 +11921,229 @@
         "abi": [
           {
             "type": "function",
+            "name": "cancelInfiWithdrawal",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_unwindingTimestamp",
+                "type": "uint256"
+              },
+              {
+                "name": "_newUnwindingEpochs",
+                "type": "uint32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "cancelUnwinding",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_unwindingTimestamp",
+                "type": "uint256"
+              },
+              {
+                "name": "_newUnwindingEpochs",
+                "type": "uint32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimRedemption",
+            "stateMutability": "nonpayable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "completeInfiWithdrawal",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_user",
+                "type": "address"
+              },
+              {
+                "name": "_unwindingTimestamp",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "createPosition",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_unwindingEpochs",
+                "type": "uint32"
+              },
+              {
+                "name": "_recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "increaseInfiWithdrawalPeriod",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_oldUnwindingEpochs",
+                "type": "uint32"
+              },
+              {
+                "name": "_newUnwindingEpochs",
+                "type": "uint32"
+              },
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "increaseUnwindingEpochs",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_oldUnwindingEpochs",
+                "type": "uint32"
+              },
+              {
+                "name": "_newUnwindingEpochs",
+                "type": "uint32"
+              },
+              {
+                "name": "_shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "lockInfi",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_unwindingEpochs",
+                "type": "uint32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_to",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mintAndLock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_to",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_unwindingEpochs",
+                "type": "uint32"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mintAndStake",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_to",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_to",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_minAssetsOut",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "stake",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -11819,6 +12165,38 @@
           },
           {
             "type": "function",
+            "name": "startInfiWithdrawal",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              },
+              {
+                "name": "_unwindingEpochs",
+                "type": "uint32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "startUnwinding",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              },
+              {
+                "name": "_unwindingEpochs",
+                "type": "uint32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "unstake",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -11837,6 +12215,59 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "unstakeAndLock",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_to",
+                "type": "address"
+              },
+              {
+                "name": "_amount",
+                "type": "uint256"
+              },
+              {
+                "name": "_unwindingEpochs",
+                "type": "uint32"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_user",
+                "type": "address"
+              },
+              {
+                "name": "_unwindingTimestamp",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_unwindingTimestamp",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -13592,6 +14023,22 @@
           },
           {
             "type": "function",
+            "name": "setUserEModeOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "setUserUseReserveAsCollateral",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -13602,6 +14049,26 @@
               {
                 "name": "useAsCollateral",
                 "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateralOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
               }
             ],
             "outputs": []
@@ -21074,6 +21541,22 @@
           },
           {
             "type": "function",
+            "name": "setUserEModeOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "setUserUseReserveAsCollateral",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -21084,6 +21567,26 @@
               {
                 "name": "useAsCollateral",
                 "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateralOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
               }
             ],
             "outputs": []
@@ -37245,6 +37748,90 @@
         "abi": [
           {
             "type": "function",
+            "name": "deposit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_assets",
+                "type": "uint256"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "_receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_shares",
+                "type": "uint256"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "ETHToSend",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "swapmpETHforETH",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -37260,6 +37847,31 @@
             "outputs": [
               {
                 "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "_assets",
+                "type": "uint256"
+              },
+              {
+                "name": "_receiver",
+                "type": "address"
+              },
+              {
+                "name": "_owner",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
                 "type": "uint256"
               }
             ]
@@ -44041,6 +44653,22 @@
           },
           {
             "type": "function",
+            "name": "setUserEModeOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "setUserUseReserveAsCollateral",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -44063,6 +44691,26 @@
               {
                 "name": "args",
                 "type": "bytes32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateralOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
               }
             ],
             "outputs": []
@@ -51903,6 +52551,22 @@
           },
           {
             "type": "function",
+            "name": "setUserEModeOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "setUserUseReserveAsCollateral",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -51913,6 +52577,26 @@
               {
                 "name": "useAsCollateral",
                 "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateralOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
               }
             ],
             "outputs": []
@@ -58821,6 +59505,22 @@
           },
           {
             "type": "function",
+            "name": "setUserEModeOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "setUserUseReserveAsCollateral",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -58831,6 +59531,26 @@
               {
                 "name": "useAsCollateral",
                 "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateralOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
               }
             ],
             "outputs": []
@@ -62668,10 +63388,235 @@
         "abi": [
           {
             "type": "function",
+            "name": "agentTransferToUncommitted",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "policyID",
+                "type": "uint64"
+              },
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "fromReleaseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "inUnderlying",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "agentWithdrawFromCommitted",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "policyID",
+                "type": "uint64"
+              },
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "fromReleaseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "amountSpecifiedInUnderlying",
+                "type": "bool"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimDeactivatedIsolated",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "validatorId",
+                "type": "uint64"
+              },
+              {
+                "name": "vShares",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountMon",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "claimDeactivatedIsolatedFor",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "validatorId",
+                "type": "uint64"
+              },
+              {
+                "name": "vShares",
+                "type": "uint256"
+              },
+              {
+                "name": "account",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountMon",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "completeUncommit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "policyID",
+                "type": "uint64"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "completeUncommitAndRedeem",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "policyID",
+                "type": "uint64"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "completeUncommitWithApproval",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "policyID",
+                "type": "uint64"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "account",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "completeUnstake",
             "stateMutability": "nonpayable",
             "inputs": [],
             "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "completeUnstakeIsolated",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "validatorId",
+                "type": "uint64"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "completeUnstakeIsolatedFor",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "validatorId",
+                "type": "uint64"
+              },
+              {
+                "name": "account",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountMon",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "convertZeroYieldTrancheToShares",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "shares",
+                "type": "uint256"
+              }
+            ]
           },
           {
             "type": "function",
@@ -62693,6 +63638,47 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "depositIsolated",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "validatorId",
+                "type": "uint64"
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "vShares",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "depositToZeroYieldTranche",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           },
           {
             "type": "function",
@@ -62776,6 +63762,27 @@
             "inputs": [
               {
                 "name": "shares",
+                "type": "uint256"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "completionEpoch",
+                "type": "uint64"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "requestUnstakeIsolated",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "validatorId",
+                "type": "uint64"
+              },
+              {
+                "name": "vShares",
                 "type": "uint256"
               }
             ],
@@ -74157,6 +75164,22 @@
           },
           {
             "type": "function",
+            "name": "setUserEModeOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "setUserUseReserveAsCollateral",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -74179,6 +75202,26 @@
               {
                 "name": "args",
                 "type": "bytes32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateralOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
               }
             ],
             "outputs": []
@@ -79071,6 +80114,164 @@
               }
             ],
             "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "addLiquidity",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "useVaultDeposit",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "startEdge",
+                    "type": "int256"
+                  },
+                  {
+                    "name": "stopEdge",
+                    "type": "int256"
+                  },
+                  {
+                    "name": "amount0Desired",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Desired",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "collect",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amount0",
+                "type": "int256"
+              },
+              {
+                "name": "amount1",
+                "type": "int256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "detach",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "splitEdge",
+                "type": "int256"
+              },
+              {
+                "name": "newBelow",
+                "type": "bool"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "newTokenIdMinted",
+                "type": "uint256"
+              },
+              {
+                "name": "amount0",
+                "type": "int256"
+              },
+              {
+                "name": "amount1",
+                "type": "int256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "drain",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amount0",
+                "type": "int256"
+              },
+              {
+                "name": "amount1",
+                "type": "int256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "portion",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "liquidity",
+                "type": "bytes16"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "newTokenIdMinted",
+                "type": "uint256"
+              }
+            ]
           },
           {
             "type": "function",
@@ -84598,6 +85799,22 @@
           },
           {
             "type": "function",
+            "name": "setUserEModeOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "categoryId",
+                "type": "uint8"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "setUserUseReserveAsCollateral",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -84620,6 +85837,26 @@
               {
                 "name": "args",
                 "type": "bytes32"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "setUserUseReserveAsCollateralOnBehalfOf",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "useAsCollateral",
+                "type": "bool"
+              },
+              {
+                "name": "onBehalfOf",
+                "type": "address"
               }
             ],
             "outputs": []
@@ -87344,6 +88581,63 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "redeemBoostReward",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "user",
+                "type": "address"
+              },
+              {
+                "name": "rewardTokens",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeemBoostRewardAll",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "user",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "redeemRewards",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "user",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "redeemRewardsAndGetReward",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "user",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           },
           {
             "type": "function",
