@@ -1474,3 +1474,11 @@ Packed paths are financial pool parameters, not executable calldata. Sturdy chec
 
 Verification: catalog generation/check, four focused backend suites (65 tests) and production-policy/public-ABI smoke passed all 14 additions with 207 expected denials. The initial smoke compared checksum addresses against lowercase public addresses and stopped before authorization; the throwaway comparison was corrected, with no production workaround. Full verify/build/E2E gates, real database locks, funded execution and Openfort broadcast were not run.
 
+## Supported-protocol completion, cycle 4 — core protocol overloads (2026-11-01)
+
+`sources/core-capability-completion.json` adds 51 exact functions: Aave V3 aToken repayment and L2 packed financial parameters (24), Curve Router/Solver default/recipient overloads (19), Morpho Blue callback-free liquidation (2), Lido finalized claims (2), and FraxSwap fee-supporting actions (4). ABI tuple names, outputs and mutability remain deployment-specific; Monad Curve retains its independently bound four-column swap parameters. No existing capability records changed.
+
+Morpho liquidation explicitly requires the existing `empty-callback-data-v1` scope at argument 4; nonempty callback data is denied. Aave bytes32 values encode fixed reserve/amount/rate financial fields, not executable calldata. Deprecated Aave deposit aliases and Pendle's unrestricted caller-selected reward dispatch remain excluded. Existing asset funding/allowance, recipient, oracle, health, conversion, finalization, slippage and liquidity constraints remain independent.
+
+Verification: additions-only diff, generate/check, all 65 focused backend tests and public-ABI/production-policy smoke over 51 additions passed, with 745 expected denials. A separate two-path Morpho smoke also rejected nonempty callback data on both chains. No new execution language, signing scope, token approval or API-key grant. Full verify/build/E2E gates, real database locking, funded execution and Openfort broadcast were not run.
+
