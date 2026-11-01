@@ -7864,6 +7864,216 @@
         ]
       },
       {
+        "address": "0x207158a267cbd2598bb3d611d8cbdee2709f2f8c",
+        "protocol": "Compound III",
+        "abi": [
+          {
+            "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x20a82619fcd300f3e0028db6353d38e3cc3b9e14",
         "protocol": "SOFA.org",
         "abi": [
@@ -14195,6 +14405,216 @@
         ]
       },
       {
+        "address": "0x3d0bb1ccab520a66e607822fc55bc921738fafe3",
+        "protocol": "Compound III",
+        "abi": [
+          {
+            "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x3d7d6fdf07ee548b939a80edbc9b2256d0cdc003",
         "protocol": "Strata",
         "abi": [
@@ -18670,6 +19090,216 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x5d409e56d886231adaf00c8775665ad0f9897b56",
+        "protocol": "Compound III",
+        "abi": [
+          {
+            "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -45250,6 +45880,216 @@
         ]
       },
       {
+        "address": "0xe85dc543813b8c2cfeaac371517b925a166a9293",
+        "protocol": "Compound III",
+        "abi": [
+          {
+            "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xe86142af1321eaac4270422081c1eda31eecff0c",
         "protocol": "Yay!",
         "abi": [
@@ -54750,6 +55590,399 @@
         ]
       },
       {
+        "address": "0xce95afbb8ea029495c66020883f87aae8864af92",
+        "protocol": "Morpho Blue",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "liquidate",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "seizedAssets",
+                "type": "uint256"
+              },
+              {
+                "name": "repaidShares",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "supplyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xe36a30d249f7761327fd973001a32010b521b6fd",
         "protocol": "Compound III",
         "abi": [
@@ -55177,6 +56410,399 @@
   },
   "56": {
     "contracts": [
+      {
+        "address": "0x01b0bd309aa75547f7a37ad7b1219a898e67a83a",
+        "protocol": "Morpho Blue",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "liquidate",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "seizedAssets",
+                "type": "uint256"
+              },
+              {
+                "name": "repaidShares",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "supplyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
       {
         "address": "0x02c48173a260fa22e99c27bec530e2052be5a528",
         "protocol": "MYX Finance",
@@ -68487,6 +70113,399 @@
         ]
       },
       {
+        "address": "0x1bf0c2541f820e775182832f06c0b7fc27a25f67",
+        "protocol": "Morpho Blue",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "liquidate",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "seizedAssets",
+                "type": "uint256"
+              },
+              {
+                "name": "repaidShares",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "supplyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6",
         "protocol": "ERC-20",
         "abi": [
@@ -71823,216 +73842,6 @@
         ]
       },
       {
-        "address": "0xaeb318360f27748acb200ce616e389a6c9409a07",
-        "protocol": "Compound III",
-        "abi": [
-          {
-            "type": "function",
-            "name": "absorb",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "absorber",
-                "type": "address"
-              },
-              {
-                "name": "accounts",
-                "type": "address[]"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "buyCollateral",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "minAmount",
-                "type": "uint256"
-              },
-              {
-                "name": "baseAmount",
-                "type": "uint256"
-              },
-              {
-                "name": "recipient",
-                "type": "address"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "supply",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "supplyFrom",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "from",
-                "type": "address"
-              },
-              {
-                "name": "dst",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "supplyTo",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "dst",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "transferAsset",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "dst",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "transferAssetFrom",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "src",
-                "type": "address"
-              },
-              {
-                "name": "dst",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "withdraw",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "withdrawFrom",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "src",
-                "type": "address"
-              },
-              {
-                "name": "to",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "withdrawTo",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "to",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          }
-        ]
-      },
-      {
         "address": "0xba12222222228d8ba445958a75a0704d566bf2c8",
         "protocol": "balancer-v2-vault",
         "abi": [
@@ -74024,216 +75833,6 @@
                 "type": "uint256[]"
               }
             ]
-          }
-        ]
-      },
-      {
-        "address": "0xf25212e676d1f7f89cd72ffee66158f541246445",
-        "protocol": "Compound III",
-        "abi": [
-          {
-            "type": "function",
-            "name": "absorb",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "absorber",
-                "type": "address"
-              },
-              {
-                "name": "accounts",
-                "type": "address[]"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "buyCollateral",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "minAmount",
-                "type": "uint256"
-              },
-              {
-                "name": "baseAmount",
-                "type": "uint256"
-              },
-              {
-                "name": "recipient",
-                "type": "address"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "supply",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "supplyFrom",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "from",
-                "type": "address"
-              },
-              {
-                "name": "dst",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "supplyTo",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "dst",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "transferAsset",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "dst",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "transferAssetFrom",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "src",
-                "type": "address"
-              },
-              {
-                "name": "dst",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "withdraw",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "withdrawFrom",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "src",
-                "type": "address"
-              },
-              {
-                "name": "to",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
-          },
-          {
-            "type": "function",
-            "name": "withdrawTo",
-            "stateMutability": "nonpayable",
-            "inputs": [
-              {
-                "name": "to",
-                "type": "address"
-              },
-              {
-                "name": "asset",
-                "type": "address"
-              },
-              {
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "outputs": []
           }
         ]
       }
@@ -79179,6 +80778,399 @@
         ]
       },
       {
+        "address": "0xd5d960e8c380b724a48ac59e2dff1b2cb4a1eaee",
+        "protocol": "Morpho Blue",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "liquidate",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "seizedAssets",
+                "type": "uint256"
+              },
+              {
+                "name": "repaidShares",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "supplyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0xe7cd86e13ac4309349f30b3435a9d337750fc82d",
         "protocol": "ERC-20",
         "abi": [
@@ -82705,6 +84697,216 @@
                 "type": "bool"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x2c776041ccfe903071af44aa147368a9c8eea518",
+        "protocol": "Compound III",
+        "abi": [
+          {
+            "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -86967,6 +89169,216 @@
         ]
       },
       {
+        "address": "0x784efeb622244d2348d4f2522f8860b96fbece89",
+        "protocol": "Compound III",
+        "abi": [
+          {
+            "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
         "address": "0x78b8726929911044748374178cb2d417a54319e5",
         "protocol": "DIEM Relay",
         "abi": [
@@ -88163,6 +90575,216 @@
                 "type": "uint256"
               }
             ]
+          }
+        ]
+      },
+      {
+        "address": "0x9c4ec768c28520b50860ea7a15bd7213a9ff58bf",
+        "protocol": "Compound III",
+        "abi": [
+          {
+            "type": "function",
+            "name": "absorb",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "absorber",
+                "type": "address"
+              },
+              {
+                "name": "accounts",
+                "type": "address[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "minAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "baseAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "supplyTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAsset",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferAssetFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "dst",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "src",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdrawTo",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -102928,6 +105550,399 @@
               },
               {
                 "name": "_strategy",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x6c247b1f6182318877311737bac0844baa518f5e",
+        "protocol": "Morpho Blue",
+        "abi": [
+          {
+            "type": "function",
+            "name": "borrow",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "liquidate",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "borrower",
+                "type": "address"
+              },
+              {
+                "name": "seizedAssets",
+                "type": "uint256"
+              },
+              {
+                "name": "repaidShares",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "repay",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "supply",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "supplyCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "withdraw",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "shares",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              },
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "withdrawCollateral",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "marketParams",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "loanToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "collateralToken",
+                    "type": "address"
+                  },
+                  {
+                    "name": "oracle",
+                    "type": "address"
+                  },
+                  {
+                    "name": "irm",
+                    "type": "address"
+                  },
+                  {
+                    "name": "lltv",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "assets",
+                "type": "uint256"
+              },
+              {
+                "name": "onBehalf",
+                "type": "address"
+              },
+              {
+                "name": "receiver",
                 "type": "address"
               }
             ],

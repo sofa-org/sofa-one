@@ -12,6 +12,8 @@ As of 2026-10-21, this policy removes 40 capabilities across Nomiswap V1 (team d
 
 The dated admission sections below are historical records and are superseded by this exclusion policy and the current `catalog.json`; their former active counts do not describe current support. No catalog maintenance step should reimport their historical `selectedFunctions` wholesale.
 
+On 2026-11-01, this policy also removes all 20 catalog functions at the two Polygon Compound III markets. [Proposal 591](https://www.tally.xyz/gov/compound/proposal/591?govId=eip155%3A1%3A0x309a862bbC1A00e45506cB8A802D1ff10004c8C0), implementing the [explicit deprecation decision](https://www.comp.xyz/t/deprecation-of-polygon-and-unichain-comets/7929), executed on Ethereum on 2026-07-20. `sources/lending-supported-deployment-parity.json` retains the execution receipt and matching `ProposalExecuted(591)` log. This is governance execution/dispatch evidence, not a separately retrieved Polygon delivery receipt or live-parameter attestation. Exit-only methods are removed too; no old custom grant can restore these markets.
+
 
 Use a contract-first inventory: **chain and exact deployed address → matching ABI → function inventory → capability records → existing catalog workflow**. Establish the chain/address from a reliable deployment source and bind the ABI to that deployment using a reliable ABI source. Where a proxy is involved, match the proxy address and the applicable implementation/interface; record the relevant implementation identity when available. These are inventory evidence, not proof of current runtime bytecode identity, funding, or executable behavior.
 
@@ -1568,4 +1570,14 @@ Five routers have independent exact-address Sourcify `exact_match` bindings. Mon
 Native input, fee-on-transfer behavior, branch-dependent minimum accounting, whole-router-balance forwarding and caller-selected paths/recipients/deadlines remain explicit risks. No permit authority, generic executor, approval grant or financial-safety gate is introduced; profiles remain unchanged.
 
 Verification: generate/check and all 65 focused generator/export/catalog/policy tests passed. Production-policy/public-download smoke authorized and final-rechecked all 84 additions with 490 expected denials. Full verify/build/E2E, real database locking, funded execution and Openfort broadcast were not run.
+
+## Supported-protocol continuation, cycle 12 — active lending and lifecycle cutover (2026-11-01)
+
+`sources/lending-supported-deployment-parity.json` adds 105 functions at 12 independently bound roots: 70 Compound III functions across seven additional markets and 35 Morpho Blue functions across Optimism, BSC, Polygon, Monad and Arbitrum. The finite current Spark registry has no additional pool on supported chains. The canonical Compound deployment source is the current Compound-Foundation repository, not an assumed older fork.
+
+All four callback-bearing Morpho methods retain the existing mandatory `empty-callback-data-v1` scopes with the correct argument indices. Nonempty callback data remains rejected. Institutional Comet source retains its Blockscout partial-verification grade, and Morpho verifier `match` is not upgraded to `exact_match`; allowlist/manager requirements, rates, liquidation, delegation and financial eligibility remain intrinsic conditions.
+
+The same review removes every capability at the two officially deprecated Polygon Compound III roots, including exit methods. No existing profile selected those IDs, so no profile republication or grant migration is required. A new regression reproduced both markets being incorrectly authorized before removal and now rejects all mode and saved exact custom grants. An additional Arbitrum Comet at `0xa5edbdd9646f8dff606d7448e414884c7d905dca` remains blocked on its reported implementation's independently bound ABI/source despite alternate verifier/explorer retrieval attempts; no ABI was borrowed.
+
+Verification: scoped non-fixing ESLint, generate/check and six targeted suites (80 tests) passed. Production-policy/public-download smoke authorized and final-rechecked all 105 additions with 765 expected denials, including cross-chain peer-grant isolation and nonempty callback rejection. The existing Morpho execution test's obsolete inventory pin was deleted; meaningful native-value, callback and final-recheck coverage now also handles liquidation. Full verify/build/E2E, real database locking, funded execution and Openfort broadcast were not run.
 

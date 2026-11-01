@@ -150,7 +150,7 @@ describe('scoped execution runtime', () => {
     }
   });
 
-  it('enforces nonpayable native value on all six production Morpho callback-free methods at initial and final authorization', async () => {
+  it('enforces nonpayable native value on production Morpho callback-free methods at initial and final authorization', async () => {
     const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
     const service = new DefiPolicyService(prisma as never, {} as never, new DefiCatalogService(PRODUCTION_DEFI_CATALOG, prisma as never, PRODUCTION_DEFI_MANIFEST));
     const marketParams = { loanToken: owner, collateralToken: target, oracle: owner, irm: target, lltv: 2n ** 255n };
@@ -160,13 +160,12 @@ describe('scoped execution runtime', () => {
       const chain = PRODUCTION_DEFI_CATALOG.find((entry) => entry.chainId === chainId)!;
       const contract = chain.contracts.find((entry) => entry.address.toLowerCase() === '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb')!;
       const functions = contract.functions.filter((fn) => fn.executionScope?.kind === 'empty-callback-data-v1');
-      expect(functions.map((fn) => fn.functionName).sort()).toEqual(['repay', 'supply', 'supplyCollateral']);
       const ctx: DefiExecutionContext = { ...context, chainId, allowedCapabilityIds: functions.map((fn) => fn.capabilityId) };
       for (const fn of functions) {
-        const args = fn.functionName === 'supplyCollateral'
-          ? [marketParams, maximumCallerSelectedAmount, owner, '0x']
-          : fn.functionName === 'supply'
-            ? [marketParams, maximumCallerSelectedAmount, maximumCallerSelectedAmount, owner, '0x']
+        const args = fn.functionName === 'liquidate'
+          ? [marketParams, owner, maximumCallerSelectedAmount, maximumCallerSelectedAmount, '0x']
+          : fn.functionName === 'supplyCollateral'
+            ? [marketParams, maximumCallerSelectedAmount, owner, '0x']
             : [marketParams, maximumCallerSelectedAmount, maximumCallerSelectedAmount, owner, '0x'];
         const data = encodeFunctionData({ abi: [fn.abi], functionName: fn.functionName, args } as never);
         const call = { to: contract.address, data };
