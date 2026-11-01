@@ -1504,3 +1504,13 @@ Funding speculation, asynchronous queues, stored agent/completor eligibility, to
 
 Verification: generate/check, all 65 focused backend tests, and production-policy/public-ABI smoke passed all 63 additions with 383 expected denials. Every addition was authorized and final-rechecked; shared mode/pause/revocation boundaries were exercised separately. Full verify/build/E2E gates, real database locks, funded execution and Openfort broadcast were not run.
 
+## Supported-protocol completion, cycle 7 — finite inventory remainder (2026-11-01)
+
+The four `financial-remainder-*-completion.json`, two `authorized-finance-*-completion.json`, two `deployment-binding-*-completion.json` and two `terminal-finance-*-completion.json` evidence files close the supplied source-inventory candidates with 174 unique additions. The independently found WePiggy liquidation is admitted once, not duplicated. Existing-record changes correct obsolete exclusion warnings only. Original full ABIs retain their compiler annotations; redundant legacy `constant`/`payable` booleans are omitted from the three Venus policy fragments, whose nonpayable mutability is unchanged.
+
+Additions include existing-position liquidations and delegated financial methods, recipient/queue variants, proof-bound claims, fixed Blend V2 financial dispatch, GMX existing-request updates/cancellations, Sushi/SmarDex swaps, Venus user operations, Sablier best-effort batches and protocol-bound payouts. Economic risk is not disguised as an execution guarantee: uint narrowing, whole-contract balances, offchain USCC redemption branches, unadjusted liquidity donations, delayed auction prices and batch partial failures remain explicit. Revert NFT removal reuses `empty-callback-data-v1` at argument 2. No authority-setting or arbitrary-executor selector is admitted.
+
+Every supplied candidate retains an explicit admission, concrete exclusion, cross-target mismatch or specific unresolved binding. Broader Blur V1 policy dispatch, GT3 arbitrary-factory paths, unresolved mandate routing, source-unbound SOFA native variants, paused/disabled entrypoints and unreviewed cross-chain authority remain excluded rather than labeled safe by outer ABI alone.
+
+Verification: generate/check, all 65 focused backend tests and production-policy/public-ABI smoke passed 174 additions with 1024 expected denials, including the empty-callback boundary. No full verify/build/E2E gates, real database locks, funded execution or Openfort broadcast were run.
+
