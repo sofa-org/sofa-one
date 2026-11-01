@@ -1514,3 +1514,13 @@ Every supplied candidate retains an explicit admission, concrete exclusion, cros
 
 Verification: generate/check, all 65 focused backend tests and production-policy/public-ABI smoke passed 174 additions with 1024 expected denials, including the empty-callback boundary. No full verify/build/E2E gates, real database locks, funded execution or Openfort broadcast were run.
 
+## Supported-protocol completion, cycle 8 — recovered complete interfaces (2026-11-01)
+
+`sources/partial-interface-two-completion.json` and `sources/partial-interface-four-completion.json` add 157 exact financial functions after recovering complete interfaces for 67 previously partial targets. Both retain SHA256-pooled full ABI/source evidence, actual match grades, routed implementation/facet bindings and explicit mutable-function dispositions; six Bancor records receive warning-only amendments.
+
+The additions cover existing-protocol lending/liquidity, claims, fixed typed zaps, existing-request transitions and preauthorized user methods. Unadjusted swaps, factory/route selection, whole-balance behavior, protocol fees, oracle/debt checks, native currency, share rounding and absent economic bounds remain visible risks, not invented financial-safety gates. No generic executor, signature/approval authority, bridge scope or runtime language was added.
+
+ZeroEx's known recovered selectors are bound individually; its non-enumerable registry still lacks an authoritative exhaustive selector list after failed full-history retrieval through two providers. This is a concrete inventory-binding prerequisite, not a claim of complete registry discovery. Unsupported Enso/Uniswap executor signatures and Merkl callbacks remain excluded.
+
+Verification: generate/check, all 65 focused backend tests and production-policy/public-ABI smoke passed 157 additions with 915 expected denials. Each addition was authorized and final-rechecked. Full verify/build/E2E gates, real database locks, funded execution and Openfort broadcast were not run.
+
