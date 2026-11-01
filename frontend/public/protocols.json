@@ -8164,6 +8164,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -12988,6 +13005,23 @@
               {
                 "name": "amountIn",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },
@@ -23646,6 +23680,65 @@
               {
                 "name": "result",
                 "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "previousBlockhash",
+                "type": "bytes32"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
               }
             ]
           },
@@ -50991,6 +51084,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -60124,6 +60234,65 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "previousBlockhash",
+                "type": "bytes32"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "pull",
             "stateMutability": "payable",
             "inputs": [
@@ -62108,6 +62277,23 @@
               {
                 "name": "amountIn",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },
@@ -66253,6 +66439,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -69270,6 +69473,23 @@
               {
                 "name": "amountIn",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },
@@ -75143,6 +75363,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -75762,6 +75999,65 @@
               {
                 "name": "result",
                 "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "previousBlockhash",
+                "type": "bytes32"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
               }
             ]
           },
@@ -80719,6 +81015,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -83651,6 +83964,65 @@
               {
                 "name": "result",
                 "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "previousBlockhash",
+                "type": "bytes32"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
               }
             ]
           },
@@ -88757,6 +89129,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -90164,6 +90553,23 @@
               {
                 "name": "amountIn",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },
@@ -99584,6 +99990,65 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "previousBlockhash",
+                "type": "bytes32"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "pull",
             "stateMutability": "payable",
             "inputs": [
@@ -102782,6 +103247,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -103210,6 +103692,65 @@
               {
                 "name": "result",
                 "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "previousBlockhash",
+                "type": "bytes32"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
               }
             ]
           },
@@ -122814,6 +123355,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -125016,6 +125574,23 @@
               {
                 "name": "amountIn",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },
@@ -130498,6 +131073,65 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "previousBlockhash",
+                "type": "bytes32"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "pull",
             "stateMutability": "payable",
             "inputs": [
@@ -133858,6 +134492,23 @@
               {
                 "name": "amountIn",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },
@@ -139722,6 +140373,23 @@
               {
                 "name": "amountIn",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },

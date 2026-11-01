@@ -62,7 +62,7 @@ export class DefiCatalogService {
         warnings: fn.warnings,
         status: active ? (scopeKeys.some((key) => paused.has(key)) ? 'paused' : 'active') : 'inactive',
         policy: fn.policy,
-        ...(fn.executionScope ? { executionScope: { kind: fn.executionScope.kind, hash: executionScopeHash(fn.executionScope), ...(fn.executionScope.kind === 'same-target-multicall-v1' ? { allowedChildren: fn.executionScope.allowedChildren.map((child) => ({ ...child })) } : {}) } } : {}),
+        ...(fn.executionScope ? { executionScope: { kind: fn.executionScope.kind, hash: executionScopeHash(fn.executionScope), ...((fn.executionScope.kind === 'same-target-multicall-v1' || fn.executionScope.kind === 'same-target-router-multicall-v1') ? { allowedChildren: fn.executionScope.allowedChildren.map((child) => ({ ...child })) } : {}) } } : {}),
       };
     })));
     capabilities.push({ capabilityId: POLYMARKET_CLOB_AUTH_CAPABILITY_ID, type: 'typed_data_sign', chainId: 137, label: 'Polymarket CLOB authentication', description: 'Strict ClobAuth EIP-712 attestation', protocol: 'Polymarket', operation: 'clob_auth', status: paused.has('global') || paused.has('chain:137') || paused.has(`capability:${POLYMARKET_CLOB_AUTH_CAPABILITY_ID}`) ? 'paused' : 'active' });

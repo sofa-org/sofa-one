@@ -6,7 +6,7 @@ import { SecurityEventService } from '../security-events/security-event.service'
 import { DefiAuthorization, DefiDbClient, DefiExecutionContext, DefiExecutionPlanNode, DefiFunctionPolicy, DefiInteraction, DefiMatch, DefiPolicyDenial, DefiSigningAuthorization, defiPauseScopeKeysForCapability } from './defi.types';
 import { DefiCatalogService, POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID } from './defi-catalog.service';
 import { functionAbiHash, reviewedManifestHashValid } from './registry/defi-manifest';
-import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from './execution/scope';
+import { executionScopeHash, isRouterMulticallBinding, NPM_MULTICALL_CHILD_SIGNATURES, ROUTER_MULTICALL_CHILD_SIGNATURES } from './execution/scope';
 import { MAX_DEFI_EXECUTION_NODES, preflightBytesArray, sameExecutionPlan } from './execution/planner';
 import { AMBIENT_CHAIN_ID, AMBIENT_SIGNATURE, AMBIENT_TARGET, preflightAmbientRoot, validateAmbientColdpathPayload } from './execution/ambient';
 import { decodeEnsoStaticWeirollRoot } from './execution/enso';
@@ -373,7 +373,9 @@ export class DefiPolicyService {
       if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
       return [rootNode];
     }
-    if (scope.kind !== 'same-target-multicall-v1' || rootFn.signature !== 'multicall(bytes[])' || rootFn.abi.inputs.length !== 1 || rootFn.abi.inputs[0].type !== 'bytes[]' || rootFn.abi.outputs?.length !== 1 || rootFn.abi.outputs[0].type !== 'bytes[]' || rootFn.abi.stateMutability !== 'payable') this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
+    if (scope.kind !== 'same-target-multicall-v1' && scope.kind !== 'same-target-router-multicall-v1') this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
+    const router = scope.kind === 'same-target-router-multicall-v1';
+    if (router ? !isRouterMulticallBinding(rootFn) : rootFn.signature !== 'multicall(bytes[])' || rootFn.abi.inputs.length !== 1 || rootFn.abi.inputs[0].type !== 'bytes[]' || rootFn.abi.outputs?.length !== 1 || rootFn.abi.outputs[0].type !== 'bytes[]' || rootFn.abi.stateMutability !== 'payable') this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
     let count: number;
     try { count = preflightBytesArray(root.data, scope.bytesArrayArgIndex); }
     catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
@@ -390,7 +392,9 @@ export class DefiPolicyService {
       if (typeof data !== 'string' || !/^0x[0-9a-f]{8}/i.test(data)) this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, rootFn);
       const selector = data.slice(0, 10).toLowerCase();
       const childFn = contract.functions.find((candidate) => candidate.status === 'active' && candidate.type === 'contract_call' && toFunctionSelector(candidate.signature).toLowerCase() === selector);
-      if (!childFn || !NPM_MULTICALL_CHILD_SIGNATURES.includes(childFn.signature) || childFn.executionScope || !scope.allowedChildren.some((child) => child.capabilityId === childFn.capabilityId && child.signature === childFn.signature && child.abiHash.toLowerCase() === functionAbiHash(childFn))) this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, rootFn);
+      if (!childFn || !(router ? ROUTER_MULTICALL_CHILD_SIGNATURES : NPM_MULTICALL_CHILD_SIGNATURES).includes(childFn.signature)
+        || childFn.executionScope || childFn.provenance.status !== 'verified' || childFn.chainId !== rootFn.chainId || childFn.contract.toLowerCase() !== rootFn.contract.toLowerCase()
+        || !scope.allowedChildren.some((child) => child.capabilityId === childFn.capabilityId && child.signature === childFn.signature && child.abiHash.toLowerCase() === functionAbiHash(childFn))) this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, rootFn);
       const interaction: DefiInteraction = { to: root.to, data, value: root.value };
       this.assertCanonicalCall(interaction, childFn, context);
       nodes.push(deepFreeze({ path: [...path, childIndex], data: data.toLowerCase() as `0x${string}`, match: toMatch(childFn, root.value as string) }));

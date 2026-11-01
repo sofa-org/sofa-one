@@ -26,6 +26,7 @@ export type DefiExecutionScope =
   | Readonly<{ kind: 'empty-callback-data-v1'; bytesArgIndex: number }>
   | Readonly<{ kind: 'ambient-coldpath-v1'; callpathArgIndex: 0; bytesArgIndex: 1 }>
   | Readonly<{ kind: 'same-target-multicall-v1'; bytesArrayArgIndex: 0; allowedChildren: readonly Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>[] }>
+  | Readonly<{ kind: 'same-target-router-multicall-v1'; bytesArrayArgIndex: 0 | 1; allowedChildren: readonly Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>[] }>
   | Readonly<{ kind: 'enso-static-weiroll-v1'; allowedChildren: readonly EnsoStaticWeirollChildBinding[] }>
   | Readonly<{ kind: 'polymarket-pusd-wrap-v1'; asset: string; recipientPolicy: 'withdrawal-allowlist-v1' }>
   | Readonly<{ kind: 'uniswap-universal-router-2.1.2-v1' }>

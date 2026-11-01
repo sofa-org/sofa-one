@@ -1615,3 +1615,15 @@ Verification: generate/check, 162 standalone production-policy/final-authorizati
 
 The catalog now has 5,216 capabilities, 417 existing protocol labels and 840 targets on the same seven chains. Router self-delegatecall batches with different child vocabularies/root overloads are not misrepresented as this manager-specific exact-eight-child grammar; their separate admission requirements remain under review.
 
+## Supported-protocol continuation, cycle 16 — finite financial-router batching (2026-11-01)
+
+`sources/router-closed-multicall-capability-support.json` adds 36 independently bound wrappers at 22 existing router targets: 15 simple roots and 21 Router02 overloads. The new `same-target-router-multicall-v1` grammar supports exactly payable `multicall(bytes[])`, `multicall(uint256,bytes[])` and `multicall(bytes32,bytes[])`, with a fixed 23-signature financial vocabulary, same-target ABI-hashed child bindings and no nested execution scopes. Missing overloads are recorded as absent, not copied from another deployment.
+
+The source review retains 533 full-ABI decisions, 264 distinct target/child bindings and 522 wrapper-child edges, actual inherited self-delegatecall bodies and overload preconditions. Optimism runtime-only/missing-constructor evidence, Monad Similar Match/self-referential proxy annotation, Sushi pinned-artifact/source limitations and Pancake's actual grades remain explicit. Old string-revert implementations guarantee atomic failure, not exact preservation of arbitrary custom-error bytes. Eighty-four existing warnings are corrected without altering their fixed identities, ABIs or scopes.
+
+Every actually requested child still needs its own custom grant; configured-but-unused children do not. All mode remains broad but cannot bypass unknown selectors, recursion, pauses, canonical ABI/native-value checks, the ten-node/64KiB limits, request/manifest commitments or final authorization. The three root overloads inherit the same single original native value; they do not allocate fresh funding to each child. Existing NPM exact-eight scopes and their hashes remain unchanged.
+
+Verification: generate/check, backend and frontend no-emit TypeScript checks, scoped non-fixing ESLint and 11 targeted suites (140 tests) passed. Production-policy/final-authorization/public-download smoke covered all 36 roots and 522 child bindings in 72 positive plans with 2598 expected denials. The 18 existing manager wrappers/144 children also passed again with 1080 expected denials after the shared planner changes. The catalog now has 5,252 capabilities; protocol labels, targets and chains remain 417/840/7. Full verify/build/E2E, real database locking, funded execution and Openfort broadcast were not run.
+
+Further source review identified additional finite financial vocabularies, nonpayable/no-output roots, optional-failure Pendle tuples and composition of the existing V4 action scope. These are concrete separate admission work, not raw ABI grants or a claim that every bytes-array wrapper is inherently unsupported.
+

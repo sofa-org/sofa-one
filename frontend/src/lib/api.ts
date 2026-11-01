@@ -368,6 +368,10 @@ export interface CreateApiKeyRequest {
   permissions?: Partial<ApiKeyPermissions>;
 }
 
+export type DefiCapabilityExecutionScope =
+  | { kind: 'same-target-multicall-v1' | 'same-target-router-multicall-v1'; hash: `0x${string}`; allowedChildren: { capabilityId: string; signature: string; abiHash: `0x${string}` }[] }
+  | { kind: 'empty-callback-data-v1' | 'ambient-coldpath-v1' | 'enso-static-weiroll-v1' | 'polymarket-pusd-wrap-v1' | 'uniswap-universal-router-2.1.2-v1' | 'uniswap-v4-position-manager-v1'; hash: `0x${string}` };
+
 export interface DefiCapability {
   capabilityId: string;
   type: 'contract_call' | 'typed_data_sign';
@@ -382,6 +386,7 @@ export interface DefiCapability {
   operation?: string;
   warnings?: string[];
   provenance?: { sourceRef: string; verifiedAt: string; status: 'verified' | 'candidate' };
+  executionScope?: DefiCapabilityExecutionScope;
 }
 
 export interface DefiCapabilitiesResponse {

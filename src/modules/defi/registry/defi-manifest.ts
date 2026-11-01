@@ -1,7 +1,7 @@
 import { keccak256, stringToHex, toFunctionSelector } from 'viem';
 import type { DefiChainPolicy, DefiFunctionPolicy } from '../defi.types';
 import type { DefiRegistryFragment, ReviewedManifest } from './defi-manifest.types';
-import { executionScopeHash, NPM_MULTICALL_CHILD_SIGNATURES } from '../execution/scope';
+import { executionScopeHash, isRouterMulticallBinding, NPM_MULTICALL_CHILD_SIGNATURES, ROUTER_MULTICALL_CHILD_SIGNATURES } from '../execution/scope';
 import { AMBIENT_CHAIN_ID, AMBIENT_SIGNATURE, AMBIENT_TARGET } from '../execution/ambient';
 import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 import { isPolymarketPusdWrapIdentity, validatePolymarketPusdWrapBinding } from '../execution/pusd-identity';
@@ -155,13 +155,14 @@ export function buildReviewedManifest(fragments: readonly DefiRegistryFragment[]
     if (scoped.executionScope?.kind === 'empty-callback-data-v1' && scoped.abi.inputs[scoped.executionScope.bytesArgIndex]?.type !== 'bytes') throw new Error('Invalid DeFi callback-data scope ABI binding');
     if (scoped.executionScope?.kind === 'ambient-coldpath-v1' && (scoped.executionScope.callpathArgIndex !== 0 || scoped.executionScope.bytesArgIndex !== 1)) throw new Error('Invalid Ambient cold-path scope arguments');
   }
-  for (const wrapper of capabilities.filter((fn) => fn.executionScope?.kind === 'same-target-multicall-v1')) {
+  for (const wrapper of capabilities.filter((fn) => fn.executionScope?.kind === 'same-target-multicall-v1' || fn.executionScope?.kind === 'same-target-router-multicall-v1')) {
     const scope = wrapper.executionScope;
-    if (!scope || scope.kind !== 'same-target-multicall-v1') continue;
-    if (wrapper.signature !== 'multicall(bytes[])' || wrapper.abi.inputs.length !== 1 || wrapper.abi.inputs[0].type !== 'bytes[]' || wrapper.abi.outputs?.length !== 1 || wrapper.abi.outputs[0].type !== 'bytes[]' || wrapper.abi.stateMutability !== 'payable') throw new Error('Invalid DeFi multicall wrapper ABI');
+    if (!scope || (scope.kind !== 'same-target-multicall-v1' && scope.kind !== 'same-target-router-multicall-v1')) continue;
+    const router = scope.kind === 'same-target-router-multicall-v1';
+    if (router ? !isRouterMulticallBinding(wrapper) : wrapper.signature !== 'multicall(bytes[])' || wrapper.abi.inputs.length !== 1 || wrapper.abi.inputs[0].type !== 'bytes[]' || wrapper.abi.outputs?.length !== 1 || wrapper.abi.outputs[0].type !== 'bytes[]' || wrapper.abi.stateMutability !== 'payable') throw new Error('Invalid DeFi multicall wrapper ABI');
     for (const child of scope.allowedChildren) {
       const resolved = capabilities.find((fn) => fn.capabilityId === child.capabilityId);
-      if (!resolved || resolved.status !== 'active' || resolved.chainId !== wrapper.chainId || resolved.contract.toLowerCase() !== wrapper.contract.toLowerCase() || resolved.signature !== child.signature || functionAbiHash(resolved) !== child.abiHash.toLowerCase() || !multicallAllowed.has(resolved.signature) || resolved.executionScope) throw new Error('Invalid DeFi execution-scope child binding');
+      if (!resolved || resolved.status !== 'active' || resolved.type !== 'contract_call' || resolved.provenance.status !== 'verified' || resolved.chainId !== wrapper.chainId || resolved.contract.toLowerCase() !== wrapper.contract.toLowerCase() || resolved.signature !== child.signature || functionAbiHash(resolved) !== child.abiHash.toLowerCase() || !(router ? ROUTER_MULTICALL_CHILD_SIGNATURES.includes(resolved.signature) : multicallAllowed.has(resolved.signature)) || resolved.executionScope) throw new Error('Invalid DeFi execution-scope child binding');
     }
   }
   for (const wrapper of capabilities.filter((fn) => fn.executionScope?.kind === 'enso-static-weiroll-v1')) {
