@@ -1541,11 +1541,21 @@ Scoped Jest verification passed across 41 files in separate runs: the 40-file se
 
 The first combined smoke/test command reached its 300-second deadline after the smoke and production-registry test had passed; the remaining scoped tests were subsequently completed separately. Full `verify`, backend/frontend verify, build and E2E gates were deliberately not run, per the repository's local verification defaults.
 
-## Completion boundary
+## Completion boundary — first nine batches
 
 Across nine committed admission batches, the catalog moves from 2,886 to 3,730 capabilities: 851 additions and seven removals, retaining 417 existing protocol labels and 712 chain/address targets after the corrective Idle replacement. Every admission still passes through the ordinary authorization, pause and execution controls; catalog membership is not an API-key grant or a claim of executable, funded or financially safe transactions.
 
 The repeated review joined retained source inventories to exact supported targets, expanded partial interfaces, resolved delegated implementations/facets where evidence was obtainable, and repeated per-target parity checks after the brand-level pass. No further source-bound admissible additions were found within the reviewed deployments and the existing authorization/execution model. This is not an assertion that every protocol's global or future interface is enumerable.
 
 Concrete unresolved prerequisites remain: an authoritative complete selector inventory for ZeroEx's non-enumerable registry; exact current implementation/source binding for the unresolved Lista target despite alternate official/explorer/provider paths; and supported closed execution/callback/bridge models for methods whose nested effects cannot currently be bounded. Deprecated deployments, authority/admin/permit methods and opaque executors are not relabeled as ordinary financial capabilities to hide those gaps.
+
+## Supported-protocol continuation, cycle 10 — direct swap deployment parity (2026-11-01)
+
+`sources/swap-router-supported-deployment-parity.json` adds 25 fixed-ABI functions at ten additional deployments of existing protocols: four Sushi V3 swaps and one WOOFi V2 swap each on Optimism, BSC, Base and Arbitrum, plus the Sushi router on Polygon and WOO router on Ethereum. Existing Ethereum Sushi and Polygon WOO entries are not duplicated.
+
+Each Sushi root has its own pinned official deployment artifact, chain marker, constructor dependencies and successful deployment receipt. Each WOO root has an independent exact-address Sourcify ABI/source binding and current official deployment reference. No ABI is copied from the same address on another chain. Packed V3 paths remain token/fee paths, not generic executor calldata; native-input, surplus custody, zero-recipient, price-limit and nonstandard-token risks remain explicit.
+
+The complete pinned Sushi map has no Monad deployment. WOO's Monad router is documented, but remains unadmitted: Sourcify v2/full/partial metadata returned 404, MonadScan reports unverified, and no exact deployment artifact was found in the official repository. That requires target-bound ABI/source evidence, not a same-address cross-chain substitution.
+
+Verification: generate/check and all 65 focused generator/export/catalog/policy tests passed. Production-policy smoke authorized and final-rechecked all 25 additions, checked their public ABIs through the running Vite download, and observed 135 expected denials. Existing grant modes, profiles, pauses and execution languages are unchanged. Full verify/build/E2E gates, real database locks, funded execution and Openfort broadcast were not run.
 

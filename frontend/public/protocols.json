@@ -16339,6 +16339,49 @@
         ]
       },
       {
+        "address": "0x4c4af8dbc524681930a27b2f1af5bcc8062e6fb7",
+        "protocol": "woofi-v2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "swap",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "fromToken",
+                "type": "address"
+              },
+              {
+                "name": "toToken",
+                "type": "address"
+              },
+              {
+                "name": "fromAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minToAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "rebateTo",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "realToAmount",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x4c9edd5852cd905f086c759e8383e09bff1e68b3",
         "protocol": "ERC-20",
         "abi": [
@@ -50656,6 +50699,49 @@
         ]
       },
       {
+        "address": "0x4c4af8dbc524681930a27b2f1af5bcc8062e6fb7",
+        "protocol": "woofi-v2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "swap",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "fromToken",
+                "type": "address"
+              },
+              {
+                "name": "toToken",
+                "type": "address"
+              },
+              {
+                "name": "fromAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minToAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "rebateTo",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "realToAmount",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x5f2508cae9923b02316254026cd43d7902866725",
         "protocol": "Aave V3",
         "abi": [
@@ -51847,6 +51933,192 @@
               {
                 "name": "",
                 "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x8c32fd078b89eccb06b40289a539d84a4aa9fda6",
+        "protocol": "sushiswap-v3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactInputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
               }
             ]
           }
@@ -58752,6 +59024,49 @@
         ]
       },
       {
+        "address": "0x4c4af8dbc524681930a27b2f1af5bcc8062e6fb7",
+        "protocol": "woofi-v2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "swap",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "fromToken",
+                "type": "address"
+              },
+              {
+                "name": "toToken",
+                "type": "address"
+              },
+              {
+                "name": "fromAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minToAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "rebateTo",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "realToAmount",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x4f2760b32720f013e900dc92f65480137391199b",
         "protocol": "Lorenzo Protocol",
         "abi": [
@@ -61154,6 +61469,192 @@
               {
                 "name": "",
                 "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x909662a99605382db1e8d69cc1f182bb577d9038",
+        "protocol": "sushiswap-v3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactInputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
               }
             ]
           }
@@ -65641,6 +66142,192 @@
               {
                 "name": "",
                 "type": "bool"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "address": "0x0af89e1620b96170e2a9d0b68feebb767ed044c3",
+        "protocol": "sushiswap-v3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactInputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
               }
             ]
           }
@@ -80802,6 +81489,49 @@
         ]
       },
       {
+        "address": "0x4c4af8dbc524681930a27b2f1af5bcc8062e6fb7",
+        "protocol": "woofi-v2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "swap",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "fromToken",
+                "type": "address"
+              },
+              {
+                "name": "toToken",
+                "type": "address"
+              },
+              {
+                "name": "fromAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minToAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "rebateTo",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "realToAmount",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x4cad0052524648a7fa2cfe279997b00239295f33",
         "protocol": "dodo-v2",
         "abi": [
@@ -93145,6 +93875,192 @@
         ]
       },
       {
+        "address": "0xfb7ef66a7e61224dd6fcd0d7d9c3be5c8b049b9f",
+        "protocol": "sushiswap-v3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactInputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0xfbb21d0380bee3312b33c4353c8936a0f13ef26c",
         "protocol": "moonwell",
         "abi": [
@@ -97105,6 +98021,49 @@
         ]
       },
       {
+        "address": "0x4c4af8dbc524681930a27b2f1af5bcc8062e6fb7",
+        "protocol": "woofi-v2",
+        "abi": [
+          {
+            "type": "function",
+            "name": "swap",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "fromToken",
+                "type": "address"
+              },
+              {
+                "name": "toToken",
+                "type": "address"
+              },
+              {
+                "name": "fromAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "minToAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "rebateTo",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "realToAmount",
+                "type": "uint256"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "address": "0x4c9aaed3b8c443b4b634d1a189a5e25c604768de",
         "protocol": "Lodestar Finance",
         "abi": [
@@ -100740,6 +101699,192 @@
               }
             ],
             "outputs": []
+          }
+        ]
+      },
+      {
+        "address": "0x8a21f6768c1f8075791d08546dadf6daa0be820c",
+        "protocol": "sushiswap-v3",
+        "abi": [
+          {
+            "type": "function",
+            "name": "exactInput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactInputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOutMinimum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountOut",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutput",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "path",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "exactOutputSingle",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "tokenIn",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenOut",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amountInMaximum",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "amountIn",
+                "type": "uint256"
+              }
+            ]
           }
         ]
       },
