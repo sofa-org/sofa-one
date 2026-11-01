@@ -1559,3 +1559,13 @@ The complete pinned Sushi map has no Monad deployment. WOO's Monad router is doc
 
 Verification: generate/check and all 65 focused generator/export/catalog/policy tests passed. Production-policy smoke authorized and final-rechecked all 25 additions, checked their public ABIs through the running Vite download, and observed 135 expected denials. Existing grant modes, profiles, pauses and execution languages are unchanged. Full verify/build/E2E gates, real database locks, funded execution and Openfort broadcast were not run.
 
+## Supported-protocol continuation, cycle 11 — Uniswap V2 deployment parity (2026-11-01)
+
+`sources/uniswap-v2-supported-deployment-parity.json` adds 84 ordinary Router02 functions: 14 each on Optimism, BSC, Polygon, Monad, Base and Arbitrum. The complete current official mapping within supported chains is exhausted without duplicate additions; its 144 ABI functions have explicit decisions, excluding 18 permit paths and 42 getters/quotes.
+
+Five routers have independent exact-address Sourcify `exact_match` bindings. Monad retains its explorer's **Similar Match** grade, supplemented by its own creation input exactly matching pinned official Router02 initcode and independently decoded factory/WMON arguments. That qualification is not upgraded to Sourcify exact verification. Constructor/factory/wrapped-native and Arbitrum WETH proxy/implementation evidence are retained independently; no cross-chain ABI substitution is used.
+
+Native input, fee-on-transfer behavior, branch-dependent minimum accounting, whole-router-balance forwarding and caller-selected paths/recipients/deadlines remain explicit risks. No permit authority, generic executor, approval grant or financial-safety gate is introduced; profiles remain unchanged.
+
+Verification: generate/check and all 65 focused generator/export/catalog/policy tests passed. Production-policy/public-download smoke authorized and final-rechecked all 84 additions with 490 expected denials. Full verify/build/E2E, real database locking, funded execution and Openfort broadcast were not run.
+
