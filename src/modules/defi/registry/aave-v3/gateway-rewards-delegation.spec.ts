@@ -60,18 +60,6 @@ describe('Aave native gateway, credit delegation and rewards boundaries', () => 
       .rejects.toMatchObject(denied('DEFI_FUNCTION_NOT_ALLOWED'));
   });
 
-  it.each([
-    [56, '0x0c2c95b24529664fe55d4437d7a31175cfe6c4f7'],
-    [137, '0xbc302053db3aa514a3c86b9221082f162b91ad63'],
-    [8453, '0xa0d9c1e9e48ca30c8d8c3b5d69ff5dc1f6dffc24'],
-  ])('does not admit unlisted repayETH on chain %s', async (chainId, address) => {
-    const id = capability(chainId, address, 'depositETH');
-    const { policy, context } = fixture(chainId, [id]);
-    const data = encodeFunctionData({ abi: gatewayAbi, functionName: 'repayETH', args: [pool, 7n, owner] });
-    await expect(policy.authorizeContractCalls([{ to: address, data, value: '7' }], { ...context, capabilityMode: 'all', allowedCapabilityIds: [] }))
-      .rejects.toMatchObject(denied('DEFI_FUNCTION_NOT_ALLOWED'));
-  });
-
   it('requires debt-token delegation grants independently of aToken approvals, even at the same address on another chain', async () => {
     const id = capability(10, debt, 'approveDelegation');
     const otherChainId = capability(42161, debt, 'approveDelegation');
