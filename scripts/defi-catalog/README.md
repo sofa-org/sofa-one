@@ -1466,3 +1466,11 @@ Requests are not immediate settlement. Existing caller share ownership, asset al
 
 Verification: additions-only diff, generate/check, four focused backend suites (65 tests), and production-policy smoke over all 22 additions passed; the smoke checked Vite-served public ABIs and observed 325 grant/canonical-data/native-value/pause/final-recheck denials. Chromium exercised the real public protocol directory, its Spark search result and download link; the screenshot was inspected. No real database locks, funded execution or Openfort broadcast; full verify/backend/frontend/build/E2E gates skipped.
 
+## Supported-protocol completion, cycle 3 — ordinary financial variants (2026-11-01)
+
+`sources/ordinary-capability-completion.json` adds 14 source-bound functions: Ramses current V3 multihop swaps (2), OctoSwap fee-supporting swap/removal variants (4), Sturdy registered-strategy queue exits (2), Jones own-claim reinvestment (1), Lodestar preauthorized borrow/redeem (2), Flat Money receiver-aware deposit announcement (1), and Ample proof-bound prize claims (2). Thirty-five existing records receive warning-only corrections removing now-obsolete scope exclusions; no existing identity, ABI or authority changes. Historical evidence remains historical.
+
+Packed paths are financial pool parameters, not executable calldata. Sturdy checks registered strategy activation and queue bounds; Lodestar consumes existing whitelist/looping eligibility without installing it. Async announcements and proof-bound claims do not guarantee settlement. Whole-router balances/taxed-token receipts, Jones uint128 narrowing/retention, queue losses and configured dependencies remain explicit. Deprecated Avalon aliases remain excluded. Lodestar liquidation remains deferred because the retained deployed Comptroller binding does not establish collateral validation before the caller-selected collateral accrual call.
+
+Verification: catalog generation/check, four focused backend suites (65 tests) and production-policy/public-ABI smoke passed all 14 additions with 207 expected denials. The initial smoke compared checksum addresses against lowercase public addresses and stopped before authorization; the throwaway comparison was corrected, with no production workaround. Full verify/build/E2E gates, real database locks, funded execution and Openfort broadcast were not run.
+
