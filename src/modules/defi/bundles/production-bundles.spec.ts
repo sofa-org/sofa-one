@@ -50,7 +50,7 @@ describe('current production profiles', () => {
 
   it('requires the wrapper and every selected child grant independently and denies recursion', async () => {
     const profile = PRODUCTION_DEFI_CAPABILITY_BUNDLES.find((bundle) => bundle.bundleId === 'uniswap-v3-positions-1')!;
-    const wrapper = flat.find((fn) => fn.capabilityId.endsWith(':multicall') && fn.chainId === 1)!;
+    const wrapper = flat.find((fn) => profile.capabilityIds.includes(fn.capabilityId) && fn.executionScope?.kind === 'same-target-multicall-v1')!;
     if (wrapper.executionScope?.kind !== 'same-target-multicall-v1') throw new Error('Missing production NPM scope');
     const children = wrapper.executionScope.allowedChildren.map((binding) => flat.find((fn) => fn.capabilityId === binding.capabilityId)!);
     const allCalls = encoded(wrapper, { 0: children.map((child) => encoded(child)) });

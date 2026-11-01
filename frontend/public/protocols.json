@@ -9098,6 +9098,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -12973,6 +12990,101 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -18115,6 +18227,23 @@
               {
                 "name": "amount1",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },
@@ -23432,6 +23561,119 @@
           },
           {
             "type": "function",
+            "name": "increaseLiquidity",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickLower",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "tickUpper",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "pull",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "swapExactTokensForTokens",
             "stateMutability": "payable",
             "inputs": [
@@ -23487,6 +23729,178 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "wrapETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -41756,6 +42170,35 @@
           },
           {
             "type": "function",
+            "name": "createAndInitializePoolIfNecessary",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token0",
+                "type": "address"
+              },
+              {
+                "name": "token1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "pool",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "decreaseLiquidity",
             "stateMutability": "payable",
             "inputs": [
@@ -41949,6 +42392,26 @@
           },
           {
             "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "sweepToken",
             "stateMutability": "payable",
             "inputs": [
@@ -41963,6 +42426,26 @@
               {
                 "name": "recipient",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -50505,6 +50988,101 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -56493,6 +57071,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -59439,6 +60034,119 @@
           },
           {
             "type": "function",
+            "name": "increaseLiquidity",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickLower",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "tickUpper",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "pull",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "swapExactTokensForTokens",
             "stateMutability": "payable",
             "inputs": [
@@ -59494,6 +60202,178 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "wrapETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -61230,6 +62110,101 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -63490,6 +64465,35 @@
           },
           {
             "type": "function",
+            "name": "createAndInitializePoolIfNecessary",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token0",
+                "type": "address"
+              },
+              {
+                "name": "token1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "pool",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "decreaseLiquidity",
             "stateMutability": "payable",
             "inputs": [
@@ -63683,6 +64687,26 @@
           },
           {
             "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "sweepToken",
             "stateMutability": "payable",
             "inputs": [
@@ -63697,6 +64721,26 @@
               {
                 "name": "recipient",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -65206,6 +66250,101 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -72833,6 +73972,35 @@
           },
           {
             "type": "function",
+            "name": "createAndInitializePoolIfNecessary",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token0",
+                "type": "address"
+              },
+              {
+                "name": "token1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "pool",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "decreaseLiquidity",
             "stateMutability": "payable",
             "inputs": [
@@ -73026,6 +74194,26 @@
           },
           {
             "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "sweepToken",
             "stateMutability": "payable",
             "inputs": [
@@ -73040,6 +74228,26 @@
               {
                 "name": "recipient",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -73932,6 +75140,101 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -74371,6 +75674,291 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "increaseLiquidity",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickLower",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "tickUpper",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "pull",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "wrapETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -78436,6 +80024,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -79111,6 +80716,101 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -81866,6 +83566,119 @@
           },
           {
             "type": "function",
+            "name": "increaseLiquidity",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickLower",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "tickUpper",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "pull",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "swapExactTokensForTokens",
             "stateMutability": "payable",
             "inputs": [
@@ -81921,6 +83734,178 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "wrapETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -84869,6 +86854,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -85947,6 +87949,35 @@
           },
           {
             "type": "function",
+            "name": "createAndInitializePoolIfNecessary",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token0",
+                "type": "address"
+              },
+              {
+                "name": "token1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "pool",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "decreaseLiquidity",
             "stateMutability": "payable",
             "inputs": [
@@ -86140,6 +88171,26 @@
           },
           {
             "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "sweepToken",
             "stateMutability": "payable",
             "inputs": [
@@ -86154,6 +88205,26 @@
               {
                 "name": "recipient",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -86683,6 +88754,101 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -88658,6 +90824,23 @@
               {
                 "name": "amount1",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },
@@ -91757,6 +93940,35 @@
           },
           {
             "type": "function",
+            "name": "createAndInitializePoolIfNecessary",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token0",
+                "type": "address"
+              },
+              {
+                "name": "token1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "pool",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "decreaseLiquidity",
             "stateMutability": "payable",
             "inputs": [
@@ -91950,6 +94162,26 @@
           },
           {
             "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "sweepToken",
             "stateMutability": "payable",
             "inputs": [
@@ -91964,6 +94196,26 @@
               {
                 "name": "recipient",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -97242,6 +99494,119 @@
           },
           {
             "type": "function",
+            "name": "increaseLiquidity",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickLower",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "tickUpper",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "pull",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "swapExactTokensForTokens",
             "stateMutability": "payable",
             "inputs": [
@@ -97297,6 +99662,178 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "wrapETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -97980,6 +100517,35 @@
           },
           {
             "type": "function",
+            "name": "createAndInitializePoolIfNecessary",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token0",
+                "type": "address"
+              },
+              {
+                "name": "token1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "pool",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "decreaseLiquidity",
             "stateMutability": "payable",
             "inputs": [
@@ -98173,6 +100739,26 @@
           },
           {
             "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "sweepToken",
             "stateMutability": "payable",
             "inputs": [
@@ -98187,6 +100773,26 @@
               {
                 "name": "recipient",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -100516,6 +103122,291 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "increaseLiquidity",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickLower",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "tickUpper",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "pull",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "wrapETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -102026,6 +104917,23 @@
               {
                 "name": "amount1",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },
@@ -108041,6 +110949,23 @@
               {
                 "name": "amount1",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },
@@ -119886,6 +122811,101 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -123884,6 +126904,23 @@
           },
           {
             "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "refundETH",
             "stateMutability": "payable",
             "inputs": [],
@@ -127371,6 +130408,119 @@
           },
           {
             "type": "function",
+            "name": "increaseLiquidity",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "mint",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "params",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "token0",
+                    "type": "address"
+                  },
+                  {
+                    "name": "token1",
+                    "type": "address"
+                  },
+                  {
+                    "name": "fee",
+                    "type": "uint24"
+                  },
+                  {
+                    "name": "tickLower",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "tickUpper",
+                    "type": "int24"
+                  },
+                  {
+                    "name": "amount0Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount1Min",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "result",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "pull",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "swapExactTokensForTokens",
             "stateMutability": "payable",
             "inputs": [
@@ -127426,6 +130576,178 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "wrapETH",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -130538,6 +133860,101 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -133548,6 +136965,35 @@
           },
           {
             "type": "function",
+            "name": "createAndInitializePoolIfNecessary",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token0",
+                "type": "address"
+              },
+              {
+                "name": "token1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "sqrtPriceX96",
+                "type": "uint160"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "pool",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "decreaseLiquidity",
             "stateMutability": "payable",
             "inputs": [
@@ -133741,6 +137187,26 @@
           },
           {
             "type": "function",
+            "name": "safeTransferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "sweepToken",
             "stateMutability": "payable",
             "inputs": [
@@ -133755,6 +137221,26 @@
               {
                 "name": "recipient",
                 "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "transferFrom",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "tokenId",
+                "type": "uint256"
               }
             ],
             "outputs": []
@@ -136238,6 +139724,101 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "refundETH",
+            "stateMutability": "payable",
+            "inputs": [],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepToken",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sweepTokenWithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "unwrapWETH9WithFee",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "amountMinimum",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "feeBips",
+                "type": "uint256"
+              },
+              {
+                "name": "feeRecipient",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },
@@ -137510,6 +141091,23 @@
               {
                 "name": "amount1",
                 "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "multicall",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "data",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "results",
+                "type": "bytes[]"
               }
             ]
           },
