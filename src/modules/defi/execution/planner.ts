@@ -31,6 +31,36 @@ export function preflightBytesArray(calldata: string, argIndex = 0): number {
   return Number(count);
 }
 
+/** Canonical Pendle Call3[] layout, bounded before viem traverses dynamic tuples. */
+export function preflightPendleMulticall(calldata: string): number {
+  if (!/^0x(?:[0-9a-f]{2})+$/i.test(calldata) || calldata.length > 2 + 65_536 * 2 || calldata.length < 10 + 128) throw new TypeError('Malformed Pendle multicall');
+  const body = calldata.slice(10);
+  const bytes = BigInt(body.length / 2);
+  const read = (offset: bigint): bigint => {
+    if (offset < 0n || offset + 32n > bytes) throw new TypeError('Malformed Pendle multicall word');
+    return BigInt(`0x${body.slice(Number(offset * 2n), Number((offset + 32n) * 2n))}`);
+  };
+  if (read(0n) !== 32n) throw new TypeError('Noncanonical Pendle array offset');
+  const count = read(32n);
+  if (count < 1n || count > BigInt(MAX_DEFI_EXECUTION_NODES)) throw new TypeError('Pendle multicall bound exceeded');
+  const base = 64n;
+  let end = base + count * 32n;
+  if (end > bytes) throw new TypeError('Malformed Pendle array head');
+  for (let index = 0n; index < count; index++) {
+    if (read(base + index * 32n) !== end - base) throw new TypeError('Noncanonical Pendle tuple offset');
+    const flag = read(end);
+    if ((flag !== 0n && flag !== 1n) || read(end + 32n) !== 64n) throw new TypeError('Malformed Pendle tuple');
+    const length = read(end + 64n);
+    const payloadEnd = end + 96n + length;
+    const paddedEnd = end + 96n + ((length + 31n) / 32n) * 32n;
+    if (length < 4n || length > 65_536n || paddedEnd > bytes) throw new TypeError('Malformed Pendle payload');
+    if (!/^0*$/.test(body.slice(Number(payloadEnd * 2n), Number(paddedEnd * 2n)))) throw new TypeError('Noncanonical Pendle padding');
+    end = paddedEnd;
+  }
+  if (end !== bytes) throw new TypeError('Noncanonical Pendle trailing data');
+  return Number(count);
+}
+
 export function sameExecutionPlan(actual: readonly DefiExecutionPlanNode[], expected: readonly DefiExecutionPlanNode[], sameMatch: (a: DefiExecutionPlanNode['match'], b: DefiExecutionPlanNode['match']) => boolean): boolean {
   return actual.length === expected.length && expected.every((node, index) => {
     const candidate = actual[index];

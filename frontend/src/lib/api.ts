@@ -370,6 +370,11 @@ export interface CreateApiKeyRequest {
 
 export type DefiCapabilityExecutionScope =
   | { kind: 'same-target-multicall-v1' | 'same-target-router-multicall-v1'; hash: `0x${string}`; allowedChildren: { capabilityId: string; signature: string; abiHash: `0x${string}` }[] }
+  | { kind: 'same-target-financial-multicall-v1'; hash: `0x${string}`; bytesArrayArgIndex: 0; nativeValuePolicy: 'inherit' | 'zero'; allowedChildren: { capabilityId: string; signature: string; abiHash: `0x${string}`; executionScopeHash?: `0x${string}` }[] }
+  | { kind: 'pendle-router-multicall-v1'; hash: `0x${string}`; allowedChildren: { capabilityId: string; signature: string; abiHash: `0x${string}` }[] }
+  | { kind: 'uniswap-v4-position-manager-multicall-v1'; hash: `0x${string}`; allowedChildren: { capabilityId: string; signature: string; abiHash: `0x${string}`; executionScopeHash: `0x${string}` }[] }
+  | { kind: 'empty-tuple-bytes-v1'; hash: `0x${string}`; tupleArgIndex: number; bytesComponentIndex: number }
+  | { kind: 'morpho-market-adapter-v1' | 'maple-adapter-exit-v1'; hash: `0x${string}`; adapter: string }
   | { kind: 'empty-callback-data-v1' | 'ambient-coldpath-v1' | 'enso-static-weiroll-v1' | 'polymarket-pusd-wrap-v1' | 'uniswap-universal-router-2.1.2-v1' | 'uniswap-v4-position-manager-v1'; hash: `0x${string}` };
 
 export interface DefiCapability {

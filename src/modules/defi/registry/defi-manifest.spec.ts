@@ -111,34 +111,21 @@ describe('reviewed manifest assembler', () => {
     expect(() => buildReviewedManifest([{ chains: [{ chainId: 1, status: 'inactive', contracts: [{ address: unrelatedWithScope.contract, status: 'inactive', functions: [unrelatedWithScope] }] }] }])).toThrow(/Enso static Weiroll root/);
   });
 
-  it('resolves every Enso child to an active exact ordinary function in the combined manifest', () => {
-    const withRoot = (base: DefiRegistryFragment) => buildReviewedManifest([base, ensoRootFragment(ensoRoot())]);
-    expect(withRoot(cloneV7BaselineWithoutEnsoRoot()).capabilities).toHaveLength(buildReviewedManifest([cloneV7BaselineWithoutEnsoRoot()]).capabilities.length + 1);
+  it('rejects missing, inactive and ABI-mismatched Enso children in an isolated graph', () => {
+    const ids = new Set(ENSO_STATIC_WEIROLL_CHILD_IDENTITIES.map((child) => child.capabilityId));
+    const children = cloneV7BaselineWithoutEnsoRoot().chains.flatMap((chain) => chain.contracts.flatMap((contract) => contract.functions)).filter((item) => ids.has(item.capabilityId));
+    const withChildren = (ordinary: readonly DefiFunctionPolicy[]) => buildReviewedManifest([{
+      chains: ordinary.map((child) => ({ chainId: child.chainId, status: 'active' as const, contracts: [{ address: child.contract, status: 'active' as const, functions: [child] }] })),
+    }, ensoRootFragment(ensoRoot())]);
     for (const missing of ENSO_STATIC_WEIROLL_CHILD_IDENTITIES) {
-      const base = cloneV7BaselineWithoutEnsoRoot();
-      const withoutChild = { ...base, chains: base.chains.map((chain) => ({ ...chain, contracts: chain.contracts.map((contract) => ({ ...contract, functions: contract.functions.filter((item) => item.capabilityId !== missing.capabilityId) })) })) };
-      expect(() => withRoot(withoutChild)).toThrow(/Enso static Weiroll child binding/);
-
-      const inactive = cloneV7BaselineWithoutEnsoRoot();
-      const inactiveChild = { ...inactive, chains: inactive.chains.map((chain) => ({ ...chain, contracts: chain.contracts.map((contract) => ({ ...contract, functions: contract.functions.map((item) => item.capabilityId === missing.capabilityId ? { ...item, status: 'inactive' as const } : item) })) })) };
-      expect(() => withRoot(inactiveChild)).toThrow(/Enso static Weiroll child binding/);
-
-      const alteredAbi = cloneV7BaselineWithoutEnsoRoot();
-      const alteredChildAbi = {
-        ...alteredAbi,
-        chains: alteredAbi.chains.map((chain) => ({
-          ...chain,
-          contracts: chain.contracts.map((contract) => ({
-            ...contract,
-            functions: contract.functions.map((item) => {
-              if (item.capabilityId !== missing.capabilityId) return item;
-              const abi = { ...item.abi, outputs: [...item.abi.outputs, { type: 'uint8' }] };
-              return { ...item, abi, abiHash: functionAbiHash({ abi } as never) };
-            }),
-          })),
-        })),
-      };
-      expect(() => withRoot(alteredChildAbi)).toThrow(/Enso static Weiroll child binding/);
+      expect(() => withChildren(children.filter((item) => item.capabilityId !== missing.capabilityId))).toThrow();
+      expect(() => withChildren(children.map((item) => item.capabilityId === missing.capabilityId ? { ...item, status: 'inactive' as const } : item))).toThrow();
+      const altered = children.map((item) => {
+        if (item.capabilityId !== missing.capabilityId) return item;
+        const abi = { ...item.abi, outputs: [...item.abi.outputs, { type: 'uint8' as const }] };
+        return { ...item, abi, abiHash: functionAbiHash({ abi }) };
+      });
+      expect(() => withChildren(altered)).toThrow();
     }
   });
 

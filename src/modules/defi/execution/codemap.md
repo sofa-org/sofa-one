@@ -1,11 +1,34 @@
 # DeFi execution planning
 
-This leaf owns pure, versioned execution-language identity and the immutable
-execution-plan contract. Scope hashing is deterministic; it has no database,
-provider, or financial-policy responsibilities. The exact Enso v8 proposal binds
-one payable `routeSingle((uint8,bytes),bytes)` root to the closed
-`enso-static-weiroll-v1` scope and three existing v7 children. Runtime decoding,
-plan commitment, root/child grant checks, and initial/final authorization remain
-at the DeFi policy boundary. V8 source/admission/catalog wiring is locally
-integrated but has not passed mandatory Gate 4; no current constructor/runtime,
-funding, liquidity, or complete-workflow claim follows.
+This leaf owns pure, versioned execution-language identity, bounded wire
+preflight and the immutable execution-plan contract. It has no database,
+provider or financial-safety responsibilities.
+
+- `scope.ts` normalizes and hashes the exact scope contract, validates finite
+  root/child bindings and pins the admitted registered-adapter identities.
+- `planner.ts` bounds canonical array/tuple payloads before ABI decoding and
+  shares the ten-call-node and aggregate-calldata limits across a request.
+- `financial-multicall-signatures.ts` is the explicit financial/Pendle signature
+  vocabulary. Runtime never discovers selectors from source snapshots or ABIs.
+- `uniswap-identity.ts` reserves the known router/position-manager identities;
+  the Uniswap wire/action decoders retain their own shared 64-operation budget,
+  recipient, hook-data, settlement, full-drain and touched-target rules.
+
+Finite self-delegatecall wrappers bind same-chain/same-target active children
+by capability ID, ABI hash and, where applicable, execution-scope hash.
+Financial roots may compose only explicitly supported empty-callback,
+empty-tuple-bytes and fixed-adapter leaf scopes. Pendle optional failures do not
+skip authorization of attempted children. V4 manager multicalls compose only
+the bound existing `modifyLiquidities` action scope and preserve the original
+caller; they do not make arbitrary nested wrappers valid.
+
+Runtime decoding, request/manifest commitments, root/child grants, pauses and
+initial/final authorization remain at the DeFi policy boundary. Typed Morpho
+market bytes and empty Maple exit bytes constrain execution syntax, not market
+eligibility, balances, permissions, liquidity or financial safety.
+
+The exact Enso v8 proposal binds payable
+`routeSingle((uint8,bytes),bytes)` to `enso-static-weiroll-v1` and three existing
+v7 children. Its source/admission/catalog wiring is locally integrated but has
+not passed mandatory Gate 4; no current constructor/runtime, funding,
+liquidity or complete-workflow claim follows.

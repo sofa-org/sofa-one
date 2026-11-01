@@ -8312,7 +8312,76 @@
           "result": "Complete recursive tree has no Monad or deployment artifacts; only scripts/deploy.ts deploys example Greeter, not router."
         }
       ],
-      "requiredPrerequisite": "Trustworthy exact Monad router ABI/source or official exact-address build/deployment artifact; no runtime fallback."
+      "requiredPrerequisite": "Trustworthy exact Monad router ABI/source or official exact-address build/deployment artifact; no runtime fallback.",
+      "independentRuntimeReview": {
+        "reviewedAt": "2026-11-01",
+        "officialRpcRef": "https://docs.monad.xyz/developer-essentials/network-information",
+        "rpc": "https://rpc.monad.xyz",
+        "chainId": 143,
+        "blockNumberHex": "0x7104c5c",
+        "method": "eth_getCode",
+        "address": "0x4c4af8dbc524681930a27b2f1af5bcc8062e6fb7",
+        "runtimeBytes": 10055,
+        "executableBytesExcludingCbor": 10002,
+        "runtimeSha256": "8d150c3e43bdbc4d1896d5f8312f57c230f45ac8c4756e581e59a0c5f2d9cc89",
+        "sha256Encoding": "Decoded bytecode bytes, not UTF-8 hexadecimal.",
+        "untrustedCompilerAuxdataHex": "0xa2646970667358221220dc38014e0b76b6c7a8a0f0d1a081a8092f7da37498d3c0695bd6a6c4974ad8db64736f6c634300080e",
+        "metadataCid": "QmdAHw92WzQj4qZtEf6fptj2YzAtrbbFyYpgGHjaCLtfdL",
+        "metadataFetchAttempts": [
+          {
+            "url": "https://ipfs.io/ipfs/QmdAHw92WzQj4qZtEf6fptj2YzAtrbbFyYpgGHjaCLtfdL",
+            "result": "HTTP 403; no metadata retrieved."
+          },
+          {
+            "url": "https://dweb.link/ipfs/QmdAHw92WzQj4qZtEf6fptj2YzAtrbbFyYpgGHjaCLtfdL",
+            "result": "HTTP 403; no metadata retrieved."
+          }
+        ],
+        "alternateExplorerAttempt": {
+          "url": "https://monadvision.com/address/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7",
+          "result": "Static reader exposed no ABI/source; actual Chromium reached an interactive Cloudflare verification. No source or ABI retrieved, and no verification status inferred."
+        },
+        "verifiedPeerBuildComparison": {
+          "compilerVersion": "0.8.14+commit.80d49f37",
+          "optimizer": {
+            "runs": 20000,
+            "enabled": true
+          },
+          "compiledRuntimeBytes": 10113,
+          "executableBytesExcludingCbor": 10060,
+          "compiledRuntimeSha256": "d1687381e645ce7f1d8cef9ae6f7e484ccc9017af73dae9fa6ab57080707be14",
+          "observations": [
+            {
+              "chainId": 1,
+              "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7?fields=runtimeBytecode,compilation,abi"
+            },
+            {
+              "chainId": 10,
+              "sourceRef": "https://sourcify.dev/server/v2/contract/10/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7?fields=runtimeBytecode,compilation"
+            },
+            {
+              "chainId": 56,
+              "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7?fields=runtimeBytecode,compilation"
+            },
+            {
+              "chainId": 137,
+              "sourceRef": "https://sourcify.dev/server/v2/contract/137/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7?fields=runtimeBytecode,compilation"
+            },
+            {
+              "chainId": 8453,
+              "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7?fields=runtimeBytecode,compilation"
+            },
+            {
+              "chainId": 42161,
+              "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7?fields=runtimeBytecode,compilation"
+            }
+          ],
+          "decision": "not-bytecode-equivalent",
+          "reason": "All six retrieved peer builds have the same compiled runtime hash, but their executable length differs from the exact Monad target even before compiler-declared immutable masking. Their ABI cannot be substituted."
+        },
+        "decision": "blocked",
+        "reason": "Read-only target runtime exists, but this is not a source/ABI proof. Embedded auxiliary data and matching selectors are not a safe cross-chain ABI fallback. No capability is admitted for this target."
+      }
     }
   ],
   "additions": [

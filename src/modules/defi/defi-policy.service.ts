@@ -6,8 +6,8 @@ import { SecurityEventService } from '../security-events/security-event.service'
 import { DefiAuthorization, DefiDbClient, DefiExecutionContext, DefiExecutionPlanNode, DefiFunctionPolicy, DefiInteraction, DefiMatch, DefiPolicyDenial, DefiSigningAuthorization, defiPauseScopeKeysForCapability } from './defi.types';
 import { DefiCatalogService, POLYMARKET_DEPOSIT_WALLET_BATCH_SIGN_CAPABILITY_ID } from './defi-catalog.service';
 import { functionAbiHash, reviewedManifestHashValid } from './registry/defi-manifest';
-import { executionScopeHash, isRouterMulticallBinding, NPM_MULTICALL_CHILD_SIGNATURES, ROUTER_MULTICALL_CHILD_SIGNATURES } from './execution/scope';
-import { MAX_DEFI_EXECUTION_NODES, preflightBytesArray, sameExecutionPlan } from './execution/planner';
+import { executionScopeHash, isFinancialAdapterBinding, isFiniteMulticallBinding, isFiniteMulticallChildBinding, isFiniteMulticallScope, isRouterMulticallBinding, NPM_MULTICALL_CHILD_SIGNATURES, ROUTER_MULTICALL_CHILD_SIGNATURES } from './execution/scope';
+import { MAX_DEFI_EXECUTION_NODES, preflightBytesArray, preflightPendleMulticall, sameExecutionPlan } from './execution/planner';
 import { AMBIENT_CHAIN_ID, AMBIENT_SIGNATURE, AMBIENT_TARGET, preflightAmbientRoot, validateAmbientColdpathPayload } from './execution/ambient';
 import { decodeEnsoStaticWeirollRoot } from './execution/enso';
 import { ENSO_STATIC_WEIROLL_CHILD_IDENTITIES, ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from './execution/enso-identity';
@@ -54,6 +54,7 @@ export class DefiPolicyService {
       this.assertGrantedAndUnpaused(fn, snapshotContext, pauseState);
       matches.push(toMatch(fn));
       const expanded = this.expandExecution(interaction, fn, snapshotContext, [matches.length - 1], executionPlan.length, uniswapPlan);
+      if (executionPlan.length + expanded.length > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', snapshotContext, fn);
       this.assertUniswapTargetsUnpaused(uniswapPlan, pauseState, snapshotContext, fn);
       for (const node of expanded) {
         if (!hasCapability(snapshotContext.capabilityMode, snapshotContext.allowedCapabilityIds, node.match.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', snapshotContext, this.catalog.functionForCapability(node.match.capabilityId));
@@ -177,6 +178,7 @@ export class DefiPolicyService {
           if (!hasCapability(liveMode, key.allowedCapabilityIds, fn.capabilityId)) this.deny('DEFI_CAPABILITY_NOT_GRANTED', context, fn);
          if (isPaused(state, fn)) this.deny('DEFI_CAPABILITY_PAUSED', context, fn);
           const expanded = this.expandExecution(authorization.interactions[index], fn, context, [index], recomputedPlan.length, uniswapPlan);
+          if (recomputedPlan.length + expanded.length > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, fn);
           this.assertUniswapTargetsUnpaused(uniswapPlan, state, context, fn);
          for (const node of expanded) {
            const child = this.catalog.functionForCapability(node.match.capabilityId);
@@ -275,6 +277,35 @@ export class DefiPolicyService {
     try { validateUniswapBinding(rootFn); }
     catch { this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn); }
     const uniswapKind = uniswapIdentityKind(rootFn);
+    if (isFiniteMulticallScope(scope)) {
+      if (path.length !== 1 || !isFiniteMulticallBinding(rootFn)) this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
+      this.assertNativeValue(root, rootFn, context);
+      if (scope.kind === 'same-target-financial-multicall-v1' && scope.nativeValuePolicy === 'zero' && BigInt(root.value ?? '0') !== 0n) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      const pendle = scope.kind === 'pendle-router-multicall-v1';
+      let count: number;
+      try { count = pendle ? preflightPendleMulticall(root.data) : preflightBytesArray(root.data); }
+      catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
+      if (alreadyPlanned + 1 + count > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      const args = this.decodeCanonicalArgs(root, rootFn, context);
+      const calls = args[0];
+      if (!Array.isArray(calls) || calls.length !== count) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      const contract = this.catalog.activeChain(context.chainId)?.contracts.find((entry) => entry.status === 'active' && entry.address.toLowerCase() === root.to.toLowerCase());
+      if (!contract) this.deny('DEFI_CONTRACT_NOT_ALLOWED', context, rootFn);
+      const input = rootFn.abi.inputs[0];
+      const payloadName = input.type === 'tuple[]' && 'components' in input ? input.components[1].name ?? '' : '';
+      const nodes: DefiExecutionPlanNode[] = [rootNode];
+      for (const [index, call] of calls.entries()) {
+        // viem returns named tuples as records and unnamed tuples as arrays.
+        const data: unknown = pendle ? (Array.isArray(call) ? call[1] : call?.[payloadName]) : call;
+        if (typeof data !== 'string' || !/^0x[0-9a-f]{8}/i.test(data)) this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, rootFn);
+        const child = contract.functions.find((candidate) => candidate.status === 'active' && candidate.type === 'contract_call' && toFunctionSelector(candidate.signature).toLowerCase() === data.slice(0, 10).toLowerCase());
+        if (!child || !isFiniteMulticallChildBinding(scope, rootFn, child, functionAbiHash(child))) this.deny('DEFI_FUNCTION_NOT_ALLOWED', context, rootFn);
+        const interaction: DefiInteraction = { to: root.to, data, value: root.value };
+        // Self-delegatecall preserves msg.sender; an external UR->PM call does not.
+        nodes.push(...this.expandExecution(interaction, child, context, [...path, index], alreadyPlanned + nodes.length, uniswapPlan, context.executionOwner));
+      }
+      return nodes;
+    }
     if (uniswapKind) {
       this.assertNativeValue(root, rootFn, context);
       let parsed: UniswapExecutionResult;
@@ -359,6 +390,36 @@ export class DefiPolicyService {
       const args = this.decodeCanonicalArgs(root, rootFn, context);
       const index = scope.bytesArgIndex;
       if (rootFn.abi.inputs[index]?.type !== 'bytes' || args[index] !== '0x') this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      return [rootNode];
+    }
+    if (scope.kind === 'empty-tuple-bytes-v1') {
+      this.assertNativeValue(root, rootFn, context);
+      const parameter = rootFn.abi.inputs[scope.tupleArgIndex];
+      if (parameter?.type !== 'tuple' || !('components' in parameter) || parameter.components[scope.bytesComponentIndex]?.type !== 'bytes') this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
+      const tuple = this.decodeCanonicalArgs(root, rootFn, context)[scope.tupleArgIndex];
+      const value = Array.isArray(tuple) ? tuple[scope.bytesComponentIndex] : (tuple as Record<string, unknown>)?.[parameter.components[scope.bytesComponentIndex].name ?? ''];
+      if (value !== '0x') this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      return [rootNode];
+    }
+    if (scope.kind === 'morpho-market-adapter-v1' || scope.kind === 'maple-adapter-exit-v1') {
+      this.assertNativeValue(root, rootFn, context);
+      if (!isFinancialAdapterBinding(rootFn)) this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
+      const args = this.decodeCanonicalArgs(root, rootFn, context);
+      const adapter = args[0];
+      const data = args[1];
+      if (typeof adapter !== 'string' || adapter.toLowerCase() !== scope.adapter.toLowerCase() || typeof data !== 'string') this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      if (scope.kind === 'maple-adapter-exit-v1') {
+        if (data !== '0x') this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      } else {
+        if (data.length !== 322) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+        // MarketParams is four canonical address words followed by one uint256.
+        // The outer ABI decoder already establishes hexadecimal bytes.
+        for (let word = 0; word < 4; word++) {
+          if (!data.startsWith('000000000000000000000000', 2 + word * 64)) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+        }
+      }
       if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
       return [rootNode];
     }

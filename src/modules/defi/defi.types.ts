@@ -24,13 +24,24 @@ export type DefiProvenance = Readonly<{
 /** Closed, versioned execution languages for explicitly scoped router workflows. */
 export type DefiExecutionScope =
   | Readonly<{ kind: 'empty-callback-data-v1'; bytesArgIndex: number }>
+  | Readonly<{ kind: 'empty-tuple-bytes-v1'; tupleArgIndex: number; bytesComponentIndex: number }>
+  | Readonly<{ kind: 'morpho-market-adapter-v1'; adapter: string }>
+  | Readonly<{ kind: 'maple-adapter-exit-v1'; adapter: string }>
   | Readonly<{ kind: 'ambient-coldpath-v1'; callpathArgIndex: 0; bytesArgIndex: 1 }>
   | Readonly<{ kind: 'same-target-multicall-v1'; bytesArrayArgIndex: 0; allowedChildren: readonly Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>[] }>
   | Readonly<{ kind: 'same-target-router-multicall-v1'; bytesArrayArgIndex: 0 | 1; allowedChildren: readonly Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>[] }>
+  | Readonly<{ kind: 'same-target-financial-multicall-v1'; bytesArrayArgIndex: 0; nativeValuePolicy: 'inherit' | 'zero'; allowedChildren: readonly FinancialMulticallChildBinding[] }>
+  | Readonly<{ kind: 'pendle-router-multicall-v1'; allowedChildren: readonly MulticallChildBinding[] }>
+  | Readonly<{ kind: 'uniswap-v4-position-manager-multicall-v1'; allowedChildren: readonly ScopedMulticallChildBinding[] }>
   | Readonly<{ kind: 'enso-static-weiroll-v1'; allowedChildren: readonly EnsoStaticWeirollChildBinding[] }>
   | Readonly<{ kind: 'polymarket-pusd-wrap-v1'; asset: string; recipientPolicy: 'withdrawal-allowlist-v1' }>
   | Readonly<{ kind: 'uniswap-universal-router-2.1.2-v1' }>
   | Readonly<{ kind: 'uniswap-v4-position-manager-v1' }>;
+
+export type MulticallChildBinding = Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>;
+export type FinancialMulticallChildBinding = MulticallChildBinding & Readonly<{ executionScopeHash?: `0x${string}` }>;
+export type ScopedMulticallChildBinding = MulticallChildBinding & Readonly<{ executionScopeHash: `0x${string}` }>;
+export type FiniteMulticallScope = Extract<DefiExecutionScope, { kind: 'same-target-financial-multicall-v1' | 'pendle-router-multicall-v1' | 'uniswap-v4-position-manager-multicall-v1' }>;
 
 /** One of the three fixed, ordinary catalog children of the bounded Enso language. */
 export type EnsoStaticWeirollChildBinding = Readonly<{
