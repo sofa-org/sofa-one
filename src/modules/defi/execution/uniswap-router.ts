@@ -1,6 +1,6 @@
 import { parseAbiParameters, type AbiParameter } from 'viem';
 import {
-  UNISWAP_DEPLOYMENTS, UNISWAP_PERMIT2, UNISWAP_POOL_MANAGERS, UNISWAP_ROUTER_ABI, UNISWAP_V4_POSITION_ABI,
+  UNISWAP_DEPLOYMENTS, UNISWAP_PERMIT2, UNISWAP_POOL_MANAGERS, UNISWAP_ROUTER_ABI, UNISWAP_ROUTER_NO_DEADLINE_ABI, UNISWAP_V4_POSITION_ABI,
   type UniswapExecutionContext, type UniswapExecutionResult,
 } from './uniswap-deployments';
 import { decodeUniswapParameters } from './uniswap-wire';
@@ -40,7 +40,9 @@ export function validateUniversalRouter(data: string, context: UniswapExecutionC
   const owner = context.executionOwner.toLowerCase();
   const router = deployment.router.toLowerCase();
   if ([ZERO, SENDER, SELF, router].includes(owner)) throw new TypeError('Invalid Uniswap execution owner');
-  if (typeof data !== 'string' || data.slice(0, 10).toLowerCase() !== '0x3593564c') throw new TypeError('Wrong Universal Router selector');
+  const selector = typeof data === 'string' ? data.slice(0, 10).toLowerCase() : '';
+  const abi = selector === '0x3593564c' ? UNISWAP_ROUTER_ABI : selector === '0x24856bc3' ? UNISWAP_ROUTER_NO_DEADLINE_ABI : undefined;
+  if (!abi) throw new TypeError('Wrong Universal Router selector');
   const touched = new Set<string>([router]);
   // Router recipients are custody intermediates, not an alternative beneficiary.
   const custody = new Set<string>();
@@ -235,7 +237,9 @@ export function validateUniversalRouter(data: string, context: UniswapExecutionC
       }
     }
   };
-  const [commands, inputs] = read(UNISWAP_ROUTER_ABI.inputs, `0x${data.slice(10)}`);
+  // Select the exact outer body before canonical bounded decoding; selector swaps
+  // cannot reinterpret the other overload. Neither path promises backend expiry.
+  const [commands, inputs] = read(abi.inputs, `0x${data.slice(10)}`);
   plan(commands, inputs, 0);
   if (custody.size !== 0) throw new TypeError('Uniswap router recipient is not an intermediate');
   return { operationCount, touchedContracts: [...touched], children };

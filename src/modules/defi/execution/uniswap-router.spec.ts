@@ -1,5 +1,5 @@
 import { encodeAbiParameters, encodeFunctionData, parseAbiParameters, type Hex } from 'viem';
-import { UNISWAP_DEPLOYMENTS, UNISWAP_PERMIT2, UNISWAP_ROUTER_ABI, UNISWAP_V4_POSITION_ABI } from './uniswap-deployments';
+import { UNISWAP_DEPLOYMENTS, UNISWAP_PERMIT2, UNISWAP_ROUTER_ABI, UNISWAP_ROUTER_NO_DEADLINE_ABI, UNISWAP_V4_POSITION_ABI } from './uniswap-deployments';
 import { validateUniversalRouter } from './uniswap-router';
 
 const owner = '0x1111111111111111111111111111111111111111';
@@ -15,7 +15,6 @@ const planTypes = 'bytes,bytes[]';
 const singleTypes = '((address,address,uint24,int24,address),bool,uint128,uint128,uint256,bytes)';
 const multiTypes = '(address,(address,uint24,int24,address,bytes)[],uint256[],uint128,uint128)';
 const enc = (types: string, values: readonly unknown[]): Hex => encodeAbiParameters(parseAbiParameters(types), values);
-const execute = (commands: Hex, inputs: readonly Hex[]): Hex => encodeFunctionData({ abi: [UNISWAP_ROUTER_ABI], functionName: 'execute', args: [commands, inputs, 123n] });
 const payment = (token: string, recipient = owner, amount = 0n): Hex => enc('address,address,uint256', [token, recipient, amount]);
 const swap = (version: 2 | 3, recipient = owner, prices: readonly bigint[] = [], payer = true): Hex => enc(
   version === 2 ? 'address,uint256,uint256,address[],bool,uint256[]' : 'address,uint256,uint256,bytes,bool,uint256[]',
@@ -25,7 +24,11 @@ const actions = (codes: Hex, inputs: readonly Hex[]): Hex => enc(planTypes, [cod
 const single = (hooks = zero, hookData: Hex = '0x'): Hex => enc(singleTypes, [[[tokenA, tokenB, 3000, 60, hooks], true, 100n, 1n, 0n, hookData]]);
 const multi = (prices: readonly bigint[] = []): Hex => enc(multiTypes, [[tokenA, [[tokenB, 3000, 60, zero, '0x'], [tokenC, 500, 10, zero, '0x']], prices, 100n, 1n]]);
 
-describe('Universal Router 2.1.2 finite execution language', () => {
+describe.each([true, false])('Universal Router 2.1.2 finite execution language (deadline argument: %s)', (withDeadline) => {
+  const execute = (commands: Hex, inputs: readonly Hex[]): Hex => encodeFunctionData({
+    abi: [withDeadline ? UNISWAP_ROUTER_ABI : UNISWAP_ROUTER_NO_DEADLINE_ABI], functionName: 'execute',
+    args: withDeadline ? [commands, inputs, 123n] : [commands, inputs],
+  });
   it.each([0x00, 0x01, 0x08, 0x09])('accepts pinned swap command %s with optional per-hop prices', (command) => {
     const version = command < 2 ? 3 : 2;
     const code = `0x${command.toString(16).padStart(2, '0')}` as Hex;
@@ -158,6 +161,17 @@ describe('Universal Router 2.1.2 finite execution language', () => {
     expect(() => validateUniversalRouter(execute('0x08', [oversized]), context)).toThrow();
     const badBool = swap(2).slice(0, 2 + 4 * 64) + '0'.repeat(63) + '2' + swap(2).slice(2 + 5 * 64);
     expect(() => validateUniversalRouter(execute('0x08', [badBool as Hex]), context)).toThrow();
+  });
+
+  it('binds each selector to its own canonical outer body without backend expiry claims', () => {
+    const input = swap(2);
+    const timed = encodeFunctionData({ abi: [UNISWAP_ROUTER_ABI], functionName: 'execute', args: ['0x08', [input], (1n << 256n) - 1n] });
+    const untimed = encodeFunctionData({ abi: [UNISWAP_ROUTER_NO_DEADLINE_ABI], functionName: 'execute', args: ['0x08', [input]] });
+    expect(validateUniversalRouter(timed, context)).toEqual(validateUniversalRouter(untimed, context));
+    expect(() => validateUniversalRouter(`0x24856bc3${timed.slice(10)}`, context)).toThrow();
+    expect(() => validateUniversalRouter(`0x3593564c${untimed.slice(10)}`, context)).toThrow();
+    expect(() => validateUniversalRouter(`0xdeadbeef${execute('0x08', [input]).slice(10)}`, context)).toThrow();
+    expect(() => validateUniversalRouter(`${execute('0x08', [input])}${'00'.repeat(65_536)}`, context)).toThrow();
   });
 
   it('preserves funded-token custody across partial settlements and swaps until owner sweep', () => {

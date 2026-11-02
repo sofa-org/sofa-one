@@ -17207,6 +17207,52 @@
           "functions": [
             {
               "abi": {
+                "name": "execute",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "commands",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "inputs",
+                    "type": "bytes[]",
+                    "internalType": "bytes[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "payable"
+              },
+              "capabilityId": "uniswap-universal-router-2.1.2:1:0x23617e59a5925b2a4bf75d73ff6711cd0b29de85:execute-no-deadline",
+              "chainId": 1,
+              "contract": "0x23617e59a5925b2a4bf75d73ff6711cd0b29de85",
+              "description": "Exact deployment-bound Universal Router 2.1.2 execution without expiry, restricted to the existing closed command/action language.",
+              "executionScope": {
+                "kind": "uniswap-universal-router-2.1.2-v1"
+              },
+              "functionName": "execute",
+              "label": "Execute without deadline",
+              "operation": "execute-no-deadline",
+              "protocol": "uniswap-universal-router-2.1.2",
+              "provenance": {
+                "sourceRef": "https://developers.uniswap.org/deployments.json ; https://sourcify.dev/server/v2/contract/1/0x23617e59a5925b2a4bf75d73ff6711cd0b29de85?fields=abi,sources,metadata,compilation,proxyResolution",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "signature": "execute(bytes,bytes[])",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Catalog admission is not a live deployment, funding, execution or financial-safety attestation.",
+                "All mode dynamically includes this capability; custom mode requires its exact capability ID.",
+                "Only the closed 2.1.2 command/action language is admitted; permits, allow-revert, bridges and third-party payouts are rejected.",
+                "NO EXPIRY: no deadline argument or on-chain deadline check. Backend authorization does not impose a time limit; choose the deadline overload when an on-chain expiry is required.",
+                "Sourcify reports match, not exact_match; source-service proxy reporting is not a live runtime identity or financial-safety guarantee."
+              ]
+            },
+            {
+              "abi": {
                 "inputs": [
                   {
                     "name": "commands",
@@ -126264,6 +126310,52 @@
           "functions": [
             {
               "abi": {
+                "name": "execute",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "commands",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "inputs",
+                    "type": "bytes[]",
+                    "internalType": "bytes[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "payable"
+              },
+              "capabilityId": "uniswap-universal-router-2.1.2:10:0xc09255d86db563cbc11c2fcf4a0c512e160111b4:execute-no-deadline",
+              "chainId": 10,
+              "contract": "0xc09255d86db563cbc11c2fcf4a0c512e160111b4",
+              "description": "Exact deployment-bound Universal Router 2.1.2 execution without expiry, restricted to the existing closed command/action language.",
+              "executionScope": {
+                "kind": "uniswap-universal-router-2.1.2-v1"
+              },
+              "functionName": "execute",
+              "label": "Execute without deadline",
+              "operation": "execute-no-deadline",
+              "protocol": "uniswap-universal-router-2.1.2",
+              "provenance": {
+                "sourceRef": "https://developers.uniswap.org/deployments.json ; https://sourcify.dev/server/v2/contract/10/0xc09255d86db563cbc11c2fcf4a0c512e160111b4?fields=abi,sources,metadata,compilation,proxyResolution",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "signature": "execute(bytes,bytes[])",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Catalog admission is not a live deployment, funding, execution or financial-safety attestation.",
+                "All mode dynamically includes this capability; custom mode requires its exact capability ID.",
+                "Only the closed 2.1.2 command/action language is admitted; permits, allow-revert, bridges and third-party payouts are rejected.",
+                "NO EXPIRY: no deadline argument or on-chain deadline check. Backend authorization does not impose a time limit; choose the deadline overload when an on-chain expiry is required.",
+                "Sourcify reports match, not exact_match; source-service proxy reporting is not a live runtime identity or financial-safety guarantee."
+              ]
+            },
+            {
+              "abi": {
                 "inputs": [
                   {
                     "name": "commands",
@@ -162604,6 +162696,52 @@
           "functions": [
             {
               "abi": {
+                "name": "execute",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "commands",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "inputs",
+                    "type": "bytes[]",
+                    "internalType": "bytes[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "payable"
+              },
+              "capabilityId": "uniswap-universal-router-2.1.2:56:0xdc264714f68d84cf29bc605589405e78bdbe7c9f:execute-no-deadline",
+              "chainId": 56,
+              "contract": "0xdc264714f68d84cf29bc605589405e78bdbe7c9f",
+              "description": "Exact deployment-bound Universal Router 2.1.2 execution without expiry, restricted to the existing closed command/action language.",
+              "executionScope": {
+                "kind": "uniswap-universal-router-2.1.2-v1"
+              },
+              "functionName": "execute",
+              "label": "Execute without deadline",
+              "operation": "execute-no-deadline",
+              "protocol": "uniswap-universal-router-2.1.2",
+              "provenance": {
+                "sourceRef": "https://developers.uniswap.org/deployments.json ; https://sourcify.dev/server/v2/contract/56/0xdc264714f68d84cf29bc605589405e78bdbe7c9f?fields=abi,sources,metadata,compilation,proxyResolution",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "signature": "execute(bytes,bytes[])",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Catalog admission is not a live deployment, funding, execution or financial-safety attestation.",
+                "All mode dynamically includes this capability; custom mode requires its exact capability ID.",
+                "Only the closed 2.1.2 command/action language is admitted; permits, allow-revert, bridges and third-party payouts are rejected.",
+                "NO EXPIRY: no deadline argument or on-chain deadline check. Backend authorization does not impose a time limit; choose the deadline overload when an on-chain expiry is required.",
+                "Sourcify reports match, not exact_match; source-service proxy reporting is not a live runtime identity or financial-safety guarantee."
+              ]
+            },
+            {
+              "abi": {
                 "inputs": [
                   {
                     "name": "commands",
@@ -181808,6 +181946,52 @@
           "functions": [
             {
               "abi": {
+                "name": "execute",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "commands",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "inputs",
+                    "type": "bytes[]",
+                    "internalType": "bytes[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "payable"
+              },
+              "capabilityId": "uniswap-universal-router-2.1.2:137:0xdc264714f68d84cf29bc605589405e78bdbe7c9f:execute-no-deadline",
+              "chainId": 137,
+              "contract": "0xdc264714f68d84cf29bc605589405e78bdbe7c9f",
+              "description": "Exact deployment-bound Universal Router 2.1.2 execution without expiry, restricted to the existing closed command/action language.",
+              "executionScope": {
+                "kind": "uniswap-universal-router-2.1.2-v1"
+              },
+              "functionName": "execute",
+              "label": "Execute without deadline",
+              "operation": "execute-no-deadline",
+              "protocol": "uniswap-universal-router-2.1.2",
+              "provenance": {
+                "sourceRef": "https://developers.uniswap.org/deployments.json ; https://sourcify.dev/server/v2/contract/137/0xdc264714f68d84cf29bc605589405e78bdbe7c9f?fields=abi,sources,metadata,compilation,proxyResolution",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "signature": "execute(bytes,bytes[])",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Catalog admission is not a live deployment, funding, execution or financial-safety attestation.",
+                "All mode dynamically includes this capability; custom mode requires its exact capability ID.",
+                "Only the closed 2.1.2 command/action language is admitted; permits, allow-revert, bridges and third-party payouts are rejected.",
+                "NO EXPIRY: no deadline argument or on-chain deadline check. Backend authorization does not impose a time limit; choose the deadline overload when an on-chain expiry is required.",
+                "Sourcify reports match, not exact_match; source-service proxy reporting is not a live runtime identity or financial-safety guarantee."
+              ]
+            },
+            {
+              "abi": {
                 "inputs": [
                   {
                     "name": "commands",
@@ -197364,6 +197548,52 @@
         {
           "address": "0xa6ce4f10d83dbddac17e68e1837ca9ce6a1b596e",
           "functions": [
+            {
+              "abi": {
+                "name": "execute",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "commands",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "inputs",
+                    "type": "bytes[]",
+                    "internalType": "bytes[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "payable"
+              },
+              "capabilityId": "uniswap-universal-router-2.1.2:143:0xa6ce4f10d83dbddac17e68e1837ca9ce6a1b596e:execute-no-deadline",
+              "chainId": 143,
+              "contract": "0xa6ce4f10d83dbddac17e68e1837ca9ce6a1b596e",
+              "description": "Exact deployment-bound Universal Router 2.1.2 execution without expiry, restricted to the existing closed command/action language.",
+              "executionScope": {
+                "kind": "uniswap-universal-router-2.1.2-v1"
+              },
+              "functionName": "execute",
+              "label": "Execute without deadline",
+              "operation": "execute-no-deadline",
+              "protocol": "uniswap-universal-router-2.1.2",
+              "provenance": {
+                "sourceRef": "https://developers.uniswap.org/deployments.json ; https://sourcify.dev/server/v2/contract/143/0xa6ce4f10d83dbddac17e68e1837ca9ce6a1b596e?fields=abi,sources,metadata,compilation,proxyResolution",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "signature": "execute(bytes,bytes[])",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Catalog admission is not a live deployment, funding, execution or financial-safety attestation.",
+                "All mode dynamically includes this capability; custom mode requires its exact capability ID.",
+                "Only the closed 2.1.2 command/action language is admitted; permits, allow-revert, bridges and third-party payouts are rejected.",
+                "NO EXPIRY: no deadline argument or on-chain deadline check. Backend authorization does not impose a time limit; choose the deadline overload when an on-chain expiry is required.",
+                "Sourcify reports match, not exact_match; source-service proxy reporting is not a live runtime identity or financial-safety guarantee."
+              ]
+            },
             {
               "abi": {
                 "inputs": [
@@ -242488,6 +242718,52 @@
           "functions": [
             {
               "abi": {
+                "name": "execute",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "commands",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "inputs",
+                    "type": "bytes[]",
+                    "internalType": "bytes[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "payable"
+              },
+              "capabilityId": "uniswap-universal-router-2.1.2:8453:0xd6145b2d3f379919e8cdeda7b97e37c4b2ca9c40:execute-no-deadline",
+              "chainId": 8453,
+              "contract": "0xd6145b2d3f379919e8cdeda7b97e37c4b2ca9c40",
+              "description": "Exact deployment-bound Universal Router 2.1.2 execution without expiry, restricted to the existing closed command/action language.",
+              "executionScope": {
+                "kind": "uniswap-universal-router-2.1.2-v1"
+              },
+              "functionName": "execute",
+              "label": "Execute without deadline",
+              "operation": "execute-no-deadline",
+              "protocol": "uniswap-universal-router-2.1.2",
+              "provenance": {
+                "sourceRef": "https://developers.uniswap.org/deployments.json ; https://sourcify.dev/server/v2/contract/8453/0xd6145b2d3f379919e8cdeda7b97e37c4b2ca9c40?fields=abi,sources,metadata,compilation,proxyResolution",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "signature": "execute(bytes,bytes[])",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Catalog admission is not a live deployment, funding, execution or financial-safety attestation.",
+                "All mode dynamically includes this capability; custom mode requires its exact capability ID.",
+                "Only the closed 2.1.2 command/action language is admitted; permits, allow-revert, bridges and third-party payouts are rejected.",
+                "NO EXPIRY: no deadline argument or on-chain deadline check. Backend authorization does not impose a time limit; choose the deadline overload when an on-chain expiry is required.",
+                "Sourcify reports match, not exact_match; source-service proxy reporting is not a live runtime identity or financial-safety guarantee."
+              ]
+            },
+            {
+              "abi": {
                 "inputs": [
                   {
                     "name": "commands",
@@ -267423,6 +267699,52 @@
         {
           "address": "0x2d01411773c8c24805306e89a41f7855c3c4fe65",
           "functions": [
+            {
+              "abi": {
+                "name": "execute",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "commands",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "inputs",
+                    "type": "bytes[]",
+                    "internalType": "bytes[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "payable"
+              },
+              "capabilityId": "uniswap-universal-router-2.1.2:42161:0x2d01411773c8c24805306e89a41f7855c3c4fe65:execute-no-deadline",
+              "chainId": 42161,
+              "contract": "0x2d01411773c8c24805306e89a41f7855c3c4fe65",
+              "description": "Exact deployment-bound Universal Router 2.1.2 execution without expiry, restricted to the existing closed command/action language.",
+              "executionScope": {
+                "kind": "uniswap-universal-router-2.1.2-v1"
+              },
+              "functionName": "execute",
+              "label": "Execute without deadline",
+              "operation": "execute-no-deadline",
+              "protocol": "uniswap-universal-router-2.1.2",
+              "provenance": {
+                "sourceRef": "https://developers.uniswap.org/deployments.json ; https://sourcify.dev/server/v2/contract/42161/0x2d01411773c8c24805306e89a41f7855c3c4fe65?fields=abi,sources,metadata,compilation,proxyResolution",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "signature": "execute(bytes,bytes[])",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Catalog admission is not a live deployment, funding, execution or financial-safety attestation.",
+                "All mode dynamically includes this capability; custom mode requires its exact capability ID.",
+                "Only the closed 2.1.2 command/action language is admitted; permits, allow-revert, bridges and third-party payouts are rejected.",
+                "NO EXPIRY: no deadline argument or on-chain deadline check. Backend authorization does not impose a time limit; choose the deadline overload when an on-chain expiry is required.",
+                "Sourcify reports match, not exact_match; source-service proxy reporting is not a live runtime identity or financial-safety guarantee."
+              ]
+            },
             {
               "abi": {
                 "inputs": [

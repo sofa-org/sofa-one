@@ -28,6 +28,11 @@ export const UNISWAP_ROUTER_ABI: AbiFunction = {
   type: 'function', name: 'execute', stateMutability: 'payable',
   inputs: [{ name: 'commands', type: 'bytes' }, { name: 'inputs', type: 'bytes[]' }, { name: 'deadline', type: 'uint256' }], outputs: [],
 };
+/** No expiry: the same closed command language, with no deadline argument or check. */
+export const UNISWAP_ROUTER_NO_DEADLINE_ABI: AbiFunction = {
+  type: 'function', name: 'execute', stateMutability: 'payable',
+  inputs: [{ name: 'commands', type: 'bytes', internalType: 'bytes' }, { name: 'inputs', type: 'bytes[]', internalType: 'bytes[]' }], outputs: [],
+};
 export const UNISWAP_V4_POSITION_ABI: AbiFunction = {
   type: 'function', name: 'modifyLiquidities', stateMutability: 'payable',
   inputs: [{ name: 'unlockData', type: 'bytes' }, { name: 'deadline', type: 'uint256' }], outputs: [],

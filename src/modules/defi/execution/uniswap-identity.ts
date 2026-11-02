@@ -1,6 +1,6 @@
 import { keccak256, stringToHex } from 'viem';
 import type { DefiFunctionPolicy } from '../defi.types';
-import { UNISWAP_DEPLOYMENTS, UNISWAP_ROUTER_ABI, UNISWAP_V4_POSITION_ABI } from './uniswap-deployments';
+import { UNISWAP_DEPLOYMENTS, UNISWAP_ROUTER_ABI, UNISWAP_ROUTER_NO_DEADLINE_ABI, UNISWAP_V4_POSITION_ABI } from './uniswap-deployments';
 import { executionScopeHash, isFiniteMulticallBinding } from './scope';
 import { UNISWAP_V4_PRIMITIVES } from './uniswap-v4-primitive';
 
@@ -24,9 +24,10 @@ export function validateUniswapBinding(fn: DefiFunctionPolicy): void {
   }
   if (!identity && kind !== 'uniswap-universal-router-2.1.2-v1' && kind !== 'uniswap-v4-position-manager-v1' && kind !== 'uniswap-v4-position-manager-primitive-v1') return;
   const primitive = kind === 'uniswap-v4-position-manager-primitive-v1';
+  const noDeadline = identity === 'uniswap-universal-router-2.1.2-v1' && fn.signature === 'execute(bytes,bytes[])';
   const abi = primitive ? UNISWAP_V4_PRIMITIVES.find((entry) => entry.signature === fn.signature)?.abi
-    : identity === 'uniswap-universal-router-2.1.2-v1' ? UNISWAP_ROUTER_ABI : UNISWAP_V4_POSITION_ABI;
-  const signature = primitive ? fn.signature : identity === 'uniswap-universal-router-2.1.2-v1' ? 'execute(bytes,bytes[],uint256)' : 'modifyLiquidities(bytes,uint256)';
+    : identity === 'uniswap-universal-router-2.1.2-v1' ? (noDeadline ? UNISWAP_ROUTER_NO_DEADLINE_ABI : UNISWAP_ROUTER_ABI) : UNISWAP_V4_POSITION_ABI;
+  const signature = primitive ? fn.signature : identity === 'uniswap-universal-router-2.1.2-v1' ? (noDeadline ? 'execute(bytes,bytes[])' : 'execute(bytes,bytes[],uint256)') : 'modifyLiquidities(bytes,uint256)';
   const canonical = (value: unknown): string => {
     if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
     if (value && typeof value === 'object') return `{${Object.entries(value).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, child]) => `${JSON.stringify(key)}:${canonical(child)}`).join(',')}}`;

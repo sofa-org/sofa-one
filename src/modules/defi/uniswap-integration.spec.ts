@@ -4,22 +4,20 @@ import { DefiPolicyService } from './defi-policy.service';
 import type { DefiExecutionContext } from './defi.types';
 import { PRODUCTION_DEFI_CATALOG, PRODUCTION_DEFI_MANIFEST } from './registry/production-registry';
 import { buildReviewedManifest } from './registry/defi-manifest';
-import { UNISWAP_DEPLOYMENTS, UNISWAP_ROUTER_ABI, UNISWAP_V4_POSITION_ABI } from './execution/uniswap-deployments';
+import { UNISWAP_DEPLOYMENTS, UNISWAP_ROUTER_ABI, UNISWAP_ROUTER_NO_DEADLINE_ABI, UNISWAP_V4_POSITION_ABI } from './execution/uniswap-deployments';
 
 const OWNER = '0x1111111111111111111111111111111111111111';
 const A = '0x2222222222222222222222222222222222222222';
 const B = '0x3333333333333333333333333333333333333333';
 const ZERO = '0x0000000000000000000000000000000000000000';
 const enc = (types: string, values: readonly unknown[]): Hex => encodeAbiParameters(parseAbiParameters(types), values);
-const router = (commands: Hex, inputs: readonly Hex[]): Hex => encodeFunctionData({ abi: [UNISWAP_ROUTER_ABI], functionName: 'execute', args: [commands, inputs, 2_000_000_000n] });
-const swap = router('0x08', [enc('address,uint256,uint256,address[],bool,uint256[]', [OWNER, 10n, 1n, [A, B], true, []])]);
 const mint = (recipient = OWNER): Hex => encodeFunctionData({ abi: [UNISWAP_V4_POSITION_ABI], functionName: 'modifyLiquidities', args: [enc('bytes,bytes[]', ['0x020d14', [
   enc('(address,address,uint24,int24,address),int24,int24,uint256,uint128,uint128,address,bytes', [[A, B, 3000, 60, ZERO], -120, 120, 1n, 10n, 10n, recipient, '0x']),
   enc('address,address', [A, B]),
   enc('address,address', [ZERO, OWNER]),
 ]]), 2_000_000_000n] });
 const context = (chainId = 1): DefiExecutionContext => ({ userId: 'user', walletId: 'wallet', apiKeyId: '00000000-0000-4000-8000-000000000001', chainId, executionMode: 'session_key', executionOwner: OWNER, capabilityMode: 'all', allowedCapabilityIds: [] });
-const capability = (chainId: number, contract: string) => PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.chainId === chainId && fn.contract.toLowerCase() === contract && fn.signature === (contract === UNISWAP_DEPLOYMENTS[chainId].router ? 'execute(bytes,bytes[],uint256)' : 'modifyLiquidities(bytes,uint256)'))!;
+const findCapability = (chainId: number, contract: string, withDeadline: boolean) => PRODUCTION_DEFI_MANIFEST.capabilities.find((fn) => fn.chainId === chainId && fn.contract.toLowerCase() === contract && fn.signature === (contract === UNISWAP_DEPLOYMENTS[chainId].router ? (withDeadline ? 'execute(bytes,bytes[],uint256)' : 'execute(bytes,bytes[])') : 'modifyLiquidities(bytes,uint256)'))!;
 function setup() {
   const state = { id: 'global', pausedScopeKeys: [] as string[] };
   const key = { userId: 'user', walletId: 'wallet', revoked: false, frozenAt: null, expiresAt: null, canSendTransaction: true, capabilityMode: 'all', allowedCapabilityIds: [] as string[] };
@@ -28,7 +26,13 @@ function setup() {
   return { state, key, db, policy: new DefiPolicyService(db as never, {} as never, catalog) };
 }
 
-describe('Uniswap production catalog authorization', () => {
+describe.each([true, false])('Uniswap production catalog authorization (deadline argument: %s)', (withDeadline) => {
+  const router = (commands: Hex, inputs: readonly Hex[]): Hex => encodeFunctionData({
+    abi: [withDeadline ? UNISWAP_ROUTER_ABI : UNISWAP_ROUTER_NO_DEADLINE_ABI], functionName: 'execute',
+    args: withDeadline ? [commands, inputs, 2_000_000_000n] : [commands, inputs],
+  });
+  const swap = router('0x08', [enc('address,uint256,uint256,address[],bool,uint256[]', [OWNER, 10n, 1n, [A, B], true, []])]);
+  const capability = (chainId: number, contract: string) => findCapability(chainId, contract, withDeadline);
   it.each(Object.keys(UNISWAP_DEPLOYMENTS).map(Number))('authorizes chain %s swaps and explicit LP mint under its own grant', async (chainId) => {
     const { policy } = setup();
     const deployment = UNISWAP_DEPLOYMENTS[chainId];
@@ -80,7 +84,20 @@ describe('Uniswap production catalog authorization', () => {
     const fn = capability(1, UNISWAP_DEPLOYMENTS[1].router);
     const withoutScope = { ...fn, executionScope: undefined };
     const chain = [{ chainId: 1, status: 'active' as const, contracts: [{ address: fn.contract, status: 'active' as const, functions: [withoutScope] }] }];
-    expect(() => buildReviewedManifest([{ chains: chain }])).toThrow('mandatory scope');
+    expect(() => buildReviewedManifest([{ chains: chain }])).toThrow();
+  });
+
+  it('does not substitute an overload grant or downgrade its exact ABI binding', async () => {
+    const { policy } = setup();
+    const deployment = UNISWAP_DEPLOYMENTS[1];
+    const other = findCapability(1, deployment.router, !withDeadline);
+    await expect(policy.authorizeContractCalls([{ to: deployment.router, data: swap }], {
+      ...context(), capabilityMode: 'custom', allowedCapabilityIds: [other.capabilityId],
+    })).rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+    const fn = capability(1, deployment.router);
+    const crossed = { ...fn, abi: withDeadline ? UNISWAP_ROUTER_NO_DEADLINE_ABI : UNISWAP_ROUTER_ABI };
+    const chain = [{ chainId: 1, status: 'active' as const, contracts: [{ address: fn.contract, status: 'active' as const, functions: [crossed] }] }];
+    expect(() => buildReviewedManifest([{ chains: chain }])).toThrow();
   });
 
   it('bounds operations across separate top-level roots, not only within one router call', async () => {
