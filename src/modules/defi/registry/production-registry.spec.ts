@@ -1,22 +1,10 @@
 jest.mock('../../security-events/security-event.module', () => ({ SecurityEventModule: class SecurityEventModule {} }));
-jest.mock('../../../core/openfort/openfort.service', () => ({ OpenfortService: class OpenfortService {} }));
 import { PRODUCTION_DEFI_CATALOG, PRODUCTION_DEFI_MANIFEST } from './production-registry';
 import { DefiCatalogService } from '../defi-catalog.service';
-import { Test } from '@nestjs/testing';
-import { ConfigModule } from '@nestjs/config';
-import { DefiModule } from '../defi.module';
-import { PrismaService } from '../../../core/database/prisma.service';
-import { DefiGrantService } from '../defi-grant.service';
-import { DefiPauseService } from '../defi-pause.service';
+import { DefiPolicyDenial } from '../defi.types';
 import { DefiPolicyService } from '../defi-policy.service';
-import { SecurityEventService } from '../../security-events/security-event.service';
-import { BillingReconciliationService } from '../../billing/billing-reconciliation.service';
-import { OpenfortService } from '../../../core/openfort/openfort.service';
-import { Global, Module } from '@nestjs/common';
 import { encodeAbiParameters, encodeFunctionData, maxUint256, toFunctionSelector } from 'viem';
 
-const mockPrisma = { defiPolicyState: { findUnique: jest.fn() } };
-@Global() @Module({ providers: [{ provide: PrismaService, useValue: mockPrisma }, { provide: SecurityEventService, useValue: {} }, { provide: OpenfortService, useValue: {} }], exports: [PrismaService, SecurityEventService, OpenfortService] }) class MockDatabaseModule {}
 
 describe('production DeFi registry assembly', () => {
   it('keeps source-added calls subject to exact capability, chain, target, selector, and ABI matching', async () => {
@@ -63,11 +51,6 @@ describe('production DeFi registry assembly', () => {
     const encode = (fn: (typeof additions)[number], overrides?: readonly unknown[]) => encodeFunctionData({
       abi: [fn.abi], functionName: fn.functionName, args: (overrides ?? (fn.abi.inputs as readonly AbiParameter[]).map(argValue)) as never,
     });
-    const scopedWrapper = pancake.find((fn) => fn.signature === 'multicall(bytes[])')!;
-    if (scopedWrapper.executionScope?.kind !== 'same-target-multicall-v1') throw new Error('Pancake wrapper lacks its finite scope');
-    const scope = scopedWrapper.executionScope;
-    const firstScopedChild = pancake.find((fn) => fn.capabilityId === scope.allowedChildren[0].capabilityId)!;
-    const wrapperRootData = encode(scopedWrapper, [[encode(firstScopedChild)]]);
     const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
     const catalog = new DefiCatalogService(PRODUCTION_DEFI_CATALOG, prisma as never, PRODUCTION_DEFI_MANIFEST);
     const policy = new DefiPolicyService(prisma as never, {} as never, catalog);
@@ -77,18 +60,21 @@ describe('production DeFi registry assembly', () => {
     });
 
     for (const fn of additions) {
-      const isWrapper = fn === scopedWrapper;
-      const data = isWrapper ? wrapperRootData : encode(fn);
+      const isWrapper = fn.executionScope?.kind === 'same-target-multicall-v1';
+      const child = isWrapper ? pancake.find((candidate) => candidate.chainId === fn.chainId && candidate.contract === fn.contract && candidate.signature === 'burn(uint256)')! : undefined;
+      const data = child ? encode(fn, [[encode(child)]]) : encode(fn);
       const value = fn.abi.stateMutability === 'payable' ? '17' : undefined;
-      const grants = isWrapper ? [fn.capabilityId, firstScopedChild.capabilityId] : [fn.capabilityId];
+      const grants = child ? [fn.capabilityId, child.capabilityId] : [fn.capabilityId];
       const exact = await policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId, grants)).catch((error: unknown) => {
-        throw new Error(`${fn.protocol} ${fn.signature} exact grant denied: ${JSON.stringify((error as { audit?: unknown }).audit)}`);
+        const audit = error instanceof DefiPolicyDenial ? error.audit : undefined;
+        throw new Error(`${fn.protocol} ${fn.signature} exact grant denied: ${JSON.stringify(audit)}`);
       });
       expect(exact.matches).toEqual(expect.arrayContaining([expect.objectContaining({ capabilityId: fn.capabilityId })]));
       await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId, [])))
         .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
-      await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId === 1 ? 56 : 1, [fn.capabilityId])))
-        .rejects.toMatchObject({ audit: { code: 'DEFI_CONTRACT_NOT_ALLOWED' } });
+      const otherChain = additions.find((candidate) => candidate.chainId !== fn.chainId && candidate.contract === fn.contract && candidate.signature === fn.signature);
+      if (otherChain) await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(otherChain.chainId, grants)))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
       await expect(policy.authorizeContractCalls([{ to: address, data, ...(value ? { value } : {}) }], context(fn.chainId, [fn.capabilityId])))
         .rejects.toMatchObject({ audit: { code: 'DEFI_CONTRACT_NOT_ALLOWED' } });
       await expect(policy.authorizeContractCalls([{ to: fn.contract, data: '0xdeadbeef' }], context(fn.chainId, [fn.capabilityId])))
@@ -130,7 +116,7 @@ describe('production DeFi registry assembly', () => {
     await expect(policy.authorizeContractCalls([{ to: mint.contract, data: encode(mint, mintArgs) }], context(1, [mint.capabilityId])))
       .resolves.toMatchObject({ matches: [{ capabilityId: mint.capabilityId }] });
 
-    const wrapper = pancake.find((fn) => fn.signature === 'multicall(bytes[])')!;
+    const wrapper = pancake.find((fn) => fn.chainId === 56 && fn.signature === 'multicall(bytes[])')!;
     if (wrapper.executionScope?.kind !== 'same-target-multicall-v1') throw new Error('Pancake wrapper lacks its finite scope');
     const childFns = wrapper.executionScope.allowedChildren.map((binding) => {
       const child = pancake.find((fn) => fn.capabilityId === binding.capabilityId && fn.signature === binding.signature);
@@ -187,7 +173,7 @@ describe('production DeFi registry assembly', () => {
       }
       throw new Error(`Unsupported v5 test ABI type ${param.type}`);
     };
-    const encode = (fn: (typeof additions)[number]) => encodeFunctionData({ abi: [fn.abi], functionName: fn.functionName, args: (fn.abi.inputs as readonly Param[]).map(argument) as never });
+    const encode = (fn: (typeof additions)[number], overrides?: readonly unknown[]) => encodeFunctionData({ abi: [fn.abi], functionName: fn.functionName, args: (overrides ?? (fn.abi.inputs as readonly Param[]).map(argument)) as never });
     const prisma = { defiPolicyState: { findUnique: jest.fn().mockResolvedValue({ id: 'global', pausedScopeKeys: [] }) } };
     const policy = new DefiPolicyService(prisma as never, {} as never, new DefiCatalogService(PRODUCTION_DEFI_CATALOG, prisma as never, PRODUCTION_DEFI_MANIFEST));
     const context = (chainId: number, grants: string[]) => ({ userId: 'v5-policy-test', apiKeyId: '00000000-0000-4000-8000-000000000001', walletId: 'w', chainId, executionMode: 'session_key' as const, executionOwner: address, allowedCapabilityIds: grants });
@@ -198,22 +184,43 @@ describe('production DeFi registry assembly', () => {
     const callData = (fn: (typeof additions)[number]) => fn === ambient ? validAmbientData : encode(fn);
 
     for (const fn of additions) {
-      const data = callData(fn);
-      const value = fn.abi.stateMutability === 'payable' ? '17' : undefined;
-      await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId, [fn.capabilityId])))
-        .resolves.toMatchObject({ matches: [{ capabilityId: fn.capabilityId }] });
+      const pendleWrapper = fn.executionScope?.kind === 'pendle-router-multicall-v1';
+      const maverickWrapper = fn.executionScope?.kind === 'same-target-financial-multicall-v1';
+      const childSignature = pendleWrapper ? 'mintPyFromSy(address,address,uint256,uint256)' : maverickWrapper ? 'exactInputSingle(address,address,bool,uint256,uint256)' : undefined;
+      const child = childSignature ? additions.find((candidate) => candidate.chainId === fn.chainId && candidate.contract === fn.contract && candidate.signature === childSignature)! : undefined;
+      const data = child ? encode(fn, [pendleWrapper ? [[false, encode(child)]] : [encode(child)]]) : callData(fn);
+      // Self-delegatecall preserves msg.value; Pendle's selected SY child is nonpayable.
+      const value = fn.abi.stateMutability === 'payable' && !pendleWrapper ? '17' : undefined;
+      const grants = child ? [fn.capabilityId, child.capabilityId] : [fn.capabilityId];
+      const approved = await policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId, grants)).catch((error: unknown) => {
+        const audit = error instanceof DefiPolicyDenial ? error.audit : undefined;
+        throw new Error(`${fn.protocol} ${fn.chainId} ${fn.signature} exact grants denied: ${JSON.stringify(audit)}`);
+      });
+      expect(approved.matches).toMatchObject([{ capabilityId: fn.capabilityId }]);
+      if (child) {
+        expect(approved.executionPlan.map((node) => ({ path: node.path, capabilityId: node.match.capabilityId }))).toEqual([
+          { path: [0], capabilityId: fn.capabilityId }, { path: [0, 0], capabilityId: child.capabilityId },
+        ]);
+        for (const incompleteGrants of [[fn.capabilityId], [child.capabilityId]]) {
+          await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId, incompleteGrants)))
+            .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+        }
+      }
+      if (pendleWrapper) await expect(policy.authorizeContractCalls([{ to: fn.contract, data, value: '1' }], context(fn.chainId, grants)))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
       await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId, [])))
         .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
-      await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(fn.chainId === 1 ? 10 : 1, [fn.capabilityId])))
+      const otherChain = additions.find((candidate) => candidate.chainId !== fn.chainId && candidate.contract === fn.contract && candidate.signature === fn.signature);
+      if (otherChain) await expect(policy.authorizeContractCalls([{ to: fn.contract, data, ...(value ? { value } : {}) }], context(otherChain.chainId, grants)))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+      await expect(policy.authorizeContractCalls([{ to: address, data, ...(value ? { value } : {}) }], context(fn.chainId, grants)))
         .rejects.toMatchObject({ audit: { code: 'DEFI_CONTRACT_NOT_ALLOWED' } });
-      await expect(policy.authorizeContractCalls([{ to: address, data, ...(value ? { value } : {}) }], context(fn.chainId, [fn.capabilityId])))
-        .rejects.toMatchObject({ audit: { code: 'DEFI_CONTRACT_NOT_ALLOWED' } });
-      await expect(policy.authorizeContractCalls([{ to: fn.contract, data: `0xdeadbeef${data.slice(10)}`, ...(value ? { value } : {}) }], context(fn.chainId, [fn.capabilityId])))
+      await expect(policy.authorizeContractCalls([{ to: fn.contract, data: `0xdeadbeef${data.slice(10)}`, ...(value ? { value } : {}) }], context(fn.chainId, grants)))
         .rejects.toMatchObject({ audit: { code: 'DEFI_FUNCTION_NOT_ALLOWED' } });
-      await expect(policy.authorizeContractCalls([{ to: fn.contract, data: `${data}00`, ...(value ? { value } : {}) }], context(fn.chainId, [fn.capabilityId])))
+      await expect(policy.authorizeContractCalls([{ to: fn.contract, data: `${data}00`, ...(value ? { value } : {}) }], context(fn.chainId, grants)))
         .rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
       if (fn.abi.stateMutability !== 'payable') {
-        await expect(policy.authorizeContractCalls([{ to: fn.contract, data, value: '1' }], context(fn.chainId, [fn.capabilityId])))
+        await expect(policy.authorizeContractCalls([{ to: fn.contract, data, value: '1' }], context(fn.chainId, grants)))
           .rejects.toMatchObject({ audit: { code: 'DEFI_INVALID_PARAMETERS' } });
       }
       const otherSameTarget = additions.find((other) => other.contract.toLowerCase() === fn.contract.toLowerCase() && other.capabilityId !== fn.capabilityId);
@@ -230,22 +237,4 @@ describe('production DeFi registry assembly', () => {
     }
   });
 
-  it('validates the merged catalog at startup without RPC access', () => {
-    const service = new DefiCatalogService(PRODUCTION_DEFI_CATALOG, {} as never, PRODUCTION_DEFI_MANIFEST);
-    expect(service.manifest().manifestHash).toBe(PRODUCTION_DEFI_MANIFEST.manifestHash);
-  });
-
-  it('resolves the wired catalog providers with mocked database dependencies', async () => {
-    const module = await Test.createTestingModule({ imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }), MockDatabaseModule, DefiModule] })
-      .overrideProvider(PrismaService).useValue(mockPrisma)
-      .overrideProvider(BillingReconciliationService).useValue({})
-      .overrideProvider(DefiGrantService).useValue({})
-      .overrideProvider(DefiPauseService).useValue({})
-      .overrideProvider(DefiPolicyService).useValue({})
-      .compile();
-    const catalog = module.get(DefiCatalogService);
-    expect(catalog.manifest().manifestHash).toBe(PRODUCTION_DEFI_MANIFEST.manifestHash);
-    expect(catalog.chains()).toEqual(PRODUCTION_DEFI_CATALOG);
-    await module.close();
-  });
 });

@@ -79,6 +79,45 @@ Redis throttling recovery:
 - Set `BILLING_E2E_ADMIN_DATABASE_URL` only to an explicitly designated test maintenance database; never point this destructive runner at a production database. CI supplies its job-local service. Local execution may use the runner's existing verified loopback Docker container fallback; do not assume an arbitrary local database is disposable.
 - For a targeted session/MFA run: `npm run test:e2e:billing -- --app-session-only`. Existing `--auth-provisioning-only`, `--multi-wallet-execution-only`, `--multi-wallet-quote-only`, `--recovery-only`, `--wallet-peak-only`, `--fixture-wallet-peak-only`, `--defi-policy-only`, `--polymarket-signing-budget-only`, and `--pusd-only` retain the same runner-owned isolation.
 
+### Fast local pre-commit feedback
+
+- Reuse installed dependencies and generated Prisma Client unless their inputs
+  changed; run `npm ci` after lockfile changes and regenerate after schema changes.
+- Start with `npx tsc --noEmit --incremental false` to catch constructor/signature
+  errors across both `src/` and `test/` before any long-running suite.
+- Run non-fixing ESLint on changed TypeScript files, then Jest with
+  `--runInBand --runTestsByPath` for affected specs. Use `--testNamePattern` when
+  checking a specific regression, and report filtered/skipped cases explicitly.
+- Run affected PostgreSQL suites through the isolated runner, never by pointing
+  Jest at a shared database. Reuse prior full E2E/frontend results only when the
+  subsequent edits do not affect those surfaces or their dependencies.
+- Do not restart the complete backend gate for each fixture edit. Leave full
+  lint/unit/build gates to GitHub unless a complete local rehearsal is requested.
+  Scoped checks are pre-commit feedback, not a claim that full CI passed.
+
+### Explicit full local CI rehearsal
+
+Use this only when a full CI rehearsal is requested; routine assistant checks remain scoped.
+Use Node.js 20, run `npm ci` separately in the root and `frontend/`, and provide
+disposable PostgreSQL 16 and Redis 7 services matching `.github/workflows/ci.yml`.
+
+From the root:
+
+```bash
+NODE_OPTIONS=--max-old-space-size=4096 npm run verify:backend
+npx tsc --noEmit --incremental false
+npm run verify:frontend
+# Set BILLING_E2E_ADMIN_DATABASE_URL and REDIS_URL to the disposable services first.
+NODE_ENV=test npm run test:e2e:billing
+```
+
+Use the frontend CI `VITE_*` values from the workflow for the frontend gate.
+The additional `tsc` check includes `test/`: the backend production build excludes
+E2E files, and a single passing E2E file does not establish that later files compile.
+The E2E runner stops at its first failure, so rerun the full runner after fixing a
+failure before claiming its complete suite list passed. Local success is not a
+GitHub Actions result; record host OS/architecture differences and the exact gates run.
+
 ## 5. Common troubleshooting
 
 ### Backend fails on env validation

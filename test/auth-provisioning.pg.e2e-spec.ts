@@ -34,7 +34,7 @@ function services(openfort: Record<string, jest.Mock>) {
   if (!prisma) throw new Error('runner-provisioned PostgreSQL target required');
   const entitlements = new BillingEntitlementService(prisma as never);
   const lifecycle = new BillingWalletLifecycleService(prisma as never, entitlements);
-  const auth = new AuthService(prisma as never, openfort as never, {} as never, {} as ConfigService, entitlements, lifecycle);
+  const auth = new AuthService(prisma as never, openfort as never, {} as never, {} as ConfigService, lifecycle);
   return auth;
 }
 

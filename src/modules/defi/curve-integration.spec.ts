@@ -19,15 +19,16 @@ const ABI = parseAbi([
   `function execute_linear_exact_in(${STEP}[],address,uint256,address,uint256) payable returns (uint256)`,
   `function execute_split_exact_in((uint256,(uint256,uint256))[],${STEP}[],address,uint256,address,uint256,address) payable returns (uint256)`,
   `function execute_balanced_exact_in((address,address,uint256,uint256,address[8]),((uint256,uint256))[],${STEP}[],uint256,address,uint256,address) payable returns (uint256)`,
+  `function execute_linear_exact_in(${STEP}[],address,uint256,address,uint256,address) payable returns (uint256)`,
 ]);
 const route = [OWNER, POOL, TOKEN, ...Array(8).fill(zeroAddress)];
 const step = [0n, POOL, OWNER, TOKEN, 0n, 1n, 0n, 10n, 2n];
 
-function setup(chainId: number, contract: string, functionName: string) {
+function setup(chainId: number, contract: string, functionName: string, inputCount?: number) {
   const prisma = { defiPolicyState: { findUnique: async () => ({ id: 'global', pausedScopeKeys: [] }) } } as unknown as PrismaService;
   const catalog = new DefiCatalogService(PRODUCTION_DEFI_CATALOG, prisma, PRODUCTION_DEFI_MANIFEST);
   const fn = catalog.activeChain(chainId)!.contracts.find((entry) => entry.address.toLowerCase() === contract)!
-    .functions.find((entry) => entry.functionName === functionName)!;
+    .functions.find((entry) => entry.functionName === functionName && (inputCount === undefined || entry.abi.inputs.length === inputCount))!;
   const context: DefiExecutionContext = {
     userId: 'user', apiKeyId: '00000000-0000-4000-8000-000000000001', walletId: 'wallet', chainId,
     executionMode: 'session_key', executionOwner: OWNER, capabilityMode: 'custom', allowedCapabilityIds: [fn.capabilityId],
@@ -57,11 +58,22 @@ describe('Curve integration authorization boundaries', () => {
       .rejects.toMatchObject({ audit: { code: 'DEFI_FUNCTION_NOT_ALLOWED' } });
   });
 
-  it('does not admit the Solver overload without receiver', async () => {
-    const { policy, context } = setup(1, SOLVER, 'execute_linear_exact_in');
-    const data = encode(2, [[step], OWNER, 100n, TOKEN, 90n]);
-    await expect(policy.authorizeContractCalls([{ to: SOLVER, data }], context))
-      .rejects.toMatchObject({ audit: { code: 'DEFI_FUNCTION_NOT_ALLOWED' } });
+  it('requires independent exact grants for explicit and default Solver receiver overloads', async () => {
+    const explicit = setup(1, SOLVER, 'execute_linear_exact_in', 6);
+    const implicit = setup(1, SOLVER, 'execute_linear_exact_in', 5);
+    const explicitData = encode(5, [[step], OWNER, 100n, TOKEN, 90n, OWNER]);
+    const implicitData = encode(2, [[step], OWNER, 100n, TOKEN, 90n]);
+    for (const [selected, data, other] of [
+      [explicit, explicitData, implicit],
+      [implicit, implicitData, explicit],
+    ] as const) {
+      await expect(selected.policy.authorizeContractCalls([{ to: SOLVER, data }], selected.context))
+        .resolves.toMatchObject({ matches: [{ capabilityId: selected.fn.capabilityId }] });
+      await expect(selected.policy.authorizeContractCalls([{ to: SOLVER, data }], other.context))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+      await expect(selected.policy.authorizeContractCalls([{ to: SOLVER, data }], { ...selected.context, allowedCapabilityIds: [] }))
+        .rejects.toMatchObject({ audit: { code: 'DEFI_CAPABILITY_NOT_GRANTED' } });
+    }
   });
 
   it('authorizes nonempty split branches with nested route spans and receiver', async () => {
