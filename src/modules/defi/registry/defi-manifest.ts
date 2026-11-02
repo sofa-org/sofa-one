@@ -7,6 +7,7 @@ import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 import { isPolymarketPusdWrapIdentity, validatePolymarketPusdWrapBinding } from '../execution/pusd-identity';
 import { validateUniswapBinding } from '../execution/uniswap-identity';
 import { validateMerklClaimBinding } from '../execution/merkl';
+import { validateZeroExNftBinding } from '../execution/zero-ex-nft';
 
 export const DEFI_MANIFEST = Symbol('DEFI_MANIFEST');
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -81,6 +82,7 @@ function validateFunction(fn: DefiFunctionPolicy, chain: DefiChainPolicy, contra
   if (fn.executionScope) executionScopeHash(fn.executionScope);
   validateUniswapBinding(fn);
   validateMerklClaimBinding(fn);
+  validateZeroExNftBinding(fn);
   if (isPolymarketPusdWrapIdentity(fn) || fn.executionScope?.kind === 'polymarket-pusd-wrap-v1') validatePolymarketPusdWrapBinding(fn);
   const ensoRootIdentity = (fn.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId)
     || (fn.chainId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.chainId

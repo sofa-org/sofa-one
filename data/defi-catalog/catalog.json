@@ -88487,6 +88487,306 @@
           "address": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
           "functions": [
             {
+              "capabilityId": "zero-x:nft-settlement-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:84680615",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "batchBuyERC1155s",
+              "signature": "batchBuyERC1155s((uint8,address,address,uint256,uint256,address,uint256,(address,uint256,bytes)[],address,uint256,(address,bytes)[],uint128)[],(uint8,uint8,bytes32,bytes32)[],uint128[],bytes[],bool)",
+              "abi": {
+                "name": "batchBuyERC1155s",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "sellOrders",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "direction",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc20Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc20TokenAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "fees",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "recipient",
+                            "type": "address"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          },
+                          {
+                            "name": "feeData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc1155Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc1155TokenId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc1155TokenProperties",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "propertyValidator",
+                            "type": "address"
+                          },
+                          {
+                            "name": "propertyData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc1155TokenAmount",
+                        "type": "uint128"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "signatures",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "signatureType",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "v",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "r",
+                        "type": "bytes32"
+                      },
+                      {
+                        "name": "s",
+                        "type": "bytes32"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc1155FillAmounts",
+                    "type": "uint128[]"
+                  },
+                  {
+                    "name": "callbackData",
+                    "type": "bytes[]"
+                  },
+                  {
+                    "name": "revertIfIncomplete",
+                    "type": "bool"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "successes",
+                    "type": "bool[]"
+                  }
+                ],
+                "stateMutability": "payable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x6acab4c9c4e3a0c78435fdb5ad1719c95460a668?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/zero-ex-nft-settlement-support.json ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "batch-buy-erc1155s",
+              "label": "zero-x batchBuyERC1155s",
+              "description": "Exact Ethereum registered-feature NFT financial settlement; bounded empty configurable callbacks and empty NFT property arrays. Standard token/recipient behavior remains possible.",
+              "executionScope": {
+                "kind": "zero-ex-nft-settlement-v1"
+              },
+              "warnings": [
+                "Finite static admission at the existing Ethereum Exchange Proxy only. Independently retrieved exact feature/root source snapshots do not attest present runtime bytecode or persistent selector routing. Each route below is a retained Ethereum PublicNode eth_call observation dated 2026-11-01, not a new live RPC result. The mutable registry can change.",
+                "All configurable taker callback bytes, every feeData value (including zero-valued fees), and every property array must be empty across every supplied order, including mismatched arrays and items whose on-chain failure could be caught. Bytes are never interpreted as executor calldata. Bounds reuse the existing 65536-byte, 64-item, 8-depth and 1024-node canonical ABI decoder before viem allocates dynamic arrays.",
+                "Empty configurable callbacks do not prevent token-contract or native-recipient code execution. ERC721 uses plain transferFrom. ERC1155 uses fixed safeTransferFrom with empty data and therefore a compliant token still invokes a contract recipient acceptance hook; purchase recipient is caller, sale recipient is signed buy-order maker. Native payments, unwrap proceeds and refunds execute ordinary recipient behavior.",
+                "No grants, pauses, approvals, permits, signer registration, delegation or presign installation are introduced. Maker order signatures consume local EIP712/ETHSIGN recovery or a previously recorded PRESIGNED order only; exact source does not dispatch an external signature validator. Signature validity, ownership, allowances, order direction, expiry, nonce state, token ID, remaining quantity, rounding and financial eligibility remain on-chain conditions, not simulated by this syntax validator.",
+                "Batch buys return per-item bool successes and optionally catch failures; batch matching always catches per-pair failures and returns profits plus successes. A successful transaction does not mean all items succeeded. Fixed typed financial arrays are not generic nested executors and do not confer independent child capability authority.",
+                "Matching pays the caller spread less seller-order fees without a caller minimum-profit argument. No liquidity, price, backing, execution success, profit or financial-safety guarantee follows. Unknown selectors beyond the finite exact interfaces remain outside this review; no complete current registry exhaustion is claimed."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:nft-settlement-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:eae93ee7",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "batchBuyERC721s",
+              "signature": "batchBuyERC721s((uint8,address,address,uint256,uint256,address,uint256,(address,uint256,bytes)[],address,uint256,(address,bytes)[])[],(uint8,uint8,bytes32,bytes32)[],bytes[],bool)",
+              "abi": {
+                "name": "batchBuyERC721s",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "sellOrders",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "direction",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc20Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc20TokenAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "fees",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "recipient",
+                            "type": "address"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          },
+                          {
+                            "name": "feeData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc721Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc721TokenId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc721TokenProperties",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "propertyValidator",
+                            "type": "address"
+                          },
+                          {
+                            "name": "propertyData",
+                            "type": "bytes"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "signatures",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "signatureType",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "v",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "r",
+                        "type": "bytes32"
+                      },
+                      {
+                        "name": "s",
+                        "type": "bytes32"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "callbackData",
+                    "type": "bytes[]"
+                  },
+                  {
+                    "name": "revertIfIncomplete",
+                    "type": "bool"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "successes",
+                    "type": "bool[]"
+                  }
+                ],
+                "stateMutability": "payable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x4af649ffde640ceb34b1afaba3e0bb8e9698cb01?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/zero-ex-nft-settlement-support.json ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "batch-buy-erc721s",
+              "label": "zero-x batchBuyERC721s",
+              "description": "Exact Ethereum registered-feature NFT financial settlement; bounded empty configurable callbacks and empty NFT property arrays. Standard token/recipient behavior remains possible.",
+              "executionScope": {
+                "kind": "zero-ex-nft-settlement-v1"
+              },
+              "warnings": [
+                "Finite static admission at the existing Ethereum Exchange Proxy only. Independently retrieved exact feature/root source snapshots do not attest present runtime bytecode or persistent selector routing. Each route below is a retained Ethereum PublicNode eth_call observation dated 2026-11-01, not a new live RPC result. The mutable registry can change.",
+                "All configurable taker callback bytes, every feeData value (including zero-valued fees), and every property array must be empty across every supplied order, including mismatched arrays and items whose on-chain failure could be caught. Bytes are never interpreted as executor calldata. Bounds reuse the existing 65536-byte, 64-item, 8-depth and 1024-node canonical ABI decoder before viem allocates dynamic arrays.",
+                "Empty configurable callbacks do not prevent token-contract or native-recipient code execution. ERC721 uses plain transferFrom. ERC1155 uses fixed safeTransferFrom with empty data and therefore a compliant token still invokes a contract recipient acceptance hook; purchase recipient is caller, sale recipient is signed buy-order maker. Native payments, unwrap proceeds and refunds execute ordinary recipient behavior.",
+                "No grants, pauses, approvals, permits, signer registration, delegation or presign installation are introduced. Maker order signatures consume local EIP712/ETHSIGN recovery or a previously recorded PRESIGNED order only; exact source does not dispatch an external signature validator. Signature validity, ownership, allowances, order direction, expiry, nonce state, token ID, remaining quantity, rounding and financial eligibility remain on-chain conditions, not simulated by this syntax validator.",
+                "Batch buys return per-item bool successes and optionally catch failures; batch matching always catches per-pair failures and returns profits plus successes. A successful transaction does not mean all items succeeded. Fixed typed financial arrays are not generic nested executors and do not confer independent child capability authority.",
+                "Matching pays the caller spread less seller-order fees without a caller minimum-profit argument. No liquidity, price, backing, execution success, profit or financial-safety guarantee follows. Unknown selectors beyond the finite exact interfaces remain outside this review; no complete current registry exhaustion is claimed."
+              ]
+            },
+            {
               "abi": {
                 "inputs": [
                   {
@@ -88582,6 +88882,196 @@
               "warnings": []
             },
             {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:86a0c8d7",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "batchCancelPairLimitOrders",
+              "signature": "batchCancelPairLimitOrders(address[],address[],uint256[])",
+              "abi": {
+                "name": "batchCancelPairLimitOrders",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "makerTokens",
+                    "type": "address[]",
+                    "internalType": "contract IERC20TokenV06[]"
+                  },
+                  {
+                    "name": "takerTokens",
+                    "type": "address[]",
+                    "internalType": "contract IERC20TokenV06[]"
+                  },
+                  {
+                    "name": "minValidSalts",
+                    "type": "uint256[]",
+                    "internalType": "uint256[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "batch-cancel-pair-limit-orders",
+              "label": "zero-x batchCancelPairLimitOrders",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:9f0434f5",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "batchCancelPairLimitOrdersWithSigner",
+              "signature": "batchCancelPairLimitOrdersWithSigner(address,address[],address[],uint256[])",
+              "abi": {
+                "name": "batchCancelPairLimitOrdersWithSigner",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "maker",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "makerTokens",
+                    "type": "address[]",
+                    "internalType": "contract IERC20TokenV06[]"
+                  },
+                  {
+                    "name": "takerTokens",
+                    "type": "address[]",
+                    "internalType": "contract IERC20TokenV06[]"
+                  },
+                  {
+                    "name": "minValidSalts",
+                    "type": "uint256[]",
+                    "internalType": "uint256[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "batch-cancel-pair-limit-orders-with-signer",
+              "label": "zero-x batchCancelPairLimitOrdersWithSigner",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:0f0e8cf7",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "batchCancelPairRfqOrders",
+              "signature": "batchCancelPairRfqOrders(address[],address[],uint256[])",
+              "abi": {
+                "name": "batchCancelPairRfqOrders",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "makerTokens",
+                    "type": "address[]",
+                    "internalType": "contract IERC20TokenV06[]"
+                  },
+                  {
+                    "name": "takerTokens",
+                    "type": "address[]",
+                    "internalType": "contract IERC20TokenV06[]"
+                  },
+                  {
+                    "name": "minValidSalts",
+                    "type": "uint256[]",
+                    "internalType": "uint256[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "batch-cancel-pair-rfq-orders",
+              "label": "zero-x batchCancelPairRfqOrders",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:fd5f995b",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "batchCancelPairRfqOrdersWithSigner",
+              "signature": "batchCancelPairRfqOrdersWithSigner(address,address[],address[],uint256[])",
+              "abi": {
+                "name": "batchCancelPairRfqOrdersWithSigner",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "maker",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "makerTokens",
+                    "type": "address[]",
+                    "internalType": "contract IERC20TokenV06[]"
+                  },
+                  {
+                    "name": "takerTokens",
+                    "type": "address[]",
+                    "internalType": "contract IERC20TokenV06[]"
+                  },
+                  {
+                    "name": "minValidSalts",
+                    "type": "uint256[]",
+                    "internalType": "uint256[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "batch-cancel-pair-rfq-orders-with-signer",
+              "label": "zero-x batchCancelPairRfqOrdersWithSigner",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
               "abi": {
                 "inputs": [
                   {
@@ -88665,6 +89155,876 @@
               "status": "active",
               "type": "contract_call",
               "warnings": []
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:1baaa00b",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "batchFillLimitOrders",
+              "signature": "batchFillLimitOrders((address,address,uint128,uint128,uint128,address,address,address,address,bytes32,uint64,uint256)[],(uint8,uint8,bytes32,bytes32)[],uint128[],bool)",
+              "abi": {
+                "name": "batchFillLimitOrders",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "orders",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "makerToken",
+                        "type": "address",
+                        "internalType": "contract IERC20TokenV06"
+                      },
+                      {
+                        "name": "takerToken",
+                        "type": "address",
+                        "internalType": "contract IERC20TokenV06"
+                      },
+                      {
+                        "name": "makerAmount",
+                        "type": "uint128",
+                        "internalType": "uint128"
+                      },
+                      {
+                        "name": "takerAmount",
+                        "type": "uint128",
+                        "internalType": "uint128"
+                      },
+                      {
+                        "name": "takerTokenFeeAmount",
+                        "type": "uint128",
+                        "internalType": "uint128"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "sender",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "feeRecipient",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "pool",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint64",
+                        "internalType": "uint64"
+                      },
+                      {
+                        "name": "salt",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "internalType": "struct LibNativeOrder.LimitOrder[]"
+                  },
+                  {
+                    "name": "signatures",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "signatureType",
+                        "type": "uint8",
+                        "internalType": "enum LibSignature.SignatureType"
+                      },
+                      {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                      },
+                      {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                      },
+                      {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                      }
+                    ],
+                    "internalType": "struct LibSignature.Signature[]"
+                  },
+                  {
+                    "name": "takerTokenFillAmounts",
+                    "type": "uint128[]",
+                    "internalType": "uint128[]"
+                  },
+                  {
+                    "name": "revertIfIncomplete",
+                    "type": "bool",
+                    "internalType": "bool"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "takerTokenFilledAmounts",
+                    "type": "uint128[]",
+                    "internalType": "uint128[]"
+                  },
+                  {
+                    "name": "makerTokenFilledAmounts",
+                    "type": "uint128[]",
+                    "internalType": "uint128[]"
+                  }
+                ],
+                "stateMutability": "payable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x8804de48debe3e6a565b5bce1a6889103ca12314?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "batch-fill-limit-orders",
+              "label": "zero-x batchFillLimitOrders",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:75103cb9",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "batchFillRfqOrders",
+              "signature": "batchFillRfqOrders((address,address,uint128,uint128,address,address,address,bytes32,uint64,uint256)[],(uint8,uint8,bytes32,bytes32)[],uint128[],bool)",
+              "abi": {
+                "name": "batchFillRfqOrders",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "orders",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "makerToken",
+                        "type": "address",
+                        "internalType": "contract IERC20TokenV06"
+                      },
+                      {
+                        "name": "takerToken",
+                        "type": "address",
+                        "internalType": "contract IERC20TokenV06"
+                      },
+                      {
+                        "name": "makerAmount",
+                        "type": "uint128",
+                        "internalType": "uint128"
+                      },
+                      {
+                        "name": "takerAmount",
+                        "type": "uint128",
+                        "internalType": "uint128"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "txOrigin",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "pool",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint64",
+                        "internalType": "uint64"
+                      },
+                      {
+                        "name": "salt",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "internalType": "struct LibNativeOrder.RfqOrder[]"
+                  },
+                  {
+                    "name": "signatures",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "signatureType",
+                        "type": "uint8",
+                        "internalType": "enum LibSignature.SignatureType"
+                      },
+                      {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                      },
+                      {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                      },
+                      {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                      }
+                    ],
+                    "internalType": "struct LibSignature.Signature[]"
+                  },
+                  {
+                    "name": "takerTokenFillAmounts",
+                    "type": "uint128[]",
+                    "internalType": "uint128[]"
+                  },
+                  {
+                    "name": "revertIfIncomplete",
+                    "type": "bool",
+                    "internalType": "bool"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "takerTokenFilledAmounts",
+                    "type": "uint128[]",
+                    "internalType": "uint128[]"
+                  },
+                  {
+                    "name": "makerTokenFilledAmounts",
+                    "type": "uint128[]",
+                    "internalType": "uint128[]"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x8804de48debe3e6a565b5bce1a6889103ca12314?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "batch-fill-rfq-orders",
+              "label": "zero-x batchFillRfqOrders",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:nft-settlement-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:7da9e2cf",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "batchMatchERC721Orders",
+              "signature": "batchMatchERC721Orders((uint8,address,address,uint256,uint256,address,uint256,(address,uint256,bytes)[],address,uint256,(address,bytes)[])[],(uint8,address,address,uint256,uint256,address,uint256,(address,uint256,bytes)[],address,uint256,(address,bytes)[])[],(uint8,uint8,bytes32,bytes32)[],(uint8,uint8,bytes32,bytes32)[])",
+              "abi": {
+                "name": "batchMatchERC721Orders",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "sellOrders",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "direction",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc20Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc20TokenAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "fees",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "recipient",
+                            "type": "address"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          },
+                          {
+                            "name": "feeData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc721Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc721TokenId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc721TokenProperties",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "propertyValidator",
+                            "type": "address"
+                          },
+                          {
+                            "name": "propertyData",
+                            "type": "bytes"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "buyOrders",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "direction",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc20Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc20TokenAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "fees",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "recipient",
+                            "type": "address"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          },
+                          {
+                            "name": "feeData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc721Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc721TokenId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc721TokenProperties",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "propertyValidator",
+                            "type": "address"
+                          },
+                          {
+                            "name": "propertyData",
+                            "type": "bytes"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "sellOrderSignatures",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "signatureType",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "v",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "r",
+                        "type": "bytes32"
+                      },
+                      {
+                        "name": "s",
+                        "type": "bytes32"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "buyOrderSignatures",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "signatureType",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "v",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "r",
+                        "type": "bytes32"
+                      },
+                      {
+                        "name": "s",
+                        "type": "bytes32"
+                      }
+                    ]
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "profits",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "successes",
+                    "type": "bool[]"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x4af649ffde640ceb34b1afaba3e0bb8e9698cb01?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/zero-ex-nft-settlement-support.json ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "batch-match-erc721-orders",
+              "label": "zero-x batchMatchERC721Orders",
+              "description": "Exact Ethereum registered-feature NFT financial settlement; bounded empty configurable callbacks and empty NFT property arrays. Standard token/recipient behavior remains possible.",
+              "executionScope": {
+                "kind": "zero-ex-nft-settlement-v1"
+              },
+              "warnings": [
+                "Finite static admission at the existing Ethereum Exchange Proxy only. Independently retrieved exact feature/root source snapshots do not attest present runtime bytecode or persistent selector routing. Each route below is a retained Ethereum PublicNode eth_call observation dated 2026-11-01, not a new live RPC result. The mutable registry can change.",
+                "All configurable taker callback bytes, every feeData value (including zero-valued fees), and every property array must be empty across every supplied order, including mismatched arrays and items whose on-chain failure could be caught. Bytes are never interpreted as executor calldata. Bounds reuse the existing 65536-byte, 64-item, 8-depth and 1024-node canonical ABI decoder before viem allocates dynamic arrays.",
+                "Empty configurable callbacks do not prevent token-contract or native-recipient code execution. ERC721 uses plain transferFrom. ERC1155 uses fixed safeTransferFrom with empty data and therefore a compliant token still invokes a contract recipient acceptance hook; purchase recipient is caller, sale recipient is signed buy-order maker. Native payments, unwrap proceeds and refunds execute ordinary recipient behavior.",
+                "No grants, pauses, approvals, permits, signer registration, delegation or presign installation are introduced. Maker order signatures consume local EIP712/ETHSIGN recovery or a previously recorded PRESIGNED order only; exact source does not dispatch an external signature validator. Signature validity, ownership, allowances, order direction, expiry, nonce state, token ID, remaining quantity, rounding and financial eligibility remain on-chain conditions, not simulated by this syntax validator.",
+                "Batch buys return per-item bool successes and optionally catch failures; batch matching always catches per-pair failures and returns profits plus successes. A successful transaction does not mean all items succeeded. Fixed typed financial arrays are not generic nested executors and do not confer independent child capability authority.",
+                "Matching pays the caller spread less seller-order fees without a caller minimum-profit argument. No liquidity, price, backing, execution success, profit or financial-safety guarantee follows. Unknown selectors beyond the finite exact interfaces remain outside this review; no complete current registry exhaustion is claimed."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:nft-settlement-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:7cdb54d8",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "buyERC1155",
+              "signature": "buyERC1155((uint8,address,address,uint256,uint256,address,uint256,(address,uint256,bytes)[],address,uint256,(address,bytes)[],uint128),(uint8,uint8,bytes32,bytes32),uint128,bytes)",
+              "abi": {
+                "name": "buyERC1155",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "sellOrder",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "direction",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc20Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc20TokenAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "fees",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "recipient",
+                            "type": "address"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          },
+                          {
+                            "name": "feeData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc1155Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc1155TokenId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc1155TokenProperties",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "propertyValidator",
+                            "type": "address"
+                          },
+                          {
+                            "name": "propertyData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc1155TokenAmount",
+                        "type": "uint128"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "signature",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "signatureType",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "v",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "r",
+                        "type": "bytes32"
+                      },
+                      {
+                        "name": "s",
+                        "type": "bytes32"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc1155BuyAmount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "callbackData",
+                    "type": "bytes"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "payable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x6acab4c9c4e3a0c78435fdb5ad1719c95460a668?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/zero-ex-nft-settlement-support.json ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "buy-erc1155",
+              "label": "zero-x buyERC1155",
+              "description": "Exact Ethereum registered-feature NFT financial settlement; bounded empty configurable callbacks and empty NFT property arrays. Standard token/recipient behavior remains possible.",
+              "executionScope": {
+                "kind": "zero-ex-nft-settlement-v1"
+              },
+              "warnings": [
+                "Finite static admission at the existing Ethereum Exchange Proxy only. Independently retrieved exact feature/root source snapshots do not attest present runtime bytecode or persistent selector routing. Each route below is a retained Ethereum PublicNode eth_call observation dated 2026-11-01, not a new live RPC result. The mutable registry can change.",
+                "All configurable taker callback bytes, every feeData value (including zero-valued fees), and every property array must be empty across every supplied order, including mismatched arrays and items whose on-chain failure could be caught. Bytes are never interpreted as executor calldata. Bounds reuse the existing 65536-byte, 64-item, 8-depth and 1024-node canonical ABI decoder before viem allocates dynamic arrays.",
+                "Empty configurable callbacks do not prevent token-contract or native-recipient code execution. ERC721 uses plain transferFrom. ERC1155 uses fixed safeTransferFrom with empty data and therefore a compliant token still invokes a contract recipient acceptance hook; purchase recipient is caller, sale recipient is signed buy-order maker. Native payments, unwrap proceeds and refunds execute ordinary recipient behavior.",
+                "No grants, pauses, approvals, permits, signer registration, delegation or presign installation are introduced. Maker order signatures consume local EIP712/ETHSIGN recovery or a previously recorded PRESIGNED order only; exact source does not dispatch an external signature validator. Signature validity, ownership, allowances, order direction, expiry, nonce state, token ID, remaining quantity, rounding and financial eligibility remain on-chain conditions, not simulated by this syntax validator.",
+                "Batch buys return per-item bool successes and optionally catch failures; batch matching always catches per-pair failures and returns profits plus successes. A successful transaction does not mean all items succeeded. Fixed typed financial arrays are not generic nested executors and do not confer independent child capability authority.",
+                "Matching pays the caller spread less seller-order fees without a caller minimum-profit argument. No liquidity, price, backing, execution success, profit or financial-safety guarantee follows. Unknown selectors beyond the finite exact interfaces remain outside this review; no complete current registry exhaustion is claimed."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:nft-settlement-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:fbee349d",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "buyERC721",
+              "signature": "buyERC721((uint8,address,address,uint256,uint256,address,uint256,(address,uint256,bytes)[],address,uint256,(address,bytes)[]),(uint8,uint8,bytes32,bytes32),bytes)",
+              "abi": {
+                "name": "buyERC721",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "sellOrder",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "direction",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc20Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc20TokenAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "fees",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "recipient",
+                            "type": "address"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          },
+                          {
+                            "name": "feeData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc721Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc721TokenId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc721TokenProperties",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "propertyValidator",
+                            "type": "address"
+                          },
+                          {
+                            "name": "propertyData",
+                            "type": "bytes"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "signature",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "signatureType",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "v",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "r",
+                        "type": "bytes32"
+                      },
+                      {
+                        "name": "s",
+                        "type": "bytes32"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "callbackData",
+                    "type": "bytes"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "payable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x4af649ffde640ceb34b1afaba3e0bb8e9698cb01?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/zero-ex-nft-settlement-support.json ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "buy-erc721",
+              "label": "zero-x buyERC721",
+              "description": "Exact Ethereum registered-feature NFT financial settlement; bounded empty configurable callbacks and empty NFT property arrays. Standard token/recipient behavior remains possible.",
+              "executionScope": {
+                "kind": "zero-ex-nft-settlement-v1"
+              },
+              "warnings": [
+                "Finite static admission at the existing Ethereum Exchange Proxy only. Independently retrieved exact feature/root source snapshots do not attest present runtime bytecode or persistent selector routing. Each route below is a retained Ethereum PublicNode eth_call observation dated 2026-11-01, not a new live RPC result. The mutable registry can change.",
+                "All configurable taker callback bytes, every feeData value (including zero-valued fees), and every property array must be empty across every supplied order, including mismatched arrays and items whose on-chain failure could be caught. Bytes are never interpreted as executor calldata. Bounds reuse the existing 65536-byte, 64-item, 8-depth and 1024-node canonical ABI decoder before viem allocates dynamic arrays.",
+                "Empty configurable callbacks do not prevent token-contract or native-recipient code execution. ERC721 uses plain transferFrom. ERC1155 uses fixed safeTransferFrom with empty data and therefore a compliant token still invokes a contract recipient acceptance hook; purchase recipient is caller, sale recipient is signed buy-order maker. Native payments, unwrap proceeds and refunds execute ordinary recipient behavior.",
+                "No grants, pauses, approvals, permits, signer registration, delegation or presign installation are introduced. Maker order signatures consume local EIP712/ETHSIGN recovery or a previously recorded PRESIGNED order only; exact source does not dispatch an external signature validator. Signature validity, ownership, allowances, order direction, expiry, nonce state, token ID, remaining quantity, rounding and financial eligibility remain on-chain conditions, not simulated by this syntax validator.",
+                "Batch buys return per-item bool successes and optionally catch failures; batch matching always catches per-pair failures and returns profits plus successes. A successful transaction does not mean all items succeeded. Fixed typed financial arrays are not generic nested executors and do not confer independent child capability authority.",
+                "Matching pays the caller spread less seller-order fees without a caller minimum-profit argument. No liquidity, price, backing, execution success, profit or financial-safety guarantee follows. Unknown selectors beyond the finite exact interfaces remain outside this review; no complete current registry exhaustion is claimed."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:06d2596b",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "cancelERC1155Order",
+              "signature": "cancelERC1155Order(uint256)",
+              "abi": {
+                "name": "cancelERC1155Order",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "orderNonce",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x6acab4c9c4e3a0c78435fdb5ad1719c95460a668?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "cancel-e-r-c1155-order",
+              "label": "zero-x cancelERC1155Order",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:be167b9d",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "cancelERC721Order",
+              "signature": "cancelERC721Order(uint256)",
+              "abi": {
+                "name": "cancelERC721Order",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "orderNonce",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x4af649ffde640ceb34b1afaba3e0bb8e9698cb01?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "cancel-e-r-c721-order",
+              "label": "zero-x cancelERC721Order",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
             },
             {
               "abi": {
@@ -88760,6 +90120,196 @@
               "status": "active",
               "type": "contract_call",
               "warnings": []
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:d0a55fb0",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "cancelPairLimitOrders",
+              "signature": "cancelPairLimitOrders(address,address,uint256)",
+              "abi": {
+                "name": "cancelPairLimitOrders",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "makerToken",
+                    "type": "address",
+                    "internalType": "contract IERC20TokenV06"
+                  },
+                  {
+                    "name": "takerToken",
+                    "type": "address",
+                    "internalType": "contract IERC20TokenV06"
+                  },
+                  {
+                    "name": "minValidSalt",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "cancel-pair-limit-orders",
+              "label": "zero-x cancelPairLimitOrders",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:b10a33f4",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "cancelPairLimitOrdersWithSigner",
+              "signature": "cancelPairLimitOrdersWithSigner(address,address,address,uint256)",
+              "abi": {
+                "name": "cancelPairLimitOrdersWithSigner",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "maker",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "makerToken",
+                    "type": "address",
+                    "internalType": "contract IERC20TokenV06"
+                  },
+                  {
+                    "name": "takerToken",
+                    "type": "address",
+                    "internalType": "contract IERC20TokenV06"
+                  },
+                  {
+                    "name": "minValidSalt",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "cancel-pair-limit-orders-with-signer",
+              "label": "zero-x cancelPairLimitOrdersWithSigner",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:9a4f809c",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "cancelPairRfqOrders",
+              "signature": "cancelPairRfqOrders(address,address,uint256)",
+              "abi": {
+                "name": "cancelPairRfqOrders",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "makerToken",
+                    "type": "address",
+                    "internalType": "contract IERC20TokenV06"
+                  },
+                  {
+                    "name": "takerToken",
+                    "type": "address",
+                    "internalType": "contract IERC20TokenV06"
+                  },
+                  {
+                    "name": "minValidSalt",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "cancel-pair-rfq-orders",
+              "label": "zero-x cancelPairRfqOrders",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:935c82a4",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "cancelPairRfqOrdersWithSigner",
+              "signature": "cancelPairRfqOrdersWithSigner(address,address,address,uint256)",
+              "abi": {
+                "name": "cancelPairRfqOrdersWithSigner",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "maker",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "makerToken",
+                    "type": "address",
+                    "internalType": "contract IERC20TokenV06"
+                  },
+                  {
+                    "name": "takerToken",
+                    "type": "address",
+                    "internalType": "contract IERC20TokenV06"
+                  },
+                  {
+                    "name": "minValidSalt",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "cancel-pair-rfq-orders-with-signer",
+              "label": "zero-x cancelPairRfqOrdersWithSigner",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
             },
             {
               "abi": {
@@ -89245,712 +90795,6 @@
               "warnings": []
             },
             {
-              "abi": {
-                "inputs": [
-                  {
-                    "components": [
-                      {
-                        "internalType": "contract IERC20Token",
-                        "name": "makerToken",
-                        "type": "address"
-                      },
-                      {
-                        "internalType": "contract IERC20Token",
-                        "name": "takerToken",
-                        "type": "address"
-                      },
-                      {
-                        "internalType": "uint128",
-                        "name": "makerAmount",
-                        "type": "uint128"
-                      },
-                      {
-                        "internalType": "uint128",
-                        "name": "takerAmount",
-                        "type": "uint128"
-                      },
-                      {
-                        "internalType": "address",
-                        "name": "maker",
-                        "type": "address"
-                      },
-                      {
-                        "internalType": "address",
-                        "name": "taker",
-                        "type": "address"
-                      },
-                      {
-                        "internalType": "address",
-                        "name": "txOrigin",
-                        "type": "address"
-                      },
-                      {
-                        "internalType": "bytes32",
-                        "name": "pool",
-                        "type": "bytes32"
-                      },
-                      {
-                        "internalType": "uint64",
-                        "name": "expiry",
-                        "type": "uint64"
-                      },
-                      {
-                        "internalType": "uint256",
-                        "name": "salt",
-                        "type": "uint256"
-                      }
-                    ],
-                    "internalType": "struct LibNativeOrder.RfqOrder",
-                    "name": "order",
-                    "type": "tuple"
-                  },
-                  {
-                    "components": [
-                      {
-                        "internalType": "enum LibSignature.SignatureType",
-                        "name": "signatureType",
-                        "type": "uint8"
-                      },
-                      {
-                        "internalType": "uint8",
-                        "name": "v",
-                        "type": "uint8"
-                      },
-                      {
-                        "internalType": "bytes32",
-                        "name": "r",
-                        "type": "bytes32"
-                      },
-                      {
-                        "internalType": "bytes32",
-                        "name": "s",
-                        "type": "bytes32"
-                      }
-                    ],
-                    "internalType": "struct LibSignature.Signature",
-                    "name": "signature",
-                    "type": "tuple"
-                  },
-                  {
-                    "internalType": "uint128",
-                    "name": "takerTokenFillAmount",
-                    "type": "uint128"
-                  }
-                ],
-                "name": "fillRfqOrder",
-                "outputs": [
-                  {
-                    "internalType": "uint128",
-                    "name": "takerTokenFilledAmount",
-                    "type": "uint128"
-                  },
-                  {
-                    "internalType": "uint128",
-                    "name": "makerTokenFilledAmount",
-                    "type": "uint128"
-                  }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "function"
-              },
-              "abiHash": "0x877576a5af1eb3af98b7ef8029fedef5f479ea23e212c5e9b3984ab8b9af75fb",
-              "capabilityId": "zero-x:native-orders-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:fill-rfq-order",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "description": "zero-x fillRfqOrder admitted from exact source snapshot and ABI binding.",
-              "functionName": "fillRfqOrder",
-              "label": "fillRfqOrder",
-              "operation": "fill-rfq-order",
-              "protocol": "zero-x",
-              "provenance": {
-                "sourceRef": "https://github.com/0xProject/protocol/blob/2c8e51e36ccbafa39f7c9003f4087710665acb02/packages/contract-artifacts/artifacts/IZeroEx.json",
-                "status": "verified",
-                "verifiedAt": "2026-10-05"
-              },
-              "signature": "fillRfqOrder((address,address,uint128,uint128,address,address,address,bytes32,uint64,uint256),(uint8,uint8,bytes32,bytes32),uint128)",
-              "status": "active",
-              "type": "contract_call",
-              "warnings": []
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:3598d8ab",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "sellEthForTokenToUniswapV3",
-              "signature": "sellEthForTokenToUniswapV3(bytes,uint256,address)",
-              "abi": {
-                "name": "sellEthForTokenToUniswapV3",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "encodedPath",
-                    "type": "bytes",
-                    "internalType": "bytes"
-                  },
-                  {
-                    "name": "minBuyAmount",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  },
-                  {
-                    "name": "recipient",
-                    "type": "address",
-                    "internalType": "address"
-                  }
-                ],
-                "outputs": [
-                  {
-                    "name": "buyAmount",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  }
-                ],
-                "stateMutability": "payable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x0e992c001e375785846eeb9cd69411b53f30f24b?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "sell-eth-for-token-to-uniswap-v3",
-              "label": "zero-x sellEthForTokenToUniswapV3",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:803ba26d",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "sellTokenForEthToUniswapV3",
-              "signature": "sellTokenForEthToUniswapV3(bytes,uint256,uint256,address)",
-              "abi": {
-                "name": "sellTokenForEthToUniswapV3",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "encodedPath",
-                    "type": "bytes",
-                    "internalType": "bytes"
-                  },
-                  {
-                    "name": "sellAmount",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  },
-                  {
-                    "name": "minBuyAmount",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  },
-                  {
-                    "name": "recipient",
-                    "type": "address",
-                    "internalType": "address payable"
-                  }
-                ],
-                "outputs": [
-                  {
-                    "name": "buyAmount",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  }
-                ],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x0e992c001e375785846eeb9cd69411b53f30f24b?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "sell-token-for-eth-to-uniswap-v3",
-              "label": "zero-x sellTokenForEthToUniswapV3",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:6af479b2",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "sellTokenForTokenToUniswapV3",
-              "signature": "sellTokenForTokenToUniswapV3(bytes,uint256,uint256,address)",
-              "abi": {
-                "name": "sellTokenForTokenToUniswapV3",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "encodedPath",
-                    "type": "bytes",
-                    "internalType": "bytes"
-                  },
-                  {
-                    "name": "sellAmount",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  },
-                  {
-                    "name": "minBuyAmount",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  },
-                  {
-                    "name": "recipient",
-                    "type": "address",
-                    "internalType": "address"
-                  }
-                ],
-                "outputs": [
-                  {
-                    "name": "buyAmount",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  }
-                ],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x0e992c001e375785846eeb9cd69411b53f30f24b?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "sell-token-for-token-to-uniswap-v3",
-              "label": "zero-x sellTokenForTokenToUniswapV3",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:86a0c8d7",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "batchCancelPairLimitOrders",
-              "signature": "batchCancelPairLimitOrders(address[],address[],uint256[])",
-              "abi": {
-                "name": "batchCancelPairLimitOrders",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "makerTokens",
-                    "type": "address[]",
-                    "internalType": "contract IERC20TokenV06[]"
-                  },
-                  {
-                    "name": "takerTokens",
-                    "type": "address[]",
-                    "internalType": "contract IERC20TokenV06[]"
-                  },
-                  {
-                    "name": "minValidSalts",
-                    "type": "uint256[]",
-                    "internalType": "uint256[]"
-                  }
-                ],
-                "outputs": [],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "batch-cancel-pair-limit-orders",
-              "label": "zero-x batchCancelPairLimitOrders",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:9f0434f5",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "batchCancelPairLimitOrdersWithSigner",
-              "signature": "batchCancelPairLimitOrdersWithSigner(address,address[],address[],uint256[])",
-              "abi": {
-                "name": "batchCancelPairLimitOrdersWithSigner",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "maker",
-                    "type": "address",
-                    "internalType": "address"
-                  },
-                  {
-                    "name": "makerTokens",
-                    "type": "address[]",
-                    "internalType": "contract IERC20TokenV06[]"
-                  },
-                  {
-                    "name": "takerTokens",
-                    "type": "address[]",
-                    "internalType": "contract IERC20TokenV06[]"
-                  },
-                  {
-                    "name": "minValidSalts",
-                    "type": "uint256[]",
-                    "internalType": "uint256[]"
-                  }
-                ],
-                "outputs": [],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "batch-cancel-pair-limit-orders-with-signer",
-              "label": "zero-x batchCancelPairLimitOrdersWithSigner",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:0f0e8cf7",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "batchCancelPairRfqOrders",
-              "signature": "batchCancelPairRfqOrders(address[],address[],uint256[])",
-              "abi": {
-                "name": "batchCancelPairRfqOrders",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "makerTokens",
-                    "type": "address[]",
-                    "internalType": "contract IERC20TokenV06[]"
-                  },
-                  {
-                    "name": "takerTokens",
-                    "type": "address[]",
-                    "internalType": "contract IERC20TokenV06[]"
-                  },
-                  {
-                    "name": "minValidSalts",
-                    "type": "uint256[]",
-                    "internalType": "uint256[]"
-                  }
-                ],
-                "outputs": [],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "batch-cancel-pair-rfq-orders",
-              "label": "zero-x batchCancelPairRfqOrders",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:fd5f995b",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "batchCancelPairRfqOrdersWithSigner",
-              "signature": "batchCancelPairRfqOrdersWithSigner(address,address[],address[],uint256[])",
-              "abi": {
-                "name": "batchCancelPairRfqOrdersWithSigner",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "maker",
-                    "type": "address",
-                    "internalType": "address"
-                  },
-                  {
-                    "name": "makerTokens",
-                    "type": "address[]",
-                    "internalType": "contract IERC20TokenV06[]"
-                  },
-                  {
-                    "name": "takerTokens",
-                    "type": "address[]",
-                    "internalType": "contract IERC20TokenV06[]"
-                  },
-                  {
-                    "name": "minValidSalts",
-                    "type": "uint256[]",
-                    "internalType": "uint256[]"
-                  }
-                ],
-                "outputs": [],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "batch-cancel-pair-rfq-orders-with-signer",
-              "label": "zero-x batchCancelPairRfqOrdersWithSigner",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:d0a55fb0",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "cancelPairLimitOrders",
-              "signature": "cancelPairLimitOrders(address,address,uint256)",
-              "abi": {
-                "name": "cancelPairLimitOrders",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "makerToken",
-                    "type": "address",
-                    "internalType": "contract IERC20TokenV06"
-                  },
-                  {
-                    "name": "takerToken",
-                    "type": "address",
-                    "internalType": "contract IERC20TokenV06"
-                  },
-                  {
-                    "name": "minValidSalt",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  }
-                ],
-                "outputs": [],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "cancel-pair-limit-orders",
-              "label": "zero-x cancelPairLimitOrders",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:b10a33f4",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "cancelPairLimitOrdersWithSigner",
-              "signature": "cancelPairLimitOrdersWithSigner(address,address,address,uint256)",
-              "abi": {
-                "name": "cancelPairLimitOrdersWithSigner",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "maker",
-                    "type": "address",
-                    "internalType": "address"
-                  },
-                  {
-                    "name": "makerToken",
-                    "type": "address",
-                    "internalType": "contract IERC20TokenV06"
-                  },
-                  {
-                    "name": "takerToken",
-                    "type": "address",
-                    "internalType": "contract IERC20TokenV06"
-                  },
-                  {
-                    "name": "minValidSalt",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  }
-                ],
-                "outputs": [],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "cancel-pair-limit-orders-with-signer",
-              "label": "zero-x cancelPairLimitOrdersWithSigner",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:9a4f809c",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "cancelPairRfqOrders",
-              "signature": "cancelPairRfqOrders(address,address,uint256)",
-              "abi": {
-                "name": "cancelPairRfqOrders",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "makerToken",
-                    "type": "address",
-                    "internalType": "contract IERC20TokenV06"
-                  },
-                  {
-                    "name": "takerToken",
-                    "type": "address",
-                    "internalType": "contract IERC20TokenV06"
-                  },
-                  {
-                    "name": "minValidSalt",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  }
-                ],
-                "outputs": [],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "cancel-pair-rfq-orders",
-              "label": "zero-x cancelPairRfqOrders",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:935c82a4",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "cancelPairRfqOrdersWithSigner",
-              "signature": "cancelPairRfqOrdersWithSigner(address,address,address,uint256)",
-              "abi": {
-                "name": "cancelPairRfqOrdersWithSigner",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "maker",
-                    "type": "address",
-                    "internalType": "address"
-                  },
-                  {
-                    "name": "makerToken",
-                    "type": "address",
-                    "internalType": "contract IERC20TokenV06"
-                  },
-                  {
-                    "name": "takerToken",
-                    "type": "address",
-                    "internalType": "contract IERC20TokenV06"
-                  },
-                  {
-                    "name": "minValidSalt",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  }
-                ],
-                "outputs": [],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x1fcc3e6f76f7a96cd2b9d09f1d3c041ca1403c57?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "cancel-pair-rfq-orders-with-signer",
-              "label": "zero-x cancelPairRfqOrdersWithSigner",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:be167b9d",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "cancelERC721Order",
-              "signature": "cancelERC721Order(uint256)",
-              "abi": {
-                "name": "cancelERC721Order",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "orderNonce",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  }
-                ],
-                "outputs": [],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x4af649ffde640ceb34b1afaba3e0bb8e9698cb01?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "cancel-e-r-c721-order",
-              "label": "zero-x cancelERC721Order",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
               "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:dac748d4",
               "type": "contract_call",
               "chainId": 1,
@@ -90306,20 +91150,493 @@
               ]
             },
             {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:06d2596b",
+              "abi": {
+                "inputs": [
+                  {
+                    "components": [
+                      {
+                        "internalType": "contract IERC20Token",
+                        "name": "makerToken",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "contract IERC20Token",
+                        "name": "takerToken",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "uint128",
+                        "name": "makerAmount",
+                        "type": "uint128"
+                      },
+                      {
+                        "internalType": "uint128",
+                        "name": "takerAmount",
+                        "type": "uint128"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "txOrigin",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "bytes32",
+                        "name": "pool",
+                        "type": "bytes32"
+                      },
+                      {
+                        "internalType": "uint64",
+                        "name": "expiry",
+                        "type": "uint64"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "salt",
+                        "type": "uint256"
+                      }
+                    ],
+                    "internalType": "struct LibNativeOrder.RfqOrder",
+                    "name": "order",
+                    "type": "tuple"
+                  },
+                  {
+                    "components": [
+                      {
+                        "internalType": "enum LibSignature.SignatureType",
+                        "name": "signatureType",
+                        "type": "uint8"
+                      },
+                      {
+                        "internalType": "uint8",
+                        "name": "v",
+                        "type": "uint8"
+                      },
+                      {
+                        "internalType": "bytes32",
+                        "name": "r",
+                        "type": "bytes32"
+                      },
+                      {
+                        "internalType": "bytes32",
+                        "name": "s",
+                        "type": "bytes32"
+                      }
+                    ],
+                    "internalType": "struct LibSignature.Signature",
+                    "name": "signature",
+                    "type": "tuple"
+                  },
+                  {
+                    "internalType": "uint128",
+                    "name": "takerTokenFillAmount",
+                    "type": "uint128"
+                  }
+                ],
+                "name": "fillRfqOrder",
+                "outputs": [
+                  {
+                    "internalType": "uint128",
+                    "name": "takerTokenFilledAmount",
+                    "type": "uint128"
+                  },
+                  {
+                    "internalType": "uint128",
+                    "name": "makerTokenFilledAmount",
+                    "type": "uint128"
+                  }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+              },
+              "abiHash": "0x877576a5af1eb3af98b7ef8029fedef5f479ea23e212c5e9b3984ab8b9af75fb",
+              "capabilityId": "zero-x:native-orders-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:fill-rfq-order",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "description": "zero-x fillRfqOrder admitted from exact source snapshot and ABI binding.",
+              "functionName": "fillRfqOrder",
+              "label": "fillRfqOrder",
+              "operation": "fill-rfq-order",
+              "protocol": "zero-x",
+              "provenance": {
+                "sourceRef": "https://github.com/0xProject/protocol/blob/2c8e51e36ccbafa39f7c9003f4087710665acb02/packages/contract-artifacts/artifacts/IZeroEx.json",
+                "status": "verified",
+                "verifiedAt": "2026-10-05"
+              },
+              "signature": "fillRfqOrder((address,address,uint128,uint128,address,address,address,bytes32,uint64,uint256),(uint8,uint8,bytes32,bytes32),uint128)",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": []
+            },
+            {
+              "capabilityId": "zero-x:nft-settlement-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:0d8261eb",
               "type": "contract_call",
               "chainId": 1,
               "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "cancelERC1155Order",
-              "signature": "cancelERC1155Order(uint256)",
+              "functionName": "matchERC721Orders",
+              "signature": "matchERC721Orders((uint8,address,address,uint256,uint256,address,uint256,(address,uint256,bytes)[],address,uint256,(address,bytes)[]),(uint8,address,address,uint256,uint256,address,uint256,(address,uint256,bytes)[],address,uint256,(address,bytes)[]),(uint8,uint8,bytes32,bytes32),(uint8,uint8,bytes32,bytes32))",
               "abi": {
-                "name": "cancelERC1155Order",
+                "name": "matchERC721Orders",
                 "type": "function",
                 "inputs": [
                   {
-                    "name": "orderNonce",
-                    "type": "uint256",
-                    "internalType": "uint256"
+                    "name": "sellOrder",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "direction",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc20Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc20TokenAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "fees",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "recipient",
+                            "type": "address"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          },
+                          {
+                            "name": "feeData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc721Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc721TokenId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc721TokenProperties",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "propertyValidator",
+                            "type": "address"
+                          },
+                          {
+                            "name": "propertyData",
+                            "type": "bytes"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "buyOrder",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "direction",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc20Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc20TokenAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "fees",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "recipient",
+                            "type": "address"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          },
+                          {
+                            "name": "feeData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc721Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc721TokenId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc721TokenProperties",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "propertyValidator",
+                            "type": "address"
+                          },
+                          {
+                            "name": "propertyData",
+                            "type": "bytes"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "sellOrderSignature",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "signatureType",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "v",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "r",
+                        "type": "bytes32"
+                      },
+                      {
+                        "name": "s",
+                        "type": "bytes32"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "buyOrderSignature",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "signatureType",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "v",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "r",
+                        "type": "bytes32"
+                      },
+                      {
+                        "name": "s",
+                        "type": "bytes32"
+                      }
+                    ]
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "profit",
+                    "type": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x4af649ffde640ceb34b1afaba3e0bb8e9698cb01?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/zero-ex-nft-settlement-support.json ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "match-erc721-orders",
+              "label": "zero-x matchERC721Orders",
+              "description": "Exact Ethereum registered-feature NFT financial settlement; bounded empty configurable callbacks and empty NFT property arrays. Standard token/recipient behavior remains possible.",
+              "executionScope": {
+                "kind": "zero-ex-nft-settlement-v1"
+              },
+              "warnings": [
+                "Finite static admission at the existing Ethereum Exchange Proxy only. Independently retrieved exact feature/root source snapshots do not attest present runtime bytecode or persistent selector routing. Each route below is a retained Ethereum PublicNode eth_call observation dated 2026-11-01, not a new live RPC result. The mutable registry can change.",
+                "All configurable taker callback bytes, every feeData value (including zero-valued fees), and every property array must be empty across every supplied order, including mismatched arrays and items whose on-chain failure could be caught. Bytes are never interpreted as executor calldata. Bounds reuse the existing 65536-byte, 64-item, 8-depth and 1024-node canonical ABI decoder before viem allocates dynamic arrays.",
+                "Empty configurable callbacks do not prevent token-contract or native-recipient code execution. ERC721 uses plain transferFrom. ERC1155 uses fixed safeTransferFrom with empty data and therefore a compliant token still invokes a contract recipient acceptance hook; purchase recipient is caller, sale recipient is signed buy-order maker. Native payments, unwrap proceeds and refunds execute ordinary recipient behavior.",
+                "No grants, pauses, approvals, permits, signer registration, delegation or presign installation are introduced. Maker order signatures consume local EIP712/ETHSIGN recovery or a previously recorded PRESIGNED order only; exact source does not dispatch an external signature validator. Signature validity, ownership, allowances, order direction, expiry, nonce state, token ID, remaining quantity, rounding and financial eligibility remain on-chain conditions, not simulated by this syntax validator.",
+                "Batch buys return per-item bool successes and optionally catch failures; batch matching always catches per-pair failures and returns profits plus successes. A successful transaction does not mean all items succeeded. Fixed typed financial arrays are not generic nested executors and do not confer independent child capability authority.",
+                "Matching pays the caller spread less seller-order fees without a caller minimum-profit argument. No liquidity, price, backing, execution success, profit or financial-safety guarantee follows. Unknown selectors beyond the finite exact interfaces remain outside this review; no complete current registry exhaustion is claimed."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:nft-settlement-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:6e2eec9e",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "sellERC1155",
+              "signature": "sellERC1155((uint8,address,address,uint256,uint256,address,uint256,(address,uint256,bytes)[],address,uint256,(address,bytes)[],uint128),(uint8,uint8,bytes32,bytes32),uint256,uint128,bool,bytes)",
+              "abi": {
+                "name": "sellERC1155",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "buyOrder",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "direction",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc20Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc20TokenAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "fees",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "recipient",
+                            "type": "address"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          },
+                          {
+                            "name": "feeData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc1155Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc1155TokenId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc1155TokenProperties",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "propertyValidator",
+                            "type": "address"
+                          },
+                          {
+                            "name": "propertyData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc1155TokenAmount",
+                        "type": "uint128"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "signature",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "signatureType",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "v",
+                        "type": "uint8"
+                      },
+                      {
+                        "name": "r",
+                        "type": "bytes32"
+                      },
+                      {
+                        "name": "s",
+                        "type": "bytes32"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc1155TokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc1155SellAmount",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "unwrapNativeToken",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "callbackData",
+                    "type": "bytes"
                   }
                 ],
                 "outputs": [],
@@ -90327,293 +91644,216 @@
               },
               "status": "active",
               "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x6acab4c9c4e3a0c78435fdb5ad1719c95460a668?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x6acab4c9c4e3a0c78435fdb5ad1719c95460a668?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/zero-ex-nft-settlement-support.json ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-02",
                 "status": "verified"
               },
               "protocol": "zero-x",
-              "operation": "cancel-e-r-c1155-order",
-              "label": "zero-x cancelERC1155Order",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "operation": "sell-erc1155",
+              "label": "zero-x sellERC1155",
+              "description": "Exact Ethereum registered-feature NFT financial settlement; bounded empty configurable callbacks and empty NFT property arrays. Standard token/recipient behavior remains possible.",
+              "executionScope": {
+                "kind": "zero-ex-nft-settlement-v1"
+              },
               "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+                "Finite static admission at the existing Ethereum Exchange Proxy only. Independently retrieved exact feature/root source snapshots do not attest present runtime bytecode or persistent selector routing. Each route below is a retained Ethereum PublicNode eth_call observation dated 2026-11-01, not a new live RPC result. The mutable registry can change.",
+                "All configurable taker callback bytes, every feeData value (including zero-valued fees), and every property array must be empty across every supplied order, including mismatched arrays and items whose on-chain failure could be caught. Bytes are never interpreted as executor calldata. Bounds reuse the existing 65536-byte, 64-item, 8-depth and 1024-node canonical ABI decoder before viem allocates dynamic arrays.",
+                "Empty configurable callbacks do not prevent token-contract or native-recipient code execution. ERC721 uses plain transferFrom. ERC1155 uses fixed safeTransferFrom with empty data and therefore a compliant token still invokes a contract recipient acceptance hook; purchase recipient is caller, sale recipient is signed buy-order maker. Native payments, unwrap proceeds and refunds execute ordinary recipient behavior.",
+                "No grants, pauses, approvals, permits, signer registration, delegation or presign installation are introduced. Maker order signatures consume local EIP712/ETHSIGN recovery or a previously recorded PRESIGNED order only; exact source does not dispatch an external signature validator. Signature validity, ownership, allowances, order direction, expiry, nonce state, token ID, remaining quantity, rounding and financial eligibility remain on-chain conditions, not simulated by this syntax validator.",
+                "Batch buys return per-item bool successes and optionally catch failures; batch matching always catches per-pair failures and returns profits plus successes. A successful transaction does not mean all items succeeded. Fixed typed financial arrays are not generic nested executors and do not confer independent child capability authority.",
+                "Matching pays the caller spread less seller-order fees without a caller minimum-profit argument. No liquidity, price, backing, execution success, profit or financial-safety guarantee follows. Unknown selectors beyond the finite exact interfaces remain outside this review; no complete current registry exhaustion is claimed."
               ]
             },
             {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:1baaa00b",
+              "capabilityId": "zero-x:nft-settlement-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:afde1b3c",
               "type": "contract_call",
               "chainId": 1,
               "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "batchFillLimitOrders",
-              "signature": "batchFillLimitOrders((address,address,uint128,uint128,uint128,address,address,address,address,bytes32,uint64,uint256)[],(uint8,uint8,bytes32,bytes32)[],uint128[],bool)",
+              "functionName": "sellERC721",
+              "signature": "sellERC721((uint8,address,address,uint256,uint256,address,uint256,(address,uint256,bytes)[],address,uint256,(address,bytes)[]),(uint8,uint8,bytes32,bytes32),uint256,bool,bytes)",
               "abi": {
-                "name": "batchFillLimitOrders",
+                "name": "sellERC721",
                 "type": "function",
                 "inputs": [
                   {
-                    "name": "orders",
-                    "type": "tuple[]",
+                    "name": "buyOrder",
+                    "type": "tuple",
                     "components": [
                       {
-                        "name": "makerToken",
-                        "type": "address",
-                        "internalType": "contract IERC20TokenV06"
-                      },
-                      {
-                        "name": "takerToken",
-                        "type": "address",
-                        "internalType": "contract IERC20TokenV06"
-                      },
-                      {
-                        "name": "makerAmount",
-                        "type": "uint128",
-                        "internalType": "uint128"
-                      },
-                      {
-                        "name": "takerAmount",
-                        "type": "uint128",
-                        "internalType": "uint128"
-                      },
-                      {
-                        "name": "takerTokenFeeAmount",
-                        "type": "uint128",
-                        "internalType": "uint128"
+                        "name": "direction",
+                        "type": "uint8"
                       },
                       {
                         "name": "maker",
-                        "type": "address",
-                        "internalType": "address"
+                        "type": "address"
                       },
                       {
                         "name": "taker",
-                        "type": "address",
-                        "internalType": "address"
-                      },
-                      {
-                        "name": "sender",
-                        "type": "address",
-                        "internalType": "address"
-                      },
-                      {
-                        "name": "feeRecipient",
-                        "type": "address",
-                        "internalType": "address"
-                      },
-                      {
-                        "name": "pool",
-                        "type": "bytes32",
-                        "internalType": "bytes32"
+                        "type": "address"
                       },
                       {
                         "name": "expiry",
-                        "type": "uint64",
-                        "internalType": "uint64"
+                        "type": "uint256"
                       },
                       {
-                        "name": "salt",
-                        "type": "uint256",
-                        "internalType": "uint256"
+                        "name": "nonce",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc20Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc20TokenAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "fees",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "recipient",
+                            "type": "address"
+                          },
+                          {
+                            "name": "amount",
+                            "type": "uint256"
+                          },
+                          {
+                            "name": "feeData",
+                            "type": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "erc721Token",
+                        "type": "address"
+                      },
+                      {
+                        "name": "erc721TokenId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "erc721TokenProperties",
+                        "type": "tuple[]",
+                        "components": [
+                          {
+                            "name": "propertyValidator",
+                            "type": "address"
+                          },
+                          {
+                            "name": "propertyData",
+                            "type": "bytes"
+                          }
+                        ]
                       }
-                    ],
-                    "internalType": "struct LibNativeOrder.LimitOrder[]"
+                    ]
                   },
                   {
-                    "name": "signatures",
-                    "type": "tuple[]",
+                    "name": "signature",
+                    "type": "tuple",
                     "components": [
                       {
                         "name": "signatureType",
-                        "type": "uint8",
-                        "internalType": "enum LibSignature.SignatureType"
+                        "type": "uint8"
                       },
                       {
                         "name": "v",
-                        "type": "uint8",
-                        "internalType": "uint8"
+                        "type": "uint8"
                       },
                       {
                         "name": "r",
-                        "type": "bytes32",
-                        "internalType": "bytes32"
+                        "type": "bytes32"
                       },
                       {
                         "name": "s",
-                        "type": "bytes32",
-                        "internalType": "bytes32"
+                        "type": "bytes32"
                       }
-                    ],
-                    "internalType": "struct LibSignature.Signature[]"
+                    ]
                   },
                   {
-                    "name": "takerTokenFillAmounts",
-                    "type": "uint128[]",
-                    "internalType": "uint128[]"
+                    "name": "erc721TokenId",
+                    "type": "uint256"
                   },
                   {
-                    "name": "revertIfIncomplete",
-                    "type": "bool",
-                    "internalType": "bool"
+                    "name": "unwrapNativeToken",
+                    "type": "bool"
+                  },
+                  {
+                    "name": "callbackData",
+                    "type": "bytes"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x4af649ffde640ceb34b1afaba3e0bb8e9698cb01?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/zero-ex-nft-settlement-support.json ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "sell-erc721",
+              "label": "zero-x sellERC721",
+              "description": "Exact Ethereum registered-feature NFT financial settlement; bounded empty configurable callbacks and empty NFT property arrays. Standard token/recipient behavior remains possible.",
+              "executionScope": {
+                "kind": "zero-ex-nft-settlement-v1"
+              },
+              "warnings": [
+                "Finite static admission at the existing Ethereum Exchange Proxy only. Independently retrieved exact feature/root source snapshots do not attest present runtime bytecode or persistent selector routing. Each route below is a retained Ethereum PublicNode eth_call observation dated 2026-11-01, not a new live RPC result. The mutable registry can change.",
+                "All configurable taker callback bytes, every feeData value (including zero-valued fees), and every property array must be empty across every supplied order, including mismatched arrays and items whose on-chain failure could be caught. Bytes are never interpreted as executor calldata. Bounds reuse the existing 65536-byte, 64-item, 8-depth and 1024-node canonical ABI decoder before viem allocates dynamic arrays.",
+                "Empty configurable callbacks do not prevent token-contract or native-recipient code execution. ERC721 uses plain transferFrom. ERC1155 uses fixed safeTransferFrom with empty data and therefore a compliant token still invokes a contract recipient acceptance hook; purchase recipient is caller, sale recipient is signed buy-order maker. Native payments, unwrap proceeds and refunds execute ordinary recipient behavior.",
+                "No grants, pauses, approvals, permits, signer registration, delegation or presign installation are introduced. Maker order signatures consume local EIP712/ETHSIGN recovery or a previously recorded PRESIGNED order only; exact source does not dispatch an external signature validator. Signature validity, ownership, allowances, order direction, expiry, nonce state, token ID, remaining quantity, rounding and financial eligibility remain on-chain conditions, not simulated by this syntax validator.",
+                "Batch buys return per-item bool successes and optionally catch failures; batch matching always catches per-pair failures and returns profits plus successes. A successful transaction does not mean all items succeeded. Fixed typed financial arrays are not generic nested executors and do not confer independent child capability authority.",
+                "Matching pays the caller spread less seller-order fees without a caller minimum-profit argument. No liquidity, price, backing, execution success, profit or financial-safety guarantee follows. Unknown selectors beyond the finite exact interfaces remain outside this review; no complete current registry exhaustion is claimed."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:3598d8ab",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "sellEthForTokenToUniswapV3",
+              "signature": "sellEthForTokenToUniswapV3(bytes,uint256,address)",
+              "abi": {
+                "name": "sellEthForTokenToUniswapV3",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "encodedPath",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "minBuyAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address",
+                    "internalType": "address"
                   }
                 ],
                 "outputs": [
                   {
-                    "name": "takerTokenFilledAmounts",
-                    "type": "uint128[]",
-                    "internalType": "uint128[]"
-                  },
-                  {
-                    "name": "makerTokenFilledAmounts",
-                    "type": "uint128[]",
-                    "internalType": "uint128[]"
+                    "name": "buyAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
                   }
                 ],
                 "stateMutability": "payable"
               },
               "status": "active",
               "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x8804de48debe3e6a565b5bce1a6889103ca12314?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x0e992c001e375785846eeb9cd69411b53f30f24b?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
                 "verifiedAt": "2026-11-01",
                 "status": "verified"
               },
               "protocol": "zero-x",
-              "operation": "batch-fill-limit-orders",
-              "label": "zero-x batchFillLimitOrders",
-              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
-              "warnings": [
-                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
-                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
-              ]
-            },
-            {
-              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:75103cb9",
-              "type": "contract_call",
-              "chainId": 1,
-              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
-              "functionName": "batchFillRfqOrders",
-              "signature": "batchFillRfqOrders((address,address,uint128,uint128,address,address,address,bytes32,uint64,uint256)[],(uint8,uint8,bytes32,bytes32)[],uint128[],bool)",
-              "abi": {
-                "name": "batchFillRfqOrders",
-                "type": "function",
-                "inputs": [
-                  {
-                    "name": "orders",
-                    "type": "tuple[]",
-                    "components": [
-                      {
-                        "name": "makerToken",
-                        "type": "address",
-                        "internalType": "contract IERC20TokenV06"
-                      },
-                      {
-                        "name": "takerToken",
-                        "type": "address",
-                        "internalType": "contract IERC20TokenV06"
-                      },
-                      {
-                        "name": "makerAmount",
-                        "type": "uint128",
-                        "internalType": "uint128"
-                      },
-                      {
-                        "name": "takerAmount",
-                        "type": "uint128",
-                        "internalType": "uint128"
-                      },
-                      {
-                        "name": "maker",
-                        "type": "address",
-                        "internalType": "address"
-                      },
-                      {
-                        "name": "taker",
-                        "type": "address",
-                        "internalType": "address"
-                      },
-                      {
-                        "name": "txOrigin",
-                        "type": "address",
-                        "internalType": "address"
-                      },
-                      {
-                        "name": "pool",
-                        "type": "bytes32",
-                        "internalType": "bytes32"
-                      },
-                      {
-                        "name": "expiry",
-                        "type": "uint64",
-                        "internalType": "uint64"
-                      },
-                      {
-                        "name": "salt",
-                        "type": "uint256",
-                        "internalType": "uint256"
-                      }
-                    ],
-                    "internalType": "struct LibNativeOrder.RfqOrder[]"
-                  },
-                  {
-                    "name": "signatures",
-                    "type": "tuple[]",
-                    "components": [
-                      {
-                        "name": "signatureType",
-                        "type": "uint8",
-                        "internalType": "enum LibSignature.SignatureType"
-                      },
-                      {
-                        "name": "v",
-                        "type": "uint8",
-                        "internalType": "uint8"
-                      },
-                      {
-                        "name": "r",
-                        "type": "bytes32",
-                        "internalType": "bytes32"
-                      },
-                      {
-                        "name": "s",
-                        "type": "bytes32",
-                        "internalType": "bytes32"
-                      }
-                    ],
-                    "internalType": "struct LibSignature.Signature[]"
-                  },
-                  {
-                    "name": "takerTokenFillAmounts",
-                    "type": "uint128[]",
-                    "internalType": "uint128[]"
-                  },
-                  {
-                    "name": "revertIfIncomplete",
-                    "type": "bool",
-                    "internalType": "bool"
-                  }
-                ],
-                "outputs": [
-                  {
-                    "name": "takerTokenFilledAmounts",
-                    "type": "uint128[]",
-                    "internalType": "uint128[]"
-                  },
-                  {
-                    "name": "makerTokenFilledAmounts",
-                    "type": "uint128[]",
-                    "internalType": "uint128[]"
-                  }
-                ],
-                "stateMutability": "nonpayable"
-              },
-              "status": "active",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x8804de48debe3e6a565b5bce1a6889103ca12314?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
-                "verifiedAt": "2026-11-01",
-                "status": "verified"
-              },
-              "protocol": "zero-x",
-              "operation": "batch-fill-rfq-orders",
-              "label": "zero-x batchFillRfqOrders",
+              "operation": "sell-eth-for-token-to-uniswap-v3",
+              "label": "zero-x sellEthForTokenToUniswapV3",
               "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
               "warnings": [
                 "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
@@ -90670,6 +91910,118 @@
               "protocol": "zero-x",
               "operation": "sell-to-uniswap",
               "label": "zero-x sellToUniswap",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:803ba26d",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "sellTokenForEthToUniswapV3",
+              "signature": "sellTokenForEthToUniswapV3(bytes,uint256,uint256,address)",
+              "abi": {
+                "name": "sellTokenForEthToUniswapV3",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "encodedPath",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "sellAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "minBuyAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address",
+                    "internalType": "address payable"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "buyAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x0e992c001e375785846eeb9cd69411b53f30f24b?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "sell-token-for-eth-to-uniswap-v3",
+              "label": "zero-x sellTokenForEthToUniswapV3",
+              "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
+              "warnings": [
+                "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",
+                "Exact feature ABI/source and observed root selector routing bind each added signature. Batch native fills internally invoke fixed native fill methods, not caller-selected calls. WithSigner cancellation consumes existing order-signer permission without registering new signers. OTC maker-order signatures are consumed as fixed financial orders, not a signing grant; taker-signed relayed execution remains excluded. V2/V3 routes encode fixed factory-derived swaps, not arbitrary executor bytecode. RFQ/OTC tx.origin, expiry, nonce and allowance conditions remain on-chain requirements."
+              ]
+            },
+            {
+              "capabilityId": "zero-x:mutable-completion-v1:1:0xdef1c0ded9bec7f1a1670819833240f027b25eff:6af479b2",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xdef1c0ded9bec7f1a1670819833240f027b25eff",
+              "functionName": "sellTokenForTokenToUniswapV3",
+              "signature": "sellTokenForTokenToUniswapV3(bytes,uint256,uint256,address)",
+              "abi": {
+                "name": "sellTokenForTokenToUniswapV3",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "encodedPath",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "sellAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "minBuyAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address",
+                    "internalType": "address"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "buyAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xdef1c0ded9bec7f1a1670819833240f027b25eff?fields=abi,sources,proxyResolution,compilation ; https://sourcify.dev/server/v2/contract/1/0x0e992c001e375785846eeb9cd69411b53f30f24b?fields=abi,sources,proxyResolution,compilation ; data/defi-catalog/sources/partial-interface-two-completion.json",
+                "verifiedAt": "2026-11-01",
+                "status": "verified"
+              },
+              "protocol": "zero-x",
+              "operation": "sell-token-for-token-to-uniswap-v3",
+              "label": "zero-x sellTokenForTokenToUniswapV3",
               "description": "Exact-deployment full mutable-interface review; ordinary financial lifecycle with existing on-chain permissions unchanged.",
               "warnings": [
                 "Static deployment-bound ABI/source review only; no ongoing implementation identity, balances, backing, liquidity, price, yield, execution success or financial-safety guarantee. Independent grants, canonical calldata/value checks, pauses and protocol permissions remain mandatory.",

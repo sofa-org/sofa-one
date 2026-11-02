@@ -22,6 +22,7 @@ import { validateV4PositionManagerPrimitive } from './execution/uniswap-v4-primi
 import { uniswapIdentityKind, validateUniswapBinding } from './execution/uniswap-identity';
 import type { UniswapExecutionResult } from './execution/uniswap-deployments';
 import { validateMerklClaim, validateMerklClaimBinding } from './execution/merkl';
+import { validateZeroExNftBinding, validateZeroExNftSettlement } from './execution/zero-ex-nft';
 
 type UniswapPlanState = { targets: Set<string>; operations: number };
 
@@ -276,7 +277,7 @@ export class DefiPolicyService {
   private expandExecution(root: DefiInteraction, rootFn: DefiFunctionPolicy, context: DefiExecutionContext, path: number[], alreadyPlanned: number, uniswapPlan: UniswapPlanState, callerAddress?: string): DefiExecutionPlanNode[] {
     const rootNode = deepFreeze({ path: [...path], data: root.data.toLowerCase() as `0x${string}`, match: toMatch(rootFn, root.value as string) });
     const scope = rootFn.executionScope;
-    try { validateUniswapBinding(rootFn); validateMerklClaimBinding(rootFn); }
+    try { validateUniswapBinding(rootFn); validateMerklClaimBinding(rootFn); validateZeroExNftBinding(rootFn); }
     catch { this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn); }
     const uniswapKind = uniswapIdentityKind(rootFn);
     if (isFiniteMulticallScope(scope)) {
@@ -396,6 +397,13 @@ export class DefiPolicyService {
           || !decodePusdWrapCall(context.chainId, root)) this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn);
       } catch { this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn); }
       this.assertCanonicalCall(root, rootFn, context);
+      if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      return [rootNode];
+    }
+    if (scope.kind === 'zero-ex-nft-settlement-v1') {
+      this.assertNativeValue(root, rootFn, context);
+      try { validateZeroExNftSettlement(root.data); }
+      catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
       if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
       return [rootNode];
     }

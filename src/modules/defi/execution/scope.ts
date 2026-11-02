@@ -182,6 +182,9 @@ export function executionScopeHash(scope: DefiExecutionScope): `0x${string}` {
   } else if (scope.kind === 'merkl-empty-claim-data-v1') {
     if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid Merkl execution scope');
     normalized = { kind: scope.kind };
+  } else if (scope.kind === 'zero-ex-nft-settlement-v1') {
+    if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid 0x NFT execution scope');
+    normalized = { kind: scope.kind };
   } else if (scope.kind === 'uniswap-universal-router-2.1.2-v1' || scope.kind === 'uniswap-v4-position-manager-v1' || scope.kind === 'uniswap-v4-position-manager-primitive-v1') {
     if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid Uniswap execution scope');
     normalized = { kind: scope.kind };

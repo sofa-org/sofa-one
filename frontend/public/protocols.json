@@ -48774,6 +48774,248 @@
         "abi": [
           {
             "type": "function",
+            "name": "batchBuyERC1155s",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "sellOrders",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "direction",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc20Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "fees",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "recipient",
+                        "type": "address"
+                      },
+                      {
+                        "name": "amount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "feeData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc1155Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc1155TokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc1155TokenProperties",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "propertyValidator",
+                        "type": "address"
+                      },
+                      {
+                        "name": "propertyData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc1155TokenAmount",
+                    "type": "uint128"
+                  }
+                ]
+              },
+              {
+                "name": "signatures",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "signatureType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              },
+              {
+                "name": "erc1155FillAmounts",
+                "type": "uint128[]"
+              },
+              {
+                "name": "callbackData",
+                "type": "bytes[]"
+              },
+              {
+                "name": "revertIfIncomplete",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "successes",
+                "type": "bool[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "batchBuyERC721s",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "sellOrders",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "direction",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc20Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "fees",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "recipient",
+                        "type": "address"
+                      },
+                      {
+                        "name": "amount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "feeData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc721Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc721TokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc721TokenProperties",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "propertyValidator",
+                        "type": "address"
+                      },
+                      {
+                        "name": "propertyData",
+                        "type": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "signatures",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "signatureType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              },
+              {
+                "name": "callbackData",
+                "type": "bytes[]"
+              },
+              {
+                "name": "revertIfIncomplete",
+                "type": "bool"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "successes",
+                "type": "bool[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "batchCancelLimitOrders",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -49169,6 +49411,439 @@
                 "type": "uint128[]"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "batchMatchERC721Orders",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "sellOrders",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "direction",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc20Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "fees",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "recipient",
+                        "type": "address"
+                      },
+                      {
+                        "name": "amount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "feeData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc721Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc721TokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc721TokenProperties",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "propertyValidator",
+                        "type": "address"
+                      },
+                      {
+                        "name": "propertyData",
+                        "type": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "buyOrders",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "direction",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc20Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "fees",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "recipient",
+                        "type": "address"
+                      },
+                      {
+                        "name": "amount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "feeData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc721Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc721TokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc721TokenProperties",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "propertyValidator",
+                        "type": "address"
+                      },
+                      {
+                        "name": "propertyData",
+                        "type": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "sellOrderSignatures",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "signatureType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              },
+              {
+                "name": "buyOrderSignatures",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "signatureType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "profits",
+                "type": "uint256[]"
+              },
+              {
+                "name": "successes",
+                "type": "bool[]"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "buyERC1155",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "sellOrder",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "direction",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc20Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "fees",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "recipient",
+                        "type": "address"
+                      },
+                      {
+                        "name": "amount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "feeData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc1155Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc1155TokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc1155TokenProperties",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "propertyValidator",
+                        "type": "address"
+                      },
+                      {
+                        "name": "propertyData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc1155TokenAmount",
+                    "type": "uint128"
+                  }
+                ]
+              },
+              {
+                "name": "signature",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "signatureType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              },
+              {
+                "name": "erc1155BuyAmount",
+                "type": "uint128"
+              },
+              {
+                "name": "callbackData",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "buyERC721",
+            "stateMutability": "payable",
+            "inputs": [
+              {
+                "name": "sellOrder",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "direction",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc20Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "fees",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "recipient",
+                        "type": "address"
+                      },
+                      {
+                        "name": "amount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "feeData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc721Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc721TokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc721TokenProperties",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "propertyValidator",
+                        "type": "address"
+                      },
+                      {
+                        "name": "propertyData",
+                        "type": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "signature",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "signatureType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              },
+              {
+                "name": "callbackData",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
           },
           {
             "type": "function",
@@ -50000,6 +50675,451 @@
                 "type": "uint128"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "matchERC721Orders",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "sellOrder",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "direction",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc20Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "fees",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "recipient",
+                        "type": "address"
+                      },
+                      {
+                        "name": "amount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "feeData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc721Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc721TokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc721TokenProperties",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "propertyValidator",
+                        "type": "address"
+                      },
+                      {
+                        "name": "propertyData",
+                        "type": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "buyOrder",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "direction",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc20Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "fees",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "recipient",
+                        "type": "address"
+                      },
+                      {
+                        "name": "amount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "feeData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc721Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc721TokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc721TokenProperties",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "propertyValidator",
+                        "type": "address"
+                      },
+                      {
+                        "name": "propertyData",
+                        "type": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "sellOrderSignature",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "signatureType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              },
+              {
+                "name": "buyOrderSignature",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "signatureType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "name": "profit",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "sellERC1155",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "buyOrder",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "direction",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc20Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "fees",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "recipient",
+                        "type": "address"
+                      },
+                      {
+                        "name": "amount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "feeData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc1155Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc1155TokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc1155TokenProperties",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "propertyValidator",
+                        "type": "address"
+                      },
+                      {
+                        "name": "propertyData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc1155TokenAmount",
+                    "type": "uint128"
+                  }
+                ]
+              },
+              {
+                "name": "signature",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "signatureType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              },
+              {
+                "name": "erc1155TokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "erc1155SellAmount",
+                "type": "uint128"
+              },
+              {
+                "name": "unwrapNativeToken",
+                "type": "bool"
+              },
+              {
+                "name": "callbackData",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "sellERC721",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "buyOrder",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "direction",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "nonce",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc20Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "fees",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "recipient",
+                        "type": "address"
+                      },
+                      {
+                        "name": "amount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "feeData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "erc721Token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "erc721TokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "erc721TokenProperties",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "propertyValidator",
+                        "type": "address"
+                      },
+                      {
+                        "name": "propertyData",
+                        "type": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "signature",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "signatureType",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "v",
+                    "type": "uint8"
+                  },
+                  {
+                    "name": "r",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "s",
+                    "type": "bytes32"
+                  }
+                ]
+              },
+              {
+                "name": "erc721TokenId",
+                "type": "uint256"
+              },
+              {
+                "name": "unwrapNativeToken",
+                "type": "bool"
+              },
+              {
+                "name": "callbackData",
+                "type": "bytes"
+              }
+            ],
+            "outputs": []
           },
           {
             "type": "function",

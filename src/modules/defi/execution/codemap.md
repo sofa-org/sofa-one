@@ -25,6 +25,10 @@ provider or financial-safety responsibilities.
   requires every per-claim callback-data element to be empty. It reuses the
   bounded recursive wire decoder for all claim/proof arrays; it does not
   simulate proofs, grant operators or admit financial multicall composition.
+- `zero-ex-nft.ts` reserves eight exact Ethereum proxy settlement interfaces.
+  It excludes all supplied taker/fee callback data and property validators
+  before authorizing buys, sells or matching; fixed ERC1155 receiver hooks
+  and ordinary token/native recipient behavior remain possible.
 
 Finite self-delegatecall wrappers bind same-chain/same-target active children
 by capability ID, ABI hash and, where applicable, execution-scope hash.
