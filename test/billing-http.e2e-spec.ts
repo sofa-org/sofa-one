@@ -97,8 +97,7 @@ jest.mock('../src/core/openfort/openfort.service', () => ({
 // an unverified / inherited DATABASE_URL.
 
 describe('Billing HTTP dashboard flow (e2e)', () => {
-  // Real Nest AppModule + Prisma against a fresh runner DB exceeds Jest's
-  // default 5s hook budget; keep a hard upper bound so hangs still fail.
+  // Keep per-test and cleanup budgets bounded independently of cold startup.
   jest.setTimeout(30_000);
 
   let app: INestApplication | undefined;
@@ -109,6 +108,8 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
   let other: TestUser;
   let dbIdentityVerified = false;
 
+  // Cold ts-jest transforms of the dynamically loaded AppModule plus Nest/Prisma
+  // initialization can exceed 30s on CI. Only this shared startup gets 90s.
   beforeAll(async () => {
     try {
       // 1) Live identity on a dedicated preflight client BEFORE Nest init.
@@ -158,7 +159,7 @@ describe('Billing HTTP dashboard flow (e2e)', () => {
       await teardownClients();
       throw err;
     }
-  });
+  }, 90_000);
 
   beforeEach(async () => {
     if (!prisma || !dbIdentityVerified) {

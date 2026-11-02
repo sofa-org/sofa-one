@@ -30,6 +30,9 @@ Drops the database `WITH (FORCE)` and the role in `finally`.
   `BILLING_E2E_DISPOSABLE_DB=true`). The admin URL is stripped from the child env.
 - Credentials and full URLs are never logged.
 - Gate-only (no Postgres): `npm run test:e2e:billing:gate`
+- Billing HTTP E2E gives its shared `beforeAll` 90 seconds for cold ts-jest
+  transforms and Nest/Prisma initialization. Individual tests and cleanup retain
+  the 30-second budget; database identity and authentication checks are unchanged.
 
 ```bash
 export BILLING_E2E_ADMIN_DATABASE_URL='postgresql://postgres:…@localhost:5432/postgres'
