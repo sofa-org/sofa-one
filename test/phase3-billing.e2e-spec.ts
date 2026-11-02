@@ -137,6 +137,17 @@ describe('Phase 3 billing integrity (disposable PostgreSQL e2e)', () => {
   let dbIdentityVerified = false;
 
   beforeAll(async () => {
+    // These September fixtures exercise cleanup/backlog classification in October,
+    // not catch-up finalization of additional months as the wall clock advances.
+    // Fake only Date; PostgreSQL I/O, Jest deadlines and scheduler timers stay real.
+    jest.useFakeTimers({
+      now: new Date('2026-10-15T12:00:00.000Z'),
+      doNotFake: [
+        'hrtime', 'nextTick', 'performance', 'queueMicrotask',
+        'setImmediate', 'clearImmediate', 'setInterval', 'clearInterval',
+        'setTimeout', 'clearTimeout',
+      ],
+    });
     try {
       preflightPrisma = new PrismaClient({ adapter: new PrismaPg(billingE2eDb.url) });
       await preflightPrisma.$connect();
@@ -206,7 +217,11 @@ describe('Phase 3 billing integrity (disposable PostgreSQL e2e)', () => {
         await cleanDatabase();
       }
     } finally {
-      await teardownClients();
+      try {
+        await teardownClients();
+      } finally {
+        jest.useRealTimers();
+      }
     }
   });
 

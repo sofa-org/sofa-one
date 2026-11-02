@@ -33,6 +33,9 @@ Drops the database `WITH (FORCE)` and the role in `finally`.
 - Billing HTTP E2E gives its shared `beforeAll` 90 seconds for cold ts-jest
   transforms and Nest/Prisma initialization. Individual tests and cleanup retain
   the 30-second budget; database identity and authentication checks are unchanged.
+- Phase 3 cleanup/backlog fixtures use a fixed application date of
+  `2026-10-15T12:00:00Z` with real I/O timers. Their September invoice snapshots
+  must not drift into unrelated historical finalization as calendar months pass.
 
 ```bash
 export BILLING_E2E_ADMIN_DATABASE_URL='postgresql://postgres:…@localhost:5432/postgres'
