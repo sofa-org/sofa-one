@@ -214051,6 +214051,84 @@
               ]
             }
           ]
+        },
+        {
+          "address": "0x4c4af8dbc524681930a27b2f1af5bcc8062e6fb7",
+          "functions": [
+            {
+              "capabilityId": "woofi-v2:v2:143:0x4c4af8dbc524681930a27b2f1af5bcc8062e6fb7:swap",
+              "type": "contract_call",
+              "chainId": 143,
+              "contract": "0x4c4AF8DBc524681930a27b2F1Af5bcC8062E6fB7",
+              "functionName": "swap",
+              "signature": "swap(address,address,uint256,uint256,address,address)",
+              "abi": {
+                "name": "swap",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "fromToken",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "toToken",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "fromAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "minToAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "to",
+                    "type": "address",
+                    "internalType": "address payable"
+                  },
+                  {
+                    "name": "rebateTo",
+                    "type": "address",
+                    "internalType": "address"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "realToAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "stateMutability": "payable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://learn.woo.org/dev-docs/references/readme/monad.md ; https://sourcify-api-monad.blockvision.org/v2/contract/143/0x4c4af8dbc524681930a27b2f1af5bcc8062e6fb7?fields=all ; provider discovery: https://docs.blockvision.org/reference/verify-smart-contract-on-monad-explorer",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "protocol": "woofi-v2",
+              "label": "WOOFi V2 explicit pool swap",
+              "operation": "swap",
+              "warnings": [
+                "Exact Monad chain143 target addition within the existing woofi-v2 protocol and an existing catalog chain, not completion of an already-supported chain-local target. Provider reports exact creation/runtime source matches and direct nonproxy code; catalog inclusion is not a grant, live configuration attestation, funded-execution guarantee or financial-safety proof.",
+                "Caller chooses input/output tokens, exact input amount, minToAmount, nonzero output recipient to and rebateTo. The router rejects zero input/output token addresses and zero to, but has no deadline. Minimum output is not a transaction-freshness guarantee.",
+                "For this exact Monad source, 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE denotes native MON. Native input requires fromAmount == msg.value on chain, wraps all supplied value using immutable WETH 0x3bd359c1119da7da1d913d1c4d2b7c461115433a and transfers fromAmount to the configured pool. ERC20 input requires msg.value == 0 on chain. Do not substitute looser msg.value behavior from same-address peer-chain routers; no new server-side value predicate is claimed.",
+                "ERC20 input consumes the caller existing allowance to this exact router and transfers fromAmount directly from msg.sender into configured wooPool before the pool swap atomically. No standalone approval, permit, signature, operator or role installation is admitted. Do not separately pre-transfer funds to a raw pool or assume prefunding is authorized or protected.",
+                "minToAmount is forwarded to wooPool.swap; ordinary swap performs no independent router post-swap minimum or recipient-balance check. realToAmount and output accounting depend on the configured pool and token behavior. Fee-on-transfer, rebasing and other nonstandard tokens can revert or affect recipient net output; compatibility is not guaranteed.",
+                "Native output asks the pool to send wrapped native to this router, unwraps exactly the returned realToAmount through immutable WETH, then sends native currency to explicit to with empty calldata. The recipient must accept native funds; recipient code, token contracts and pool behavior remain external dependencies, despite no user-supplied callback bytes in this ABI.",
+                "Constructor pool 0x5520385bfcf07ec87c4c53a7d8d65595dff69fa4 matches the current official address mapping, but is not freshly observed live router storage. Owner can change wooPool via setPool. Direct nonproxy router identity does not freeze the pool, oracle, fees, administration, liquidity or dependent implementation; none is independently admitted or freshly attested here.",
+                "rebateTo is forwarded to the configured pool; the exact bundled pool interface describes it as optional, including zero address. Rebate processing, token support, balances, allowances, liquidity, prices, gas, slippage, pause state and successful settlement are not established by this source inventory.",
+                "Provider verification timestamp is 2026-10-30T04:31:08Z. Retained eth_getCode observation is dated2026-11-01 at block0x7104c5c, not refreshed by this review. Matching embedded metadata digest binds retained observations to this provider build but is not a fresh RPC observation or independent local recompilation. Independent grants, pauses, canonical calldata checks and final acceptance remain required."
+              ]
+            }
+          ],
+          "status": "active"
         }
       ],
       "status": "active"
