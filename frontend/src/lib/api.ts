@@ -375,7 +375,7 @@ export type DefiCapabilityExecutionScope =
   | { kind: 'uniswap-v4-position-manager-multicall-v1'; hash: `0x${string}`; allowedChildren: { capabilityId: string; signature: string; abiHash: `0x${string}`; executionScopeHash: `0x${string}` }[] }
   | { kind: 'empty-tuple-bytes-v1'; hash: `0x${string}`; tupleArgIndex: number; bytesComponentIndex: number }
   | { kind: 'morpho-market-adapter-v1' | 'maple-adapter-exit-v1'; hash: `0x${string}`; adapter: string }
-  | { kind: 'merkl-empty-claim-data-v1' | 'zero-ex-nft-settlement-v1'; hash: `0x${string}` }
+  | { kind: 'merkl-empty-claim-data-v1' | 'zero-ex-nft-settlement-v1' | 'umami-zero-request-callback-v1' | 'flexa-preauthorized-stake-v1'; hash: `0x${string}` }
   | { kind: 'empty-callback-data-v1' | 'ambient-coldpath-v1' | 'enso-static-weiroll-v1' | 'polymarket-pusd-wrap-v1' | 'uniswap-universal-router-2.1.2-v1' | 'uniswap-v4-position-manager-v1' | 'uniswap-v4-position-manager-primitive-v1'; hash: `0x${string}` };
 
 export interface DefiCapability {

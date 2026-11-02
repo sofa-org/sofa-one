@@ -39,6 +39,8 @@ export type DefiExecutionScope =
   | Readonly<{ kind: 'uniswap-v4-position-manager-v1' }>
   | Readonly<{ kind: 'merkl-empty-claim-data-v1' }>
   | Readonly<{ kind: 'zero-ex-nft-settlement-v1' }>
+  | Readonly<{ kind: 'umami-zero-request-callback-v1' }>
+  | Readonly<{ kind: 'flexa-preauthorized-stake-v1' }>
   | Readonly<{ kind: 'uniswap-v4-position-manager-primitive-v1' }>;
 
 export type MulticallChildBinding = Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>;

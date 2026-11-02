@@ -84898,11 +84898,124 @@
               "type": "contract_call",
               "warnings": [
                 "Static deployment/source/ABI metadata only; not live authorization, persistent runtime attestation, backing, liquidity, financial safety, successful execution or a complete workflow. Independent grants, policies, pauses and canonical calldata/value controls remain mandatory. Zero native value required.",
-                "Only maintained Flexa Capacity v3 normal unstake and release are selected. Flexa is a distinct payment-backstop financial capacity service using Anvil infrastructure; this is not another admission of Anvil vault or retired v2. No stake/deposit, allowance approval, new signature, payment claim, role or upgrade authority is admitted.",
+                "Maintained Flexa Capacity v3 ordinary unstake/release remain selected. Separately scoped stake and self-pool stakeReleasableTokensFrom admit only empty-signature use of preexisting Anvil balance and collateralizable allowance. No depositAndStake, new allowance approval/signature authority, selected other-pool call, payment claim, role or upgrade authority is admitted; retired v2 remains excluded.",
                 "Pool shell explorer source verification is null/unverified; shown 295-byte runtime embeds immutable beacon 0x1f00d6f7c18a8edf4f8bb4ead8a898abdd9c9e14. Current beacon implementation getter resolves 0xcc437a7bb14f07de09b0f4438df007c8f64cf29f with full exact verified source/ABI. Applicable OpenZeppelin 5.0.1 immutable BeaconProxy wrapper source is preserved with partial/manual runtime binding, not an exact compilation claim; current VisibleBeaconProxy is not substituted. Beacon owner may change implementation.",
                 "unstake uses caller-owned pool units, not raw AMP token amounts; positive units must be available excluding pending exits. It releases already-eligible collateral first and queues remaining units through the end of the next epoch. Official product describes ordinary 12–24 hour unlocks, not immediate wallet payout.",
                 "releaseEligibleTokens is permissionless processing of the specified account’s matured/reset financial ledger, always crediting that same account inside the Anvil collateral vault. It does not transfer to caller or an arbitrary recipient and does not itself withdraw vault tokens to a wallet. Non-matured/empty positions can do nothing.",
                 "Collateral remains exposed to authorized payment-backstop claims until released. Exit token amounts are pro-rata from reserved collateral with integer truncation and dust/reset accounting; losses can reduce tokens to zero. No principal/reward/fee guarantee, full migration workflow, active inventory, or ability to bypass existing pool/vault eligibility is asserted."
+              ]
+            },
+            {
+              "abi": {
+                "inputs": [
+                  {
+                    "name": "_token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "_collateralizableApprovalSignature",
+                    "type": "bytes"
+                  }
+                ],
+                "name": "stake",
+                "outputs": [
+                  {
+                    "name": "",
+                    "type": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+              },
+              "capabilityId": "flexa-capacity-v3:1:0xd57e335457b6f5d09ac69248230005a02f9b60cf:stake-preauthorized",
+              "chainId": 1,
+              "contract": "0xd57e335457b6f5d09ac69248230005a02f9b60cf",
+              "functionName": "stake",
+              "label": "Flexa stake existing authorized Anvil collateral",
+              "operation": "stake",
+              "protocol": "Flexa",
+              "provenance": {
+                "sourceRef": "https://app.flexa.co/pools/0xD57E335457b6f5d09ac69248230005a02F9B60CF | https://etherscan.io/address/0xCc437a7Bb14f07de09B0F4438df007c8F64Cf29f#code | https://sourcify.dev/server/v2/contract/1/0x5d2725fdE4d7Aa3388DA4519ac0449Cc031d675f?fields=all | data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json | data/defi-catalog/sources/anvil-collateral-vault-r5.json",
+                "status": "verified",
+                "verifiedAt": "2026-11-02"
+              },
+              "signature": "stake(address,uint256,bytes)",
+              "status": "active",
+              "type": "contract_call",
+              "executionScope": {
+                "kind": "flexa-preauthorized-stake-v1"
+              },
+              "warnings": [
+                "Static source/ABI capability evidence only, not live authorization, implementation identity, funded execution, solvency, liquidity, successful execution or a complete workflow. Independent grants, policies, pauses, bounded canonical calldata, final checks and zero native value remain mandatory.",
+                "Mandatory flexa-preauthorized-stake-v1 scope requires raw collateralizableApprovalSignature bytes to be exactly empty; no allowance-signature helper, permit, approval, ledger-operator, role, delegation or presign installation is admitted. Only the two exact source-bound selectors at this Ethereum pool are admitted; no implicit multicall composition.",
+                "Funding is the caller’s preexisting available selected-token collateral balance inside Anvil CollateralVault 0x5d2725fde4d7aa3388da4519ac0449cc031d675f, potentially including eligible/reset collateral released first by the fixed pool modifier. Existing caller-to-pool collateralizable token allowance must cover the amount and is decreased, not installed. This path does not pull ERC20 tokens from the wallet or call depositFromAccount.",
+                "Amount is positive raw selected-token units, not pool units. The fixed vault must enable that token and approve the pool as collateralizable; existing balance, allowance, reservation and accounting limits remain on-chain preconditions. Staking pools and reserves caller collateral and credits caller pool-accounting units; the unnamed uint256 return is units issued, which need not equal token amount.",
+                "There is no minimum-issued-unit or deadline parameter. Integer truncation, diluted pool-unit exchange rates, dust, reset accounting and deposit-size/overflow limits may affect issuance or cause reversion. Collateral backs Flexa payments and is exposed to authorized backstop claims and loss, potentially to zero; no principal, reward or fee guarantee.",
+                "Unstaking is a separate epoch-based request, not immediate payout; collateral remains claimable until eligible release. Reset/eligible-release processing can occur before staking. Later release credits the same account inside Anvil; wallet withdrawal is a separate vault operation. Retired Flexa v2, depositAndStake, payment claim, authority setters and pool resets are not admitted.",
+                "Pool shell remains explorer-unverified with partial/manual source-pattern binding, NOT compiled exact equivalence. Retained 2026-10-24 runtime embeds immutable beacon 0x1f00d6f7c18a8edf4f8bb4ead8a898abdd9c9e14; retained beacon getter resolves implementation 0xcc437a7bb14f07de09b0f4438df007c8f64cf29f. Beacon and implementation explorer grades are exact. Anvil CollateralVault is independently exact_match creation/runtime, direct nonproxy. These are dated observations, not live identity guarantees; the beacon owner may upgrade."
+              ]
+            },
+            {
+              "abi": {
+                "inputs": [
+                  {
+                    "name": "_pool",
+                    "type": "address"
+                  },
+                  {
+                    "name": "_token",
+                    "type": "address"
+                  },
+                  {
+                    "name": "_amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "_collateralizableApprovalSignature",
+                    "type": "bytes"
+                  }
+                ],
+                "name": "stakeReleasableTokensFrom",
+                "outputs": [
+                  {
+                    "name": "",
+                    "type": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+              },
+              "capabilityId": "flexa-capacity-v3:1:0xd57e335457b6f5d09ac69248230005a02f9b60cf:stake-releasable-self-preauthorized",
+              "chainId": 1,
+              "contract": "0xd57e335457b6f5d09ac69248230005a02f9b60cf",
+              "functionName": "stakeReleasableTokensFrom",
+              "label": "Flexa stake existing authorized collateral with self-pool binding",
+              "operation": "stake",
+              "protocol": "Flexa",
+              "provenance": {
+                "sourceRef": "https://app.flexa.co/pools/0xD57E335457b6f5d09ac69248230005a02F9B60CF | https://etherscan.io/address/0xCc437a7Bb14f07de09B0F4438df007c8F64Cf29f#code | https://sourcify.dev/server/v2/contract/1/0x5d2725fdE4d7Aa3388DA4519ac0449Cc031d675f?fields=all | data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json | data/defi-catalog/sources/anvil-collateral-vault-r5.json",
+                "status": "verified",
+                "verifiedAt": "2026-11-02"
+              },
+              "signature": "stakeReleasableTokensFrom(address,address,uint256,bytes)",
+              "status": "active",
+              "type": "contract_call",
+              "executionScope": {
+                "kind": "flexa-preauthorized-stake-v1"
+              },
+              "warnings": [
+                "Static source/ABI capability evidence only, not live authorization, implementation identity, funded execution, solvency, liquidity, successful execution or a complete workflow. Independent grants, policies, pauses, bounded canonical calldata, final checks and zero native value remain mandatory.",
+                "Mandatory flexa-preauthorized-stake-v1 scope requires raw collateralizableApprovalSignature bytes to be exactly empty; no allowance-signature helper, permit, approval, ledger-operator, role, delegation or presign installation is admitted. Only the two exact source-bound selectors at this Ethereum pool are admitted; no implicit multicall composition.",
+                "The _pool field must equal the exact outer proxy root 0xd57e335457b6f5d09ac69248230005a02f9b60cf, not the implementation or beacon. Under delegatecall address(this) is this root, disabling the entire selected other-pool release call while real _stake still runs. No caller-selected pool target or callback remains.",
+                "Funding is the caller’s preexisting available selected-token collateral balance inside Anvil CollateralVault 0x5d2725fde4d7aa3388da4519ac0449cc031d675f, potentially including eligible/reset collateral released first by the fixed pool modifier. Existing caller-to-pool collateralizable token allowance must cover the amount and is decreased, not installed. This path does not pull ERC20 tokens from the wallet or call depositFromAccount.",
+                "Amount is positive raw selected-token units, not pool units. The fixed vault must enable that token and approve the pool as collateralizable; existing balance, allowance, reservation and accounting limits remain on-chain preconditions. Staking pools and reserves caller collateral and credits caller pool-accounting units; the unnamed uint256 return is units issued, which need not equal token amount.",
+                "There is no minimum-issued-unit or deadline parameter. Integer truncation, diluted pool-unit exchange rates, dust, reset accounting and deposit-size/overflow limits may affect issuance or cause reversion. Collateral backs Flexa payments and is exposed to authorized backstop claims and loss, potentially to zero; no principal, reward or fee guarantee.",
+                "Unstaking is a separate epoch-based request, not immediate payout; collateral remains claimable until eligible release. Reset/eligible-release processing can occur before staking. Later release credits the same account inside Anvil; wallet withdrawal is a separate vault operation. Retired Flexa v2, depositAndStake, payment claim, authority setters and pool resets are not admitted.",
+                "Pool shell remains explorer-unverified with partial/manual source-pattern binding, NOT compiled exact equivalence. Retained 2026-10-24 runtime embeds immutable beacon 0x1f00d6f7c18a8edf4f8bb4ead8a898abdd9c9e14; retained beacon getter resolves implementation 0xcc437a7bb14f07de09b0f4438df007c8f64cf29f. Beacon and implementation explorer grades are exact. Anvil CollateralVault is independently exact_match creation/runtime, direct nonproxy. These are dated observations, not live identity guarantees; the beacon owner may upgrade."
               ]
             },
             {
@@ -84939,7 +85052,7 @@
               "type": "contract_call",
               "warnings": [
                 "Static deployment/source/ABI metadata only; not live authorization, persistent runtime attestation, backing, liquidity, financial safety, successful execution or a complete workflow. Independent grants, policies, pauses and canonical calldata/value controls remain mandatory. Zero native value required.",
-                "Only maintained Flexa Capacity v3 normal unstake and release are selected. Flexa is a distinct payment-backstop financial capacity service using Anvil infrastructure; this is not another admission of Anvil vault or retired v2. No stake/deposit, allowance approval, new signature, payment claim, role or upgrade authority is admitted.",
+                "Maintained Flexa Capacity v3 ordinary unstake/release remain selected. Separately scoped stake and self-pool stakeReleasableTokensFrom admit only empty-signature use of preexisting Anvil balance and collateralizable allowance. No depositAndStake, new allowance approval/signature authority, selected other-pool call, payment claim, role or upgrade authority is admitted; retired v2 remains excluded.",
                 "Pool shell explorer source verification is null/unverified; shown 295-byte runtime embeds immutable beacon 0x1f00d6f7c18a8edf4f8bb4ead8a898abdd9c9e14. Current beacon implementation getter resolves 0xcc437a7bb14f07de09b0f4438df007c8f64cf29f with full exact verified source/ABI. Applicable OpenZeppelin 5.0.1 immutable BeaconProxy wrapper source is preserved with partial/manual runtime binding, not an exact compilation claim; current VisibleBeaconProxy is not substituted. Beacon owner may change implementation.",
                 "unstake uses caller-owned pool units, not raw AMP token amounts; positive units must be available excluding pending exits. It releases already-eligible collateral first and queues remaining units through the end of the next epoch. Official product describes ordinary 12–24 hour unlocks, not immediate wallet payout.",
                 "releaseEligibleTokens is permissionless processing of the specified account’s matured/reset financial ledger, always crediting that same account inside the Anvil collateral vault. It does not transfer to caller or an arbitrary recipient and does not itself withdraw vault tokens to a wallet. Non-matured/empty positions can do nothing.",
@@ -275038,10 +275151,10 @@
                 "Redeem escrows owner shares in this vault rather than immediately burning/paying them. Owner must approve the vault to transfer shares even when owner equals caller; a different caller additionally consumes owner-to-caller share allowance. Receiver controls settlement destination, whereas cancellation refunds the recorded initiating sender, not necessarily owner or receiver.",
                 "Both deposit and redeem are payable because msg.value is forwarded to the aggregate for keeper execution gas, not ETH principal. Bundled aggregate code requires msg.value >= configured gas requirement times tx.gasprice and forwards all supplied value to rebalanceKeeper, without an excess refund in these entrypoints; documented approximately 0.001 ETH is not a fixed fee quote.",
                 "minOutAfterFees is forwarded into the pending request without local enforcement. Bundled aggregate source stores it for deferred execution; current exact aggregate/request-handler source and minimum-enforcement implementation were not independently bound, and no live execution/min-output guarantee is asserted. No caller deadline is present.",
-                "Conversions floor at the share price and dynamic fees can consume small inputs; deposit requires nonzero preview shares and capacity, redeem requires nonzero preview assets and sufficient aggregate USDC before it can even queue. Documented fees are 2% annual management and 20% yield plus dynamic entry/exit fees; actual configured execution-time rates may differ.",
+                "Conversions floor at the share price and dynamic fees can consume small inputs; deposit requires nonzero preview shares and capacity, ordinary redeem requires nonzero preview assets and sufficient aggregate USDC before it can even queue. The separately scoped redeemWithCallback still requires nonzero preview assets but omits that local aggregate-balance precheck, even at zero callback; no equivalent immediate-liquidity rejection is asserted. Documented fees are 2% annual management and 20% yield plus dynamic entry/exit fees; actual configured execution-time rates may differ.",
                 "Requests depend on keeper/oracle execution, configured hooks, buffers and rebalancing; no fixed settlement delay or payout guarantee. cancelRequest checks exact vault and initiating sender, returns escrowed USDC or shares and clears the pending request; already cleared/executed or unavailable escrow requests can revert, and keeper ETH is not refunded by this function.",
                 "Explorer snapshot reports depositPaused=false, withdrawalPaused=false, aggregateVault=0x1E914730B4Cd343aE14530F0BBF6b350d83B833d and asset=USDC. These are point-in-time reported values, not persistence or runtime attestation. Configurator can pause operations or replace aggregateVault; the immutable AUTH reference is not automatically replaced with it.",
-                "Caller-selected callback variants, permit, approvals/transfers, privileged share accounting, pause/configuration and all views are excluded. The fixed configured aggregate dependency may revert or change; its source bundled in the vault compilation is contextual only, not an independently verified current deployed aggregate ABI. Umami requires lawful jurisdictional participation; no KYC eligibility or legal suitability is inferred."
+                "Nonzero caller-selected request callbacks remain excluded. The two separately granted callback entrypoints are admitted only under mandatory zero-request-callback scope at this exact root; zero disables neither configured protocol hooks nor asynchronous keepers. Permit, approvals/transfers, privileged share accounting, pause/configuration and all views remain excluded. The fixed configured aggregate dependency may revert or change; its source bundled in the vault compilation is contextual only, not an independently verified current deployed aggregate ABI. Umami requires lawful jurisdictional participation; no KYC eligibility or legal suitability is inferred."
               ]
             },
             {
@@ -275096,10 +275209,71 @@
                 "Redeem escrows owner shares in this vault rather than immediately burning/paying them. Owner must approve the vault to transfer shares even when owner equals caller; a different caller additionally consumes owner-to-caller share allowance. Receiver controls settlement destination, whereas cancellation refunds the recorded initiating sender, not necessarily owner or receiver.",
                 "Both deposit and redeem are payable because msg.value is forwarded to the aggregate for keeper execution gas, not ETH principal. Bundled aggregate code requires msg.value >= configured gas requirement times tx.gasprice and forwards all supplied value to rebalanceKeeper, without an excess refund in these entrypoints; documented approximately 0.001 ETH is not a fixed fee quote.",
                 "minOutAfterFees is forwarded into the pending request without local enforcement. Bundled aggregate source stores it for deferred execution; current exact aggregate/request-handler source and minimum-enforcement implementation were not independently bound, and no live execution/min-output guarantee is asserted. No caller deadline is present.",
-                "Conversions floor at the share price and dynamic fees can consume small inputs; deposit requires nonzero preview shares and capacity, redeem requires nonzero preview assets and sufficient aggregate USDC before it can even queue. Documented fees are 2% annual management and 20% yield plus dynamic entry/exit fees; actual configured execution-time rates may differ.",
+                "Conversions floor at the share price and dynamic fees can consume small inputs; deposit requires nonzero preview shares and capacity, ordinary redeem requires nonzero preview assets and sufficient aggregate USDC before it can even queue. The separately scoped redeemWithCallback still requires nonzero preview assets but omits that local aggregate-balance precheck, even at zero callback; no equivalent immediate-liquidity rejection is asserted. Documented fees are 2% annual management and 20% yield plus dynamic entry/exit fees; actual configured execution-time rates may differ.",
                 "Requests depend on keeper/oracle execution, configured hooks, buffers and rebalancing; no fixed settlement delay or payout guarantee. cancelRequest checks exact vault and initiating sender, returns escrowed USDC or shares and clears the pending request; already cleared/executed or unavailable escrow requests can revert, and keeper ETH is not refunded by this function.",
                 "Explorer snapshot reports depositPaused=false, withdrawalPaused=false, aggregateVault=0x1E914730B4Cd343aE14530F0BBF6b350d83B833d and asset=USDC. These are point-in-time reported values, not persistence or runtime attestation. Configurator can pause operations or replace aggregateVault; the immutable AUTH reference is not automatically replaced with it.",
-                "Caller-selected callback variants, permit, approvals/transfers, privileged share accounting, pause/configuration and all views are excluded. The fixed configured aggregate dependency may revert or change; its source bundled in the vault compilation is contextual only, not an independently verified current deployed aggregate ABI. Umami requires lawful jurisdictional participation; no KYC eligibility or legal suitability is inferred."
+                "Nonzero caller-selected request callbacks remain excluded. The two separately granted callback entrypoints are admitted only under mandatory zero-request-callback scope at this exact root; zero disables neither configured protocol hooks nor asynchronous keepers. Permit, approvals/transfers, privileged share accounting, pause/configuration and all views remain excluded. The fixed configured aggregate dependency may revert or change; its source bundled in the vault compilation is contextual only, not an independently verified current deployed aggregate ABI. Umami requires lawful jurisdictional participation; no KYC eligibility or legal suitability is inferred."
+              ]
+            },
+            {
+              "abi": {
+                "name": "depositWithCallback",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "assets",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "minOutAfterFees",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "receiver",
+                    "type": "address"
+                  },
+                  {
+                    "name": "callback",
+                    "type": "address"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "shares",
+                    "type": "uint256"
+                  }
+                ],
+                "stateMutability": "payable"
+              },
+              "capabilityId": "umami-gm-usdc-btc:v1:42161:0x5f851f67d24419982ecd7b7765defd64fbb50a97:deposit-with-zero-request-callback",
+              "chainId": 42161,
+              "contract": "0x5f851f67d24419982ecd7b7765defd64fbb50a97",
+              "functionName": "depositWithCallback",
+              "label": "Umami GM BTC vault deposit with zero selected callback",
+              "operation": "deposit",
+              "protocol": "Umami",
+              "provenance": {
+                "sourceRef": "https://about.umami.finance/umami-finance/gm-vaults/vault-tokens-and-contract-addresses.md | https://sourcify.dev/server/v2/contract/42161/0x5f851F67D24419982EcD7b7765deFD64fBb50a97?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-11-02"
+              },
+              "signature": "depositWithCallback(uint256,uint256,address,address)",
+              "status": "active",
+              "type": "contract_call",
+              "executionScope": {
+                "kind": "umami-zero-request-callback-v1"
+              },
+              "warnings": [
+                "Static exact-root source/ABI observation only, not live runtime identity, current configuration, funded execution, liquidity, settlement, complete workflow or financial-safety assurance. Independent grants, pauses, canonical calldata bounds and final acceptance remain mandatory.",
+                "Only Arbitrum42161 gmUSDC BTC-backed AssetVault 0x5f851f67d24419982ecd7b7765defd64fbb50a97 is admitted. Maintained GM deployment evidence does not admit deprecated GLP products or any other Umami root. Retained configuration identifies native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831,6 decimals; vault shares also have6 decimals.",
+                "Mandatory umami-zero-request-callback-v1 requires the selected callback address to be exactly zero. This disables only the user-selected request callback; configured protocol hooks, token behavior and asynchronous keepers remain. No new permit, allowance, operator, role, delegation or presign installation is admitted; no multicall child composition is added.",
+                "Payable native ETH is keeper execution-fee funding, not USDC principal. Exact root forwards all msg.value to its configured aggregate. Contextual aggregate source requires configured gas times tx.gasprice and forwards all supplied value to rebalanceKeeper without an excess refund here. No fixed fee quote or zero-native-value restriction is imposed.",
+                "minOutAfterFees is forwarded, not locally enforced by the AssetVault; contextual aggregate source stores it for deferred handling. No caller deadline or immediate settlement/min-output guarantee. Rounding, dynamic fees, pauses, keeper/oracle execution, hooks, buffers and rebalancing may affect acceptance and outcomes.",
+                "Exact root source-service creationMatch/runtimeMatch are match/match, not exact_match; direct AssetVault is reported nonproxy. These are direct source-service observations, not fresh RPC bytecode/configuration attestations. Configurator can replace aggregateVault or pause operations.",
+                "Retained configured aggregate 0x1e914730b4cd343ae14530f0bbf6b350d83b833d has unknown current deployed ABI/implementation. Its source bundled with the root compilation is contextual only, not independently bound current dependency code. The same fixed configurable dependency is used by ordinary supported calls; it is not admitted as a target and its evidence grade is not upgraded.",
+                "Umami jurisdictional participation requirements remain; no KYC eligibility, legal suitability, balances, sufficient allowance or successful settlement is inferred.",
+                "Transfers assets from caller to this AssetVault using existing caller-to-vault USDC allowance; native ETH cannot fund this principal. Requires nonzero preview shares and vault capacity on chain. The returned shares are an estimate of asynchronously issued shares, not final minted shares or completed settlement.",
+                "Callback argument3 (zero-based) must be zero. At zero, the exact root forwards the same aggregate arguments as ordinary deposit. Explicit receiver and minOutAfterFees remain caller choices; contextual aggregate source rejects a zero receiver."
               ]
             },
             {
@@ -275159,10 +275333,75 @@
                 "Redeem escrows owner shares in this vault rather than immediately burning/paying them. Owner must approve the vault to transfer shares even when owner equals caller; a different caller additionally consumes owner-to-caller share allowance. Receiver controls settlement destination, whereas cancellation refunds the recorded initiating sender, not necessarily owner or receiver.",
                 "Both deposit and redeem are payable because msg.value is forwarded to the aggregate for keeper execution gas, not ETH principal. Bundled aggregate code requires msg.value >= configured gas requirement times tx.gasprice and forwards all supplied value to rebalanceKeeper, without an excess refund in these entrypoints; documented approximately 0.001 ETH is not a fixed fee quote.",
                 "minOutAfterFees is forwarded into the pending request without local enforcement. Bundled aggregate source stores it for deferred execution; current exact aggregate/request-handler source and minimum-enforcement implementation were not independently bound, and no live execution/min-output guarantee is asserted. No caller deadline is present.",
-                "Conversions floor at the share price and dynamic fees can consume small inputs; deposit requires nonzero preview shares and capacity, redeem requires nonzero preview assets and sufficient aggregate USDC before it can even queue. Documented fees are 2% annual management and 20% yield plus dynamic entry/exit fees; actual configured execution-time rates may differ.",
+                "Conversions floor at the share price and dynamic fees can consume small inputs; deposit requires nonzero preview shares and capacity, ordinary redeem requires nonzero preview assets and sufficient aggregate USDC before it can even queue. The separately scoped redeemWithCallback still requires nonzero preview assets but omits that local aggregate-balance precheck, even at zero callback; no equivalent immediate-liquidity rejection is asserted. Documented fees are 2% annual management and 20% yield plus dynamic entry/exit fees; actual configured execution-time rates may differ.",
                 "Requests depend on keeper/oracle execution, configured hooks, buffers and rebalancing; no fixed settlement delay or payout guarantee. cancelRequest checks exact vault and initiating sender, returns escrowed USDC or shares and clears the pending request; already cleared/executed or unavailable escrow requests can revert, and keeper ETH is not refunded by this function.",
                 "Explorer snapshot reports depositPaused=false, withdrawalPaused=false, aggregateVault=0x1E914730B4Cd343aE14530F0BBF6b350d83B833d and asset=USDC. These are point-in-time reported values, not persistence or runtime attestation. Configurator can pause operations or replace aggregateVault; the immutable AUTH reference is not automatically replaced with it.",
-                "Caller-selected callback variants, permit, approvals/transfers, privileged share accounting, pause/configuration and all views are excluded. The fixed configured aggregate dependency may revert or change; its source bundled in the vault compilation is contextual only, not an independently verified current deployed aggregate ABI. Umami requires lawful jurisdictional participation; no KYC eligibility or legal suitability is inferred."
+                "Nonzero caller-selected request callbacks remain excluded. The two separately granted callback entrypoints are admitted only under mandatory zero-request-callback scope at this exact root; zero disables neither configured protocol hooks nor asynchronous keepers. Permit, approvals/transfers, privileged share accounting, pause/configuration and all views remain excluded. The fixed configured aggregate dependency may revert or change; its source bundled in the vault compilation is contextual only, not an independently verified current deployed aggregate ABI. Umami requires lawful jurisdictional participation; no KYC eligibility or legal suitability is inferred."
+              ]
+            },
+            {
+              "abi": {
+                "name": "redeemWithCallback",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "shares",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "minOutAfterFees",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "receiver",
+                    "type": "address"
+                  },
+                  {
+                    "name": "owner",
+                    "type": "address"
+                  },
+                  {
+                    "name": "callback",
+                    "type": "address"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "assets",
+                    "type": "uint256"
+                  }
+                ],
+                "stateMutability": "payable"
+              },
+              "capabilityId": "umami-gm-usdc-btc:v1:42161:0x5f851f67d24419982ecd7b7765defd64fbb50a97:redeem-with-zero-request-callback",
+              "chainId": 42161,
+              "contract": "0x5f851f67d24419982ecd7b7765defd64fbb50a97",
+              "functionName": "redeemWithCallback",
+              "label": "Umami GM BTC vault redemption request with zero selected callback",
+              "operation": "redeem",
+              "protocol": "Umami",
+              "provenance": {
+                "sourceRef": "https://about.umami.finance/umami-finance/gm-vaults/vault-tokens-and-contract-addresses.md | https://sourcify.dev/server/v2/contract/42161/0x5f851F67D24419982EcD7b7765deFD64fBb50a97?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-11-02"
+              },
+              "signature": "redeemWithCallback(uint256,uint256,address,address,address)",
+              "status": "active",
+              "type": "contract_call",
+              "executionScope": {
+                "kind": "umami-zero-request-callback-v1"
+              },
+              "warnings": [
+                "Static exact-root source/ABI observation only, not live runtime identity, current configuration, funded execution, liquidity, settlement, complete workflow or financial-safety assurance. Independent grants, pauses, canonical calldata bounds and final acceptance remain mandatory.",
+                "Only Arbitrum42161 gmUSDC BTC-backed AssetVault 0x5f851f67d24419982ecd7b7765defd64fbb50a97 is admitted. Maintained GM deployment evidence does not admit deprecated GLP products or any other Umami root. Retained configuration identifies native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831,6 decimals; vault shares also have6 decimals.",
+                "Mandatory umami-zero-request-callback-v1 requires the selected callback address to be exactly zero. This disables only the user-selected request callback; configured protocol hooks, token behavior and asynchronous keepers remain. No new permit, allowance, operator, role, delegation or presign installation is admitted; no multicall child composition is added.",
+                "Payable native ETH is keeper execution-fee funding, not USDC principal. Exact root forwards all msg.value to its configured aggregate. Contextual aggregate source requires configured gas times tx.gasprice and forwards all supplied value to rebalanceKeeper without an excess refund here. No fixed fee quote or zero-native-value restriction is imposed.",
+                "minOutAfterFees is forwarded, not locally enforced by the AssetVault; contextual aggregate source stores it for deferred handling. No caller deadline or immediate settlement/min-output guarantee. Rounding, dynamic fees, pauses, keeper/oracle execution, hooks, buffers and rebalancing may affect acceptance and outcomes.",
+                "Exact root source-service creationMatch/runtimeMatch are match/match, not exact_match; direct AssetVault is reported nonproxy. These are direct source-service observations, not fresh RPC bytecode/configuration attestations. Configurator can replace aggregateVault or pause operations.",
+                "Retained configured aggregate 0x1e914730b4cd343ae14530f0bbf6b350d83b833d has unknown current deployed ABI/implementation. Its source bundled with the root compilation is contextual only, not independently bound current dependency code. The same fixed configurable dependency is used by ordinary supported calls; it is not admitted as a target and its evidence grade is not upgraded.",
+                "Umami jurisdictional participation requirements remain; no KYC eligibility, legal suitability, balances, sufficient allowance or successful settlement is inferred.",
+                "Escrows owner shares via an external ERC20 self-call. Existing owner-to-AssetVault share allowance is required even when owner equals caller; caller different from owner additionally consumes existing owner-to-caller share allowance. No permission is installed. Receiver chooses settlement destination; cancellation uses recorded initiating sender, not necessarily owner or receiver.",
+                "Callback argument4 (zero-based) must be zero. Positive shares and nonzero preview assets are checked on chain; returned assets are an estimate, not an immediate underlying payout. Unlike ordinary redeem, redeemWithCallback omits the local aggregate-USDC-balance precheck even at zero callback, so no equivalent immediate-liquidity rejection is claimed. Acceptance and deferred settlement still depend on fixed configured protocol machinery."
               ]
             }
           ],

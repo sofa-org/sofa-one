@@ -1,0 +1,964 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-11-02",
+  "protocol": "Flexa",
+  "chainId": 1,
+  "address": "0xd57e335457b6f5d09ac69248230005a02f9b60cf",
+  "scope": "Two missing canonical staking selectors at the existing maintained Flexa Capacity v3 Ethereum root, constrained to preexisting Anvil funding/allowance. No new root, protocol, chain, authority or multicall child.",
+  "executionScope": {
+    "kind": "flexa-preauthorized-stake-v1"
+  },
+  "lineage": "Reassesses previously entire-selector signature exclusions using exact source branch restrictions. Financial equivalence to another selector does not exclude a distinct canonical financial selector. Historical source files remain unchanged.",
+  "primarySources": [
+    "https://app.flexa.co/pools/0xD57E335457b6f5d09ac69248230005a02F9B60CF",
+    "https://etherscan.io/address/0xCc437a7Bb14f07de09B0F4438df007c8F64Cf29f#code",
+    "https://sourcify.dev/server/v2/contract/1/0x5d2725fdE4d7Aa3388DA4519ac0449Cc031d675f?fields=all"
+  ],
+  "lifecycle": {
+    "status": "maintained",
+    "primaryEvidence": "Amp homepage links Use Amp to app.flexa.co; Flexa Capacity v3 official release explicitly migrates collateral into Anvil pools and retires only v2 in July2025. Current pool interface offers Add collateral and names exact pool contract.",
+    "distinctness": "Own Flexa payment-backstop collateral capacity service with its own pool, distinct from existing Anvil vault and LOC infrastructure; not merely a curator vault label."
+  },
+  "identityEvidence": {
+    "retainedPoolEvidence": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+    "poolEvidenceObservedAt": "2026-10-24",
+    "rootIdentity": {
+      "root": "0xd57e335457b6f5d09ac69248230005a02f9b60cf",
+      "rootExplorerSourceVerificationGrade": null,
+      "rootRuntimeBytecode": "0x6080604052600a600c565b005b60186014601a565b60a0565b565b60007f0000000000000000000000001f00d6f7c18a8edf4f8bb4ead8a898abdd9c9e146001600160a01b0316635c60da1b6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156079573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190609b919060c3565b905090565b3660008037600080366000845af43d6000803e80801560be573d6000f35b3d6000fd5b60006020828403121560d457600080fd5b81516001600160a01b038116811460ea57600080fd5b939250505056fea264697066735822122085232a0413b8583099fcc916c0491cd464ae93e197fb5cd6cee824e422968cbd64736f6c63430008190033",
+      "rootRuntimeSha256": "83bed7b1876013468ef3db8650a032f5a92670d2c352024f64a6a235bd5942cc",
+      "beacon": "0x1f00d6f7c18a8edf4f8bb4ead8a898abdd9c9e14",
+      "currentImplementation": "0xcc437a7bb14f07de09b0f4438df007c8f64cf29f",
+      "resolution": "Root shown runtime immutable PUSH32 embeds beacon, calls implementation selector 0x5c60da1b via STATICCALL then DELEGATECALL with calldata and bubbles returndata. Current beacon getter explicitly returns current implementation, matching explorer proxy link and official Anvil repository. Constructor initial implementation is not substituted for current value.",
+      "shellSourceBindingGrade": "partial/manual source-pattern binding; no compiled equality or explorer exact grade claimed",
+      "rootMetadataCid": "QmXJN2rA12hkC2CUt2zGaEixonmPvwtJ8cUQcZhj3RWsJL",
+      "caveat": "Root shell explorer verification remains null. Metadata source retrieval unavailable; full applicable OZ5.0.1 BeaconProxy and dependencies preserved based on pinned official Anvil dependency and observed immutable-beacon control flow. VisibleBeaconProxy (with extra getters) is NOT the observed shell. This is point-in-time ABI/source identity, not persistent runtime attestation."
+    },
+    "implementation": {
+      "address": "0xcc437a7bb14f07de09b0f4438df007c8f64cf29f",
+      "sourceRef": "https://etherscan.io/address/0xCc437a7Bb14f07de09B0F4438df007c8F64Cf29f#code",
+      "explorerVerificationGrade": "exact",
+      "compilerInputSha256": "51ce48daa1a4f31fa17e695184b5899bc009ac0842f46f6f0d592f2c016f1e3b",
+      "fullOriginalAbiSha256": "7ebc290f49d1ef478f92340c241735f3e8f52d326e30952b8545b2167ac616df",
+      "sourceFileSha256": {
+        "@openzeppelin/contracts/access/AccessControl.sol": "1086a1ad3788972b885ff3f209da510615dde6214d46b29e1cd2a4924f66c06d",
+        "@openzeppelin/contracts/access/IAccessControl.sol": "1d6ef09193265172824fa1139e85cba422117ca918961183f080e692489d8c3b",
+        "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol": "912509e0e9bf74e0f8a8c92d031b5b26d2d35c6d4abf3f56251be1ea9ca946bf",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol": "6f2faae462e286e24e091d7718575179644dc60e79936ef0c92e2d1ab3ca3cee",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": "471157c89111d7b9eab456b53ebe9042bc69504a64cb5cc980d38da9103379ae",
+        "@openzeppelin/contracts/utils/Address.sol": "b3710b1712637eb8c0df81912da3450da6ff67b0b3ed18146b033ed15b1aa3b9",
+        "@openzeppelin/contracts/utils/Context.sol": "847fda5460fee70f56f4200f59b82ae622bb03c79c77e67af010e31b7e2cc5b6",
+        "@openzeppelin/contracts/utils/introspection/ERC165.sol": "99348354365cbdeb90157e2903334b861a00d69faab7720ae542d911d5c70d87",
+        "@openzeppelin/contracts/utils/introspection/IERC165.sol": "07ae1ac964ab74dedada999e2dfc642031a6495469cffc0bf715daa4f1e4f904",
+        "contracts/interfaces/ICollateral.sol": "08bbc0c56255dc10c58ed47acde0f503761cf5b55371dbc9a62a8951ece41d75",
+        "contracts/interfaces/ICollateralDepositTarget.sol": "d0f07808d6b896f12dea3c2639da0b1bc36227ee377f8dcadecebefd2cceb5d6",
+        "contracts/interfaces/ICollateralPool.sol": "047515428b3941d596116a824e94273d6b5994b073dfe2e5b77527440a7c1347",
+        "contracts/interfaces/ITimeBasedCollateralPool.sol": "7ce653a42a07392e8d09acfd2599fe737e797c8b32e555260f235400539030cf",
+        "contracts/Pricing.sol": "35d1cc61adfdfc1b306209e57c7edc6db6a372d423abfda16feeaaa71d7f4f31",
+        "contracts/TimeBasedCollateralPool.sol": "7eb30cb28ae1aa184f4f2bbec26ff7d6553b2fbbb2f4930643a6213174d67ecb",
+        "settings.json": "c04d008da7a14ce840c6eb52de98529bd18c7a71b5f91e6e19d8a2e49e2e807d"
+      }
+    },
+    "beacon": {
+      "address": "0x1f00d6f7c18a8edf4f8bb4ead8a898abdd9c9e14",
+      "sourceRef": "https://etherscan.io/address/0x1f00D6f7C18a8edf4f8Bb4Ead8a898aBDd9c9E14#code",
+      "explorerVerificationGrade": "exact",
+      "compilerInputSha256": "4ba242744c5ca231f1d822797d6ad5ece8e93c13ea3ec68c287dfad8359ff063",
+      "fullOriginalAbiSha256": "5a2e6b16f6a9d47660f80de6e7130a8d1d150c179d2cacb97be9d2e56a7e01fa",
+      "sourceFileSha256": {
+        "@openzeppelin/contracts/access/Ownable.sol": "38578bd71c0a909840e67202db527cc6b4e6b437e0f39f0c909da32c1e30cb81",
+        "@openzeppelin/contracts/proxy/beacon/IBeacon.sol": "422eabc0e645e24c3a52898f6255b349323b013544a3ebdc4b2d3f7fc5bb7e9e",
+        "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol": "26dda9d5bb961b3df26602d49f9f5a0647cfdb78b63cc253aed8527030a64f25",
+        "@openzeppelin/contracts/utils/Context.sol": "847fda5460fee70f56f4200f59b82ae622bb03c79c77e67af010e31b7e2cc5b6",
+        "settings.json": "c04d008da7a14ce840c6eb52de98529bd18c7a71b5f91e6e19d8a2e49e2e807d"
+      }
+    },
+    "collateralVaultInitialization": {
+      "address": "0x5d2725fde4d7aa3388da4519ac0449cc031d675f",
+      "sourceRef": "https://etherscan.io/tx/0xff109dc233f8be8af50b8f4a9edcd8d8005b68e41e1d01884050db91b5b82e2d",
+      "retrievedAt": "2026-10-24",
+      "sha256": "8b50b541f07f187b27d51346d23cdcb4a6910633739b1c0878a8f58f1c549d83",
+      "binding": "Retained deployment transaction constructor initialization calldata binds this collateral vault; not a fresh live state observation."
+    },
+    "collateralVault": {
+      "retainedFile": "data/defi-catalog/sources/anvil-collateral-vault-r5.json",
+      "address": "0x5d2725fdE4d7Aa3388DA4519ac0449Cc031d675f",
+      "observedAt": "2026-10-24",
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x5d2725fdE4d7Aa3388DA4519ac0449Cc031d675f?fields=all",
+      "retrievedAt": "2026-10-24",
+      "responseSha256": "d1030377a4991498c8702198542efb01e062501cf0e497ba6dbac5ffb160f74b",
+      "creationMatch": "exact_match",
+      "runtimeMatch": "exact_match",
+      "verifiedAt": "2024-09-26T17:44:32Z",
+      "proxyResolution": {
+        "isProxy": false,
+        "proxyType": null,
+        "implementations": []
+      },
+      "runtimeBytecodeSha256": "a2dee522e77076f7f5c1f5f0141734f939fba3ba67e6f380bea260a19ea982c6",
+      "runtimeImmutableValues": {
+        "1910": "f1b1a1f475e5230b6783c09d40d22ed22e86cf0853a5b146762cb052af339d40",
+        "1912": "0000000000000000000000000000000000000000000000000000000000000001",
+        "1914": "0000000000000000000000005d2725fde4d7aa3388da4519ac0449cc031d675f",
+        "1916": "c01f029d6c9db6f00d3d20348ff31845b8da38d5d03af2cde252e7777d74f13b",
+        "1918": "c89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6",
+        "1921": "436f6c6c61746572616c5661756c74000000000000000000000000000000000f",
+        "1924": "3100000000000000000000000000000000000000000000000000000000000001"
+      }
+    }
+  },
+  "sourceSemantics": {
+    "preconditions": "Both selected paths release eligible/reset caller collateral first, reject zero stake amount on chain, pool caller available Anvil collateral using existing allowance and create/increase pool reservation before crediting caller units. No wallet token pull in the admitted path.",
+    "directStake": "stake checks signature.length > 0 before invoking _tryModifyCollateralizableAllowanceWithSignature. Empty raw bytes skips it entirely.",
+    "selfPool": "stakeReleasableTokensFrom calls _pool.releaseEligibleTokens only when _pool != address(this). Exact outer proxy binding makes this false under delegatecall; empty signature independently disables the approval helper.",
+    "funding": "Anvil poolCollateral calls _requireCollateralizableAndDecreaseApprovedAmount then _transferCollateral. Existing caller balance is debited and pool available balance credited; pool reservation debits pool available balance, not caller ERC20 wallet. No new allowance is installed.",
+    "depositExclusion": "depositAndStake cannot satisfy the disabled-authority requirement because mandatory depositFromAccount invokes deposit signature verification, including ERC1271, regardless of bytes length and can increase allowance on success. Catching InvalidSignature in the pool does not eliminate this attempted authority path."
+  },
+  "sourceExcerpts": [
+    {
+      "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+      "sourcePath": "contracts/TimeBasedCollateralPool.sol",
+      "sourceSha256": "7eb30cb28ae1aa184f4f2bbec26ff7d6553b2fbbb2f4930643a6213174d67ecb",
+      "sections": [
+        {
+          "startLine": 114,
+          "endLine": 118,
+          "content": "    modifier withEligibleAccountTokensReleased(address _account, address _tokenAddress) {\n        _releaseEligibleAccountTokens(_account, _tokenAddress);\n\n        _;\n    }"
+        },
+        {
+          "startLine": 609,
+          "endLine": 633,
+          "content": "    function depositAndStake(\n        IERC20 _token,\n        uint256 _amount,\n        bytes calldata _collateralizableDepositApprovalSignature\n    ) external withEligibleAccountTokensReleased(msg.sender, address(_token)) returns (uint256) {\n        try\n            collateral.depositFromAccount(\n                msg.sender,\n                address(_token),\n                _amount,\n                _collateralizableDepositApprovalSignature\n            )\n        {} catch (bytes memory reason) {\n            if (bytes4(reason) != ICollateral.InvalidSignature.selector) {\n                // Revert with the original error message\n                assembly (\"memory-safe\") {\n                    revert(add(reason, 0x20), mload(reason))\n                }\n            }\n            // If it reverts for signature reasons, we do not want to let the transaction revert [yet].\n        }\n\n        return _stake(_token, _amount);\n    }\n"
+        },
+        {
+          "startLine": 679,
+          "endLine": 719,
+          "content": "    function stake(\n        IERC20 _token,\n        uint256 _amount,\n        bytes calldata _collateralizableApprovalSignature\n    ) external withEligibleAccountTokensReleased(msg.sender, address(_token)) returns (uint256) {\n        if (_collateralizableApprovalSignature.length > 0) {\n            _tryModifyCollateralizableAllowanceWithSignature(\n                address(_token),\n                Pricing.safeCastToInt256(_amount),\n                _collateralizableApprovalSignature\n            );\n        }\n\n        return _stake(_token, _amount);\n    }\n\n    /**\n     * @inheritdoc ITimeBasedCollateralPool\n     */\n    function stakeReleasableTokensFrom(\n        ITimeBasedCollateralPool _pool,\n        IERC20 _token,\n        uint256 _amount,\n        bytes calldata _collateralizableApprovalSignature\n    ) external withEligibleAccountTokensReleased(msg.sender, address(_token)) returns (uint256) {\n        if (address(_pool) != address(this)) {\n            IERC20[] memory tokens = new IERC20[](1);\n            tokens[0] = _token;\n            _pool.releaseEligibleTokens(msg.sender, tokens);\n        }\n        if (_collateralizableApprovalSignature.length > 0) {\n            _tryModifyCollateralizableAllowanceWithSignature(\n                address(_token),\n                Pricing.safeCastToInt256(_amount),\n                _collateralizableApprovalSignature\n            );\n        }\n\n        return _stake(_token, _amount);\n    }\n"
+        },
+        {
+          "startLine": 915,
+          "endLine": 940,
+          "content": "    function _releaseEligibleAccountTokens(\n        address _account,\n        address _tokenAddress\n    ) internal returns (bool _accountWasReset) {\n        _accountWasReset = _unlockEligibleTokenContractPendingUnstakes(_tokenAddress);\n\n        (uint256 totalUnitsToRelease, uint256 totalTokensToRelease) = _resetAccountTokenStateIfApplicable(\n            _account,\n            _tokenAddress\n        );\n\n        if (totalUnitsToRelease == 0) {\n            (uint256 units, uint256 tokens) = _processAccountTokenUnstakes(_account, _tokenAddress);\n            totalUnitsToRelease += units;\n            totalTokensToRelease += tokens;\n        } else {\n            _accountWasReset = true;\n        }\n\n        if (totalUnitsToRelease == 0) {\n            return _accountWasReset;\n        }\n\n        collateral.transferCollateral(_tokenAddress, totalTokensToRelease, _account);\n\n        emit CollateralReleased(IERC20(_tokenAddress), totalTokensToRelease, totalUnitsToRelease, _account);"
+        },
+        {
+          "startLine": 1119,
+          "endLine": 1163,
+          "content": "    function _stake(IERC20 _token, uint256 _amount) internal returns (uint256 _poolUnitsIssued) {\n        if (_amount == 0) revert InvalidZeroAmount();\n\n        collateral.poolCollateral(msg.sender, address(_token), _amount);\n\n        uint96 reservationId = tokenContractState[address(_token)].collateralReservationId;\n        uint256 poolTotalUnitsAfter;\n        uint256 poolTotalTokensAfter;\n        if (reservationId == 0) {\n            _poolUnitsIssued = _amount;\n            (reservationId, ) = collateral.reserveCollateral(address(this), address(_token), _amount);\n            tokenContractState[address(_token)].collateralReservationId = reservationId;\n            tokenContractState[address(_token)].totalUnits = _poolUnitsIssued;\n            accountTokenState[msg.sender][address(_token)].totalUnits = _poolUnitsIssued;\n\n            poolTotalUnitsAfter = _poolUnitsIssued;\n            poolTotalTokensAfter = _amount;\n        } else {\n            (poolTotalTokensAfter, ) = collateral.modifyCollateralReservation(\n                reservationId,\n                Pricing.safeCastToInt256(_amount)\n            );\n            uint256 poolUnits = tokenContractState[address(_token)].totalUnits;\n            _poolUnitsIssued = Pricing.calculateProportionOfTotal(_amount, poolTotalTokensAfter - _amount, poolUnits);\n\n            poolTotalUnitsAfter = poolUnits + _poolUnitsIssued;\n\n            tokenContractState[address(_token)].totalUnits = poolTotalUnitsAfter;\n            accountTokenState[msg.sender][address(_token)].totalUnits += _poolUnitsIssued;\n        }\n\n        {\n            uint256 product;\n            unchecked {\n                product = (poolTotalTokensAfter * poolTotalUnitsAfter) / poolTotalUnitsAfter;\n            }\n            // This means that the contract will not be able to process withdrawals without overflowing, so must revert.\n            // This can happen because the pool is empty, but the number of tokens being deposited is > 2**128 - 1\n            // or if pool units have been diluted enough to make the units issued for this deposit very large.\n            // If the latter, the pool should be reset.\n            if (product != poolTotalTokensAfter) revert DepositTooLarge();\n        }\n\n        emit CollateralStaked(msg.sender, _token, _amount, _poolUnitsIssued);\n    }"
+        },
+        {
+          "startLine": 1172,
+          "endLine": 1194,
+          "content": "    function _tryModifyCollateralizableAllowanceWithSignature(\n        address _collateralTokenAddress,\n        int256 _collateralTokenAmount,\n        bytes calldata _collateralizableAllowanceSignature\n    ) private {\n        try\n            collateral.modifyCollateralizableTokenAllowanceWithSignature(\n                msg.sender,\n                address(this),\n                _collateralTokenAddress,\n                _collateralTokenAmount,\n                _collateralizableAllowanceSignature\n            )\n        {} catch (bytes memory reason) {\n            if (bytes4(reason) != ICollateral.InvalidSignature.selector) {\n                // Revert with the original error message\n                assembly (\"memory-safe\") {\n                    revert(add(reason, 0x20), mload(reason))\n                }\n            }\n            // If it reverts for signature reasons, we do not want to let the transaction revert [yet].\n        }\n    }"
+        }
+      ]
+    },
+    {
+      "retainedFile": "data/defi-catalog/sources/anvil-collateral-vault-r5.json",
+      "sourcePath": "contracts/CollateralVault.sol",
+      "sourceSha256": "5f7cc301f94b2825e353462012f8fdfcfdd5aa79c6f3732338a87b1e19e038f2",
+      "sections": [
+        {
+          "startLine": 239,
+          "endLine": 265,
+          "content": "    function depositFromAccount(\n        address _accountAddress,\n        address _tokenAddress,\n        uint256 _amount,\n        bytes calldata _collateralizableDepositApprovalSignature\n    ) external {\n        if (!collateralizableContracts[msg.sender]) revert Unauthorized(msg.sender);\n\n        _verifyDepositApprovalSignature(\n            _accountAddress,\n            _tokenAddress,\n            _amount,\n            _collateralizableDepositApprovalSignature\n        );\n\n        uint256 allowance = accountCollateralizableTokenAllowances[_accountAddress][msg.sender][_tokenAddress];\n        if (allowance < _amount) {\n            _authorizedModifyCollateralizableTokenAllowance(\n                _accountAddress,\n                msg.sender,\n                _tokenAddress,\n                int256(_amount - allowance)\n            );\n        }\n\n        _deposit(_accountAddress, _accountAddress, _tokenAddress, _amount);\n    }"
+        },
+        {
+          "startLine": 323,
+          "endLine": 331,
+          "content": "    function poolCollateral(\n        address _accountAddress,\n        address _tokenAddress,\n        uint256 _amount\n    ) external onlyEnabledCollateralTokens(_tokenAddress) {\n        _requireCollateralizableAndDecreaseApprovedAmount(msg.sender, _accountAddress, _tokenAddress, _amount);\n\n        _transferCollateral(_tokenAddress, _accountAddress, _amount, msg.sender);\n    }"
+        },
+        {
+          "startLine": 373,
+          "endLine": 375,
+          "content": "    function transferCollateral(address _tokenAddress, uint256 _amount, address _destinationAddress) external {\n        _transferCollateral(_tokenAddress, msg.sender, _amount, _destinationAddress);\n    }"
+        },
+        {
+          "startLine": 709,
+          "endLine": 725,
+          "content": "    function _deposit(\n        address _transferSource,\n        address _accountAddress,\n        address _tokenAddress,\n        uint256 _amount\n    ) internal onlyEnabledCollateralTokens(_tokenAddress) {\n        CollateralToken storage collateralTokenStorage = collateralTokens[_tokenAddress];\n\n        CollateralBalance storage accountBalanceStorage = accountBalances[_accountAddress][_tokenAddress];\n        uint256 available = accountBalanceStorage.available;\n        accountBalanceStorage.available = available + _amount;\n        collateralTokenStorage.cumulativeUserBalance += _amount;\n\n        IERC20(_tokenAddress).safeTransferFrom(_transferSource, address(this), _amount);\n\n        emit FundsDeposited(_transferSource, _accountAddress, _tokenAddress, _amount);\n    }"
+        },
+        {
+          "startLine": 854,
+          "endLine": 881,
+          "content": "    function _requireCollateralizableAndDecreaseApprovedAmount(\n        address _collateralizableAddress,\n        address _accountAddress,\n        address _tokenAddress,\n        uint256 _amount\n    ) internal {\n        if (_collateralizableAddress == _accountAddress) {\n            return;\n        }\n        if (!collateralizableContracts[_collateralizableAddress])\n            revert ContractNotApprovedByProtocol(_collateralizableAddress);\n\n        uint256 approvedAmount = accountCollateralizableTokenAllowances[_accountAddress][_collateralizableAddress][\n            _tokenAddress\n        ];\n        if (approvedAmount < _amount)\n            revert InsufficientAllowance(\n                _collateralizableAddress,\n                _accountAddress,\n                _tokenAddress,\n                _amount,\n                approvedAmount\n            );\n\n        accountCollateralizableTokenAllowances[_accountAddress][_collateralizableAddress][_tokenAddress] =\n            approvedAmount -\n            _amount;\n    }"
+        },
+        {
+          "startLine": 895,
+          "endLine": 943,
+          "content": "    function _reserveCollateral(\n        address _reservingContract,\n        address _accountAddress,\n        address _tokenAddress,\n        uint256 _reservedCollateral,\n        uint256 _claimableCollateral\n    ) private onlyEnabledCollateralTokens(_tokenAddress) returns (uint96 _reservationId) {\n        if (_claimableCollateral == 0) revert ClaimableAmountZero();\n\n        _requireCollateralizableAndDecreaseApprovedAmount(\n            _reservingContract,\n            _accountAddress,\n            _tokenAddress,\n            _reservedCollateral\n        );\n\n        CollateralBalance storage accountBalanceStorage = accountBalances[_accountAddress][_tokenAddress];\n        uint256 available = accountBalanceStorage.available;\n        if (available < _reservedCollateral) revert InsufficientCollateral(_reservedCollateral, available);\n        // sanity check -- this can never happen.\n        if (_reservedCollateral < _claimableCollateral)\n            revert InsufficientCollateral(_claimableCollateral, _reservedCollateral);\n\n        accountBalanceStorage.available = available - _reservedCollateral;\n        accountBalanceStorage.reserved += _reservedCollateral;\n\n        uint16 withdrawalFee = withdrawalFeeBasisPoints;\n        // NB: Return fields\n        _reservationId = ++collateralReservationNonce;\n\n        collateralReservations[_reservationId] = CollateralReservation(\n            _reservingContract,\n            _accountAddress,\n            _tokenAddress,\n            withdrawalFee,\n            _reservedCollateral,\n            _claimableCollateral\n        );\n\n        emit CollateralReserved(\n            _reservationId,\n            _accountAddress,\n            _reservingContract,\n            _tokenAddress,\n            _reservedCollateral,\n            _claimableCollateral,\n            withdrawalFee\n        );\n    }"
+        },
+        {
+          "startLine": 954,
+          "endLine": 975,
+          "content": "    function _transferCollateral(\n        address _tokenAddress,\n        address _fromAddress,\n        uint256 _amount,\n        address _destinationAddress\n    ) private {\n        if (_amount == 0 || _fromAddress == _destinationAddress) {\n            // NB: 0 amounts should not revert, as transferCollateral may be used by pool contracts to do the reverse of\n            // poolCollateral(...). If those contracts do not check for 0, reverting here may cause them to deadlock.\n            return;\n        }\n\n        CollateralBalance storage fromStorage = accountBalances[_fromAddress][_tokenAddress];\n        uint256 fromAvailable = fromStorage.available;\n        if (_amount > fromAvailable) {\n            revert InsufficientCollateral(_amount, fromAvailable);\n        }\n\n        accountBalances[_destinationAddress][_tokenAddress].available += _amount;\n        fromStorage.available = fromAvailable - _amount;\n\n        emit CollateralTransferred(_fromAddress, _tokenAddress, _destinationAddress, _amount);"
+        },
+        {
+          "startLine": 995,
+          "endLine": 1015,
+          "content": "    function _verifyDepositApprovalSignature(\n        address _accountAddress,\n        address _tokenAddress,\n        uint256 _amount,\n        bytes memory _signature\n    ) internal virtual {\n        bytes32 hash = _hashTypedDataV4(\n            keccak256(\n                abi.encode(\n                    COLLATERALIZABLE_DEPOSIT_APPROVAL_TYPEHASH,\n                    msg.sender,\n                    _tokenAddress,\n                    _amount,\n                    _useNonce(_accountAddress, COLLATERALIZABLE_DEPOSIT_APPROVAL_TYPEHASH)\n                )\n            )\n        );\n        if (!SignatureChecker.isValidSignatureNow(_accountAddress, hash, _signature)) {\n            revert InvalidSignature(_accountAddress);\n        }\n    }"
+        }
+      ]
+    },
+    {
+      "retainedFile": "data/defi-catalog/sources/anvil-collateral-vault-r5.json",
+      "sourcePath": "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol",
+      "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.0.0) (utils/cryptography/SignatureChecker.sol)\n\npragma solidity ^0.8.20;\n\nimport {ECDSA} from \"./ECDSA.sol\";\nimport {IERC1271} from \"../../interfaces/IERC1271.sol\";\n\n/**\n * @dev Signature verification helper that can be used instead of `ECDSA.recover` to seamlessly support both ECDSA\n * signatures from externally owned accounts (EOAs) as well as ERC1271 signatures from smart contract wallets like\n * Argent and Safe Wallet (previously Gnosis Safe).\n */\nlibrary SignatureChecker {\n    /**\n     * @dev Checks if a signature is valid for a given signer and data hash. If the signer is a smart contract, the\n     * signature is validated against that smart contract using ERC1271, otherwise it's validated using `ECDSA.recover`.\n     *\n     * NOTE: Unlike ECDSA signatures, contract signatures are revocable, and the outcome of this function can thus\n     * change through time. It could return true at block N and false at block N+1 (or the opposite).\n     */\n    function isValidSignatureNow(address signer, bytes32 hash, bytes memory signature) internal view returns (bool) {\n        (address recovered, ECDSA.RecoverError error, ) = ECDSA.tryRecover(hash, signature);\n        return\n            (error == ECDSA.RecoverError.NoError && recovered == signer) ||\n            isValidERC1271SignatureNow(signer, hash, signature);\n    }\n\n    /**\n     * @dev Checks if a signature is valid for a given signer and data hash. The signature is validated\n     * against the signer smart contract using ERC1271.\n     *\n     * NOTE: Unlike ECDSA signatures, contract signatures are revocable, and the outcome of this function can thus\n     * change through time. It could return true at block N and false at block N+1 (or the opposite).\n     */\n    function isValidERC1271SignatureNow(\n        address signer,\n        bytes32 hash,\n        bytes memory signature\n    ) internal view returns (bool) {\n        (bool success, bytes memory result) = signer.staticcall(\n            abi.encodeCall(IERC1271.isValidSignature, (hash, signature))\n        );\n        return (success &&\n            result.length >= 32 &&\n            abi.decode(result, (bytes32)) == bytes32(IERC1271.isValidSignature.selector));\n    }\n}\n"
+    }
+  ],
+  "finiteInventory": {
+    "basis": "Every function in the retained exact current implementation fullOriginalAbi; inherited mutable access-control bodies reviewed in the same compiler input. Read-only ABI entries are excluded as no transaction capability. No peer ABI or unobserved upgrade is substituted.",
+    "mutableFunctions": [
+      {
+        "inputs": [
+          {
+            "name": "_tokens",
+            "type": "address[]"
+          },
+          {
+            "name": "_amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "name": "claim",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "_token",
+            "type": "address"
+          },
+          {
+            "name": "_amount",
+            "type": "uint256"
+          },
+          {
+            "name": "_collateralizableDepositApprovalSignature",
+            "type": "bytes"
+          }
+        ],
+        "name": "depositAndStake",
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "_collateral",
+            "type": "address"
+          },
+          {
+            "name": "_epochPeriodSeconds",
+            "type": "uint256"
+          },
+          {
+            "name": "_defaultClaimDestination",
+            "type": "address"
+          },
+          {
+            "name": "_admin",
+            "type": "address"
+          },
+          {
+            "name": "_claimant",
+            "type": "address"
+          },
+          {
+            "name": "_claimRouter",
+            "type": "address"
+          },
+          {
+            "name": "_resetter",
+            "type": "address"
+          }
+        ],
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "_account",
+            "type": "address"
+          },
+          {
+            "name": "_tokens",
+            "type": "address[]"
+          }
+        ],
+        "name": "releaseEligibleTokens",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "callerConfirmation",
+            "type": "address"
+          }
+        ],
+        "name": "renounceRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "_tokens",
+            "type": "address[]"
+          }
+        ],
+        "name": "resetPool",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "revokeRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "_defaultClaimDestinationAccount",
+            "type": "address"
+          }
+        ],
+        "name": "setDefaultClaimDestinationAccount",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "_token",
+            "type": "address"
+          },
+          {
+            "name": "_destinationAccount",
+            "type": "address"
+          }
+        ],
+        "name": "setTokenClaimDestinationAccountOverride",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "_token",
+            "type": "address"
+          },
+          {
+            "name": "_amount",
+            "type": "uint256"
+          },
+          {
+            "name": "_collateralizableApprovalSignature",
+            "type": "bytes"
+          }
+        ],
+        "name": "stake",
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "_pool",
+            "type": "address"
+          },
+          {
+            "name": "_token",
+            "type": "address"
+          },
+          {
+            "name": "_amount",
+            "type": "uint256"
+          },
+          {
+            "name": "_collateralizableApprovalSignature",
+            "type": "bytes"
+          }
+        ],
+        "name": "stakeReleasableTokensFrom",
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "name": "_token",
+            "type": "address"
+          },
+          {
+            "name": "_poolUnits",
+            "type": "uint256"
+          }
+        ],
+        "name": "unstake",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "functionDecisions": [
+      {
+        "signature": "ADMIN_ROLE()",
+        "name": "ADMIN_ROLE",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "ADMIN_ROLE: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "CLAIMANT_ROLE()",
+        "name": "CLAIMANT_ROLE",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "CLAIMANT_ROLE: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "CLAIM_ROUTER_ROLE()",
+        "name": "CLAIM_ROUTER_ROLE",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "CLAIM_ROUTER_ROLE: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "DEFAULT_ADMIN_ROLE()",
+        "name": "DEFAULT_ADMIN_ROLE",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "DEFAULT_ADMIN_ROLE: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "RESETTER_ROLE()",
+        "name": "RESETTER_ROLE",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "RESETTER_ROLE: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "calculateEpochExitBalance(address,uint256)",
+        "name": "calculateEpochExitBalance",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "calculateEpochExitBalance: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "claim(address[],uint256[])",
+        "name": "claim",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "CLAIMANT_ROLE seizes pooled collateral for configured payment claim destinations, not ordinary provider redemption.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/contracts~1TimeBasedCollateralPool.sol/content",
+          "startLine": 567
+        }
+      },
+      {
+        "signature": "collateral()",
+        "name": "collateral",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "collateral: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "defaultClaimDestinationAccount()",
+        "name": "defaultClaimDestinationAccount",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "defaultClaimDestinationAccount: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "depositAndStake(address,uint256,bytes)",
+        "name": "depositAndStake",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "No length guard: always calls fixed Anvil depositFromAccount, which unconditionally hashes/uses a deposit-approval nonce and calls SignatureChecker. An ERC1271 account may accept empty bytes; success may increase collateralizable allowance then pull wallet ERC20. Pool catches InvalidSignature only after attempting this signature-authority path. Empty bytes therefore does not provably disable approval/signature authority.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/contracts~1TimeBasedCollateralPool.sol/content",
+          "startLine": 609
+        }
+      },
+      {
+        "signature": "epochPeriodSeconds()",
+        "name": "epochPeriodSeconds",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "epochPeriodSeconds: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "firstEpochStartTimeSeconds()",
+        "name": "firstEpochStartTimeSeconds",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "firstEpochStartTimeSeconds: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getAccountExitUnitsAndTokens(address,uint256,uint256,bool)",
+        "name": "getAccountExitUnitsAndTokens",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getAccountExitUnitsAndTokens: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getAccountPoolBalance(address,address)",
+        "name": "getAccountPoolBalance",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getAccountPoolBalance: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getAccountPoolUnits(address,address)",
+        "name": "getAccountPoolUnits",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getAccountPoolUnits: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getAccountTokenState(address,address)",
+        "name": "getAccountTokenState",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getAccountTokenState: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getClaimableCollateral(address[])",
+        "name": "getClaimableCollateral",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getClaimableCollateral: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getCurrentEpoch()",
+        "name": "getCurrentEpoch",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getCurrentEpoch: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getEpochEndTimestamp(uint256)",
+        "name": "getEpochEndTimestamp",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getEpochEndTimestamp: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getPoolUnits(address)",
+        "name": "getPoolUnits",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getPoolUnits: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getRoleAdmin(bytes32)",
+        "name": "getRoleAdmin",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getRoleAdmin: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getTokenContractState(address)",
+        "name": "getTokenContractState",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getTokenContractState: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getTokenEpochExitBalance(address,uint256)",
+        "name": "getTokenEpochExitBalance",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getTokenEpochExitBalance: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getTokenResetExitBalance(address,uint256)",
+        "name": "getTokenResetExitBalance",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getTokenResetExitBalance: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getTotalAccountUnitsPendingUnstake(address,address)",
+        "name": "getTotalAccountUnitsPendingUnstake",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getTotalAccountUnitsPendingUnstake: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "getTotalContractUnitsPendingUnstake(address)",
+        "name": "getTotalContractUnitsPendingUnstake",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "getTotalContractUnitsPendingUnstake: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "grantRole(bytes32,address)",
+        "name": "grantRole",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Access-control role authorization.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/@openzeppelin~1contracts~1access~1AccessControl.sol/content",
+          "startLine": 122
+        }
+      },
+      {
+        "signature": "hasRole(bytes32,address)",
+        "name": "hasRole",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "hasRole: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "initialize(address,uint256,address,address,address,address,address)",
+        "name": "initialize",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "One-time privileged deployment/configuration and role assignment.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/contracts~1TimeBasedCollateralPool.sol/content",
+          "startLine": 522
+        }
+      },
+      {
+        "signature": "releaseEligibleTokens(address,address[])",
+        "name": "releaseEligibleTokens",
+        "stateMutability": "nonpayable",
+        "decision": "already-supported",
+        "reason": "Existing permissionless eligible/reset account-ledger release, always crediting that same account in Anvil; no new selector.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/contracts~1TimeBasedCollateralPool.sol/content",
+          "startLine": 637
+        }
+      },
+      {
+        "signature": "renounceRole(bytes32,address)",
+        "name": "renounceRole",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Access-control role relinquishment.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/@openzeppelin~1contracts~1access~1AccessControl.sol/content",
+          "startLine": 157
+        }
+      },
+      {
+        "signature": "resetPool(address[])",
+        "name": "resetPool",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "RESETTER_ROLE pool accounting reset administration.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/contracts~1TimeBasedCollateralPool.sol/content",
+          "startLine": 646
+        }
+      },
+      {
+        "signature": "revokeRole(bytes32,address)",
+        "name": "revokeRole",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "Access-control authorization revocation.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/@openzeppelin~1contracts~1access~1AccessControl.sol/content",
+          "startLine": 137
+        }
+      },
+      {
+        "signature": "setDefaultClaimDestinationAccount(address)",
+        "name": "setDefaultClaimDestinationAccount",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "CLAIM_ROUTER_ROLE payment claim destination administration.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/contracts~1TimeBasedCollateralPool.sol/content",
+          "startLine": 655
+        }
+      },
+      {
+        "signature": "setTokenClaimDestinationAccountOverride(address,address)",
+        "name": "setTokenClaimDestinationAccountOverride",
+        "stateMutability": "nonpayable",
+        "decision": "excluded",
+        "reason": "CLAIM_ROUTER_ROLE token payment destination administration.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/contracts~1TimeBasedCollateralPool.sol/content",
+          "startLine": 667
+        }
+      },
+      {
+        "signature": "stake(address,uint256,bytes)",
+        "name": "stake",
+        "stateMutability": "nonpayable",
+        "decision": "added-scoped",
+        "reason": "Empty arg2 disables the entire allowance-signature helper; fixed eligible-release modifier and _stake execute real caller pool-unit issuance using existing Anvil balance/allowance.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/contracts~1TimeBasedCollateralPool.sol/content",
+          "startLine": 679
+        }
+      },
+      {
+        "signature": "stakeReleasableTokensFrom(address,address,uint256,bytes)",
+        "name": "stakeReleasableTokensFrom",
+        "stateMutability": "nonpayable",
+        "decision": "added-scoped",
+        "reason": "Exact outer-root arg0 disables selected external pool release; empty arg3 disables allowance-signature helper. The modifier and real _stake caller funding/reservation/unit issuance remain.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/contracts~1TimeBasedCollateralPool.sol/content",
+          "startLine": 698
+        }
+      },
+      {
+        "signature": "supportsInterface(bytes4)",
+        "name": "supportsInterface",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "supportsInterface: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "tokenClaimDestinationAccountOverrides(address)",
+        "name": "tokenClaimDestinationAccountOverrides",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "tokenClaimDestinationAccountOverrides: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "tokenResetEpoch(address,uint256)",
+        "name": "tokenResetEpoch",
+        "stateMutability": "view",
+        "decision": "excluded",
+        "reason": "tokenResetEpoch: read-only view function; no transaction capability."
+      },
+      {
+        "signature": "unstake(address,uint256)",
+        "name": "unstake",
+        "stateMutability": "nonpayable",
+        "decision": "already-supported",
+        "reason": "Existing caller pool-unit exit request with epoch/reset processing; no new selector.",
+        "sourceLocation": {
+          "retainedFile": "data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json",
+          "jsonPointer": "/contractSnapshots/0/compilerInput/sources/contracts~1TimeBasedCollateralPool.sol/content",
+          "startLine": 723
+        }
+      }
+    ],
+    "remainingMutableFinancialAdditions": "None beyond the two scoped selectors: unstake/release already supported; mandatory signature/allowance deposit path and claimant-only seizure are excluded. Administration and role changes remain excluded."
+  },
+  "limitations": [
+    "No source was refetched and no runtime identity or implementation getter was newly observed in this review. Retained pool source/identity observations date to 2026-10-24; Anvil source service immutable verifiedAt 2024-09-26T17:44:32Z and retrieval 2026-10-24 are preserved.",
+    "Root shell is unverified/partial manual source-pattern binding, not exact compiled equivalence. Implementation/beacon explorer exact grades and independent Anvil exact_match grades are not promoted to the root.",
+    "No funded execution, broadcast, simulation, live balance, allowance, protocol eligibility, current collateral approval, token state or financial-safety proof.",
+    "Scope admits no selected external pool, nonempty signature, depositAndStake, authority setter, ledger operator, new role or multicall composition. Existing authority remains an on-chain precondition."
+  ],
+  "additions": [
+    {
+      "abi": {
+        "inputs": [
+          {
+            "name": "_token",
+            "type": "address"
+          },
+          {
+            "name": "_amount",
+            "type": "uint256"
+          },
+          {
+            "name": "_collateralizableApprovalSignature",
+            "type": "bytes"
+          }
+        ],
+        "name": "stake",
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "capabilityId": "flexa-capacity-v3:1:0xd57e335457b6f5d09ac69248230005a02f9b60cf:stake-preauthorized",
+      "chainId": 1,
+      "contract": "0xd57e335457b6f5d09ac69248230005a02f9b60cf",
+      "functionName": "stake",
+      "label": "Flexa stake existing authorized Anvil collateral",
+      "operation": "stake",
+      "protocol": "Flexa",
+      "provenance": {
+        "sourceRef": "https://app.flexa.co/pools/0xD57E335457b6f5d09ac69248230005a02F9B60CF | https://etherscan.io/address/0xCc437a7Bb14f07de09B0F4438df007c8F64Cf29f#code | https://sourcify.dev/server/v2/contract/1/0x5d2725fdE4d7Aa3388DA4519ac0449Cc031d675f?fields=all | data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json | data/defi-catalog/sources/anvil-collateral-vault-r5.json",
+        "status": "verified",
+        "verifiedAt": "2026-11-02"
+      },
+      "signature": "stake(address,uint256,bytes)",
+      "status": "active",
+      "type": "contract_call",
+      "executionScope": {
+        "kind": "flexa-preauthorized-stake-v1"
+      },
+      "warnings": [
+        "Static source/ABI capability evidence only, not live authorization, implementation identity, funded execution, solvency, liquidity, successful execution or a complete workflow. Independent grants, policies, pauses, bounded canonical calldata, final checks and zero native value remain mandatory.",
+        "Mandatory flexa-preauthorized-stake-v1 scope requires raw collateralizableApprovalSignature bytes to be exactly empty; no allowance-signature helper, permit, approval, ledger-operator, role, delegation or presign installation is admitted. Only the two exact source-bound selectors at this Ethereum pool are admitted; no implicit multicall composition.",
+        "Funding is the caller\u2019s preexisting available selected-token collateral balance inside Anvil CollateralVault 0x5d2725fde4d7aa3388da4519ac0449cc031d675f, potentially including eligible/reset collateral released first by the fixed pool modifier. Existing caller-to-pool collateralizable token allowance must cover the amount and is decreased, not installed. This path does not pull ERC20 tokens from the wallet or call depositFromAccount.",
+        "Amount is positive raw selected-token units, not pool units. The fixed vault must enable that token and approve the pool as collateralizable; existing balance, allowance, reservation and accounting limits remain on-chain preconditions. Staking pools and reserves caller collateral and credits caller pool-accounting units; the unnamed uint256 return is units issued, which need not equal token amount.",
+        "There is no minimum-issued-unit or deadline parameter. Integer truncation, diluted pool-unit exchange rates, dust, reset accounting and deposit-size/overflow limits may affect issuance or cause reversion. Collateral backs Flexa payments and is exposed to authorized backstop claims and loss, potentially to zero; no principal, reward or fee guarantee.",
+        "Unstaking is a separate epoch-based request, not immediate payout; collateral remains claimable until eligible release. Reset/eligible-release processing can occur before staking. Later release credits the same account inside Anvil; wallet withdrawal is a separate vault operation. Retired Flexa v2, depositAndStake, payment claim, authority setters and pool resets are not admitted.",
+        "Pool shell remains explorer-unverified with partial/manual source-pattern binding, NOT compiled exact equivalence. Retained 2026-10-24 runtime embeds immutable beacon 0x1f00d6f7c18a8edf4f8bb4ead8a898abdd9c9e14; retained beacon getter resolves implementation 0xcc437a7bb14f07de09b0f4438df007c8f64cf29f. Beacon and implementation explorer grades are exact. Anvil CollateralVault is independently exact_match creation/runtime, direct nonproxy. These are dated observations, not live identity guarantees; the beacon owner may upgrade."
+      ]
+    },
+    {
+      "abi": {
+        "inputs": [
+          {
+            "name": "_pool",
+            "type": "address"
+          },
+          {
+            "name": "_token",
+            "type": "address"
+          },
+          {
+            "name": "_amount",
+            "type": "uint256"
+          },
+          {
+            "name": "_collateralizableApprovalSignature",
+            "type": "bytes"
+          }
+        ],
+        "name": "stakeReleasableTokensFrom",
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "capabilityId": "flexa-capacity-v3:1:0xd57e335457b6f5d09ac69248230005a02f9b60cf:stake-releasable-self-preauthorized",
+      "chainId": 1,
+      "contract": "0xd57e335457b6f5d09ac69248230005a02f9b60cf",
+      "functionName": "stakeReleasableTokensFrom",
+      "label": "Flexa stake existing authorized collateral with self-pool binding",
+      "operation": "stake",
+      "protocol": "Flexa",
+      "provenance": {
+        "sourceRef": "https://app.flexa.co/pools/0xD57E335457b6f5d09ac69248230005a02F9B60CF | https://etherscan.io/address/0xCc437a7Bb14f07de09B0F4438df007c8F64Cf29f#code | https://sourcify.dev/server/v2/contract/1/0x5d2725fdE4d7Aa3388DA4519ac0449Cc031d675f?fields=all | data/defi-catalog/sources/flexa-capacity-v3-ethereum-r12.json | data/defi-catalog/sources/anvil-collateral-vault-r5.json",
+        "status": "verified",
+        "verifiedAt": "2026-11-02"
+      },
+      "signature": "stakeReleasableTokensFrom(address,address,uint256,bytes)",
+      "status": "active",
+      "type": "contract_call",
+      "executionScope": {
+        "kind": "flexa-preauthorized-stake-v1"
+      },
+      "warnings": [
+        "Static source/ABI capability evidence only, not live authorization, implementation identity, funded execution, solvency, liquidity, successful execution or a complete workflow. Independent grants, policies, pauses, bounded canonical calldata, final checks and zero native value remain mandatory.",
+        "Mandatory flexa-preauthorized-stake-v1 scope requires raw collateralizableApprovalSignature bytes to be exactly empty; no allowance-signature helper, permit, approval, ledger-operator, role, delegation or presign installation is admitted. Only the two exact source-bound selectors at this Ethereum pool are admitted; no implicit multicall composition.",
+        "The _pool field must equal the exact outer proxy root 0xd57e335457b6f5d09ac69248230005a02f9b60cf, not the implementation or beacon. Under delegatecall address(this) is this root, disabling the entire selected other-pool release call while real _stake still runs. No caller-selected pool target or callback remains.",
+        "Funding is the caller\u2019s preexisting available selected-token collateral balance inside Anvil CollateralVault 0x5d2725fde4d7aa3388da4519ac0449cc031d675f, potentially including eligible/reset collateral released first by the fixed pool modifier. Existing caller-to-pool collateralizable token allowance must cover the amount and is decreased, not installed. This path does not pull ERC20 tokens from the wallet or call depositFromAccount.",
+        "Amount is positive raw selected-token units, not pool units. The fixed vault must enable that token and approve the pool as collateralizable; existing balance, allowance, reservation and accounting limits remain on-chain preconditions. Staking pools and reserves caller collateral and credits caller pool-accounting units; the unnamed uint256 return is units issued, which need not equal token amount.",
+        "There is no minimum-issued-unit or deadline parameter. Integer truncation, diluted pool-unit exchange rates, dust, reset accounting and deposit-size/overflow limits may affect issuance or cause reversion. Collateral backs Flexa payments and is exposed to authorized backstop claims and loss, potentially to zero; no principal, reward or fee guarantee.",
+        "Unstaking is a separate epoch-based request, not immediate payout; collateral remains claimable until eligible release. Reset/eligible-release processing can occur before staking. Later release credits the same account inside Anvil; wallet withdrawal is a separate vault operation. Retired Flexa v2, depositAndStake, payment claim, authority setters and pool resets are not admitted.",
+        "Pool shell remains explorer-unverified with partial/manual source-pattern binding, NOT compiled exact equivalence. Retained 2026-10-24 runtime embeds immutable beacon 0x1f00d6f7c18a8edf4f8bb4ead8a898abdd9c9e14; retained beacon getter resolves implementation 0xcc437a7bb14f07de09b0f4438df007c8f64cf29f. Beacon and implementation explorer grades are exact. Anvil CollateralVault is independently exact_match creation/runtime, direct nonproxy. These are dated observations, not live identity guarantees; the beacon owner may upgrade."
+      ]
+    }
+  ],
+  "existingFunctionUpdates": [
+    {
+      "capabilityId": "flexa-capacity-v3:v1:1:0xd57e335457b6f5d09ac69248230005a02f9b60cf:releaseEligibleTokens",
+      "warnings": [
+        "Static deployment/source/ABI metadata only; not live authorization, persistent runtime attestation, backing, liquidity, financial safety, successful execution or a complete workflow. Independent grants, policies, pauses and canonical calldata/value controls remain mandatory. Zero native value required.",
+        "Maintained Flexa Capacity v3 ordinary unstake/release remain selected. Separately scoped stake and self-pool stakeReleasableTokensFrom admit only empty-signature use of preexisting Anvil balance and collateralizable allowance. No depositAndStake, new allowance approval/signature authority, selected other-pool call, payment claim, role or upgrade authority is admitted; retired v2 remains excluded.",
+        "Pool shell explorer source verification is null/unverified; shown 295-byte runtime embeds immutable beacon 0x1f00d6f7c18a8edf4f8bb4ead8a898abdd9c9e14. Current beacon implementation getter resolves 0xcc437a7bb14f07de09b0f4438df007c8f64cf29f with full exact verified source/ABI. Applicable OpenZeppelin 5.0.1 immutable BeaconProxy wrapper source is preserved with partial/manual runtime binding, not an exact compilation claim; current VisibleBeaconProxy is not substituted. Beacon owner may change implementation.",
+        "unstake uses caller-owned pool units, not raw AMP token amounts; positive units must be available excluding pending exits. It releases already-eligible collateral first and queues remaining units through the end of the next epoch. Official product describes ordinary 12\u201324 hour unlocks, not immediate wallet payout.",
+        "releaseEligibleTokens is permissionless processing of the specified account\u2019s matured/reset financial ledger, always crediting that same account inside the Anvil collateral vault. It does not transfer to caller or an arbitrary recipient and does not itself withdraw vault tokens to a wallet. Non-matured/empty positions can do nothing.",
+        "Collateral remains exposed to authorized payment-backstop claims until released. Exit token amounts are pro-rata from reserved collateral with integer truncation and dust/reset accounting; losses can reduce tokens to zero. No principal/reward/fee guarantee, full migration workflow, active inventory, or ability to bypass existing pool/vault eligibility is asserted."
+      ]
+    },
+    {
+      "capabilityId": "flexa-capacity-v3:v1:1:0xd57e335457b6f5d09ac69248230005a02f9b60cf:unstake",
+      "warnings": [
+        "Static deployment/source/ABI metadata only; not live authorization, persistent runtime attestation, backing, liquidity, financial safety, successful execution or a complete workflow. Independent grants, policies, pauses and canonical calldata/value controls remain mandatory. Zero native value required.",
+        "Maintained Flexa Capacity v3 ordinary unstake/release remain selected. Separately scoped stake and self-pool stakeReleasableTokensFrom admit only empty-signature use of preexisting Anvil balance and collateralizable allowance. No depositAndStake, new allowance approval/signature authority, selected other-pool call, payment claim, role or upgrade authority is admitted; retired v2 remains excluded.",
+        "Pool shell explorer source verification is null/unverified; shown 295-byte runtime embeds immutable beacon 0x1f00d6f7c18a8edf4f8bb4ead8a898abdd9c9e14. Current beacon implementation getter resolves 0xcc437a7bb14f07de09b0f4438df007c8f64cf29f with full exact verified source/ABI. Applicable OpenZeppelin 5.0.1 immutable BeaconProxy wrapper source is preserved with partial/manual runtime binding, not an exact compilation claim; current VisibleBeaconProxy is not substituted. Beacon owner may change implementation.",
+        "unstake uses caller-owned pool units, not raw AMP token amounts; positive units must be available excluding pending exits. It releases already-eligible collateral first and queues remaining units through the end of the next epoch. Official product describes ordinary 12\u201324 hour unlocks, not immediate wallet payout.",
+        "releaseEligibleTokens is permissionless processing of the specified account\u2019s matured/reset financial ledger, always crediting that same account inside the Anvil collateral vault. It does not transfer to caller or an arbitrary recipient and does not itself withdraw vault tokens to a wallet. Non-matured/empty positions can do nothing.",
+        "Collateral remains exposed to authorized payment-backstop claims until released. Exit token amounts are pro-rata from reserved collateral with integer truncation and dust/reset accounting; losses can reduce tokens to zero. No principal/reward/fee guarantee, full migration workflow, active inventory, or ability to bypass existing pool/vault eligibility is asserted."
+      ]
+    }
+  ]
+}

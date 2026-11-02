@@ -29,6 +29,11 @@ provider or financial-safety responsibilities.
   It excludes all supplied taker/fee callback data and property validators
   before authorizing buys, sells or matching; fixed ERC1155 receiver hooks
   and ordinary token/native recipient behavior remain possible.
+- `umami.ts` binds two exact payable request ABIs to zero chosen callback
+  addresses; configured hooks and asynchronous settlement are not disabled.
+- `flexa.ts` binds empty approval-signature staking to the reviewed proxy and,
+  for the cross-pool-shaped selector, its exact self address. It consumes
+  existing Anvil collateral/allowance and does not install new permission.
 
 Finite self-delegatecall wrappers bind same-chain/same-target active children
 by capability ID, ABI hash and, where applicable, execution-scope hash.
