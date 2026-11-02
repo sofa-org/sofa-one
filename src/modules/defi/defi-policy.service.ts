@@ -25,6 +25,7 @@ import { validateMerklClaim, validateMerklClaimBinding } from './execution/merkl
 import { validateZeroExNftBinding, validateZeroExNftSettlement } from './execution/zero-ex-nft';
 import { validateUmamiRequest, validateUmamiRequestBinding } from './execution/umami';
 import { validateFlexaStake, validateFlexaStakeBinding } from './execution/flexa';
+import { validateVeloraOrderBinding, validateVeloraOrderSettlement } from './execution/velora';
 
 type UniswapPlanState = { targets: Set<string>; operations: number };
 
@@ -285,6 +286,7 @@ export class DefiPolicyService {
       validateZeroExNftBinding(rootFn);
       validateUmamiRequestBinding(rootFn);
       validateFlexaStakeBinding(rootFn);
+      validateVeloraOrderBinding(rootFn);
     } catch { this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn); }
     const uniswapKind = uniswapIdentityKind(rootFn);
     if (isFiniteMulticallScope(scope)) {
@@ -413,6 +415,13 @@ export class DefiPolicyService {
         if (scope.kind === 'umami-zero-request-callback-v1') validateUmamiRequest(root.data);
         else validateFlexaStake(root.data);
       } catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
+      if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      return [rootNode];
+    }
+    if (scope.kind === 'velora-empty-permit-settlement-v1') {
+      this.assertNativeValue(root, rootFn, context);
+      try { validateVeloraOrderSettlement(root.data); }
+      catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
       if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
       return [rootNode];
     }

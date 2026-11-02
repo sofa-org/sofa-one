@@ -95728,6 +95728,246 @@
           "address": "0xe92b586627cca7a83dc919cc7127196d70f55a06",
           "functions": [
             {
+              "capabilityId": "velora:empty-permit-settlement-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:batchfillorderwithtarget",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xe92b586627cca7a83dc919cc7127196d70f55a06",
+              "functionName": "batchFillOrderWithTarget",
+              "signature": "batchFillOrderWithTarget(((uint256,uint128,address,address,address,address,uint256,uint256),bytes,uint256,bytes,bytes)[],address)",
+              "abi": {
+                "name": "batchFillOrderWithTarget",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "orderInfos",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "order",
+                        "type": "tuple",
+                        "components": [
+                          {
+                            "name": "nonceAndMeta",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "expiry",
+                            "type": "uint128",
+                            "internalType": "uint128"
+                          },
+                          {
+                            "name": "makerAsset",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "takerAsset",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "maker",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "taker",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "makerAmount",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "takerAmount",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          }
+                        ],
+                        "internalType": "struct AugustusRFQ.Order"
+                      },
+                      {
+                        "name": "signature",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      },
+                      {
+                        "name": "takerTokenFillAmount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "permitTakerAsset",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      },
+                      {
+                        "name": "permitMakerAsset",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      }
+                    ],
+                    "internalType": "struct AugustusRFQ.OrderInfo[]"
+                  },
+                  {
+                    "name": "target",
+                    "type": "address",
+                    "internalType": "address"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://raw.githubusercontent.com/VeloraDEX/paraswap-dex-lib/a36949e4d7fcc47c39083ca61622e48cb5be0e6b/src/abi/paraswap-limit-orders/AugustusRFQ.abi.json | https://sourcify.dev/server/v2/contract/1/0xe92b586627cca7a83dc919cc7127196d70f55a06?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-11-01"
+              },
+              "label": "velora batchFillOrderWithTarget",
+              "description": "Typed order settlement under existing allowances with every maker/taker permit byte string constrained to exact empty bytes.",
+              "protocol": "velora",
+              "operation": "swap",
+              "warnings": [
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
+              ],
+              "executionScope": {
+                "kind": "velora-empty-permit-settlement-v1"
+              }
+            },
+            {
+              "capabilityId": "velora:empty-permit-settlement-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:batchfillorderwithtargetnft",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xe92b586627cca7a83dc919cc7127196d70f55a06",
+              "functionName": "batchFillOrderWithTargetNFT",
+              "signature": "batchFillOrderWithTargetNFT(((uint256,uint128,uint256,uint256,uint256,uint256,address,address,uint256,uint256),bytes,uint256,bytes,bytes)[],address)",
+              "abi": {
+                "name": "batchFillOrderWithTargetNFT",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "orderInfos",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "order",
+                        "type": "tuple",
+                        "components": [
+                          {
+                            "name": "nonceAndMeta",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "expiry",
+                            "type": "uint128",
+                            "internalType": "uint128"
+                          },
+                          {
+                            "name": "makerAsset",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "makerAssetId",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "takerAsset",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "takerAssetId",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "maker",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "taker",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "makerAmount",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "takerAmount",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          }
+                        ],
+                        "internalType": "struct AugustusRFQ.OrderNFT"
+                      },
+                      {
+                        "name": "signature",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      },
+                      {
+                        "name": "takerTokenFillAmount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "permitTakerAsset",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      },
+                      {
+                        "name": "permitMakerAsset",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      }
+                    ],
+                    "internalType": "struct AugustusRFQ.OrderNFTInfo[]"
+                  },
+                  {
+                    "name": "target",
+                    "type": "address",
+                    "internalType": "address"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://raw.githubusercontent.com/VeloraDEX/paraswap-dex-lib/a36949e4d7fcc47c39083ca61622e48cb5be0e6b/src/abi/paraswap-limit-orders/AugustusRFQ.abi.json | https://sourcify.dev/server/v2/contract/1/0xe92b586627cca7a83dc919cc7127196d70f55a06?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-11-01"
+              },
+              "label": "velora batchFillOrderWithTargetNFT",
+              "description": "Typed order settlement under existing allowances with every maker/taker permit byte string constrained to exact empty bytes.",
+              "protocol": "velora",
+              "operation": "swap",
+              "warnings": [
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
+              ],
+              "executionScope": {
+                "kind": "velora-empty-permit-settlement-v1"
+              }
+            },
+            {
               "abi": {
                 "inputs": [
                   {
@@ -95758,7 +95998,9 @@
               "signature": "cancelOrder(bytes32)",
               "status": "active",
               "type": "contract_call",
-              "warnings": []
+              "warnings": [
+                "Caller-scoped cancellation remains unchanged. Additional settlement admission is limited to six exact-entrypoint empty-permit scopes; actual permits, approvals and arbitrary batch execution remain excluded."
+              ]
             },
             {
               "abi": {
@@ -95791,7 +96033,9 @@
               "signature": "cancelOrders(bytes32[])",
               "status": "active",
               "type": "contract_call",
-              "warnings": []
+              "warnings": [
+                "Caller-scoped cancellation remains unchanged. Additional settlement admission is limited to six exact-entrypoint empty-permit scopes; actual permits, approvals and arbitrary batch execution remain excluded."
+              ]
             },
             {
               "abi": {
@@ -95871,98 +96115,9 @@
               "signature": "fillOrder((uint256,uint128,address,address,address,address,uint256,uint256),bytes)",
               "status": "active",
               "type": "contract_call",
-              "warnings": []
-            },
-            {
-              "abi": {
-                "inputs": [
-                  {
-                    "components": [
-                      {
-                        "internalType": "uint256",
-                        "name": "nonceAndMeta",
-                        "type": "uint256"
-                      },
-                      {
-                        "internalType": "uint128",
-                        "name": "expiry",
-                        "type": "uint128"
-                      },
-                      {
-                        "internalType": "address",
-                        "name": "makerAsset",
-                        "type": "address"
-                      },
-                      {
-                        "internalType": "address",
-                        "name": "takerAsset",
-                        "type": "address"
-                      },
-                      {
-                        "internalType": "address",
-                        "name": "maker",
-                        "type": "address"
-                      },
-                      {
-                        "internalType": "address",
-                        "name": "taker",
-                        "type": "address"
-                      },
-                      {
-                        "internalType": "uint256",
-                        "name": "makerAmount",
-                        "type": "uint256"
-                      },
-                      {
-                        "internalType": "uint256",
-                        "name": "takerAmount",
-                        "type": "uint256"
-                      }
-                    ],
-                    "internalType": "struct AugustusRFQ.Order",
-                    "name": "order",
-                    "type": "tuple"
-                  },
-                  {
-                    "internalType": "bytes",
-                    "name": "signature",
-                    "type": "bytes"
-                  },
-                  {
-                    "internalType": "uint256",
-                    "name": "takerTokenFillAmount",
-                    "type": "uint256"
-                  }
-                ],
-                "name": "partialFillOrder",
-                "outputs": [
-                  {
-                    "internalType": "uint256",
-                    "name": "makerTokenFilledAmount",
-                    "type": "uint256"
-                  }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "function"
-              },
-              "abiHash": "0x4d605872a233659eacd516b21dc96c52a24652a177f9c03c6823f205355fd5a5",
-              "capabilityId": "velora:augustus-rfq-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:partial-fill-order",
-              "chainId": 1,
-              "contract": "0xe92b586627cca7a83dc919cc7127196d70f55a06",
-              "description": "velora partialFillOrder admitted from exact source snapshot and ABI binding.",
-              "functionName": "partialFillOrder",
-              "label": "partialFillOrder",
-              "operation": "partial-fill-order",
-              "protocol": "velora",
-              "provenance": {
-                "sourceRef": "https://raw.githubusercontent.com/VeloraDEX/paraswap-dex-lib/a36949e4d7fcc47c39083ca61622e48cb5be0e6b/src/abi/paraswap-limit-orders/AugustusRFQ.abi.json",
-                "status": "verified",
-                "verifiedAt": "2026-10-05"
-              },
-              "signature": "partialFillOrder((uint256,uint128,address,address,address,address,uint256,uint256),bytes,uint256)",
-              "status": "active",
-              "type": "contract_call",
-              "warnings": []
+              "warnings": [
+                "Static source inventory only, not live identity, profitability or successful execution attestation. Existing allowances, maker signature checks including ERC1271 static checks, token execution and protocol fill restrictions remain. Additional settlement admission is limited to six exact-entrypoint empty-permit scopes; actual permits, approvals and arbitrary batch execution remain excluded. Target is a payout recipient, not an executor."
+              ]
             },
             {
               "capabilityId": "velora:interface-completion-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:fill-order-n-f-t-48d0449d91",
@@ -96052,10 +96207,11 @@
               "protocol": "velora",
               "operation": "swap",
               "warnings": [
-                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, backing, liquidity, financial safety, successful execution or complete workflow assurance. Independent exact-function grants, pauses, canonical calldata/value controls and protocol checks remain mandatory.",
-                "Non-permit individual order settlement only. A supplied maker order signature is verified; no new wallet signature production or token/NFT approval capability is granted. target is the receiver of maker assets, never an arbitrary calldata target. Taker assets debit msg.sender under existing allowance; maker assets debit maker under its existing allowance.",
-                "NFT order asset uint256 fields use high bits as fixed type tag (ERC20=0, ERC1155=1, ERC721=2) and low 160 bits as token address; ERC721 amount must equal one. ERC721/ERC1155 standard recipient callbacks can occur; no user-supplied callback payload is passed. Existing token/NFT approvals are prerequisites, not added grants.",
-                "Expiry, taker restriction, remaining-order fill, nonce cancellation, maker signature, amount ratios and rounding remain protocol checks. Partial fill uses floor maker amount and rejects zero. Full/partial fills send to target or msg.sender according to function. Permit-bearing individual and batch methods stay excluded; no batch-delegatecall blanket admission is made."
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
               ]
             },
             {
@@ -96141,10 +96297,11 @@
               "protocol": "velora",
               "operation": "swap",
               "warnings": [
-                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, backing, liquidity, financial safety, successful execution or complete workflow assurance. Independent exact-function grants, pauses, canonical calldata/value controls and protocol checks remain mandatory.",
-                "Non-permit individual order settlement only. A supplied maker order signature is verified; no new wallet signature production or token/NFT approval capability is granted. target is the receiver of maker assets, never an arbitrary calldata target. Taker assets debit msg.sender under existing allowance; maker assets debit maker under its existing allowance.",
-                "NFT order asset uint256 fields use high bits as fixed type tag (ERC20=0, ERC1155=1, ERC721=2) and low 160 bits as token address; ERC721 amount must equal one. ERC721/ERC1155 standard recipient callbacks can occur; no user-supplied callback payload is passed. Existing token/NFT approvals are prerequisites, not added grants.",
-                "Expiry, taker restriction, remaining-order fill, nonce cancellation, maker signature, amount ratios and rounding remain protocol checks. Partial fill uses floor maker amount and rejects zero. Full/partial fills send to target or msg.sender according to function. Permit-bearing individual and batch methods stay excluded; no batch-delegatecall blanket admission is made."
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
               ]
             },
             {
@@ -96240,10 +96397,104 @@
               "protocol": "velora",
               "operation": "swap",
               "warnings": [
-                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, backing, liquidity, financial safety, successful execution or complete workflow assurance. Independent exact-function grants, pauses, canonical calldata/value controls and protocol checks remain mandatory.",
-                "Non-permit individual order settlement only. A supplied maker order signature is verified; no new wallet signature production or token/NFT approval capability is granted. target is the receiver of maker assets, never an arbitrary calldata target. Taker assets debit msg.sender under existing allowance; maker assets debit maker under its existing allowance.",
-                "NFT order asset uint256 fields use high bits as fixed type tag (ERC20=0, ERC1155=1, ERC721=2) and low 160 bits as token address; ERC721 amount must equal one. ERC721/ERC1155 standard recipient callbacks can occur; no user-supplied callback payload is passed. Existing token/NFT approvals are prerequisites, not added grants.",
-                "Expiry, taker restriction, remaining-order fill, nonce cancellation, maker signature, amount ratios and rounding remain protocol checks. Partial fill uses floor maker amount and rejects zero. Full/partial fills send to target or msg.sender according to function. Permit-bearing individual and batch methods stay excluded; no batch-delegatecall blanket admission is made."
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
+              ]
+            },
+            {
+              "abi": {
+                "inputs": [
+                  {
+                    "components": [
+                      {
+                        "internalType": "uint256",
+                        "name": "nonceAndMeta",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "uint128",
+                        "name": "expiry",
+                        "type": "uint128"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "makerAsset",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "takerAsset",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "makerAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "takerAmount",
+                        "type": "uint256"
+                      }
+                    ],
+                    "internalType": "struct AugustusRFQ.Order",
+                    "name": "order",
+                    "type": "tuple"
+                  },
+                  {
+                    "internalType": "bytes",
+                    "name": "signature",
+                    "type": "bytes"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "takerTokenFillAmount",
+                    "type": "uint256"
+                  }
+                ],
+                "name": "partialFillOrder",
+                "outputs": [
+                  {
+                    "internalType": "uint256",
+                    "name": "makerTokenFilledAmount",
+                    "type": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+              },
+              "abiHash": "0x4d605872a233659eacd516b21dc96c52a24652a177f9c03c6823f205355fd5a5",
+              "capabilityId": "velora:augustus-rfq-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:partial-fill-order",
+              "chainId": 1,
+              "contract": "0xe92b586627cca7a83dc919cc7127196d70f55a06",
+              "description": "velora partialFillOrder admitted from exact source snapshot and ABI binding.",
+              "functionName": "partialFillOrder",
+              "label": "partialFillOrder",
+              "operation": "partial-fill-order",
+              "protocol": "velora",
+              "provenance": {
+                "sourceRef": "https://raw.githubusercontent.com/VeloraDEX/paraswap-dex-lib/a36949e4d7fcc47c39083ca61622e48cb5be0e6b/src/abi/paraswap-limit-orders/AugustusRFQ.abi.json",
+                "status": "verified",
+                "verifiedAt": "2026-10-05"
+              },
+              "signature": "partialFillOrder((uint256,uint128,address,address,address,address,uint256,uint256),bytes,uint256)",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Static source inventory only, not live identity, profitability or successful execution attestation. Existing allowances, maker signature checks including ERC1271 static checks, token execution and protocol fill restrictions remain. Additional settlement admission is limited to six exact-entrypoint empty-permit scopes; actual permits, approvals and arbitrary batch execution remain excluded. Target is a payout recipient, not an executor; partial fills round down maker output and reject zero."
               ]
             },
             {
@@ -96345,10 +96596,11 @@
               "protocol": "velora",
               "operation": "swap",
               "warnings": [
-                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, backing, liquidity, financial safety, successful execution or complete workflow assurance. Independent exact-function grants, pauses, canonical calldata/value controls and protocol checks remain mandatory.",
-                "Non-permit individual order settlement only. A supplied maker order signature is verified; no new wallet signature production or token/NFT approval capability is granted. target is the receiver of maker assets, never an arbitrary calldata target. Taker assets debit msg.sender under existing allowance; maker assets debit maker under its existing allowance.",
-                "NFT order asset uint256 fields use high bits as fixed type tag (ERC20=0, ERC1155=1, ERC721=2) and low 160 bits as token address; ERC721 amount must equal one. ERC721/ERC1155 standard recipient callbacks can occur; no user-supplied callback payload is passed. Existing token/NFT approvals are prerequisites, not added grants.",
-                "Expiry, taker restriction, remaining-order fill, nonce cancellation, maker signature, amount ratios and rounding remain protocol checks. Partial fill uses floor maker amount and rejects zero. Full/partial fills send to target or msg.sender according to function. Permit-bearing individual and batch methods stay excluded; no batch-delegatecall blanket admission is made."
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
               ]
             },
             {
@@ -96445,10 +96697,11 @@
               "protocol": "velora",
               "operation": "swap",
               "warnings": [
-                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, backing, liquidity, financial safety, successful execution or complete workflow assurance. Independent exact-function grants, pauses, canonical calldata/value controls and protocol checks remain mandatory.",
-                "Non-permit individual order settlement only. A supplied maker order signature is verified; no new wallet signature production or token/NFT approval capability is granted. target is the receiver of maker assets, never an arbitrary calldata target. Taker assets debit msg.sender under existing allowance; maker assets debit maker under its existing allowance.",
-                "NFT order asset uint256 fields use high bits as fixed type tag (ERC20=0, ERC1155=1, ERC721=2) and low 160 bits as token address; ERC721 amount must equal one. ERC721/ERC1155 standard recipient callbacks can occur; no user-supplied callback payload is passed. Existing token/NFT approvals are prerequisites, not added grants.",
-                "Expiry, taker restriction, remaining-order fill, nonce cancellation, maker signature, amount ratios and rounding remain protocol checks. Partial fill uses floor maker amount and rejects zero. Full/partial fills send to target or msg.sender according to function. Permit-bearing individual and batch methods stay excluded; no batch-delegatecall blanket admission is made."
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
               ]
             },
             {
@@ -96555,11 +96808,490 @@
               "protocol": "velora",
               "operation": "swap",
               "warnings": [
-                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, backing, liquidity, financial safety, successful execution or complete workflow assurance. Independent exact-function grants, pauses, canonical calldata/value controls and protocol checks remain mandatory.",
-                "Non-permit individual order settlement only. A supplied maker order signature is verified; no new wallet signature production or token/NFT approval capability is granted. target is the receiver of maker assets, never an arbitrary calldata target. Taker assets debit msg.sender under existing allowance; maker assets debit maker under its existing allowance.",
-                "NFT order asset uint256 fields use high bits as fixed type tag (ERC20=0, ERC1155=1, ERC721=2) and low 160 bits as token address; ERC721 amount must equal one. ERC721/ERC1155 standard recipient callbacks can occur; no user-supplied callback payload is passed. Existing token/NFT approvals are prerequisites, not added grants.",
-                "Expiry, taker restriction, remaining-order fill, nonce cancellation, maker signature, amount ratios and rounding remain protocol checks. Partial fill uses floor maker amount and rejects zero. Full/partial fills send to target or msg.sender according to function. Permit-bearing individual and batch methods stay excluded; no batch-delegatecall blanket admission is made."
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
               ]
+            },
+            {
+              "capabilityId": "velora:empty-permit-settlement-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:partialfillorderwithtargetpermit",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xe92b586627cca7a83dc919cc7127196d70f55a06",
+              "functionName": "partialFillOrderWithTargetPermit",
+              "signature": "partialFillOrderWithTargetPermit((uint256,uint128,address,address,address,address,uint256,uint256),bytes,uint256,address,bytes,bytes)",
+              "abi": {
+                "name": "partialFillOrderWithTargetPermit",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "order",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "nonceAndMeta",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint128",
+                        "internalType": "uint128"
+                      },
+                      {
+                        "name": "makerAsset",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "takerAsset",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "makerAmount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "takerAmount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "internalType": "struct AugustusRFQ.Order"
+                  },
+                  {
+                    "name": "signature",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "takerTokenFillAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "target",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "permitTakerAsset",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "permitMakerAsset",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "makerTokenFilledAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://raw.githubusercontent.com/VeloraDEX/paraswap-dex-lib/a36949e4d7fcc47c39083ca61622e48cb5be0e6b/src/abi/paraswap-limit-orders/AugustusRFQ.abi.json | https://sourcify.dev/server/v2/contract/1/0xe92b586627cca7a83dc919cc7127196d70f55a06?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-11-01"
+              },
+              "label": "velora partialFillOrderWithTargetPermit",
+              "description": "Typed order settlement under existing allowances with every maker/taker permit byte string constrained to exact empty bytes.",
+              "protocol": "velora",
+              "operation": "swap",
+              "warnings": [
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
+              ],
+              "executionScope": {
+                "kind": "velora-empty-permit-settlement-v1"
+              }
+            },
+            {
+              "capabilityId": "velora:empty-permit-settlement-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:partialfillorderwithtargetpermitnft",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xe92b586627cca7a83dc919cc7127196d70f55a06",
+              "functionName": "partialFillOrderWithTargetPermitNFT",
+              "signature": "partialFillOrderWithTargetPermitNFT((uint256,uint128,uint256,uint256,uint256,uint256,address,address,uint256,uint256),bytes,uint256,address,bytes,bytes)",
+              "abi": {
+                "name": "partialFillOrderWithTargetPermitNFT",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "order",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "nonceAndMeta",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint128",
+                        "internalType": "uint128"
+                      },
+                      {
+                        "name": "makerAsset",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "makerAssetId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "takerAsset",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "takerAssetId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "makerAmount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "takerAmount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "internalType": "struct AugustusRFQ.OrderNFT"
+                  },
+                  {
+                    "name": "signature",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "takerTokenFillAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "target",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "permitTakerAsset",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "permitMakerAsset",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "makerTokenFilledAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://raw.githubusercontent.com/VeloraDEX/paraswap-dex-lib/a36949e4d7fcc47c39083ca61622e48cb5be0e6b/src/abi/paraswap-limit-orders/AugustusRFQ.abi.json | https://sourcify.dev/server/v2/contract/1/0xe92b586627cca7a83dc919cc7127196d70f55a06?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-11-01"
+              },
+              "label": "velora partialFillOrderWithTargetPermitNFT",
+              "description": "Typed order settlement under existing allowances with every maker/taker permit byte string constrained to exact empty bytes.",
+              "protocol": "velora",
+              "operation": "swap",
+              "warnings": [
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
+              ],
+              "executionScope": {
+                "kind": "velora-empty-permit-settlement-v1"
+              }
+            },
+            {
+              "capabilityId": "velora:empty-permit-settlement-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:trybatchfillordermakeramount",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xe92b586627cca7a83dc919cc7127196d70f55a06",
+              "functionName": "tryBatchFillOrderMakerAmount",
+              "signature": "tryBatchFillOrderMakerAmount(((uint256,uint128,address,address,address,address,uint256,uint256),bytes,uint256,bytes,bytes)[],uint256,address)",
+              "abi": {
+                "name": "tryBatchFillOrderMakerAmount",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "orderInfos",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "order",
+                        "type": "tuple",
+                        "components": [
+                          {
+                            "name": "nonceAndMeta",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "expiry",
+                            "type": "uint128",
+                            "internalType": "uint128"
+                          },
+                          {
+                            "name": "makerAsset",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "takerAsset",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "maker",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "taker",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "makerAmount",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "takerAmount",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          }
+                        ],
+                        "internalType": "struct AugustusRFQ.Order"
+                      },
+                      {
+                        "name": "signature",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      },
+                      {
+                        "name": "takerTokenFillAmount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "permitTakerAsset",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      },
+                      {
+                        "name": "permitMakerAsset",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      }
+                    ],
+                    "internalType": "struct AugustusRFQ.OrderInfo[]"
+                  },
+                  {
+                    "name": "makerFillAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "target",
+                    "type": "address",
+                    "internalType": "address"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://raw.githubusercontent.com/VeloraDEX/paraswap-dex-lib/a36949e4d7fcc47c39083ca61622e48cb5be0e6b/src/abi/paraswap-limit-orders/AugustusRFQ.abi.json | https://sourcify.dev/server/v2/contract/1/0xe92b586627cca7a83dc919cc7127196d70f55a06?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-11-01"
+              },
+              "label": "velora tryBatchFillOrderMakerAmount",
+              "description": "Typed order settlement under existing allowances with every maker/taker permit byte string constrained to exact empty bytes.",
+              "protocol": "velora",
+              "operation": "swap",
+              "warnings": [
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
+              ],
+              "executionScope": {
+                "kind": "velora-empty-permit-settlement-v1"
+              }
+            },
+            {
+              "capabilityId": "velora:empty-permit-settlement-v1:1:0xe92b586627cca7a83dc919cc7127196d70f55a06:trybatchfillordertakeramount",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0xe92b586627cca7a83dc919cc7127196d70f55a06",
+              "functionName": "tryBatchFillOrderTakerAmount",
+              "signature": "tryBatchFillOrderTakerAmount(((uint256,uint128,address,address,address,address,uint256,uint256),bytes,uint256,bytes,bytes)[],uint256,address)",
+              "abi": {
+                "name": "tryBatchFillOrderTakerAmount",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "orderInfos",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "order",
+                        "type": "tuple",
+                        "components": [
+                          {
+                            "name": "nonceAndMeta",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "expiry",
+                            "type": "uint128",
+                            "internalType": "uint128"
+                          },
+                          {
+                            "name": "makerAsset",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "takerAsset",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "maker",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "taker",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "makerAmount",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "takerAmount",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          }
+                        ],
+                        "internalType": "struct AugustusRFQ.Order"
+                      },
+                      {
+                        "name": "signature",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      },
+                      {
+                        "name": "takerTokenFillAmount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "permitTakerAsset",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      },
+                      {
+                        "name": "permitMakerAsset",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      }
+                    ],
+                    "internalType": "struct AugustusRFQ.OrderInfo[]"
+                  },
+                  {
+                    "name": "takerFillAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "target",
+                    "type": "address",
+                    "internalType": "address"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://raw.githubusercontent.com/VeloraDEX/paraswap-dex-lib/a36949e4d7fcc47c39083ca61622e48cb5be0e6b/src/abi/paraswap-limit-orders/AugustusRFQ.abi.json | https://sourcify.dev/server/v2/contract/1/0xe92b586627cca7a83dc919cc7127196d70f55a06?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-11-01"
+              },
+              "label": "velora tryBatchFillOrderTakerAmount",
+              "description": "Typed order settlement under existing allowances with every maker/taker permit byte string constrained to exact empty bytes.",
+              "protocol": "velora",
+              "operation": "swap",
+              "warnings": [
+                "Static exact-deployment source/ABI inventory only; not live runtime identity, funding, liquidity, profitability, eligibility or successful execution attestation. Independent exact-function grants, pauses and canonical zero-native-value calldata controls remain mandatory.",
+                "Both taker and maker permit bytes must be exactly empty in every item, including caught, skipped and excess items. Empty bytes cause no external permit call; no approval, presignature or delegation is installed. Maker signature bytes remain ordinary settlement proof, including existing ERC1271 static checks.",
+                "Caller pays maker using existing allowance; maker pays target using existing allowance. target is a payout recipient, not an executor. Atomic batches revert all; try batches catch individual failures but require aggregate fill and self-delegatecall only a fixed typed settlement selector. No arbitrary executor or multicall vocabulary is admitted.",
+                "Maker-mode batches use ceil conversion before individual floor rounding. Scalar aggregate fill does not guarantee token homogeneity. Expiry zero means no expiry. Taker restriction, remaining fill, cancellation, signatures, amounts, rounding and token behavior remain protocol checks.",
+                "NFT packed types select fixed ERC20, ERC1155 with empty receiver data, or ERC721 safe transfer methods. Standard receiver hooks and token execution remain; no supplied arbitrary receiver payload is enabled."
+              ],
+              "executionScope": {
+                "kind": "velora-empty-permit-settlement-v1"
+              }
             }
           ],
           "status": "active"

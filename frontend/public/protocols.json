@@ -53465,6 +53465,158 @@
         "abi": [
           {
             "type": "function",
+            "name": "batchFillOrderWithTarget",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "orderInfos",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "order",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "nonceAndMeta",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint128"
+                      },
+                      {
+                        "name": "makerAsset",
+                        "type": "address"
+                      },
+                      {
+                        "name": "takerAsset",
+                        "type": "address"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "makerAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "takerAmount",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "signature",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "takerTokenFillAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "permitTakerAsset",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "permitMakerAsset",
+                    "type": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "target",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "batchFillOrderWithTargetNFT",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "orderInfos",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "order",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "nonceAndMeta",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint128"
+                      },
+                      {
+                        "name": "makerAsset",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "makerAssetId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "takerAsset",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "takerAssetId",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "makerAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "takerAmount",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "signature",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "takerTokenFillAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "permitTakerAsset",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "permitMakerAsset",
+                    "type": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "target",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "cancelOrder",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -53970,6 +54122,308 @@
                 "type": "uint256"
               }
             ]
+          },
+          {
+            "type": "function",
+            "name": "partialFillOrderWithTargetPermit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "order",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "nonceAndMeta",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "makerAsset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "takerAsset",
+                    "type": "address"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "makerAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "takerAmount",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "signature",
+                "type": "bytes"
+              },
+              {
+                "name": "takerTokenFillAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "target",
+                "type": "address"
+              },
+              {
+                "name": "permitTakerAsset",
+                "type": "bytes"
+              },
+              {
+                "name": "permitMakerAsset",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "makerTokenFilledAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "partialFillOrderWithTargetPermitNFT",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "order",
+                "type": "tuple",
+                "components": [
+                  {
+                    "name": "nonceAndMeta",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint128"
+                  },
+                  {
+                    "name": "makerAsset",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "makerAssetId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "takerAsset",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "takerAssetId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "maker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "taker",
+                    "type": "address"
+                  },
+                  {
+                    "name": "makerAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "takerAmount",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "signature",
+                "type": "bytes"
+              },
+              {
+                "name": "takerTokenFillAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "target",
+                "type": "address"
+              },
+              {
+                "name": "permitTakerAsset",
+                "type": "bytes"
+              },
+              {
+                "name": "permitMakerAsset",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "makerTokenFilledAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "tryBatchFillOrderMakerAmount",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "orderInfos",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "order",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "nonceAndMeta",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint128"
+                      },
+                      {
+                        "name": "makerAsset",
+                        "type": "address"
+                      },
+                      {
+                        "name": "takerAsset",
+                        "type": "address"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "makerAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "takerAmount",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "signature",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "takerTokenFillAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "permitTakerAsset",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "permitMakerAsset",
+                    "type": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "makerFillAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "target",
+                "type": "address"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "tryBatchFillOrderTakerAmount",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "orderInfos",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "name": "order",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "nonceAndMeta",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "expiry",
+                        "type": "uint128"
+                      },
+                      {
+                        "name": "makerAsset",
+                        "type": "address"
+                      },
+                      {
+                        "name": "takerAsset",
+                        "type": "address"
+                      },
+                      {
+                        "name": "maker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "taker",
+                        "type": "address"
+                      },
+                      {
+                        "name": "makerAmount",
+                        "type": "uint256"
+                      },
+                      {
+                        "name": "takerAmount",
+                        "type": "uint256"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "signature",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "takerTokenFillAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "permitTakerAsset",
+                    "type": "bytes"
+                  },
+                  {
+                    "name": "permitMakerAsset",
+                    "type": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "takerFillAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "target",
+                "type": "address"
+              }
+            ],
+            "outputs": []
           }
         ]
       },

@@ -188,6 +188,9 @@ export function executionScopeHash(scope: DefiExecutionScope): `0x${string}` {
   } else if (scope.kind === 'umami-zero-request-callback-v1' || scope.kind === 'flexa-preauthorized-stake-v1') {
     if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid financial request/stake execution scope');
     normalized = { kind: scope.kind };
+  } else if (scope.kind === 'velora-empty-permit-settlement-v1') {
+    if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid Velora execution scope');
+    normalized = { kind: scope.kind };
   } else if (scope.kind === 'uniswap-universal-router-2.1.2-v1' || scope.kind === 'uniswap-v4-position-manager-v1' || scope.kind === 'uniswap-v4-position-manager-primitive-v1') {
     if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid Uniswap execution scope');
     normalized = { kind: scope.kind };

@@ -34,6 +34,9 @@ provider or financial-safety responsibilities.
 - `flexa.ts` binds empty approval-signature staking to the reviewed proxy and,
   for the cross-pool-shaped selector, its exact self address. It consumes
   existing Anvil collateral/allowance and does not install new permission.
+- `velora.ts` binds six exact RFQ settlement ABIs to empty maker/taker permit
+  bytes in every supplied item, retaining maker proof and fixed financial
+  partial-fill/batch behavior. Targets are recipients, not arbitrary executors.
 
 Finite self-delegatecall wrappers bind same-chain/same-target active children
 by capability ID, ABI hash and, where applicable, execution-scope hash.
