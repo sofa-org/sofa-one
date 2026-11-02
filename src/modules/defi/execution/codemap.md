@@ -37,6 +37,12 @@ provider or financial-safety responsibilities.
 - `velora.ts` binds six exact RFQ settlement ABIs to empty maker/taker permit
   bytes in every supplied item, retaining maker proof and fixed financial
   partial-fill/batch behavior. Targets are recipients, not arbitrary executors.
+- `revert-lending.ts` binds three exact empty-Permit2-data lending/repayment
+  overloads to existing USDC allowance, without reserving their ordinary
+  overload names or widening any existing multicall child graph.
+- `napier.ts` binds both collectors to per-input zero permit deadlines,
+  skipping authority calls entirely. Factory registration, prior collector
+  approval, accrued balances and configured reward/token behavior remain.
 
 Finite self-delegatecall wrappers bind same-chain/same-target active children
 by capability ID, ABI hash and, where applicable, execution-scope hash.

@@ -642,7 +642,7 @@
                 "Static deployment-bound source and ABI inventory only; not a fresh runtime identity, configuration, balance, liquidity, funding, successful-execution or financial-safety guarantee. Exact grants, canonical calldata/value checks, pauses and all independent execution controls remain mandatory.",
                 "This is Napier V2 own direct Ethereum TwoCryptoZap, not Napier V1, a Curve direct-pool admission, a curator wrapper or a TokiHook chain4663 admission. Current deployment docs explicitly list this exact Ethereum Zap, and current Curve-AMM docs continue supporting Two-Crypto-NG markets. Current app observation showed only wsNET on unsupported Robinhood4663; this inventory asserts no current Ethereum market, balance, liquidity or successful execution.",
                 "Deployment-bound constructor and immutable evidence bind factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b, connector registry 0x5f44286b6aa9d7aaec73abcf627e32b0e048fc9a, TwoCrypto deployer0x129d398a6116a13cc0d1ae8833b0490c2d53cf37 and aggregation router0x000000371a8d1064aaafc4dcad3a5ec91f8858db. Current docs list different general registry/TwoCrypto-deployer addresses; those are not substituted into this older still-listed Zap configuration. Live dependency implementation/configuration is not attested.",
-                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, permits and public callbacks are excluded.",
+                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, actual permits and public callbacks are excluded. The two separately granted collector entrypoints are admitted only under mandatory per-input zero-deadline scope, which skips the entire permitCollector authority call; existing collector approval and accrued caller balances remain prerequisites, and no implicit multicall composition is added.",
                 "Underlying means each PT target yield-bearing token shares, not universally USDC/ETH. Token input/output may equal that target (direct transfer), otherwise conversion goes through registry-selected or default-created VaultConnector for the PT underlying/asset. Registry authority can replace connectors; factory/PT/resolver/fee/reward modules, token restrictions, pauses and liquidity remain dependencies. No fixed asset, share-decimal, KYC eligibility, fee or current module configuration is asserted.",
                 "Caller must approve this Zap for ERC20 input, PT/YT and LP tokens as applicable. supply issues both PT and YT to receiver; combine pulls equal PT and YT from caller and burns both; redeem burns caller PT through an allowance to Zap only after PT maturity. Accrued yield/rewards are not automatically claimed by combine/redeem. Issuance requires PT not paused/not expired, verifier/deposit-cap success. Maturity is an ordinary condition of this generic router, not an admission of retired or expired fixed deployments.",
                 "Supply/combine/redeem carry a final minimum but no deadline; liquidity/swaps carry deadline and final slippage minimums. Issuance/redemption fees round upward and shares/principal conversions round down in included PrincipalToken implementation source; actual selected PT implementation and fee modules remain authoritative. Fee/performance/post-settlement charges and market price can reduce payout. One-token LP withdrawal trades PT before maturity, redeems PT after maturity, and can depend on immediate vault withdrawal cash/liquidity; no asynchronous claim orchestration is admitted.",
@@ -731,12 +731,187 @@
                 "Static deployment-bound source and ABI inventory only; not a fresh runtime identity, configuration, balance, liquidity, funding, successful-execution or financial-safety guarantee. Exact grants, canonical calldata/value checks, pauses and all independent execution controls remain mandatory.",
                 "This is Napier V2 own direct Ethereum TwoCryptoZap, not Napier V1, a Curve direct-pool admission, a curator wrapper or a TokiHook chain4663 admission. Current deployment docs explicitly list this exact Ethereum Zap, and current Curve-AMM docs continue supporting Two-Crypto-NG markets. Current app observation showed only wsNET on unsupported Robinhood4663; this inventory asserts no current Ethereum market, balance, liquidity or successful execution.",
                 "Deployment-bound constructor and immutable evidence bind factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b, connector registry 0x5f44286b6aa9d7aaec73abcf627e32b0e048fc9a, TwoCrypto deployer0x129d398a6116a13cc0d1ae8833b0490c2d53cf37 and aggregation router0x000000371a8d1064aaafc4dcad3a5ec91f8858db. Current docs list different general registry/TwoCrypto-deployer addresses; those are not substituted into this older still-listed Zap configuration. Live dependency implementation/configuration is not attested.",
-                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, permits and public callbacks are excluded.",
+                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, actual permits and public callbacks are excluded. The two separately granted collector entrypoints are admitted only under mandatory per-input zero-deadline scope, which skips the entire permitCollector authority call; existing collector approval and accrued caller balances remain prerequisites, and no implicit multicall composition is added.",
                 "Underlying means each PT target yield-bearing token shares, not universally USDC/ETH. Token input/output may equal that target (direct transfer), otherwise conversion goes through registry-selected or default-created VaultConnector for the PT underlying/asset. Registry authority can replace connectors; factory/PT/resolver/fee/reward modules, token restrictions, pauses and liquidity remain dependencies. No fixed asset, share-decimal, KYC eligibility, fee or current module configuration is asserted.",
                 "Caller must approve this Zap for ERC20 input, PT/YT and LP tokens as applicable. supply issues both PT and YT to receiver; combine pulls equal PT and YT from caller and burns both; redeem burns caller PT through an allowance to Zap only after PT maturity. Accrued yield/rewards are not automatically claimed by combine/redeem. Issuance requires PT not paused/not expired, verifier/deposit-cap success. Maturity is an ordinary condition of this generic router, not an admission of retired or expired fixed deployments.",
                 "Supply/combine/redeem carry a final minimum but no deadline; liquidity/swaps carry deadline and final slippage minimums. Issuance/redemption fees round upward and shares/principal conversions round down in included PrincipalToken implementation source; actual selected PT implementation and fee modules remain authoritative. Fee/performance/post-settlement charges and market price can reduce payout. One-token LP withdrawal trades PT before maturity, redeems PT after maturity, and can depend on immediate vault withdrawal cash/liquidity; no asynchronous claim orchestration is admitted.",
                 "Payable calls can spend native ETH via a connector; direct-target input uses ERC20 shares. Nonpayable calls require zero value. Ordinary payable paths do not run the aggregator _pullToken exact-value guard and do not refund excess ETH: send only the needed native amount for a supported native connector and zero value for ERC20 inputs; unrelated value can be stranded. No multicall or automatic value management is added.",
                 "YT swaps accept numerical off-chain approximation values, not arbitrary bytes. Source generates callback bytes from the factory-checked pool, underlying, initiating caller and numerical amounts; calls PrincipalToken supply/combine with that fixed data. HookValidation uses a one-use transient context boolean rather than explicit callback msg.sender equality. Stale approximation can revert; YT sale spends at most requested YT and may spend less. Exact callback entrypoints remain excluded and this is not whole-workflow/security assurance."
+              ]
+            },
+            {
+              "abi": {
+                "name": "collectRewardsWithPermit",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "inputs",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "principalToken",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "permit",
+                        "type": "tuple",
+                        "components": [
+                          {
+                            "name": "deadline",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "v",
+                            "type": "uint8",
+                            "internalType": "uint8"
+                          },
+                          {
+                            "name": "r",
+                            "type": "bytes32",
+                            "internalType": "bytes32"
+                          },
+                          {
+                            "name": "s",
+                            "type": "bytes32",
+                            "internalType": "bytes32"
+                          }
+                        ],
+                        "internalType": "struct TwoCryptoZap.PermitCollectInput"
+                      }
+                    ],
+                    "internalType": "struct TwoCryptoZap.CollectInput[]"
+                  },
+                  {
+                    "name": "rewardTokens",
+                    "type": "address[][]",
+                    "internalType": "address[][]"
+                  },
+                  {
+                    "name": "receiver",
+                    "type": "address",
+                    "internalType": "address"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "capabilityId": "napier-v2:v1:1:0x0000001d41857cb60f6be0c9fe74b9e69e1e5234:collect-rewards-with-zero-permit-deadlines",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0x0000001d41857cb60f6be0c9fe74b9e69e1e5234",
+              "functionName": "collectRewardsWithPermit",
+              "signature": "collectRewardsWithPermit((address,(uint256,uint8,bytes32,bytes32))[],address[][],address)",
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x0000001d41857cb60F6BE0C9Fe74B9e69E1e5234?fields=all | retained2026-10-23 https://docs.napier.finance/build/developer-guide/deployment.md",
+                "status": "verified",
+                "verifiedAt": "2026-11-02"
+              },
+              "protocol": "Napier",
+              "operation": "claim",
+              "label": "Napier collect accrued rewards with zero permit deadlines",
+              "executionScope": {
+                "kind": "napier-zero-deadline-collect-v1"
+              },
+              "warnings": [
+                "Static exact-root source and ABI observation only; no fresh RPC/runtime identity, current configuration, funded execution, accrued balances, active Ethereum registered market, successful claim, complete workflow or financial-safety assurance. Independent grants, pauses, canonical calldata/value checks and final acceptance remain mandatory.",
+                "Only Ethereum1 direct TwoCryptoZap 0x0000001d41857cb60f6be0c9fe74b9e69e1e5234 is admitted. Independent 2026-11-02 Sourcify retrieval reports creationMatch/runtimeMatch exact_match/exact_match and nonproxy. These are source-service match grades, not live dependency/runtime identity attestations. Official exact-root listing and protocol lifecycle observations retained from 2026-10-23 are not redated; the current documentation read redirected to a GitBook shell without deployment content.",
+                "Mandatory napier-zero-deadline-collect-v1 requires every inputs[i].permit.deadline (argument0 tuple component1 subcomponent0) to equal zero. _permitCollector returns before the external permitCollector call. v/r/s remain arbitrary well-typed unused fields; no catch behavior, signature invalidity or failed-permit assumption is relied on. No permit, collector approval, allowance, role, delegation or presign is installed.",
+                "Every principalToken is checked against immutable factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b.s_principalTokens before the fixed collect or collectRewards call. These are registered financial targets, not arbitrary executable bytes, callbacks or target/payload pairs. Registration is not financial-safety, eligibility, current PT implementation, module configuration, accrued-balance, funding or successful-transfer proof.",
+                "Both calls consume preexisting owner-to-Zap collector approval, where owner is the initiating msg.sender. Contextual PrincipalToken source checks ownerOrApprovedCollector; no permission setup is included. On-chain selected PT behavior, modules, fees, settlement state, token behavior and availability remain dependencies. Neither caller eligibility nor financial-array suitability is simulated locally.",
+                "collectWithPermit calls fixed PT.collect(receiver,msg.sender), which in contextual source updates yield accounting, clears the owner accrued yield and reward records, delegates to the configured reward proxy for refresh when present, and transfers target yield-bearing-token shares plus accrued rewards. Reward proxy/module execution is not disabled by zero permit deadlines.",
+                "collectRewardsWithPermit calls fixed PT.collectRewards(rewardTokens[i],receiver,msg.sender). Contextual source clears and transfers existing accrued rewards without the collect reward-proxy refresh, and rejects the PT target underlying token as a reward token. Caller-selected reward token addresses can have standard token behavior; this does not authorize arbitrary calldata execution. No payout, token safety or positive claim amount is guaranteed.",
+                "Nonpayable entrypoints require zero native value; receiver is caller-selected and there is no caller slippage minimum or transaction-expiry deadline. Permit deadline zero is an authority bypass sentinel, not transaction expiry. Outputs are empty in both exact Zap ABIs; underlying PT return values are ignored by the Zap.",
+                "The shared bounded canonical decoder checks every tuple input and nested reward array, including mismatched, extra and unused items, before viem decoding: at most64 items per array,65536 parameter bytes,depth8 and1024 visited nodes. It rejects alternate encodings. It does not require nonempty arrays, check parallel financial-array lengths, simulate source eligibility or turn any no-op into evidence of financial qualification.",
+                "Full compilation source tree retained for helper/control-flow inspection. Included Factory, PrincipalToken, module and token sources are contextual dependencies, not separately admitted deployments or independently verified current configured PT/module implementations. Existing factory/PT dependency grades and constructor qualifications are unchanged; there is no implicit multicall child composition, arbitrary executor or unsupported-chain addition.",
+                "Manually collects selected accrued rewards for the caller through each factory-registered PT, without collect-style reward-proxy refresh in the contextual source. Selected reward tokens must be financially appropriate on chain; target underlying token is protected."
+              ]
+            },
+            {
+              "abi": {
+                "name": "collectWithPermit",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "inputs",
+                    "type": "tuple[]",
+                    "components": [
+                      {
+                        "name": "principalToken",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "permit",
+                        "type": "tuple",
+                        "components": [
+                          {
+                            "name": "deadline",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "v",
+                            "type": "uint8",
+                            "internalType": "uint8"
+                          },
+                          {
+                            "name": "r",
+                            "type": "bytes32",
+                            "internalType": "bytes32"
+                          },
+                          {
+                            "name": "s",
+                            "type": "bytes32",
+                            "internalType": "bytes32"
+                          }
+                        ],
+                        "internalType": "struct TwoCryptoZap.PermitCollectInput"
+                      }
+                    ],
+                    "internalType": "struct TwoCryptoZap.CollectInput[]"
+                  },
+                  {
+                    "name": "receiver",
+                    "type": "address",
+                    "internalType": "address"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "capabilityId": "napier-v2:v1:1:0x0000001d41857cb60f6be0c9fe74b9e69e1e5234:collect-with-zero-permit-deadlines",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0x0000001d41857cb60f6be0c9fe74b9e69e1e5234",
+              "functionName": "collectWithPermit",
+              "signature": "collectWithPermit((address,(uint256,uint8,bytes32,bytes32))[],address)",
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x0000001d41857cb60F6BE0C9Fe74B9e69E1e5234?fields=all | retained2026-10-23 https://docs.napier.finance/build/developer-guide/deployment.md",
+                "status": "verified",
+                "verifiedAt": "2026-11-02"
+              },
+              "protocol": "Napier",
+              "operation": "claim",
+              "label": "Napier collect yield and rewards with zero permit deadlines",
+              "executionScope": {
+                "kind": "napier-zero-deadline-collect-v1"
+              },
+              "warnings": [
+                "Static exact-root source and ABI observation only; no fresh RPC/runtime identity, current configuration, funded execution, accrued balances, active Ethereum registered market, successful claim, complete workflow or financial-safety assurance. Independent grants, pauses, canonical calldata/value checks and final acceptance remain mandatory.",
+                "Only Ethereum1 direct TwoCryptoZap 0x0000001d41857cb60f6be0c9fe74b9e69e1e5234 is admitted. Independent 2026-11-02 Sourcify retrieval reports creationMatch/runtimeMatch exact_match/exact_match and nonproxy. These are source-service match grades, not live dependency/runtime identity attestations. Official exact-root listing and protocol lifecycle observations retained from 2026-10-23 are not redated; the current documentation read redirected to a GitBook shell without deployment content.",
+                "Mandatory napier-zero-deadline-collect-v1 requires every inputs[i].permit.deadline (argument0 tuple component1 subcomponent0) to equal zero. _permitCollector returns before the external permitCollector call. v/r/s remain arbitrary well-typed unused fields; no catch behavior, signature invalidity or failed-permit assumption is relied on. No permit, collector approval, allowance, role, delegation or presign is installed.",
+                "Every principalToken is checked against immutable factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b.s_principalTokens before the fixed collect or collectRewards call. These are registered financial targets, not arbitrary executable bytes, callbacks or target/payload pairs. Registration is not financial-safety, eligibility, current PT implementation, module configuration, accrued-balance, funding or successful-transfer proof.",
+                "Both calls consume preexisting owner-to-Zap collector approval, where owner is the initiating msg.sender. Contextual PrincipalToken source checks ownerOrApprovedCollector; no permission setup is included. On-chain selected PT behavior, modules, fees, settlement state, token behavior and availability remain dependencies. Neither caller eligibility nor financial-array suitability is simulated locally.",
+                "collectWithPermit calls fixed PT.collect(receiver,msg.sender), which in contextual source updates yield accounting, clears the owner accrued yield and reward records, delegates to the configured reward proxy for refresh when present, and transfers target yield-bearing-token shares plus accrued rewards. Reward proxy/module execution is not disabled by zero permit deadlines.",
+                "collectRewardsWithPermit calls fixed PT.collectRewards(rewardTokens[i],receiver,msg.sender). Contextual source clears and transfers existing accrued rewards without the collect reward-proxy refresh, and rejects the PT target underlying token as a reward token. Caller-selected reward token addresses can have standard token behavior; this does not authorize arbitrary calldata execution. No payout, token safety or positive claim amount is guaranteed.",
+                "Nonpayable entrypoints require zero native value; receiver is caller-selected and there is no caller slippage minimum or transaction-expiry deadline. Permit deadline zero is an authority bypass sentinel, not transaction expiry. Outputs are empty in both exact Zap ABIs; underlying PT return values are ignored by the Zap.",
+                "The shared bounded canonical decoder checks every tuple input and nested reward array, including mismatched, extra and unused items, before viem decoding: at most64 items per array,65536 parameter bytes,depth8 and1024 visited nodes. It rejects alternate encodings. It does not require nonempty arrays, check parallel financial-array lengths, simulate source eligibility or turn any no-op into evidence of financial qualification.",
+                "Full compilation source tree retained for helper/control-flow inspection. Included Factory, PrincipalToken, module and token sources are contextual dependencies, not separately admitted deployments or independently verified current configured PT/module implementations. Existing factory/PT dependency grades and constructor qualifications are unchanged; there is no implicit multicall child composition, arbitrary executor or unsupported-chain addition.",
+                "Collects caller accrued yield-bearing target shares and rewards through each factory-registered PT; configured reward-module refresh remains enabled. Existing collector approval is consumed, not installed."
               ]
             },
             {
@@ -798,7 +973,7 @@
                 "Static deployment-bound source and ABI inventory only; not a fresh runtime identity, configuration, balance, liquidity, funding, successful-execution or financial-safety guarantee. Exact grants, canonical calldata/value checks, pauses and all independent execution controls remain mandatory.",
                 "This is Napier V2 own direct Ethereum TwoCryptoZap, not Napier V1, a Curve direct-pool admission, a curator wrapper or a TokiHook chain4663 admission. Current deployment docs explicitly list this exact Ethereum Zap, and current Curve-AMM docs continue supporting Two-Crypto-NG markets. Current app observation showed only wsNET on unsupported Robinhood4663; this inventory asserts no current Ethereum market, balance, liquidity or successful execution.",
                 "Deployment-bound constructor and immutable evidence bind factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b, connector registry 0x5f44286b6aa9d7aaec73abcf627e32b0e048fc9a, TwoCrypto deployer0x129d398a6116a13cc0d1ae8833b0490c2d53cf37 and aggregation router0x000000371a8d1064aaafc4dcad3a5ec91f8858db. Current docs list different general registry/TwoCrypto-deployer addresses; those are not substituted into this older still-listed Zap configuration. Live dependency implementation/configuration is not attested.",
-                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, permits and public callbacks are excluded.",
+                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, actual permits and public callbacks are excluded. The two separately granted collector entrypoints are admitted only under mandatory per-input zero-deadline scope, which skips the entire permitCollector authority call; existing collector approval and accrued caller balances remain prerequisites, and no implicit multicall composition is added.",
                 "Underlying means each PT target yield-bearing token shares, not universally USDC/ETH. Token input/output may equal that target (direct transfer), otherwise conversion goes through registry-selected or default-created VaultConnector for the PT underlying/asset. Registry authority can replace connectors; factory/PT/resolver/fee/reward modules, token restrictions, pauses and liquidity remain dependencies. No fixed asset, share-decimal, KYC eligibility, fee or current module configuration is asserted.",
                 "Caller must approve this Zap for ERC20 input, PT/YT and LP tokens as applicable. supply issues both PT and YT to receiver; combine pulls equal PT and YT from caller and burns both; redeem burns caller PT through an allowance to Zap only after PT maturity. Accrued yield/rewards are not automatically claimed by combine/redeem. Issuance requires PT not paused/not expired, verifier/deposit-cap success. Maturity is an ordinary condition of this generic router, not an admission of retired or expired fixed deployments.",
                 "Supply/combine/redeem carry a final minimum but no deadline; liquidity/swaps carry deadline and final slippage minimums. Issuance/redemption fees round upward and shares/principal conversions round down in included PrincipalToken implementation source; actual selected PT implementation and fee modules remain authoritative. Fee/performance/post-settlement charges and market price can reduce payout. One-token LP withdrawal trades PT before maturity, redeems PT after maturity, and can depend on immediate vault withdrawal cash/liquidity; no asynchronous claim orchestration is admitted.",
@@ -865,7 +1040,7 @@
                 "Static deployment-bound source and ABI inventory only; not a fresh runtime identity, configuration, balance, liquidity, funding, successful-execution or financial-safety guarantee. Exact grants, canonical calldata/value checks, pauses and all independent execution controls remain mandatory.",
                 "This is Napier V2 own direct Ethereum TwoCryptoZap, not Napier V1, a Curve direct-pool admission, a curator wrapper or a TokiHook chain4663 admission. Current deployment docs explicitly list this exact Ethereum Zap, and current Curve-AMM docs continue supporting Two-Crypto-NG markets. Current app observation showed only wsNET on unsupported Robinhood4663; this inventory asserts no current Ethereum market, balance, liquidity or successful execution.",
                 "Deployment-bound constructor and immutable evidence bind factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b, connector registry 0x5f44286b6aa9d7aaec73abcf627e32b0e048fc9a, TwoCrypto deployer0x129d398a6116a13cc0d1ae8833b0490c2d53cf37 and aggregation router0x000000371a8d1064aaafc4dcad3a5ec91f8858db. Current docs list different general registry/TwoCrypto-deployer addresses; those are not substituted into this older still-listed Zap configuration. Live dependency implementation/configuration is not attested.",
-                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, permits and public callbacks are excluded.",
+                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, actual permits and public callbacks are excluded. The two separately granted collector entrypoints are admitted only under mandatory per-input zero-deadline scope, which skips the entire permitCollector authority call; existing collector approval and accrued caller balances remain prerequisites, and no implicit multicall composition is added.",
                 "Underlying means each PT target yield-bearing token shares, not universally USDC/ETH. Token input/output may equal that target (direct transfer), otherwise conversion goes through registry-selected or default-created VaultConnector for the PT underlying/asset. Registry authority can replace connectors; factory/PT/resolver/fee/reward modules, token restrictions, pauses and liquidity remain dependencies. No fixed asset, share-decimal, KYC eligibility, fee or current module configuration is asserted.",
                 "Caller must approve this Zap for ERC20 input, PT/YT and LP tokens as applicable. supply issues both PT and YT to receiver; combine pulls equal PT and YT from caller and burns both; redeem burns caller PT through an allowance to Zap only after PT maturity. Accrued yield/rewards are not automatically claimed by combine/redeem. Issuance requires PT not paused/not expired, verifier/deposit-cap success. Maturity is an ordinary condition of this generic router, not an admission of retired or expired fixed deployments.",
                 "Supply/combine/redeem carry a final minimum but no deadline; liquidity/swaps carry deadline and final slippage minimums. Issuance/redemption fees round upward and shares/principal conversions round down in included PrincipalToken implementation source; actual selected PT implementation and fee modules remain authoritative. Fee/performance/post-settlement charges and market price can reduce payout. One-token LP withdrawal trades PT before maturity, redeems PT after maturity, and can depend on immediate vault withdrawal cash/liquidity; no asynchronous claim orchestration is admitted.",
@@ -949,7 +1124,7 @@
                 "Static deployment-bound source and ABI inventory only; not a fresh runtime identity, configuration, balance, liquidity, funding, successful-execution or financial-safety guarantee. Exact grants, canonical calldata/value checks, pauses and all independent execution controls remain mandatory.",
                 "This is Napier V2 own direct Ethereum TwoCryptoZap, not Napier V1, a Curve direct-pool admission, a curator wrapper or a TokiHook chain4663 admission. Current deployment docs explicitly list this exact Ethereum Zap, and current Curve-AMM docs continue supporting Two-Crypto-NG markets. Current app observation showed only wsNET on unsupported Robinhood4663; this inventory asserts no current Ethereum market, balance, liquidity or successful execution.",
                 "Deployment-bound constructor and immutable evidence bind factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b, connector registry 0x5f44286b6aa9d7aaec73abcf627e32b0e048fc9a, TwoCrypto deployer0x129d398a6116a13cc0d1ae8833b0490c2d53cf37 and aggregation router0x000000371a8d1064aaafc4dcad3a5ec91f8858db. Current docs list different general registry/TwoCrypto-deployer addresses; those are not substituted into this older still-listed Zap configuration. Live dependency implementation/configuration is not attested.",
-                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, permits and public callbacks are excluded.",
+                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, actual permits and public callbacks are excluded. The two separately granted collector entrypoints are admitted only under mandatory per-input zero-deadline scope, which skips the entire permitCollector authority call; existing collector approval and accrued caller balances remain prerequisites, and no implicit multicall composition is added.",
                 "Underlying means each PT target yield-bearing token shares, not universally USDC/ETH. Token input/output may equal that target (direct transfer), otherwise conversion goes through registry-selected or default-created VaultConnector for the PT underlying/asset. Registry authority can replace connectors; factory/PT/resolver/fee/reward modules, token restrictions, pauses and liquidity remain dependencies. No fixed asset, share-decimal, KYC eligibility, fee or current module configuration is asserted.",
                 "Caller must approve this Zap for ERC20 input, PT/YT and LP tokens as applicable. supply issues both PT and YT to receiver; combine pulls equal PT and YT from caller and burns both; redeem burns caller PT through an allowance to Zap only after PT maturity. Accrued yield/rewards are not automatically claimed by combine/redeem. Issuance requires PT not paused/not expired, verifier/deposit-cap success. Maturity is an ordinary condition of this generic router, not an admission of retired or expired fixed deployments.",
                 "Supply/combine/redeem carry a final minimum but no deadline; liquidity/swaps carry deadline and final slippage minimums. Issuance/redemption fees round upward and shares/principal conversions round down in included PrincipalToken implementation source; actual selected PT implementation and fee modules remain authoritative. Fee/performance/post-settlement charges and market price can reduce payout. One-token LP withdrawal trades PT before maturity, redeems PT after maturity, and can depend on immediate vault withdrawal cash/liquidity; no asynchronous claim orchestration is admitted.",
@@ -1028,7 +1203,7 @@
                 "Static deployment-bound source and ABI inventory only; not a fresh runtime identity, configuration, balance, liquidity, funding, successful-execution or financial-safety guarantee. Exact grants, canonical calldata/value checks, pauses and all independent execution controls remain mandatory.",
                 "This is Napier V2 own direct Ethereum TwoCryptoZap, not Napier V1, a Curve direct-pool admission, a curator wrapper or a TokiHook chain4663 admission. Current deployment docs explicitly list this exact Ethereum Zap, and current Curve-AMM docs continue supporting Two-Crypto-NG markets. Current app observation showed only wsNET on unsupported Robinhood4663; this inventory asserts no current Ethereum market, balance, liquidity or successful execution.",
                 "Deployment-bound constructor and immutable evidence bind factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b, connector registry 0x5f44286b6aa9d7aaec73abcf627e32b0e048fc9a, TwoCrypto deployer0x129d398a6116a13cc0d1ae8833b0490c2d53cf37 and aggregation router0x000000371a8d1064aaafc4dcad3a5ec91f8858db. Current docs list different general registry/TwoCrypto-deployer addresses; those are not substituted into this older still-listed Zap configuration. Live dependency implementation/configuration is not attested.",
-                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, permits and public callbacks are excluded.",
+                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, actual permits and public callbacks are excluded. The two separately granted collector entrypoints are admitted only under mandatory per-input zero-deadline scope, which skips the entire permitCollector authority call; existing collector approval and accrued caller balances remain prerequisites, and no implicit multicall composition is added.",
                 "Underlying means each PT target yield-bearing token shares, not universally USDC/ETH. Token input/output may equal that target (direct transfer), otherwise conversion goes through registry-selected or default-created VaultConnector for the PT underlying/asset. Registry authority can replace connectors; factory/PT/resolver/fee/reward modules, token restrictions, pauses and liquidity remain dependencies. No fixed asset, share-decimal, KYC eligibility, fee or current module configuration is asserted.",
                 "Caller must approve this Zap for ERC20 input, PT/YT and LP tokens as applicable. supply issues both PT and YT to receiver; combine pulls equal PT and YT from caller and burns both; redeem burns caller PT through an allowance to Zap only after PT maturity. Accrued yield/rewards are not automatically claimed by combine/redeem. Issuance requires PT not paused/not expired, verifier/deposit-cap success. Maturity is an ordinary condition of this generic router, not an admission of retired or expired fixed deployments.",
                 "Supply/combine/redeem carry a final minimum but no deadline; liquidity/swaps carry deadline and final slippage minimums. Issuance/redemption fees round upward and shares/principal conversions round down in included PrincipalToken implementation source; actual selected PT implementation and fee modules remain authoritative. Fee/performance/post-settlement charges and market price can reduce payout. One-token LP withdrawal trades PT before maturity, redeems PT after maturity, and can depend on immediate vault withdrawal cash/liquidity; no asynchronous claim orchestration is admitted.",
@@ -1095,7 +1270,7 @@
                 "Static deployment-bound source and ABI inventory only; not a fresh runtime identity, configuration, balance, liquidity, funding, successful-execution or financial-safety guarantee. Exact grants, canonical calldata/value checks, pauses and all independent execution controls remain mandatory.",
                 "This is Napier V2 own direct Ethereum TwoCryptoZap, not Napier V1, a Curve direct-pool admission, a curator wrapper or a TokiHook chain4663 admission. Current deployment docs explicitly list this exact Ethereum Zap, and current Curve-AMM docs continue supporting Two-Crypto-NG markets. Current app observation showed only wsNET on unsupported Robinhood4663; this inventory asserts no current Ethereum market, balance, liquidity or successful execution.",
                 "Deployment-bound constructor and immutable evidence bind factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b, connector registry 0x5f44286b6aa9d7aaec73abcf627e32b0e048fc9a, TwoCrypto deployer0x129d398a6116a13cc0d1ae8833b0490c2d53cf37 and aggregation router0x000000371a8d1064aaafc4dcad3a5ec91f8858db. Current docs list different general registry/TwoCrypto-deployer addresses; those are not substituted into this older still-listed Zap configuration. Live dependency implementation/configuration is not attested.",
-                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, permits and public callbacks are excluded.",
+                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, actual permits and public callbacks are excluded. The two separately granted collector entrypoints are admitted only under mandatory per-input zero-deadline scope, which skips the entire permitCollector authority call; existing collector approval and accrued caller balances remain prerequisites, and no implicit multicall composition is added.",
                 "Underlying means each PT target yield-bearing token shares, not universally USDC/ETH. Token input/output may equal that target (direct transfer), otherwise conversion goes through registry-selected or default-created VaultConnector for the PT underlying/asset. Registry authority can replace connectors; factory/PT/resolver/fee/reward modules, token restrictions, pauses and liquidity remain dependencies. No fixed asset, share-decimal, KYC eligibility, fee or current module configuration is asserted.",
                 "Caller must approve this Zap for ERC20 input, PT/YT and LP tokens as applicable. supply issues both PT and YT to receiver; combine pulls equal PT and YT from caller and burns both; redeem burns caller PT through an allowance to Zap only after PT maturity. Accrued yield/rewards are not automatically claimed by combine/redeem. Issuance requires PT not paused/not expired, verifier/deposit-cap success. Maturity is an ordinary condition of this generic router, not an admission of retired or expired fixed deployments.",
                 "Supply/combine/redeem carry a final minimum but no deadline; liquidity/swaps carry deadline and final slippage minimums. Issuance/redemption fees round upward and shares/principal conversions round down in included PrincipalToken implementation source; actual selected PT implementation and fee modules remain authoritative. Fee/performance/post-settlement charges and market price can reduce payout. One-token LP withdrawal trades PT before maturity, redeems PT after maturity, and can depend on immediate vault withdrawal cash/liquidity; no asynchronous claim orchestration is admitted.",
@@ -1174,7 +1349,7 @@
                 "Static deployment-bound source and ABI inventory only; not a fresh runtime identity, configuration, balance, liquidity, funding, successful-execution or financial-safety guarantee. Exact grants, canonical calldata/value checks, pauses and all independent execution controls remain mandatory.",
                 "This is Napier V2 own direct Ethereum TwoCryptoZap, not Napier V1, a Curve direct-pool admission, a curator wrapper or a TokiHook chain4663 admission. Current deployment docs explicitly list this exact Ethereum Zap, and current Curve-AMM docs continue supporting Two-Crypto-NG markets. Current app observation showed only wsNET on unsupported Robinhood4663; this inventory asserts no current Ethereum market, balance, liquidity or successful execution.",
                 "Deployment-bound constructor and immutable evidence bind factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b, connector registry 0x5f44286b6aa9d7aaec73abcf627e32b0e048fc9a, TwoCrypto deployer0x129d398a6116a13cc0d1ae8833b0490c2d53cf37 and aggregation router0x000000371a8d1064aaafc4dcad3a5ec91f8858db. Current docs list different general registry/TwoCrypto-deployer addresses; those are not substituted into this older still-listed Zap configuration. Live dependency implementation/configuration is not attested.",
-                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, permits and public callbacks are excluded.",
+                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, actual permits and public callbacks are excluded. The two separately granted collector entrypoints are admitted only under mandatory per-input zero-deadline scope, which skips the entire permitCollector authority call; existing collector approval and accrued caller balances remain prerequisites, and no implicit multicall composition is added.",
                 "Underlying means each PT target yield-bearing token shares, not universally USDC/ETH. Token input/output may equal that target (direct transfer), otherwise conversion goes through registry-selected or default-created VaultConnector for the PT underlying/asset. Registry authority can replace connectors; factory/PT/resolver/fee/reward modules, token restrictions, pauses and liquidity remain dependencies. No fixed asset, share-decimal, KYC eligibility, fee or current module configuration is asserted.",
                 "Caller must approve this Zap for ERC20 input, PT/YT and LP tokens as applicable. supply issues both PT and YT to receiver; combine pulls equal PT and YT from caller and burns both; redeem burns caller PT through an allowance to Zap only after PT maturity. Accrued yield/rewards are not automatically claimed by combine/redeem. Issuance requires PT not paused/not expired, verifier/deposit-cap success. Maturity is an ordinary condition of this generic router, not an admission of retired or expired fixed deployments.",
                 "Supply/combine/redeem carry a final minimum but no deadline; liquidity/swaps carry deadline and final slippage minimums. Issuance/redemption fees round upward and shares/principal conversions round down in included PrincipalToken implementation source; actual selected PT implementation and fee modules remain authoritative. Fee/performance/post-settlement charges and market price can reduce payout. One-token LP withdrawal trades PT before maturity, redeems PT after maturity, and can depend on immediate vault withdrawal cash/liquidity; no asynchronous claim orchestration is admitted.",
@@ -1253,7 +1428,7 @@
                 "Static deployment-bound source and ABI inventory only; not a fresh runtime identity, configuration, balance, liquidity, funding, successful-execution or financial-safety guarantee. Exact grants, canonical calldata/value checks, pauses and all independent execution controls remain mandatory.",
                 "This is Napier V2 own direct Ethereum TwoCryptoZap, not Napier V1, a Curve direct-pool admission, a curator wrapper or a TokiHook chain4663 admission. Current deployment docs explicitly list this exact Ethereum Zap, and current Curve-AMM docs continue supporting Two-Crypto-NG markets. Current app observation showed only wsNET on unsupported Robinhood4663; this inventory asserts no current Ethereum market, balance, liquidity or successful execution.",
                 "Deployment-bound constructor and immutable evidence bind factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b, connector registry 0x5f44286b6aa9d7aaec73abcf627e32b0e048fc9a, TwoCrypto deployer0x129d398a6116a13cc0d1ae8833b0490c2d53cf37 and aggregation router0x000000371a8d1064aaafc4dcad3a5ec91f8858db. Current docs list different general registry/TwoCrypto-deployer addresses; those are not substituted into this older still-listed Zap configuration. Live dependency implementation/configuration is not attested.",
-                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, permits and public callbacks are excluded.",
+                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, actual permits and public callbacks are excluded. The two separately granted collector entrypoints are admitted only under mandatory per-input zero-deadline scope, which skips the entire permitCollector authority call; existing collector approval and accrued caller balances remain prerequisites, and no implicit multicall composition is added.",
                 "Underlying means each PT target yield-bearing token shares, not universally USDC/ETH. Token input/output may equal that target (direct transfer), otherwise conversion goes through registry-selected or default-created VaultConnector for the PT underlying/asset. Registry authority can replace connectors; factory/PT/resolver/fee/reward modules, token restrictions, pauses and liquidity remain dependencies. No fixed asset, share-decimal, KYC eligibility, fee or current module configuration is asserted.",
                 "Caller must approve this Zap for ERC20 input, PT/YT and LP tokens as applicable. supply issues both PT and YT to receiver; combine pulls equal PT and YT from caller and burns both; redeem burns caller PT through an allowance to Zap only after PT maturity. Accrued yield/rewards are not automatically claimed by combine/redeem. Issuance requires PT not paused/not expired, verifier/deposit-cap success. Maturity is an ordinary condition of this generic router, not an admission of retired or expired fixed deployments.",
                 "Supply/combine/redeem carry a final minimum but no deadline; liquidity/swaps carry deadline and final slippage minimums. Issuance/redemption fees round upward and shares/principal conversions round down in included PrincipalToken implementation source; actual selected PT implementation and fee modules remain authoritative. Fee/performance/post-settlement charges and market price can reduce payout. One-token LP withdrawal trades PT before maturity, redeems PT after maturity, and can depend on immediate vault withdrawal cash/liquidity; no asynchronous claim orchestration is admitted.",
@@ -1337,7 +1512,7 @@
                 "Static deployment-bound source and ABI inventory only; not a fresh runtime identity, configuration, balance, liquidity, funding, successful-execution or financial-safety guarantee. Exact grants, canonical calldata/value checks, pauses and all independent execution controls remain mandatory.",
                 "This is Napier V2 own direct Ethereum TwoCryptoZap, not Napier V1, a Curve direct-pool admission, a curator wrapper or a TokiHook chain4663 admission. Current deployment docs explicitly list this exact Ethereum Zap, and current Curve-AMM docs continue supporting Two-Crypto-NG markets. Current app observation showed only wsNET on unsupported Robinhood4663; this inventory asserts no current Ethereum market, balance, liquidity or successful execution.",
                 "Deployment-bound constructor and immutable evidence bind factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b, connector registry 0x5f44286b6aa9d7aaec73abcf627e32b0e048fc9a, TwoCrypto deployer0x129d398a6116a13cc0d1ae8833b0490c2d53cf37 and aggregation router0x000000371a8d1064aaafc4dcad3a5ec91f8858db. Current docs list different general registry/TwoCrypto-deployer addresses; those are not substituted into this older still-listed Zap configuration. Live dependency implementation/configuration is not attested.",
-                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, permits and public callbacks are excluded.",
+                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, actual permits and public callbacks are excluded. The two separately granted collector entrypoints are admitted only under mandatory per-input zero-deadline scope, which skips the entire permitCollector authority call; existing collector approval and accrued caller balances remain prerequisites, and no implicit multicall composition is added.",
                 "Underlying means each PT target yield-bearing token shares, not universally USDC/ETH. Token input/output may equal that target (direct transfer), otherwise conversion goes through registry-selected or default-created VaultConnector for the PT underlying/asset. Registry authority can replace connectors; factory/PT/resolver/fee/reward modules, token restrictions, pauses and liquidity remain dependencies. No fixed asset, share-decimal, KYC eligibility, fee or current module configuration is asserted.",
                 "Caller must approve this Zap for ERC20 input, PT/YT and LP tokens as applicable. supply issues both PT and YT to receiver; combine pulls equal PT and YT from caller and burns both; redeem burns caller PT through an allowance to Zap only after PT maturity. Accrued yield/rewards are not automatically claimed by combine/redeem. Issuance requires PT not paused/not expired, verifier/deposit-cap success. Maturity is an ordinary condition of this generic router, not an admission of retired or expired fixed deployments.",
                 "Supply/combine/redeem carry a final minimum but no deadline; liquidity/swaps carry deadline and final slippage minimums. Issuance/redemption fees round upward and shares/principal conversions round down in included PrincipalToken implementation source; actual selected PT implementation and fee modules remain authoritative. Fee/performance/post-settlement charges and market price can reduce payout. One-token LP withdrawal trades PT before maturity, redeems PT after maturity, and can depend on immediate vault withdrawal cash/liquidity; no asynchronous claim orchestration is admitted.",
@@ -1421,7 +1596,7 @@
                 "Static deployment-bound source and ABI inventory only; not a fresh runtime identity, configuration, balance, liquidity, funding, successful-execution or financial-safety guarantee. Exact grants, canonical calldata/value checks, pauses and all independent execution controls remain mandatory.",
                 "This is Napier V2 own direct Ethereum TwoCryptoZap, not Napier V1, a Curve direct-pool admission, a curator wrapper or a TokiHook chain4663 admission. Current deployment docs explicitly list this exact Ethereum Zap, and current Curve-AMM docs continue supporting Two-Crypto-NG markets. Current app observation showed only wsNET on unsupported Robinhood4663; this inventory asserts no current Ethereum market, balance, liquidity or successful execution.",
                 "Deployment-bound constructor and immutable evidence bind factory 0x0000001afbca1e8cf82fe458b33c9954a65b987b, connector registry 0x5f44286b6aa9d7aaec73abcf627e32b0e048fc9a, TwoCrypto deployer0x129d398a6116a13cc0d1ae8833b0490c2d53cf37 and aggregation router0x000000371a8d1064aaafc4dcad3a5ec91f8858db. Current docs list different general registry/TwoCrypto-deployer addresses; those are not substituted into this older still-listed Zap configuration. Live dependency implementation/configuration is not attested.",
-                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, permits and public callbacks are excluded.",
+                "PT parameters must be registered in immutable factory.s_principalTokens; pool parameters must be registered in factory.s_pools to the immutable TwoCrypto-deployer identity. These are ordinary financial market addresses, not arbitrary target+payload. All AnyToken/ToAnyToken aggregator variants, deployment/module-configuration functions, actual permits and public callbacks are excluded. The two separately granted collector entrypoints are admitted only under mandatory per-input zero-deadline scope, which skips the entire permitCollector authority call; existing collector approval and accrued caller balances remain prerequisites, and no implicit multicall composition is added.",
                 "Underlying means each PT target yield-bearing token shares, not universally USDC/ETH. Token input/output may equal that target (direct transfer), otherwise conversion goes through registry-selected or default-created VaultConnector for the PT underlying/asset. Registry authority can replace connectors; factory/PT/resolver/fee/reward modules, token restrictions, pauses and liquidity remain dependencies. No fixed asset, share-decimal, KYC eligibility, fee or current module configuration is asserted.",
                 "Caller must approve this Zap for ERC20 input, PT/YT and LP tokens as applicable. supply issues both PT and YT to receiver; combine pulls equal PT and YT from caller and burns both; redeem burns caller PT through an allowance to Zap only after PT maturity. Accrued yield/rewards are not automatically claimed by combine/redeem. Issuance requires PT not paused/not expired, verifier/deposit-cap success. Maturity is an ordinary condition of this generic router, not an admission of retired or expired fixed deployments.",
                 "Supply/combine/redeem carry a final minimum but no deadline; liquidity/swaps carry deadline and final slippage minimums. Issuance/redemption fees round upward and shares/principal conversions round down in included PrincipalToken implementation source; actual selected PT implementation and fee modules remain authoritative. Fee/performance/post-settlement charges and market price can reduce payout. One-token LP withdrawal trades PT before maturity, redeems PT after maturity, and can depend on immediate vault withdrawal cash/liquidity; no asynchronous claim orchestration is admitted.",
@@ -278807,220 +278982,6 @@
           "address": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
           "functions": [
             {
-              "abi": {
-                "inputs": [
-                  {
-                    "internalType": "uint256",
-                    "name": "assets",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "address",
-                    "name": "receiver",
-                    "type": "address"
-                  }
-                ],
-                "name": "deposit",
-                "outputs": [
-                  {
-                    "internalType": "uint256",
-                    "name": "",
-                    "type": "uint256"
-                  }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "function"
-              },
-              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:deposit-usdc",
-              "chainId": 42161,
-              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
-              "functionName": "deposit",
-              "label": "Revert Finance Deposit USDC",
-              "operation": "deposit-usdc",
-              "protocol": "Revert Finance",
-              "provenance": {
-                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all",
-                "status": "verified",
-                "verifiedAt": "2026-10-23"
-              },
-              "signature": "deposit(uint256,address)",
-              "status": "active",
-              "type": "contract_call",
-              "warnings": [
-                "Static deployment/source/ABI inventory only; no current runtime identity, balance, liquidity, funding, successful execution, complete workflow or financial-safety guarantee. Zero native value; independent grants, pauses, canonical calldata and transaction controls remain mandatory.",
-                "Arbitrum native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831 is immutable asset with6 decimals; rlUSDC lender shares also use6 decimals. Loan tokenId is a fixed-manager Uniswap V3 NFT and debt shares are separate loan-accounting units; neither is lender rlUSDC or raw ETH.",
-                "Plain deposit/mint pull USDC atomically from msg.sender using existing allowance to V3Vault and mint rlUSDC to receiver; they pass empty permitData internally. Permit2 overloads and all signature authorization entries are excluded. No standalone prefunding capability.",
-                "Conversions update accrued interest first. Deposit floors shares, mint rounds required USDC up; redeem floors USDC, withdraw rounds shares up. In this exact V3Vault implementation a withdrawal/redeem request exceeding owner share balance is clipped to that balance and recalculates assets, so requested exact assets may not be delivered. No caller minimum output, maximum input or deadline.",
-                "Withdraw/redeem burn owner shares; a different msg.sender requires pre-existing share allowance from owner. USDC goes to caller-chosen receiver. Exits require idle USDC and revert InsufficientLiquidity when insufficient; no withdrawal queue or fixed exit delay is provided.",
-                "Owner or emergencyAdmin can change global and daily lending/debt limits; zero or restrictive lending limits can block entry. Daily lending limit resets on UTC day number and exits replenish it. No current limits or perpetual unpaused availability are attested; this direct source has no separate lender pause flag.",
-                "Lenders fund loans against allowed Uniswap V3 LP NFT collateral, subject to oracle values, collateral/debt limits, minimum loan sizes, health checks and liquidations. Ordinary collateral deposit, borrowing, no-permit repayment, liquidity/fee withdrawal and zero-debt NFT removal are separately admitted; removal requires runtime-enforced empty callback bytes. Uncovered liquidation shortfalls can lower lending exchange rate pro rata. Signature-bearing liquidation, transformer authority, arbitrary multicall and direct NFT callback entrypoints remain excluded.",
-                "ABI functions do not establish website, legal, jurisdictional or account eligibility; any applicable protocol and independent policy restrictions remain binding. No KYC clearance or asset-safety assertion."
-              ]
-            },
-            {
-              "abi": {
-                "inputs": [
-                  {
-                    "internalType": "uint256",
-                    "name": "shares",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "address",
-                    "name": "receiver",
-                    "type": "address"
-                  }
-                ],
-                "name": "mint",
-                "outputs": [
-                  {
-                    "internalType": "uint256",
-                    "name": "",
-                    "type": "uint256"
-                  }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "function"
-              },
-              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:mint-usdc",
-              "chainId": 42161,
-              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
-              "functionName": "mint",
-              "label": "Revert Finance Mint USDC",
-              "operation": "mint-usdc",
-              "protocol": "Revert Finance",
-              "provenance": {
-                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all",
-                "status": "verified",
-                "verifiedAt": "2026-10-23"
-              },
-              "signature": "mint(uint256,address)",
-              "status": "active",
-              "type": "contract_call",
-              "warnings": [
-                "Static deployment/source/ABI inventory only; no current runtime identity, balance, liquidity, funding, successful execution, complete workflow or financial-safety guarantee. Zero native value; independent grants, pauses, canonical calldata and transaction controls remain mandatory.",
-                "Arbitrum native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831 is immutable asset with6 decimals; rlUSDC lender shares also use6 decimals. Loan tokenId is a fixed-manager Uniswap V3 NFT and debt shares are separate loan-accounting units; neither is lender rlUSDC or raw ETH.",
-                "Plain deposit/mint pull USDC atomically from msg.sender using existing allowance to V3Vault and mint rlUSDC to receiver; they pass empty permitData internally. Permit2 overloads and all signature authorization entries are excluded. No standalone prefunding capability.",
-                "Conversions update accrued interest first. Deposit floors shares, mint rounds required USDC up; redeem floors USDC, withdraw rounds shares up. In this exact V3Vault implementation a withdrawal/redeem request exceeding owner share balance is clipped to that balance and recalculates assets, so requested exact assets may not be delivered. No caller minimum output, maximum input or deadline.",
-                "Withdraw/redeem burn owner shares; a different msg.sender requires pre-existing share allowance from owner. USDC goes to caller-chosen receiver. Exits require idle USDC and revert InsufficientLiquidity when insufficient; no withdrawal queue or fixed exit delay is provided.",
-                "Owner or emergencyAdmin can change global and daily lending/debt limits; zero or restrictive lending limits can block entry. Daily lending limit resets on UTC day number and exits replenish it. No current limits or perpetual unpaused availability are attested; this direct source has no separate lender pause flag.",
-                "Lenders fund loans against allowed Uniswap V3 LP NFT collateral, subject to oracle values, collateral/debt limits, minimum loan sizes, health checks and liquidations. Ordinary collateral deposit, borrowing, no-permit repayment, liquidity/fee withdrawal and zero-debt NFT removal are separately admitted; removal requires runtime-enforced empty callback bytes. Uncovered liquidation shortfalls can lower lending exchange rate pro rata. Signature-bearing liquidation, transformer authority, arbitrary multicall and direct NFT callback entrypoints remain excluded.",
-                "ABI functions do not establish website, legal, jurisdictional or account eligibility; any applicable protocol and independent policy restrictions remain binding. No KYC clearance or asset-safety assertion."
-              ]
-            },
-            {
-              "abi": {
-                "inputs": [
-                  {
-                    "internalType": "uint256",
-                    "name": "shares",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "address",
-                    "name": "receiver",
-                    "type": "address"
-                  },
-                  {
-                    "internalType": "address",
-                    "name": "owner",
-                    "type": "address"
-                  }
-                ],
-                "name": "redeem",
-                "outputs": [
-                  {
-                    "internalType": "uint256",
-                    "name": "",
-                    "type": "uint256"
-                  }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "function"
-              },
-              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:redeem-usdc",
-              "chainId": 42161,
-              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
-              "functionName": "redeem",
-              "label": "Revert Finance Redeem USDC",
-              "operation": "redeem-usdc",
-              "protocol": "Revert Finance",
-              "provenance": {
-                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all",
-                "status": "verified",
-                "verifiedAt": "2026-10-23"
-              },
-              "signature": "redeem(uint256,address,address)",
-              "status": "active",
-              "type": "contract_call",
-              "warnings": [
-                "Static deployment/source/ABI inventory only; no current runtime identity, balance, liquidity, funding, successful execution, complete workflow or financial-safety guarantee. Zero native value; independent grants, pauses, canonical calldata and transaction controls remain mandatory.",
-                "Arbitrum native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831 is immutable asset with6 decimals; rlUSDC lender shares also use6 decimals. Loan tokenId is a fixed-manager Uniswap V3 NFT and debt shares are separate loan-accounting units; neither is lender rlUSDC or raw ETH.",
-                "Plain deposit/mint pull USDC atomically from msg.sender using existing allowance to V3Vault and mint rlUSDC to receiver; they pass empty permitData internally. Permit2 overloads and all signature authorization entries are excluded. No standalone prefunding capability.",
-                "Conversions update accrued interest first. Deposit floors shares, mint rounds required USDC up; redeem floors USDC, withdraw rounds shares up. In this exact V3Vault implementation a withdrawal/redeem request exceeding owner share balance is clipped to that balance and recalculates assets, so requested exact assets may not be delivered. No caller minimum output, maximum input or deadline.",
-                "Withdraw/redeem burn owner shares; a different msg.sender requires pre-existing share allowance from owner. USDC goes to caller-chosen receiver. Exits require idle USDC and revert InsufficientLiquidity when insufficient; no withdrawal queue or fixed exit delay is provided.",
-                "Owner or emergencyAdmin can change global and daily lending/debt limits; zero or restrictive lending limits can block entry. Daily lending limit resets on UTC day number and exits replenish it. No current limits or perpetual unpaused availability are attested; this direct source has no separate lender pause flag.",
-                "Lenders fund loans against allowed Uniswap V3 LP NFT collateral, subject to oracle values, collateral/debt limits, minimum loan sizes, health checks and liquidations. Ordinary collateral deposit, borrowing, no-permit repayment, liquidity/fee withdrawal and zero-debt NFT removal are separately admitted; removal requires runtime-enforced empty callback bytes. Uncovered liquidation shortfalls can lower lending exchange rate pro rata. Signature-bearing liquidation, transformer authority, arbitrary multicall and direct NFT callback entrypoints remain excluded.",
-                "ABI functions do not establish website, legal, jurisdictional or account eligibility; any applicable protocol and independent policy restrictions remain binding. No KYC clearance or asset-safety assertion."
-              ]
-            },
-            {
-              "abi": {
-                "inputs": [
-                  {
-                    "internalType": "uint256",
-                    "name": "assets",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "address",
-                    "name": "receiver",
-                    "type": "address"
-                  },
-                  {
-                    "internalType": "address",
-                    "name": "owner",
-                    "type": "address"
-                  }
-                ],
-                "name": "withdraw",
-                "outputs": [
-                  {
-                    "internalType": "uint256",
-                    "name": "",
-                    "type": "uint256"
-                  }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "function"
-              },
-              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:withdraw-usdc",
-              "chainId": 42161,
-              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
-              "functionName": "withdraw",
-              "label": "Revert Finance Withdraw USDC",
-              "operation": "withdraw-usdc",
-              "protocol": "Revert Finance",
-              "provenance": {
-                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all",
-                "status": "verified",
-                "verifiedAt": "2026-10-23"
-              },
-              "signature": "withdraw(uint256,address,address)",
-              "status": "active",
-              "type": "contract_call",
-              "warnings": [
-                "Static deployment/source/ABI inventory only; no current runtime identity, balance, liquidity, funding, successful execution, complete workflow or financial-safety guarantee. Zero native value; independent grants, pauses, canonical calldata and transaction controls remain mandatory.",
-                "Arbitrum native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831 is immutable asset with6 decimals; rlUSDC lender shares also use6 decimals. Loan tokenId is a fixed-manager Uniswap V3 NFT and debt shares are separate loan-accounting units; neither is lender rlUSDC or raw ETH.",
-                "Plain deposit/mint pull USDC atomically from msg.sender using existing allowance to V3Vault and mint rlUSDC to receiver; they pass empty permitData internally. Permit2 overloads and all signature authorization entries are excluded. No standalone prefunding capability.",
-                "Conversions update accrued interest first. Deposit floors shares, mint rounds required USDC up; redeem floors USDC, withdraw rounds shares up. In this exact V3Vault implementation a withdrawal/redeem request exceeding owner share balance is clipped to that balance and recalculates assets, so requested exact assets may not be delivered. No caller minimum output, maximum input or deadline.",
-                "Withdraw/redeem burn owner shares; a different msg.sender requires pre-existing share allowance from owner. USDC goes to caller-chosen receiver. Exits require idle USDC and revert InsufficientLiquidity when insufficient; no withdrawal queue or fixed exit delay is provided.",
-                "Owner or emergencyAdmin can change global and daily lending/debt limits; zero or restrictive lending limits can block entry. Daily lending limit resets on UTC day number and exits replenish it. No current limits or perpetual unpaused availability are attested; this direct source has no separate lender pause flag.",
-                "Lenders fund loans against allowed Uniswap V3 LP NFT collateral, subject to oracle values, collateral/debt limits, minimum loan sizes, health checks and liquidations. Ordinary collateral deposit, borrowing, no-permit repayment, liquidity/fee withdrawal and zero-debt NFT removal are separately admitted; removal requires runtime-enforced empty callback bytes. Uncovered liquidation shortfalls can lower lending exchange rate pro rata. Signature-bearing liquidation, transformer authority, arbitrary multicall and direct NFT callback entrypoints remain excluded.",
-                "ABI functions do not establish website, legal, jurisdictional or account eligibility; any applicable protocol and independent policy restrictions remain binding. No KYC clearance or asset-safety assertion."
-              ]
-            },
-            {
               "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:remainder-borrow-88d90c92",
               "type": "contract_call",
               "chainId": 42161,
@@ -279174,101 +279135,316 @@
               ]
             },
             {
-              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:remainder-remove-a2c05694",
-              "type": "contract_call",
-              "chainId": 42161,
-              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
-              "functionName": "remove",
-              "signature": "remove(uint256,address,bytes)",
               "abi": {
-                "type": "function",
-                "name": "remove",
-                "stateMutability": "nonpayable",
                 "inputs": [
                   {
-                    "name": "tokenId",
-                    "type": "uint256"
-                  },
-                  {
-                    "name": "recipient",
-                    "type": "address"
-                  },
-                  {
-                    "name": "data",
-                    "type": "bytes"
-                  }
-                ],
-                "outputs": []
-              },
-              "status": "active",
-              "protocol": "Revert Finance",
-              "label": "Revert Finance remove",
-              "operation": "remove",
-              "provenance": {
-                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all ; data/defi-catalog/sources/revert-finance-v3vault-r4.json $.abiEvidence.snapshot.abi[137] ; data/defi-catalog/sources/financial-remainder-two-completion.json",
-                "status": "verified",
-                "verifiedAt": "2026-11-01"
-              },
-              "warnings": [
-                "Static deployment-bound source/ABI review only; not persistent runtime identity, financial safety, backing, liquidity, funding, eligibility, execution success or a complete workflow. Exact-function grants, independent policies, pauses and canonical calldata/value validation remain mandatory; nonpayable functions require zero native value.",
-                "Only internal loan owner with zero debtShares can remove the fixed-manager NFT. recipient controls resulting collateral ownership; standard ERC721 receiver callback can revert.",
-                "Runtime executionScope empty-callback-data-v1 enforces data == 0x at argument 2. Nonempty recipient callback payloads are not admitted; no generic NFT transfer/approval or transformer grant is added."
-              ],
-              "executionScope": {
-                "kind": "empty-callback-data-v1",
-                "bytesArgIndex": 2
-              }
-            },
-            {
-              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:remainder-repay-1948f163",
-              "type": "contract_call",
-              "chainId": 42161,
-              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
-              "functionName": "repay",
-              "signature": "repay(uint256,uint256,bool)",
-              "abi": {
-                "type": "function",
-                "name": "repay",
-                "stateMutability": "nonpayable",
-                "inputs": [
-                  {
-                    "name": "tokenId",
-                    "type": "uint256"
-                  },
-                  {
-                    "name": "amount",
-                    "type": "uint256"
-                  },
-                  {
-                    "name": "isShare",
-                    "type": "bool"
-                  }
-                ],
-                "outputs": [
-                  {
+                    "internalType": "uint256",
                     "name": "assets",
                     "type": "uint256"
                   },
                   {
-                    "name": "shares",
+                    "internalType": "address",
+                    "name": "receiver",
+                    "type": "address"
+                  }
+                ],
+                "name": "deposit",
+                "outputs": [
+                  {
+                    "internalType": "uint256",
+                    "name": "",
                     "type": "uint256"
                   }
-                ]
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+              },
+              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:deposit-usdc",
+              "chainId": 42161,
+              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
+              "functionName": "deposit",
+              "label": "Revert Finance Deposit USDC",
+              "operation": "deposit-usdc",
+              "protocol": "Revert Finance",
+              "provenance": {
+                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-10-23"
+              },
+              "signature": "deposit(uint256,address)",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Static deployment/source/ABI inventory only; no current runtime identity, balance, liquidity, funding, successful execution, complete workflow or financial-safety guarantee. Zero native value; independent grants, pauses, canonical calldata and transaction controls remain mandatory.",
+                "Arbitrum native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831 is immutable asset with6 decimals; rlUSDC lender shares also use6 decimals. Loan tokenId is a fixed-manager Uniswap V3 NFT and debt shares are separate loan-accounting units; neither is lender rlUSDC or raw ETH.",
+                "Plain deposit/mint and the separately scoped exact-empty permitData lending overloads pull USDC from msg.sender using existing allowance to V3Vault and mint rlUSDC to receiver. Exact-empty raw bytes skip the entire Permit2 branch; nonempty actual Permit2 execution and signature authorization entries remain excluded. No approval or signing capability is added. A separately scoped exact-empty permitData repayment overload also uses caller existing USDC allowance and does not grant new authority.",
+                "Conversions update accrued interest first. Deposit floors shares, mint rounds required USDC up; redeem floors USDC, withdraw rounds shares up. In this exact V3Vault implementation a withdrawal/redeem request exceeding owner share balance is clipped to that balance and recalculates assets, so requested exact assets may not be delivered. No caller minimum output, maximum input or deadline.",
+                "Withdraw/redeem burn owner shares; a different msg.sender requires pre-existing share allowance from owner. USDC goes to caller-chosen receiver. Exits require idle USDC and revert InsufficientLiquidity when insufficient; no withdrawal queue or fixed exit delay is provided.",
+                "Owner or emergencyAdmin can change global and daily lending/debt limits; zero or restrictive lending limits can block entry. Daily lending limit resets on UTC day number and exits replenish it. No current limits or perpetual unpaused availability are attested; this direct source has no separate lender pause flag.",
+                "Lenders fund loans against allowed Uniswap V3 LP NFT collateral, subject to oracle values, collateral/debt limits, minimum loan sizes, health checks and liquidations. Ordinary collateral deposit, borrowing, no-permit repayment, liquidity/fee withdrawal and zero-debt NFT removal are separately admitted; removal requires runtime-enforced empty callback bytes. Uncovered liquidation shortfalls can lower lending exchange rate pro rata. Signature-bearing liquidation, transformer authority, arbitrary multicall and direct NFT callback entrypoints remain excluded.",
+                "ABI functions do not establish website, legal, jurisdictional or account eligibility; any applicable protocol and independent policy restrictions remain binding. No KYC clearance or asset-safety assertion."
+              ]
+            },
+            {
+              "capabilityId": "revert-finance:empty-lending-permit-v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:deposit",
+              "type": "contract_call",
+              "chainId": 42161,
+              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
+              "functionName": "deposit",
+              "signature": "deposit(uint256,address,bytes)",
+              "abi": {
+                "name": "deposit",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "assets",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "receiver",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "permitData",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable"
               },
               "status": "active",
-              "protocol": "Revert Finance",
-              "label": "Revert Finance repay",
-              "operation": "repay",
               "provenance": {
-                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all ; data/defi-catalog/sources/revert-finance-v3vault-r4.json $.abiEvidence.snapshot.abi[140] ; data/defi-catalog/sources/financial-remainder-two-completion.json",
+                "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all",
                 "status": "verified",
-                "verifiedAt": "2026-11-01"
+                "verifiedAt": "2026-11-02"
+              },
+              "label": "Revert Finance deposit (empty permit data)",
+              "description": "Ordinary USDC lending using existing vault allowance; raw permitData must be exactly empty.",
+              "protocol": "Revert Finance",
+              "operation": "deposit",
+              "warnings": [
+                "Static deployment/source/ABI inventory only; no current runtime identity, balance, liquidity, funding, successful execution, complete workflow or financial-safety guarantee. Zero native value; independent grants, pauses, canonical calldata and transaction controls remain mandatory.",
+                "Arbitrum native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831 is immutable asset with6 decimals; rlUSDC lender shares also use6 decimals. Loan tokenId is a fixed-manager Uniswap V3 NFT and debt shares are separate loan-accounting units; neither is lender rlUSDC or raw ETH.",
+                "Plain deposit/mint and the separately scoped exact-empty permitData lending overloads pull USDC from msg.sender using existing allowance to V3Vault and mint rlUSDC to receiver. Exact-empty raw bytes skip the entire Permit2 branch; nonempty actual Permit2 execution and signature authorization entries remain excluded. No approval or signing capability is added.",
+                "Conversions update accrued interest first. Deposit floors shares, mint rounds required USDC up; redeem floors USDC, withdraw rounds shares up. In this exact V3Vault implementation a withdrawal/redeem request exceeding owner share balance is clipped to that balance and recalculates assets, so requested exact assets may not be delivered. No caller minimum output, maximum input or deadline.",
+                "Withdraw/redeem burn owner shares; a different msg.sender requires pre-existing share allowance from owner. USDC goes to caller-chosen receiver. Exits require idle USDC and revert InsufficientLiquidity when insufficient; no withdrawal queue or fixed exit delay is provided.",
+                "Owner or emergencyAdmin can change global and daily lending/debt limits; zero or restrictive lending limits can block entry. Daily lending limit resets on UTC day number and exits replenish it. No current limits or perpetual unpaused availability are attested; this direct source has no separate lender pause flag.",
+                "Lenders fund loans against allowed Uniswap V3 LP NFT collateral, subject to oracle values, collateral/debt limits, minimum loan sizes, health checks and liquidations. Ordinary collateral deposit, borrowing, no-permit repayment, liquidity/fee withdrawal and zero-debt NFT removal are separately admitted; removal requires runtime-enforced empty callback bytes. Uncovered liquidation shortfalls can lower lending exchange rate pro rata. Signature-bearing liquidation, transformer authority, arbitrary multicall and direct NFT callback entrypoints remain excluded.",
+                "ABI functions do not establish website, legal, jurisdictional or account eligibility; any applicable protocol and independent policy restrictions remain binding. No KYC clearance or asset-safety assertion.",
+                "Deposit floors shares; mint rounds required assets up. Interest, global/daily lending limits, token behavior and receiver validity remain onchain checks. No minimum output, maximum input or deadline is introduced.",
+                "No new overload is added to any existing multicall allowedChildren graph; existing graph identities and scope hashes are unchanged."
+              ],
+              "executionScope": {
+                "kind": "revert-empty-lending-permit-v1"
+              }
+            },
+            {
+              "capabilityId": "revert-finance:financial-closure-v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:liquidate-empty-permit",
+              "type": "contract_call",
+              "chainId": 42161,
+              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
+              "protocol": "Revert Finance",
+              "functionName": "liquidate",
+              "signature": "liquidate((uint256,uint256,uint256,address,bytes,uint256))",
+              "operation": "liquidate-empty-permit",
+              "label": "Revert liquidation using existing allowance / empty permit data",
+              "description": "Source-defined unhealthy LP-NFT loan liquidation restricted to empty params.permitData and existing asset allowance; no Permit2 signing or new authority.",
+              "status": "active",
+              "abi": {
+                "name": "liquidate",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "params",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "tokenId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "amount0Min",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "amount1Min",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "recipient",
+                        "type": "address",
+                        "internalType": "address"
+                      },
+                      {
+                        "name": "permitData",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                      },
+                      {
+                        "name": "deadline",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "internalType": "struct IVault.LiquidateParams"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "amount0",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "amount1",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "provenance": {
+                "status": "verified",
+                "verifiedAt": "2026-11-01",
+                "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all"
+              },
+              "executionScope": {
+                "kind": "empty-tuple-bytes-v1",
+                "tupleArgIndex": 0,
+                "bytesComponentIndex": 4
               },
               "warnings": [
-                "Static deployment-bound source/ABI review only; not persistent runtime identity, financial safety, backing, liquidity, funding, eligibility, execution success or a complete workflow. Exact-function grants, independent policies, pauses and canonical calldata/value validation remain mandatory; nonpayable functions require zero native value.",
-                "Three-argument overload always passes empty permitData; Permit2 overload not admitted. Caller pays 6-decimal USDC under existing allowance, possibly repaying another tokenId owner loan without gaining collateral rights.",
-                "isShare=true uses debt shares and rounds required assets up; false uses USDC and floors shares. Payment caps at outstanding debt; minimum-loan-size and no-zero-shares checks may reject partial/dust repayments. No caller max-payment/deadline argument."
+                "Mandatory empty-tuple-bytes-v1 requires the actual top-level params tuple component permitData at input[0].components[4] to equal0x. No signature or Permit2 branch is admitted, even though the deployed selector also exposes that source branch.",
+                "If liquidatorCost is nonzero, empty permitData enters SafeERC20.safeTransferFrom(asset,msg.sender,address(this),liquidatorCost); caller must already hold assets and have ordinary existing allowance. No permit/approval capability or signing authority is created. Source root/child nonpayable requires native value0.",
+                "Source rejects transformer mode and healthy loans, updates debt/lending rates and reserve shortfall accounting, sends position value to caller-selected recipient subject to deadline and amount0Min/amount1Min, then cleans up the loan. Oracle/collateral valuation, reserve losses, minimum health/liquidity/price checks and token/LP dependencies remain actual financial conditions, not guaranteed outcomes.",
+                "Current direct V3Vault creation/runtime exact_match and exact full ABI/body are retained. Source review does not establish persistent runtime identity, current solvency, liquidation profitability, liquidity, successful execution, full workflows or financial safety. Independent root/used-child grants and pauses apply when nested."
+              ],
+              "abiHash": "0x99ad6b1bdd48dfc114073048d0dc6c7e8ac198fd062b3e23d4d937f82531f4bb"
+            },
+            {
+              "abi": {
+                "inputs": [
+                  {
+                    "internalType": "uint256",
+                    "name": "shares",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "receiver",
+                    "type": "address"
+                  }
+                ],
+                "name": "mint",
+                "outputs": [
+                  {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+              },
+              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:mint-usdc",
+              "chainId": 42161,
+              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
+              "functionName": "mint",
+              "label": "Revert Finance Mint USDC",
+              "operation": "mint-usdc",
+              "protocol": "Revert Finance",
+              "provenance": {
+                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-10-23"
+              },
+              "signature": "mint(uint256,address)",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Static deployment/source/ABI inventory only; no current runtime identity, balance, liquidity, funding, successful execution, complete workflow or financial-safety guarantee. Zero native value; independent grants, pauses, canonical calldata and transaction controls remain mandatory.",
+                "Arbitrum native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831 is immutable asset with6 decimals; rlUSDC lender shares also use6 decimals. Loan tokenId is a fixed-manager Uniswap V3 NFT and debt shares are separate loan-accounting units; neither is lender rlUSDC or raw ETH.",
+                "Plain deposit/mint and the separately scoped exact-empty permitData lending overloads pull USDC from msg.sender using existing allowance to V3Vault and mint rlUSDC to receiver. Exact-empty raw bytes skip the entire Permit2 branch; nonempty actual Permit2 execution and signature authorization entries remain excluded. No approval or signing capability is added. A separately scoped exact-empty permitData repayment overload also uses caller existing USDC allowance and does not grant new authority.",
+                "Conversions update accrued interest first. Deposit floors shares, mint rounds required USDC up; redeem floors USDC, withdraw rounds shares up. In this exact V3Vault implementation a withdrawal/redeem request exceeding owner share balance is clipped to that balance and recalculates assets, so requested exact assets may not be delivered. No caller minimum output, maximum input or deadline.",
+                "Withdraw/redeem burn owner shares; a different msg.sender requires pre-existing share allowance from owner. USDC goes to caller-chosen receiver. Exits require idle USDC and revert InsufficientLiquidity when insufficient; no withdrawal queue or fixed exit delay is provided.",
+                "Owner or emergencyAdmin can change global and daily lending/debt limits; zero or restrictive lending limits can block entry. Daily lending limit resets on UTC day number and exits replenish it. No current limits or perpetual unpaused availability are attested; this direct source has no separate lender pause flag.",
+                "Lenders fund loans against allowed Uniswap V3 LP NFT collateral, subject to oracle values, collateral/debt limits, minimum loan sizes, health checks and liquidations. Ordinary collateral deposit, borrowing, no-permit repayment, liquidity/fee withdrawal and zero-debt NFT removal are separately admitted; removal requires runtime-enforced empty callback bytes. Uncovered liquidation shortfalls can lower lending exchange rate pro rata. Signature-bearing liquidation, transformer authority, arbitrary multicall and direct NFT callback entrypoints remain excluded.",
+                "ABI functions do not establish website, legal, jurisdictional or account eligibility; any applicable protocol and independent policy restrictions remain binding. No KYC clearance or asset-safety assertion."
               ]
+            },
+            {
+              "capabilityId": "revert-finance:empty-lending-permit-v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:mint",
+              "type": "contract_call",
+              "chainId": 42161,
+              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
+              "functionName": "mint",
+              "signature": "mint(uint256,address,bytes)",
+              "abi": {
+                "name": "mint",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "shares",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "receiver",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "permitData",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-11-02"
+              },
+              "label": "Revert Finance mint (empty permit data)",
+              "description": "Ordinary USDC lending using existing vault allowance; raw permitData must be exactly empty.",
+              "protocol": "Revert Finance",
+              "operation": "deposit",
+              "warnings": [
+                "Static deployment/source/ABI inventory only; no current runtime identity, balance, liquidity, funding, successful execution, complete workflow or financial-safety guarantee. Zero native value; independent grants, pauses, canonical calldata and transaction controls remain mandatory.",
+                "Arbitrum native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831 is immutable asset with6 decimals; rlUSDC lender shares also use6 decimals. Loan tokenId is a fixed-manager Uniswap V3 NFT and debt shares are separate loan-accounting units; neither is lender rlUSDC or raw ETH.",
+                "Plain deposit/mint and the separately scoped exact-empty permitData lending overloads pull USDC from msg.sender using existing allowance to V3Vault and mint rlUSDC to receiver. Exact-empty raw bytes skip the entire Permit2 branch; nonempty actual Permit2 execution and signature authorization entries remain excluded. No approval or signing capability is added.",
+                "Conversions update accrued interest first. Deposit floors shares, mint rounds required USDC up; redeem floors USDC, withdraw rounds shares up. In this exact V3Vault implementation a withdrawal/redeem request exceeding owner share balance is clipped to that balance and recalculates assets, so requested exact assets may not be delivered. No caller minimum output, maximum input or deadline.",
+                "Withdraw/redeem burn owner shares; a different msg.sender requires pre-existing share allowance from owner. USDC goes to caller-chosen receiver. Exits require idle USDC and revert InsufficientLiquidity when insufficient; no withdrawal queue or fixed exit delay is provided.",
+                "Owner or emergencyAdmin can change global and daily lending/debt limits; zero or restrictive lending limits can block entry. Daily lending limit resets on UTC day number and exits replenish it. No current limits or perpetual unpaused availability are attested; this direct source has no separate lender pause flag.",
+                "Lenders fund loans against allowed Uniswap V3 LP NFT collateral, subject to oracle values, collateral/debt limits, minimum loan sizes, health checks and liquidations. Ordinary collateral deposit, borrowing, no-permit repayment, liquidity/fee withdrawal and zero-debt NFT removal are separately admitted; removal requires runtime-enforced empty callback bytes. Uncovered liquidation shortfalls can lower lending exchange rate pro rata. Signature-bearing liquidation, transformer authority, arbitrary multicall and direct NFT callback entrypoints remain excluded.",
+                "ABI functions do not establish website, legal, jurisdictional or account eligibility; any applicable protocol and independent policy restrictions remain binding. No KYC clearance or asset-safety assertion.",
+                "Deposit floors shares; mint rounds required assets up. Interest, global/daily lending limits, token behavior and receiver validity remain onchain checks. No minimum output, maximum input or deadline is introduced.",
+                "No new overload is added to any existing multicall allowedChildren graph; existing graph identities and scope hashes are unchanged."
+              ],
+              "executionScope": {
+                "kind": "revert-empty-lending-permit-v1"
+              }
             },
             {
               "capabilityId": "revert-finance:financial-closed-batch:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:multicall",
@@ -279378,90 +279554,279 @@
               "abiHash": "0x47fdac20e4f530c016f184794110d8a82d1caaa9fd14ee8d6a43d751884a62a3"
             },
             {
-              "capabilityId": "revert-finance:financial-closure-v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:liquidate-empty-permit",
+              "abi": {
+                "inputs": [
+                  {
+                    "internalType": "uint256",
+                    "name": "shares",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "receiver",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "owner",
+                    "type": "address"
+                  }
+                ],
+                "name": "redeem",
+                "outputs": [
+                  {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+              },
+              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:redeem-usdc",
+              "chainId": 42161,
+              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
+              "functionName": "redeem",
+              "label": "Revert Finance Redeem USDC",
+              "operation": "redeem-usdc",
+              "protocol": "Revert Finance",
+              "provenance": {
+                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-10-23"
+              },
+              "signature": "redeem(uint256,address,address)",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Static deployment/source/ABI inventory only; no current runtime identity, balance, liquidity, funding, successful execution, complete workflow or financial-safety guarantee. Zero native value; independent grants, pauses, canonical calldata and transaction controls remain mandatory.",
+                "Arbitrum native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831 is immutable asset with6 decimals; rlUSDC lender shares also use6 decimals. Loan tokenId is a fixed-manager Uniswap V3 NFT and debt shares are separate loan-accounting units; neither is lender rlUSDC or raw ETH.",
+                "Plain deposit/mint and the separately scoped exact-empty permitData lending overloads pull USDC from msg.sender using existing allowance to V3Vault and mint rlUSDC to receiver. Exact-empty raw bytes skip the entire Permit2 branch; nonempty actual Permit2 execution and signature authorization entries remain excluded. No approval or signing capability is added. A separately scoped exact-empty permitData repayment overload also uses caller existing USDC allowance and does not grant new authority.",
+                "Conversions update accrued interest first. Deposit floors shares, mint rounds required USDC up; redeem floors USDC, withdraw rounds shares up. In this exact V3Vault implementation a withdrawal/redeem request exceeding owner share balance is clipped to that balance and recalculates assets, so requested exact assets may not be delivered. No caller minimum output, maximum input or deadline.",
+                "Withdraw/redeem burn owner shares; a different msg.sender requires pre-existing share allowance from owner. USDC goes to caller-chosen receiver. Exits require idle USDC and revert InsufficientLiquidity when insufficient; no withdrawal queue or fixed exit delay is provided.",
+                "Owner or emergencyAdmin can change global and daily lending/debt limits; zero or restrictive lending limits can block entry. Daily lending limit resets on UTC day number and exits replenish it. No current limits or perpetual unpaused availability are attested; this direct source has no separate lender pause flag.",
+                "Lenders fund loans against allowed Uniswap V3 LP NFT collateral, subject to oracle values, collateral/debt limits, minimum loan sizes, health checks and liquidations. Ordinary collateral deposit, borrowing, no-permit repayment, liquidity/fee withdrawal and zero-debt NFT removal are separately admitted; removal requires runtime-enforced empty callback bytes. Uncovered liquidation shortfalls can lower lending exchange rate pro rata. Signature-bearing liquidation, transformer authority, arbitrary multicall and direct NFT callback entrypoints remain excluded.",
+                "ABI functions do not establish website, legal, jurisdictional or account eligibility; any applicable protocol and independent policy restrictions remain binding. No KYC clearance or asset-safety assertion."
+              ]
+            },
+            {
+              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:remainder-remove-a2c05694",
               "type": "contract_call",
               "chainId": 42161,
               "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
-              "protocol": "Revert Finance",
-              "functionName": "liquidate",
-              "signature": "liquidate((uint256,uint256,uint256,address,bytes,uint256))",
-              "operation": "liquidate-empty-permit",
-              "label": "Revert liquidation using existing allowance / empty permit data",
-              "description": "Source-defined unhealthy LP-NFT loan liquidation restricted to empty params.permitData and existing asset allowance; no Permit2 signing or new authority.",
-              "status": "active",
+              "functionName": "remove",
+              "signature": "remove(uint256,address,bytes)",
               "abi": {
-                "name": "liquidate",
                 "type": "function",
+                "name": "remove",
+                "stateMutability": "nonpayable",
                 "inputs": [
                   {
-                    "name": "params",
-                    "type": "tuple",
-                    "components": [
-                      {
-                        "name": "tokenId",
-                        "type": "uint256",
-                        "internalType": "uint256"
-                      },
-                      {
-                        "name": "amount0Min",
-                        "type": "uint256",
-                        "internalType": "uint256"
-                      },
-                      {
-                        "name": "amount1Min",
-                        "type": "uint256",
-                        "internalType": "uint256"
-                      },
-                      {
-                        "name": "recipient",
-                        "type": "address",
-                        "internalType": "address"
-                      },
-                      {
-                        "name": "permitData",
-                        "type": "bytes",
-                        "internalType": "bytes"
-                      },
-                      {
-                        "name": "deadline",
-                        "type": "uint256",
-                        "internalType": "uint256"
-                      }
-                    ],
-                    "internalType": "struct IVault.LiquidateParams"
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "name": "data",
+                    "type": "bytes"
+                  }
+                ],
+                "outputs": []
+              },
+              "status": "active",
+              "protocol": "Revert Finance",
+              "label": "Revert Finance remove",
+              "operation": "remove",
+              "provenance": {
+                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all ; data/defi-catalog/sources/revert-finance-v3vault-r4.json $.abiEvidence.snapshot.abi[137] ; data/defi-catalog/sources/financial-remainder-two-completion.json",
+                "status": "verified",
+                "verifiedAt": "2026-11-01"
+              },
+              "warnings": [
+                "Static deployment-bound source/ABI review only; not persistent runtime identity, financial safety, backing, liquidity, funding, eligibility, execution success or a complete workflow. Exact-function grants, independent policies, pauses and canonical calldata/value validation remain mandatory; nonpayable functions require zero native value.",
+                "Only internal loan owner with zero debtShares can remove the fixed-manager NFT. recipient controls resulting collateral ownership; standard ERC721 receiver callback can revert.",
+                "Runtime executionScope empty-callback-data-v1 enforces data == 0x at argument 2. Nonempty recipient callback payloads are not admitted; no generic NFT transfer/approval or transformer grant is added."
+              ],
+              "executionScope": {
+                "kind": "empty-callback-data-v1",
+                "bytesArgIndex": 2
+              }
+            },
+            {
+              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:remainder-repay-1948f163",
+              "type": "contract_call",
+              "chainId": 42161,
+              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
+              "functionName": "repay",
+              "signature": "repay(uint256,uint256,bool)",
+              "abi": {
+                "type": "function",
+                "name": "repay",
+                "stateMutability": "nonpayable",
+                "inputs": [
+                  {
+                    "name": "tokenId",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "isShare",
+                    "type": "bool"
                   }
                 ],
                 "outputs": [
                   {
-                    "name": "amount0",
+                    "name": "assets",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "shares",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              "status": "active",
+              "protocol": "Revert Finance",
+              "label": "Revert Finance repay",
+              "operation": "repay",
+              "provenance": {
+                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all ; data/defi-catalog/sources/revert-finance-v3vault-r4.json $.abiEvidence.snapshot.abi[140] ; data/defi-catalog/sources/financial-remainder-two-completion.json",
+                "status": "verified",
+                "verifiedAt": "2026-11-01"
+              },
+              "warnings": [
+                "Static deployment-bound source/ABI review only; not persistent runtime identity, financial safety, backing, liquidity, funding, eligibility, execution success or a complete workflow. Exact-function grants, independent policies, pauses and canonical calldata/value validation remain mandatory; nonpayable functions require zero native value.",
+                "Ordinary repayment and the separately granted exact-empty permitData overload pay 6-decimal native USDC from msg.sender using existing allowance to V3Vault, possibly repaying another tokenId owner loan without gaining collateral rights. Exact-empty argument3 skips the entire Permit2 branch; no permit, signature, allowance, collateral or delegation authority is installed.",
+                "isShare=true uses debt shares and rounds required assets up; false uses USDC and floors shares. Payment caps at outstanding debt; minimum-loan-size and no-zero-shares checks may reject partial/dust repayments. No caller max-payment/deadline argument."
+              ]
+            },
+            {
+              "capabilityId": "revert-finance:empty-lending-permit-v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:repay",
+              "type": "contract_call",
+              "chainId": 42161,
+              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
+              "functionName": "repay",
+              "signature": "repay(uint256,uint256,bool,bytes)",
+              "abi": {
+                "name": "repay",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "tokenId",
                     "type": "uint256",
                     "internalType": "uint256"
                   },
                   {
-                    "name": "amount1",
+                    "name": "amount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "isShare",
+                    "type": "bool",
+                    "internalType": "bool"
+                  },
+                  {
+                    "name": "permitData",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "assets",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "shares",
                     "type": "uint256",
                     "internalType": "uint256"
                   }
                 ],
                 "stateMutability": "nonpayable"
               },
+              "status": "active",
+              "protocol": "Revert Finance",
+              "label": "Repay debt with empty permit data",
+              "operation": "repay",
               "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all",
                 "status": "verified",
-                "verifiedAt": "2026-11-01",
-                "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all"
-              },
-              "executionScope": {
-                "kind": "empty-tuple-bytes-v1",
-                "tupleArgIndex": 0,
-                "bytesComponentIndex": 4
+                "verifiedAt": "2026-11-02"
               },
               "warnings": [
-                "Mandatory empty-tuple-bytes-v1 requires the actual top-level params tuple component permitData at input[0].components[4] to equal0x. No signature or Permit2 branch is admitted, even though the deployed selector also exposes that source branch.",
-                "If liquidatorCost is nonzero, empty permitData enters SafeERC20.safeTransferFrom(asset,msg.sender,address(this),liquidatorCost); caller must already hold assets and have ordinary existing allowance. No permit/approval capability or signing authority is created. Source root/child nonpayable requires native value0.",
-                "Source rejects transformer mode and healthy loans, updates debt/lending rates and reserve shortfall accounting, sends position value to caller-selected recipient subject to deadline and amount0Min/amount1Min, then cleans up the loan. Oracle/collateral valuation, reserve losses, minimum health/liquidity/price checks and token/LP dependencies remain actual financial conditions, not guaranteed outcomes.",
-                "Current direct V3Vault creation/runtime exact_match and exact full ABI/body are retained. Source review does not establish persistent runtime identity, current solvency, liquidation profitability, liquidity, successful execution, full workflows or financial safety. Independent root/used-child grants and pauses apply when nested."
+                "Static deployment-bound source/ABI review only; not persistent runtime identity, financial safety, backing, liquidity, funding, eligibility, execution success or a complete workflow. Exact-function grants, independent policies, pauses and canonical calldata/value validation remain mandatory; nonpayable functions require zero native value.",
+                "Ordinary repayment and the separately granted exact-empty permitData overload pay 6-decimal native USDC from msg.sender using existing allowance to V3Vault, possibly repaying another tokenId owner loan without gaining collateral rights. Exact-empty argument3 skips the entire Permit2 branch; no permit, signature, allowance, collateral or delegation authority is installed.",
+                "isShare=true uses debt shares and rounds required assets up; false uses USDC and floors shares. Payment caps at outstanding debt; minimum-loan-size and no-zero-shares checks may reject partial/dust repayments. No caller max-payment/deadline argument.",
+                "Mandatory revert-empty-lending-permit-v1 binds the exact root, chain, signature and complete ABI and rejects all nonempty raw permitData. Both isShare modes remain ordinary repayment; canonical bool and dynamic bytes are bounded before decoding. Existing finite multicall child graphs are intentionally unchanged; this newly granted leaf is direct-only, not implicitly composable."
               ],
-              "abiHash": "0x99ad6b1bdd48dfc114073048d0dc6c7e8ac198fd062b3e23d4d937f82531f4bb"
+              "description": "Repay a V3Vault loan using existing native-USDC allowance; raw Permit2 data must be exactly empty.",
+              "executionScope": {
+                "kind": "revert-empty-lending-permit-v1"
+              }
+            },
+            {
+              "abi": {
+                "inputs": [
+                  {
+                    "internalType": "uint256",
+                    "name": "assets",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "receiver",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "owner",
+                    "type": "address"
+                  }
+                ],
+                "name": "withdraw",
+                "outputs": [
+                  {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+              },
+              "capabilityId": "revert-finance-v3vault:v1:42161:0x74e6afef5705beb126c6d3bf46f8fad8f3e07825:withdraw-usdc",
+              "chainId": 42161,
+              "contract": "0x74e6afef5705beb126c6d3bf46f8fad8f3e07825",
+              "functionName": "withdraw",
+              "label": "Revert Finance Withdraw USDC",
+              "operation": "withdraw-usdc",
+              "protocol": "Revert Finance",
+              "provenance": {
+                "sourceRef": "https://docs.revert.finance/revert/resources/contract-addresses.md ; https://sourcify.dev/server/v2/contract/42161/0x74e6afef5705beb126c6d3bf46f8fad8f3e07825?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-10-23"
+              },
+              "signature": "withdraw(uint256,address,address)",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Static deployment/source/ABI inventory only; no current runtime identity, balance, liquidity, funding, successful execution, complete workflow or financial-safety guarantee. Zero native value; independent grants, pauses, canonical calldata and transaction controls remain mandatory.",
+                "Arbitrum native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831 is immutable asset with6 decimals; rlUSDC lender shares also use6 decimals. Loan tokenId is a fixed-manager Uniswap V3 NFT and debt shares are separate loan-accounting units; neither is lender rlUSDC or raw ETH.",
+                "Plain deposit/mint and the separately scoped exact-empty permitData lending overloads pull USDC from msg.sender using existing allowance to V3Vault and mint rlUSDC to receiver. Exact-empty raw bytes skip the entire Permit2 branch; nonempty actual Permit2 execution and signature authorization entries remain excluded. No approval or signing capability is added. A separately scoped exact-empty permitData repayment overload also uses caller existing USDC allowance and does not grant new authority.",
+                "Conversions update accrued interest first. Deposit floors shares, mint rounds required USDC up; redeem floors USDC, withdraw rounds shares up. In this exact V3Vault implementation a withdrawal/redeem request exceeding owner share balance is clipped to that balance and recalculates assets, so requested exact assets may not be delivered. No caller minimum output, maximum input or deadline.",
+                "Withdraw/redeem burn owner shares; a different msg.sender requires pre-existing share allowance from owner. USDC goes to caller-chosen receiver. Exits require idle USDC and revert InsufficientLiquidity when insufficient; no withdrawal queue or fixed exit delay is provided.",
+                "Owner or emergencyAdmin can change global and daily lending/debt limits; zero or restrictive lending limits can block entry. Daily lending limit resets on UTC day number and exits replenish it. No current limits or perpetual unpaused availability are attested; this direct source has no separate lender pause flag.",
+                "Lenders fund loans against allowed Uniswap V3 LP NFT collateral, subject to oracle values, collateral/debt limits, minimum loan sizes, health checks and liquidations. Ordinary collateral deposit, borrowing, no-permit repayment, liquidity/fee withdrawal and zero-debt NFT removal are separately admitted; removal requires runtime-enforced empty callback bytes. Uncovered liquidation shortfalls can lower lending exchange rate pro rata. Signature-bearing liquidation, transformer authority, arbitrary multicall and direct NFT callback entrypoints remain excluded.",
+                "ABI functions do not establish website, legal, jurisdictional or account eligibility; any applicable protocol and independent policy restrictions remain binding. No KYC clearance or asset-safety assertion."
+              ]
             }
           ],
           "status": "active"

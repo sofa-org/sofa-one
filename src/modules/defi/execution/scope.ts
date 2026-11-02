@@ -191,6 +191,9 @@ export function executionScopeHash(scope: DefiExecutionScope): `0x${string}` {
   } else if (scope.kind === 'velora-empty-permit-settlement-v1') {
     if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid Velora execution scope');
     normalized = { kind: scope.kind };
+  } else if (scope.kind === 'revert-empty-lending-permit-v1' || scope.kind === 'napier-zero-deadline-collect-v1') {
+    if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid lender/collector execution scope');
+    normalized = { kind: scope.kind };
   } else if (scope.kind === 'uniswap-universal-router-2.1.2-v1' || scope.kind === 'uniswap-v4-position-manager-v1' || scope.kind === 'uniswap-v4-position-manager-primitive-v1') {
     if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid Uniswap execution scope');
     normalized = { kind: scope.kind };

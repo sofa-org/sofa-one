@@ -11,6 +11,8 @@ import { validateZeroExNftBinding } from '../execution/zero-ex-nft';
 import { validateUmamiRequestBinding } from '../execution/umami';
 import { validateFlexaStakeBinding } from '../execution/flexa';
 import { validateVeloraOrderBinding } from '../execution/velora';
+import { validateRevertLendingBinding } from '../execution/revert-lending';
+import { validateNapierCollectorBinding } from '../execution/napier';
 
 export const DEFI_MANIFEST = Symbol('DEFI_MANIFEST');
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -89,6 +91,8 @@ function validateFunction(fn: DefiFunctionPolicy, chain: DefiChainPolicy, contra
   validateUmamiRequestBinding(fn);
   validateFlexaStakeBinding(fn);
   validateVeloraOrderBinding(fn);
+  validateRevertLendingBinding(fn);
+  validateNapierCollectorBinding(fn);
   if (isPolymarketPusdWrapIdentity(fn) || fn.executionScope?.kind === 'polymarket-pusd-wrap-v1') validatePolymarketPusdWrapBinding(fn);
   const ensoRootIdentity = (fn.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId)
     || (fn.chainId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.chainId
