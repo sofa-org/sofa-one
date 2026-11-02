@@ -39997,7 +39997,15 @@
               "status": "active",
               "type": "contract_call",
               "warnings": [
-                "Payable ABI: caller-supplied value is not bounded by this catalog entry."
+                "Payable ABI: caller-supplied value is not bounded by this catalog entry.",
+                "Static exact-target source/ABI inventory only. Retained Sourcify root and implementation grades are match/match, not exact_match. No current implementation-slot/runtime identity, balances, funding, liquidity, successful execution, complete workflow or financial-safety guarantee; independent grants, pauses and transaction controls remain mandatory.",
+                "The ordinary payable route ABI and all existing IDs, fields, scopes and child graphs remain unchanged. Native-input flags and amount/value consistency remain onchain checks; allowance-funded ERC20 input remains available without adding approval or signature capabilities.",
+                "V2 route entries encode caller-chosen pair addresses; no factory validation is established. Existing srcToken allowance funds transferFrom(msg.sender, firstPair, amount), with fixed reserve/swap selectors and empty pair swap callback bytes; arbitrary token/pair implementations and recipient hooks are not made safe by this syntax restriction.",
+                "Settlement pays msg.sender, subject to token/native recipient behavior and encoded surplus deductions. No recipient ownership restriction is introduced.",
+                "The supplied route controls pools, direction and fee-related encoding. Pool liquidity, reserves, token behavior, existing caller allowance and recipient behavior remain dependencies; this scope does not validate quotes, pool suitability or market safety.",
+                "The source checks computed returnAmount against minReturn but has no transaction deadline. Encoded finalAmount settlement may cap recipient proceeds and send surplus to fixed 0x8dd9433e6f86a035bb318a6f74ad2d3ac6731861; computed returnAmount is not a promise that all output reaches the recipient.",
+                "The root is an upgradeable EIP1967 proxy. Owner/admin pause, upgrades and dependency changes can change availability or behavior. Current official deployment listing is lifecycle inventory, not live storage attestation; historical family inventory inactive metadata is not proof this deployment is shut down.",
+                "Generic swap, simpleSwap and swapGmxV2 arbitrary-executor routes, standalone approval/permit/signing, role activation, proxy administration and direct callback entrypoints remain unactivated. No existing multicall child graph is widened."
               ]
             },
             {
@@ -40058,8 +40066,163 @@
               "status": "active",
               "type": "contract_call",
               "warnings": [
-                "Payable ABI: caller-supplied value is not bounded by this catalog entry."
+                "Payable ABI: caller-supplied value is not bounded by this catalog entry.",
+                "Static exact-target source/ABI inventory only. Retained Sourcify root and implementation grades are match/match, not exact_match. No current implementation-slot/runtime identity, balances, funding, liquidity, successful execution, complete workflow or financial-safety guarantee; independent grants, pauses and transaction controls remain mandatory.",
+                "The ordinary payable route ABI and all existing IDs, fields, scopes and child graphs remain unchanged. Native-input flags and amount/value consistency remain onchain checks; allowance-funded ERC20 input remains available without adding approval or signature capabilities.",
+                "V2 route entries encode caller-chosen pair addresses; no factory validation is established. Existing srcToken allowance funds transferFrom(msg.sender, firstPair, amount), with fixed reserve/swap selectors and empty pair swap callback bytes; arbitrary token/pair implementations and recipient hooks are not made safe by this syntax restriction.",
+                "Settlement pays the supplied recipient, subject to token/native recipient behavior and encoded surplus deductions. No recipient ownership restriction is introduced.",
+                "The supplied route controls pools, direction and fee-related encoding. Pool liquidity, reserves, token behavior, existing caller allowance and recipient behavior remain dependencies; this scope does not validate quotes, pool suitability or market safety.",
+                "The source checks computed returnAmount against minReturn but has no transaction deadline. Encoded finalAmount settlement may cap recipient proceeds and send surplus to fixed 0x8dd9433e6f86a035bb318a6f74ad2d3ac6731861; computed returnAmount is not a promise that all output reaches the recipient.",
+                "The root is an upgradeable EIP1967 proxy. Owner/admin pause, upgrades and dependency changes can change availability or behavior. Current official deployment listing is lifecycle inventory, not live storage attestation; historical family inventory inactive metadata is not proof this deployment is shut down.",
+                "Generic swap, simpleSwap and swapGmxV2 arbitrary-executor routes, standalone approval/permit/signing, role activation, proxy administration and direct callback entrypoints remain unactivated. No existing multicall child graph is widened."
               ]
+            },
+            {
+              "capabilityId": "open-ocean:empty-permit-swap-v1:1:0x6352a56caadc4f1e25cd6c75970fa768a3304e64:callUniswapToWithPermit",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0x6352a56caadc4f1e25cd6c75970fa768a3304e64",
+              "functionName": "callUniswapToWithPermit",
+              "signature": "callUniswapToWithPermit(address,uint256,uint256,bytes32[],bytes,address)",
+              "abi": {
+                "name": "callUniswapToWithPermit",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "srcToken",
+                    "type": "address",
+                    "internalType": "contract IERC20"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "minReturn",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "pools",
+                    "type": "bytes32[]",
+                    "internalType": "bytes32[]"
+                  },
+                  {
+                    "name": "permit",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "recipient",
+                    "type": "address",
+                    "internalType": "address payable"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "returnAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "protocol": "open-ocean",
+              "operation": "swap",
+              "label": "OpenOcean callUniswapToWithPermit (empty permit)",
+              "description": "Caller-funded V2-style swap using existing allowance, with permit bytes exactly empty and settlement to the final recipient argument.",
+              "provenance": {
+                "sourceRef": "https://etherscan.io/address/0xE29B6B6E96beFE1e9C6f948BcB5A3f71058bDA9B#code",
+                "status": "verified",
+                "verifiedAt": "2026-10-04"
+              },
+              "warnings": [
+                "Static exact-target source/ABI inventory only. Retained Sourcify root and implementation grades are match/match, not exact_match. No current implementation-slot/runtime identity, balances, funding, liquidity, successful execution, complete workflow or financial-safety guarantee; independent grants, pauses and transaction controls remain mandatory.",
+                "Nonpayable exact ABI: native value must be zero. Positive native-input wrapping requires msg.value == amount and is unavailable for a positive amount in these overloads; output unwrapping may still send native currency.",
+                "Top-level permit argument index 4 must equal exactly 0x. The genuine permit.length > 0 guard skips the entire external _permit1/_permit2 authority call for empty bytes; _permit returns false and _isPermit2(empty) is false. Invalid-signature catch behavior is not relied upon; no token/operator authority is created.",
+                "V2 route entries encode caller-chosen pair addresses; no factory validation is established. Existing srcToken allowance funds transferFrom(msg.sender, firstPair, amount), with fixed reserve/swap selectors and empty pair swap callback bytes; arbitrary token/pair implementations and recipient hooks are not made safe by this syntax restriction.",
+                "Settlement pays the final recipient argument, subject to output-token/native-recipient behavior and encoded surplus deductions. No recipient ownership restriction is introduced.",
+                "The supplied route controls pools, direction and fee-related encoding. Pool liquidity, reserves, token behavior, existing caller allowance and recipient behavior remain dependencies; this scope does not validate quotes, pool suitability or market safety.",
+                "The source checks computed returnAmount against minReturn but has no transaction deadline. Encoded finalAmount settlement may cap recipient proceeds and send surplus to fixed 0x8dd9433e6f86a035bb318a6f74ad2d3ac6731861; computed returnAmount is not a promise that all output reaches the recipient.",
+                "The root is an upgradeable EIP1967 proxy. Owner/admin pause, upgrades and dependency changes can change availability or behavior. Current official deployment listing is lifecycle inventory, not live storage attestation; historical family inventory inactive metadata is not proof this deployment is shut down.",
+                "Generic swap, simpleSwap and swapGmxV2 arbitrary-executor routes, standalone approval/permit/signing, role activation, proxy administration and direct callback entrypoints remain unactivated. No existing multicall child graph is widened."
+              ],
+              "executionScope": {
+                "kind": "openocean-empty-permit-swap-v1"
+              }
+            },
+            {
+              "capabilityId": "open-ocean:empty-permit-swap-v1:1:0x6352a56caadc4f1e25cd6c75970fa768a3304e64:callUniswapWithPermit",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0x6352a56caadc4f1e25cd6c75970fa768a3304e64",
+              "functionName": "callUniswapWithPermit",
+              "signature": "callUniswapWithPermit(address,uint256,uint256,bytes32[],bytes)",
+              "abi": {
+                "name": "callUniswapWithPermit",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "srcToken",
+                    "type": "address",
+                    "internalType": "contract IERC20"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "minReturn",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "pools",
+                    "type": "bytes32[]",
+                    "internalType": "bytes32[]"
+                  },
+                  {
+                    "name": "permit",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "returnAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "protocol": "open-ocean",
+              "operation": "swap",
+              "label": "OpenOcean callUniswapWithPermit (empty permit)",
+              "description": "Caller-funded V2-style swap using existing allowance, with permit bytes exactly empty and settlement to msg.sender.",
+              "provenance": {
+                "sourceRef": "https://etherscan.io/address/0xE29B6B6E96beFE1e9C6f948BcB5A3f71058bDA9B#code",
+                "status": "verified",
+                "verifiedAt": "2026-10-04"
+              },
+              "warnings": [
+                "Static exact-target source/ABI inventory only. Retained Sourcify root and implementation grades are match/match, not exact_match. No current implementation-slot/runtime identity, balances, funding, liquidity, successful execution, complete workflow or financial-safety guarantee; independent grants, pauses and transaction controls remain mandatory.",
+                "Nonpayable exact ABI: native value must be zero. Positive native-input wrapping requires msg.value == amount and is unavailable for a positive amount in these overloads; output unwrapping may still send native currency.",
+                "Top-level permit argument index 4 must equal exactly 0x. The genuine permit.length > 0 guard skips the entire external _permit1/_permit2 authority call for empty bytes; _permit returns false and _isPermit2(empty) is false. Invalid-signature catch behavior is not relied upon; no token/operator authority is created.",
+                "V2 route entries encode caller-chosen pair addresses; no factory validation is established. Existing srcToken allowance funds transferFrom(msg.sender, firstPair, amount), with fixed reserve/swap selectors and empty pair swap callback bytes; arbitrary token/pair implementations and recipient hooks are not made safe by this syntax restriction.",
+                "Settlement pays msg.sender, subject to output-token/native-recipient behavior and encoded surplus deductions. No recipient ownership restriction is introduced.",
+                "The supplied route controls pools, direction and fee-related encoding. Pool liquidity, reserves, token behavior, existing caller allowance and recipient behavior remain dependencies; this scope does not validate quotes, pool suitability or market safety.",
+                "The source checks computed returnAmount against minReturn but has no transaction deadline. Encoded finalAmount settlement may cap recipient proceeds and send surplus to fixed 0x8dd9433e6f86a035bb318a6f74ad2d3ac6731861; computed returnAmount is not a promise that all output reaches the recipient.",
+                "The root is an upgradeable EIP1967 proxy. Owner/admin pause, upgrades and dependency changes can change availability or behavior. Current official deployment listing is lifecycle inventory, not live storage attestation; historical family inventory inactive metadata is not proof this deployment is shut down.",
+                "Generic swap, simpleSwap and swapGmxV2 arbitrary-executor routes, standalone approval/permit/signing, role activation, proxy administration and direct callback entrypoints remain unactivated. No existing multicall child graph is widened."
+              ],
+              "executionScope": {
+                "kind": "openocean-empty-permit-swap-v1"
+              }
             },
             {
               "abi": {
@@ -40114,8 +40277,93 @@
               "status": "active",
               "type": "contract_call",
               "warnings": [
-                "Payable ABI: caller-supplied value is not bounded by this catalog entry."
+                "Payable ABI: caller-supplied value is not bounded by this catalog entry.",
+                "Static exact-target source/ABI inventory only. Retained Sourcify root and implementation grades are match/match, not exact_match. No current implementation-slot/runtime identity, balances, funding, liquidity, successful execution, complete workflow or financial-safety guarantee; independent grants, pauses and transaction controls remain mandatory.",
+                "The ordinary payable route ABI and all existing IDs, fields, scopes and child graphs remain unchanged. Native-input flags and amount/value consistency remain onchain checks; allowance-funded ERC20 input remains available without adding approval or signature capabilities.",
+                "V3 first-hop payer is msg.sender under existing token allowance when the nonpayable route is not native-wrapping; later hops use router-held output. The fixed settlement callback verifies pool identity using its configured factory/init-code-hash constants and token0/token1/fee before paying owed input. This is existing settlement behavior, not user-selected callback target/data or a standalone callback grant.",
+                "Settlement pays the supplied recipient, subject to token/native recipient behavior and encoded surplus deductions. No recipient ownership restriction is introduced.",
+                "The supplied route controls pools, direction and fee-related encoding. Pool liquidity, reserves, token behavior, existing caller allowance and recipient behavior remain dependencies; this scope does not validate quotes, pool suitability or market safety.",
+                "The source checks computed returnAmount against minReturn but has no transaction deadline. Encoded finalAmount settlement may cap recipient proceeds and send surplus to fixed 0x8dd9433e6f86a035bb318a6f74ad2d3ac6731861; computed returnAmount is not a promise that all output reaches the recipient.",
+                "The root is an upgradeable EIP1967 proxy. Owner/admin pause, upgrades and dependency changes can change availability or behavior. Current official deployment listing is lifecycle inventory, not live storage attestation; historical family inventory inactive metadata is not proof this deployment is shut down.",
+                "Generic swap, simpleSwap and swapGmxV2 arbitrary-executor routes, standalone approval/permit/signing, role activation, proxy administration and direct callback entrypoints remain unactivated. No existing multicall child graph is widened."
               ]
+            },
+            {
+              "capabilityId": "open-ocean:empty-permit-swap-v1:1:0x6352a56caadc4f1e25cd6c75970fa768a3304e64:uniswapV3SwapToWithPermit",
+              "type": "contract_call",
+              "chainId": 1,
+              "contract": "0x6352a56caadc4f1e25cd6c75970fa768a3304e64",
+              "functionName": "uniswapV3SwapToWithPermit",
+              "signature": "uniswapV3SwapToWithPermit(address,uint256,uint256,uint256[],bytes,address)",
+              "abi": {
+                "name": "uniswapV3SwapToWithPermit",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "recipient",
+                    "type": "address",
+                    "internalType": "address payable"
+                  },
+                  {
+                    "name": "amount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "minReturn",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "pools",
+                    "type": "uint256[]",
+                    "internalType": "uint256[]"
+                  },
+                  {
+                    "name": "permit",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "srcToken",
+                    "type": "address",
+                    "internalType": "contract IERC20"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "returnAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ],
+                "stateMutability": "nonpayable"
+              },
+              "status": "active",
+              "protocol": "open-ocean",
+              "operation": "swap",
+              "label": "OpenOcean uniswapV3SwapToWithPermit (empty permit)",
+              "description": "Caller-funded V3-style swap using existing allowance, with permit bytes exactly empty and settlement to the leading recipient argument.",
+              "provenance": {
+                "sourceRef": "https://etherscan.io/address/0xE29B6B6E96beFE1e9C6f948BcB5A3f71058bDA9B#code",
+                "status": "verified",
+                "verifiedAt": "2026-10-04"
+              },
+              "warnings": [
+                "Static exact-target source/ABI inventory only. Retained Sourcify root and implementation grades are match/match, not exact_match. No current implementation-slot/runtime identity, balances, funding, liquidity, successful execution, complete workflow or financial-safety guarantee; independent grants, pauses and transaction controls remain mandatory.",
+                "Nonpayable exact ABI: native value must be zero. Positive native-input wrapping requires msg.value == amount and is unavailable for a positive amount in these overloads; output unwrapping may still send native currency.",
+                "Top-level permit argument index 4 must equal exactly 0x. The genuine permit.length > 0 guard skips the entire external _permit1/_permit2 authority call for empty bytes; _permit returns false and _isPermit2(empty) is false. Invalid-signature catch behavior is not relied upon; no token/operator authority is created.",
+                "V3 first-hop payer is msg.sender under existing token allowance when the nonpayable route is not native-wrapping; later hops use router-held output. The fixed settlement callback verifies pool identity using its configured factory/init-code-hash constants and token0/token1/fee before paying owed input. This is existing settlement behavior, not user-selected callback target/data or a standalone callback grant.",
+                "Settlement pays the leading recipient argument, subject to output-token/native-recipient behavior and encoded surplus deductions. No recipient ownership restriction is introduced.",
+                "The final srcToken argument is used only by the skipped permit helper for empty permit bytes; it does not bind or validate the actual route input token. Owed input token is determined by the pool callback and route direction.",
+                "The supplied route controls pools, direction and fee-related encoding. Pool liquidity, reserves, token behavior, existing caller allowance and recipient behavior remain dependencies; this scope does not validate quotes, pool suitability or market safety.",
+                "The source checks computed returnAmount against minReturn but has no transaction deadline. Encoded finalAmount settlement may cap recipient proceeds and send surplus to fixed 0x8dd9433e6f86a035bb318a6f74ad2d3ac6731861; computed returnAmount is not a promise that all output reaches the recipient.",
+                "The root is an upgradeable EIP1967 proxy. Owner/admin pause, upgrades and dependency changes can change availability or behavior. Current official deployment listing is lifecycle inventory, not live storage attestation; historical family inventory inactive metadata is not proof this deployment is shut down.",
+                "Generic swap, simpleSwap and swapGmxV2 arbitrary-executor routes, standalone approval/permit/signing, role activation, proxy administration and direct callback entrypoints remain unactivated. No existing multicall child graph is widened."
+              ],
+              "executionScope": {
+                "kind": "openocean-empty-permit-swap-v1"
+              }
             }
           ],
           "status": "active"

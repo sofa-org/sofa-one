@@ -22907,6 +22907,76 @@
           },
           {
             "type": "function",
+            "name": "callUniswapToWithPermit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "srcToken",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "minReturn",
+                "type": "uint256"
+              },
+              {
+                "name": "pools",
+                "type": "bytes32[]"
+              },
+              {
+                "name": "permit",
+                "type": "bytes"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "returnAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "callUniswapWithPermit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "srcToken",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "minReturn",
+                "type": "uint256"
+              },
+              {
+                "name": "pools",
+                "type": "bytes32[]"
+              },
+              {
+                "name": "permit",
+                "type": "bytes"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "returnAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
             "name": "uniswapV3SwapTo",
             "stateMutability": "payable",
             "inputs": [
@@ -22925,6 +22995,43 @@
               {
                 "name": "pools",
                 "type": "uint256[]"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "returnAmount",
+                "type": "uint256"
+              }
+            ]
+          },
+          {
+            "type": "function",
+            "name": "uniswapV3SwapToWithPermit",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "name": "minReturn",
+                "type": "uint256"
+              },
+              {
+                "name": "pools",
+                "type": "uint256[]"
+              },
+              {
+                "name": "permit",
+                "type": "bytes"
+              },
+              {
+                "name": "srcToken",
+                "type": "address"
               }
             ],
             "outputs": [

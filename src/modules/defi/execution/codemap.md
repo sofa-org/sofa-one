@@ -43,6 +43,10 @@ provider or financial-safety responsibilities.
 - `napier.ts` binds both collectors to per-input zero permit deadlines,
   skipping authority calls entirely. Factory registration, prior collector
   approval, accrued balances and configured reward/token behavior remain.
+- `openocean.ts` reserves three exact Ethereum permit-wrapper swap identities
+  and requires raw permit argument 4 empty. Complete routes are bounded before
+  decoding; ordinary caller-funded V2/V3 settlement and dependency behavior
+  remain, without installing token or Permit2 authority.
 
 Finite self-delegatecall wrappers bind same-chain/same-target active children
 by capability ID, ABI hash and, where applicable, execution-scope hash.
