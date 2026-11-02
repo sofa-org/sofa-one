@@ -45,6 +45,7 @@ export type DefiExecutionScope =
   | Readonly<{ kind: 'revert-empty-lending-permit-v1' }>
   | Readonly<{ kind: 'napier-zero-deadline-collect-v1' }>
   | Readonly<{ kind: 'openocean-empty-permit-swap-v1' }>
+  | Readonly<{ kind: 'hertzflow-zero-callback-decrease-order-v1' }>
   | Readonly<{ kind: 'uniswap-v4-position-manager-primitive-v1' }>;
 
 export type MulticallChildBinding = Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>;

@@ -14,6 +14,7 @@ import { validateVeloraOrderBinding } from '../execution/velora';
 import { validateRevertLendingBinding } from '../execution/revert-lending';
 import { validateNapierCollectorBinding } from '../execution/napier';
 import { validateOpenOceanSwapBinding } from '../execution/openocean';
+import { validateHertzDecreaseOrderBinding } from '../execution/hertzflow';
 
 export const DEFI_MANIFEST = Symbol('DEFI_MANIFEST');
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -95,6 +96,7 @@ function validateFunction(fn: DefiFunctionPolicy, chain: DefiChainPolicy, contra
   validateRevertLendingBinding(fn);
   validateNapierCollectorBinding(fn);
   validateOpenOceanSwapBinding(fn);
+  validateHertzDecreaseOrderBinding(fn);
   if (isPolymarketPusdWrapIdentity(fn) || fn.executionScope?.kind === 'polymarket-pusd-wrap-v1') validatePolymarketPusdWrapBinding(fn);
   const ensoRootIdentity = (fn.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId)
     || (fn.chainId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.chainId

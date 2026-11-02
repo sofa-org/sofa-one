@@ -8,6 +8,8 @@ Merkl recipient claims, 0x NFT settlements, Umami request callbacks, Flexa preau
 
 OpenOcean's three exact Ethereum permit-wrapper swaps also require a mandatory exact-root/full-ABI marker. Empty permit bytes must bypass the entire authority helper; invalid signatures or caught failures are not a substitute. Its ordinary route methods retain their old identities and do not implicitly grant the new selectors.
 
+HertzFlow `createOrder` is reserved for a dedicated direct-only position-decrease scope, never the full order-creation ABI. The fixed account-derived position key, zero chosen callback/extension data and zero-native-value policy distinguish it from shared-principal ingress or oracle-parameterized atomic withdrawal. Existing finite child graphs and independently required fee provisioning are unchanged.
+
 Registry tests follow the same domain layout: protocol-specific authorization tests live beside that protocol under `registry/<protocol>/`, cross-protocol policy integration tests live in `registry/policy-integration/`, and shared catalog/manifest test helpers live in `registry/__fixtures__/`. Test filenames describe the exercised operation or policy boundary; they do not carry temporal or release labels.
 
 The production-registry module fixture overrides `PrismaService` directly: imported feature modules can register their own database provider, so a global mock alone does not isolate Prisma construction. Module fixtures importing the session/step-up graph also load global `ConfigModule`, matching application composition.

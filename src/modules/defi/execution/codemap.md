@@ -47,6 +47,10 @@ provider or financial-safety responsibilities.
   and requires raw permit argument 4 empty. Complete routes are bounded before
   decoding; ordinary caller-funded V2/V3 settlement and dependency behavior
   remain, without installing token or Permit2 authority.
+- `hertzflow.ts` reserves `createOrder` for existing-position decrease types
+  4/5/6, zero chosen callback, empty extension data and zero native value.
+  Ownership comes from the on-chain caller-derived position key; preexisting
+  shared-vault WNT fees, keepers and stored/configured callbacks remain external.
 
 Finite self-delegatecall wrappers bind same-chain/same-target active children
 by capability ID, ABI hash and, where applicable, execution-scope hash.

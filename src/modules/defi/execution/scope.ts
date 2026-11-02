@@ -197,6 +197,9 @@ export function executionScopeHash(scope: DefiExecutionScope): `0x${string}` {
   } else if (scope.kind === 'openocean-empty-permit-swap-v1') {
     if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid OpenOcean execution scope');
     normalized = { kind: scope.kind };
+  } else if (scope.kind === 'hertzflow-zero-callback-decrease-order-v1') {
+    if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid HertzFlow execution scope');
+    normalized = { kind: scope.kind };
   } else if (scope.kind === 'uniswap-universal-router-2.1.2-v1' || scope.kind === 'uniswap-v4-position-manager-v1' || scope.kind === 'uniswap-v4-position-manager-primitive-v1') {
     if (Object.keys(scope).join(',') !== 'kind') throw new TypeError('Invalid Uniswap execution scope');
     normalized = { kind: scope.kind };

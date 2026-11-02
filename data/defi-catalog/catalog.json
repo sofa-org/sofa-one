@@ -153209,7 +153209,7 @@
               "warnings": [
                 "Static deployment/source/ABI inventory only; not live authorization, persistent runtime attestation, backing, financial safety, liquidity, successful execution or a complete workflow. Existing grants, independent policy, pauses, canonical calldata and value controls remain mandatory.",
                 "BNB Smart Chain56 direct nonproxy ExchangeRouter0x61e1116a943b27d21094599c2c5bd75e980170a5 only. Current official SDK0.3.2 published2026-09-10 binds this address. Older August GitHub config and testnet-only address-table text are not used as current mainnet mappings. Sourcify runtime/creation grade is match, not exact_match. Fixed linked libraries and immutable handlers are retained; independent dependency safety is not attested.",
-                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. New order/LP ingress is not covered.",
+                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. LP/new-principal ingress remains excluded. A separately granted direct-only createOrder scope admits only existing-position decrease modes4/5/6 with zero chosen callback, empty extension data and zero native value; it does not widen this function or the old multicall child graph.",
                 "Cancellation keys must belong to msg.sender. Pending request removal refunds existing deposited token quantities, not an executed position close: deposit long/short tokens and withdrawal/shift market tokens return to recorded account. Order cancellation returns increase/swap collateral to recorded cancellationReceiver, falling back to account; execution-fee refund receiver is recorded cancellationReceiver or receiver. Native unwrapping follows stored request flags.",
                 "Existing stored callback and callback gas limits can be invoked on cancellation; these methods cannot choose a new callback or arbitrary calldata. Request expiry/feature gates, supported order type, gas and keeper fee rules apply; current feature state is not inferred from source. Requests originally created through multichain paths may credit an existing on-chain MultichainVault ledger rather than deliver a wallet token; no cross-chain send is admitted.",
                 "updateOrder changes only caller-owned supported nonmarket order sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount, validFromTime and autoCancel; it unfreezes/touches the request. USD/price fields use protocol1e30 precision, output token quantities native decimals, validFromTime seconds. Existing execution fee is revalidated; source recordTransferIn can consume already-present WNT but no prefunding helper or top-up workflow is admitted.",
@@ -153249,7 +153249,7 @@
               "warnings": [
                 "Static deployment/source/ABI inventory only; not live authorization, persistent runtime attestation, backing, financial safety, liquidity, successful execution or a complete workflow. Existing grants, independent policy, pauses, canonical calldata and value controls remain mandatory.",
                 "BNB Smart Chain56 direct nonproxy ExchangeRouter0x61e1116a943b27d21094599c2c5bd75e980170a5 only. Current official SDK0.3.2 published2026-09-10 binds this address. Older August GitHub config and testnet-only address-table text are not used as current mainnet mappings. Sourcify runtime/creation grade is match, not exact_match. Fixed linked libraries and immutable handlers are retained; independent dependency safety is not attested.",
-                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. New order/LP ingress is not covered.",
+                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. LP/new-principal ingress remains excluded. A separately granted direct-only createOrder scope admits only existing-position decrease modes4/5/6 with zero chosen callback, empty extension data and zero native value; it does not widen this function or the old multicall child graph.",
                 "Cancellation keys must belong to msg.sender. Pending request removal refunds existing deposited token quantities, not an executed position close: deposit long/short tokens and withdrawal/shift market tokens return to recorded account. Order cancellation returns increase/swap collateral to recorded cancellationReceiver, falling back to account; execution-fee refund receiver is recorded cancellationReceiver or receiver. Native unwrapping follows stored request flags.",
                 "Existing stored callback and callback gas limits can be invoked on cancellation; these methods cannot choose a new callback or arbitrary calldata. Request expiry/feature gates, supported order type, gas and keeper fee rules apply; current feature state is not inferred from source. Requests originally created through multichain paths may credit an existing on-chain MultichainVault ledger rather than deliver a wallet token; no cross-chain send is admitted.",
                 "updateOrder changes only caller-owned supported nonmarket order sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount, validFromTime and autoCancel; it unfreezes/touches the request. USD/price fields use protocol1e30 precision, output token quantities native decimals, validFromTime seconds. Existing execution fee is revalidated; source recordTransferIn can consume already-present WNT but no prefunding helper or top-up workflow is admitted.",
@@ -153289,7 +153289,7 @@
               "warnings": [
                 "Static deployment/source/ABI inventory only; not live authorization, persistent runtime attestation, backing, financial safety, liquidity, successful execution or a complete workflow. Existing grants, independent policy, pauses, canonical calldata and value controls remain mandatory.",
                 "BNB Smart Chain56 direct nonproxy ExchangeRouter0x61e1116a943b27d21094599c2c5bd75e980170a5 only. Current official SDK0.3.2 published2026-09-10 binds this address. Older August GitHub config and testnet-only address-table text are not used as current mainnet mappings. Sourcify runtime/creation grade is match, not exact_match. Fixed linked libraries and immutable handlers are retained; independent dependency safety is not attested.",
-                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. New order/LP ingress is not covered.",
+                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. LP/new-principal ingress remains excluded. A separately granted direct-only createOrder scope admits only existing-position decrease modes4/5/6 with zero chosen callback, empty extension data and zero native value; it does not widen this function or the old multicall child graph.",
                 "Cancellation keys must belong to msg.sender. Pending request removal refunds existing deposited token quantities, not an executed position close: deposit long/short tokens and withdrawal/shift market tokens return to recorded account. Order cancellation returns increase/swap collateral to recorded cancellationReceiver, falling back to account; execution-fee refund receiver is recorded cancellationReceiver or receiver. Native unwrapping follows stored request flags.",
                 "Existing stored callback and callback gas limits can be invoked on cancellation; these methods cannot choose a new callback or arbitrary calldata. Request expiry/feature gates, supported order type, gas and keeper fee rules apply; current feature state is not inferred from source. Requests originally created through multichain paths may credit an existing on-chain MultichainVault ledger rather than deliver a wallet token; no cross-chain send is admitted.",
                 "updateOrder changes only caller-owned supported nonmarket order sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount, validFromTime and autoCancel; it unfreezes/touches the request. USD/price fields use protocol1e30 precision, output token quantities native decimals, validFromTime seconds. Existing execution fee is revalidated; source recordTransferIn can consume already-present WNT but no prefunding helper or top-up workflow is admitted.",
@@ -153329,7 +153329,7 @@
               "warnings": [
                 "Static deployment/source/ABI inventory only; not live authorization, persistent runtime attestation, backing, financial safety, liquidity, successful execution or a complete workflow. Existing grants, independent policy, pauses, canonical calldata and value controls remain mandatory.",
                 "BNB Smart Chain56 direct nonproxy ExchangeRouter0x61e1116a943b27d21094599c2c5bd75e980170a5 only. Current official SDK0.3.2 published2026-09-10 binds this address. Older August GitHub config and testnet-only address-table text are not used as current mainnet mappings. Sourcify runtime/creation grade is match, not exact_match. Fixed linked libraries and immutable handlers are retained; independent dependency safety is not attested.",
-                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. New order/LP ingress is not covered.",
+                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. LP/new-principal ingress remains excluded. A separately granted direct-only createOrder scope admits only existing-position decrease modes4/5/6 with zero chosen callback, empty extension data and zero native value; it does not widen this function or the old multicall child graph.",
                 "Cancellation keys must belong to msg.sender. Pending request removal refunds existing deposited token quantities, not an executed position close: deposit long/short tokens and withdrawal/shift market tokens return to recorded account. Order cancellation returns increase/swap collateral to recorded cancellationReceiver, falling back to account; execution-fee refund receiver is recorded cancellationReceiver or receiver. Native unwrapping follows stored request flags.",
                 "Existing stored callback and callback gas limits can be invoked on cancellation; these methods cannot choose a new callback or arbitrary calldata. Request expiry/feature gates, supported order type, gas and keeper fee rules apply; current feature state is not inferred from source. Requests originally created through multichain paths may credit an existing on-chain MultichainVault ledger rather than deliver a wallet token; no cross-chain send is admitted.",
                 "updateOrder changes only caller-owned supported nonmarket order sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount, validFromTime and autoCancel; it unfreezes/touches the request. USD/price fields use protocol1e30 precision, output token quantities native decimals, validFromTime seconds. Existing execution fee is revalidated; source recordTransferIn can consume already-present WNT but no prefunding helper or top-up workflow is admitted.",
@@ -153382,7 +153382,7 @@
               "warnings": [
                 "Static deployment/source/ABI inventory only; not live authorization, persistent runtime attestation, backing, financial safety, liquidity, successful execution or a complete workflow. Existing grants, independent policy, pauses, canonical calldata and value controls remain mandatory.",
                 "BNB Smart Chain56 direct nonproxy ExchangeRouter0x61e1116a943b27d21094599c2c5bd75e980170a5 only. Current official SDK0.3.2 published2026-09-10 binds this address. Older August GitHub config and testnet-only address-table text are not used as current mainnet mappings. Sourcify runtime/creation grade is match, not exact_match. Fixed linked libraries and immutable handlers are retained; independent dependency safety is not attested.",
-                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. New order/LP ingress is not covered.",
+                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. LP/new-principal ingress remains excluded. A separately granted direct-only createOrder scope admits only existing-position decrease modes4/5/6 with zero chosen callback, empty extension data and zero native value; it does not widen this function or the old multicall child graph.",
                 "Cancellation keys must belong to msg.sender. Pending request removal refunds existing deposited token quantities, not an executed position close: deposit long/short tokens and withdrawal/shift market tokens return to recorded account. Order cancellation returns increase/swap collateral to recorded cancellationReceiver, falling back to account; execution-fee refund receiver is recorded cancellationReceiver or receiver. Native unwrapping follows stored request flags.",
                 "Existing stored callback and callback gas limits can be invoked on cancellation; these methods cannot choose a new callback or arbitrary calldata. Request expiry/feature gates, supported order type, gas and keeper fee rules apply; current feature state is not inferred from source. Requests originally created through multichain paths may credit an existing on-chain MultichainVault ledger rather than deliver a wallet token; no cross-chain send is admitted.",
                 "updateOrder changes only caller-owned supported nonmarket order sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount, validFromTime and autoCancel; it unfreezes/touches the request. USD/price fields use protocol1e30 precision, output token quantities native decimals, validFromTime seconds. Existing execution fee is revalidated; source recordTransferIn can consume already-present WNT but no prefunding helper or top-up workflow is admitted.",
@@ -153439,7 +153439,7 @@
               "warnings": [
                 "Static deployment/source/ABI inventory only; not live authorization, persistent runtime attestation, backing, financial safety, liquidity, successful execution or a complete workflow. Existing grants, independent policy, pauses, canonical calldata and value controls remain mandatory.",
                 "BNB Smart Chain56 direct nonproxy ExchangeRouter0x61e1116a943b27d21094599c2c5bd75e980170a5 only. Current official SDK0.3.2 published2026-09-10 binds this address. Older August GitHub config and testnet-only address-table text are not used as current mainnet mappings. Sourcify runtime/creation grade is match, not exact_match. Fixed linked libraries and immutable handlers are retained; independent dependency safety is not attested.",
-                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. New order/LP ingress is not covered.",
+                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. LP/new-principal ingress remains excluded. A separately granted direct-only createOrder scope admits only existing-position decrease modes4/5/6 with zero chosen callback, empty extension data and zero native value; it does not widen this function or the old multicall child graph.",
                 "Cancellation keys must belong to msg.sender. Pending request removal refunds existing deposited token quantities, not an executed position close: deposit long/short tokens and withdrawal/shift market tokens return to recorded account. Order cancellation returns increase/swap collateral to recorded cancellationReceiver, falling back to account; execution-fee refund receiver is recorded cancellationReceiver or receiver. Native unwrapping follows stored request flags.",
                 "Existing stored callback and callback gas limits can be invoked on cancellation; these methods cannot choose a new callback or arbitrary calldata. Request expiry/feature gates, supported order type, gas and keeper fee rules apply; current feature state is not inferred from source. Requests originally created through multichain paths may credit an existing on-chain MultichainVault ledger rather than deliver a wallet token; no cross-chain send is admitted.",
                 "updateOrder changes only caller-owned supported nonmarket order sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount, validFromTime and autoCancel; it unfreezes/touches the request. USD/price fields use protocol1e30 precision, output token quantities native decimals, validFromTime seconds. Existing execution fee is revalidated; source recordTransferIn can consume already-present WNT but no prefunding helper or top-up workflow is admitted.",
@@ -153492,7 +153492,7 @@
               "warnings": [
                 "Static deployment/source/ABI inventory only; not live authorization, persistent runtime attestation, backing, financial safety, liquidity, successful execution or a complete workflow. Existing grants, independent policy, pauses, canonical calldata and value controls remain mandatory.",
                 "BNB Smart Chain56 direct nonproxy ExchangeRouter0x61e1116a943b27d21094599c2c5bd75e980170a5 only. Current official SDK0.3.2 published2026-09-10 binds this address. Older August GitHub config and testnet-only address-table text are not used as current mainnet mappings. Sourcify runtime/creation grade is match, not exact_match. Fixed linked libraries and immutable handlers are retained; independent dependency safety is not attested.",
-                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. New order/LP ingress is not covered.",
+                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. LP/new-principal ingress remains excluded. A separately granted direct-only createOrder scope admits only existing-position decrease modes4/5/6 with zero chosen callback, empty extension data and zero native value; it does not widen this function or the old multicall child graph.",
                 "Cancellation keys must belong to msg.sender. Pending request removal refunds existing deposited token quantities, not an executed position close: deposit long/short tokens and withdrawal/shift market tokens return to recorded account. Order cancellation returns increase/swap collateral to recorded cancellationReceiver, falling back to account; execution-fee refund receiver is recorded cancellationReceiver or receiver. Native unwrapping follows stored request flags.",
                 "Existing stored callback and callback gas limits can be invoked on cancellation; these methods cannot choose a new callback or arbitrary calldata. Request expiry/feature gates, supported order type, gas and keeper fee rules apply; current feature state is not inferred from source. Requests originally created through multichain paths may credit an existing on-chain MultichainVault ledger rather than deliver a wallet token; no cross-chain send is admitted.",
                 "updateOrder changes only caller-owned supported nonmarket order sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount, validFromTime and autoCancel; it unfreezes/touches the request. USD/price fields use protocol1e30 precision, output token quantities native decimals, validFromTime seconds. Existing execution fee is revalidated; source recordTransferIn can consume already-present WNT but no prefunding helper or top-up workflow is admitted.",
@@ -153545,7 +153545,7 @@
               "warnings": [
                 "Static deployment/source/ABI inventory only; not live authorization, persistent runtime attestation, backing, financial safety, liquidity, successful execution or a complete workflow. Existing grants, independent policy, pauses, canonical calldata and value controls remain mandatory.",
                 "BNB Smart Chain56 direct nonproxy ExchangeRouter0x61e1116a943b27d21094599c2c5bd75e980170a5 only. Current official SDK0.3.2 published2026-09-10 binds this address. Older August GitHub config and testnet-only address-table text are not used as current mainnet mappings. Sourcify runtime/creation grade is match, not exact_match. Fixed linked libraries and immutable handlers are retained; independent dependency safety is not attested.",
-                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. New order/LP ingress is not covered.",
+                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. LP/new-principal ingress remains excluded. A separately granted direct-only createOrder scope admits only existing-position decrease modes4/5/6 with zero chosen callback, empty extension data and zero native value; it does not widen this function or the old multicall child graph.",
                 "Cancellation keys must belong to msg.sender. Pending request removal refunds existing deposited token quantities, not an executed position close: deposit long/short tokens and withdrawal/shift market tokens return to recorded account. Order cancellation returns increase/swap collateral to recorded cancellationReceiver, falling back to account; execution-fee refund receiver is recorded cancellationReceiver or receiver. Native unwrapping follows stored request flags.",
                 "Existing stored callback and callback gas limits can be invoked on cancellation; these methods cannot choose a new callback or arbitrary calldata. Request expiry/feature gates, supported order type, gas and keeper fee rules apply; current feature state is not inferred from source. Requests originally created through multichain paths may credit an existing on-chain MultichainVault ledger rather than deliver a wallet token; no cross-chain send is admitted.",
                 "updateOrder changes only caller-owned supported nonmarket order sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount, validFromTime and autoCancel; it unfreezes/touches the request. USD/price fields use protocol1e30 precision, output token quantities native decimals, validFromTime seconds. Existing execution fee is revalidated; source recordTransferIn can consume already-present WNT but no prefunding helper or top-up workflow is admitted.",
@@ -153555,67 +153555,186 @@
               ]
             },
             {
-              "abi": {
-                "inputs": [
-                  {
-                    "name": "key",
-                    "type": "bytes32"
-                  },
-                  {
-                    "name": "sizeDeltaUsd",
-                    "type": "uint256"
-                  },
-                  {
-                    "name": "acceptablePrice",
-                    "type": "uint256"
-                  },
-                  {
-                    "name": "triggerPrice",
-                    "type": "uint256"
-                  },
-                  {
-                    "name": "minOutputAmount",
-                    "type": "uint256"
-                  },
-                  {
-                    "name": "validFromTime",
-                    "type": "uint256"
-                  },
-                  {
-                    "name": "autoCancel",
-                    "type": "bool"
-                  }
-                ],
-                "name": "updateOrder",
-                "outputs": [],
-                "stateMutability": "payable",
-                "type": "function"
-              },
-              "capabilityId": "hertzflow-current-bsc:v1:56:0x61e1116a943b27d21094599c2c5bd75e980170a5:updateorder",
+              "capabilityId": "hertzflow:zero-callback-decrease-v1:56:0x61e1116a943b27d21094599c2c5bd75e980170a5:create-order",
+              "type": "contract_call",
               "chainId": 56,
               "contract": "0x61e1116a943b27d21094599c2c5bd75e980170a5",
-              "functionName": "updateOrder",
-              "label": "HertzFlow update own pending nonmarket order",
-              "operation": "updateOrder",
-              "protocol": "HertzFlow",
-              "provenance": {
-                "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x61e1116A943b27D21094599C2c5Bd75e980170a5?fields=all",
-                "status": "verified",
-                "verifiedAt": "2026-10-24"
+              "functionName": "createOrder",
+              "signature": "createOrder(((address,address,address,address,address,address,address[]),(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256),uint8,uint8,uint8,bool,bool,bool,bytes32,bytes32[]))",
+              "abi": {
+                "name": "createOrder",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "params",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "name": "addresses",
+                        "type": "tuple",
+                        "components": [
+                          {
+                            "name": "receiver",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "cancellationReceiver",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "callbackContract",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "uiFeeReceiver",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "market",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "initialCollateralToken",
+                            "type": "address",
+                            "internalType": "address"
+                          },
+                          {
+                            "name": "swapPath",
+                            "type": "address[]",
+                            "internalType": "address[]"
+                          }
+                        ],
+                        "internalType": "struct IBaseOrderUtils.CreateOrderParamsAddresses"
+                      },
+                      {
+                        "name": "numbers",
+                        "type": "tuple",
+                        "components": [
+                          {
+                            "name": "sizeDeltaUsd",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "initialCollateralDeltaAmount",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "triggerPrice",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "acceptablePrice",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "executionFee",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "callbackGasLimit",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "minOutputAmount",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          },
+                          {
+                            "name": "validFromTime",
+                            "type": "uint256",
+                            "internalType": "uint256"
+                          }
+                        ],
+                        "internalType": "struct IBaseOrderUtils.CreateOrderParamsNumbers"
+                      },
+                      {
+                        "name": "orderType",
+                        "type": "uint8",
+                        "internalType": "enum Order.OrderType"
+                      },
+                      {
+                        "name": "decreasePositionSwapType",
+                        "type": "uint8",
+                        "internalType": "enum Order.DecreasePositionSwapType"
+                      },
+                      {
+                        "name": "orderPositionType",
+                        "type": "uint8",
+                        "internalType": "enum Order.OrderPositionType"
+                      },
+                      {
+                        "name": "isLong",
+                        "type": "bool",
+                        "internalType": "bool"
+                      },
+                      {
+                        "name": "shouldUnwrapNativeToken",
+                        "type": "bool",
+                        "internalType": "bool"
+                      },
+                      {
+                        "name": "autoCancel",
+                        "type": "bool",
+                        "internalType": "bool"
+                      },
+                      {
+                        "name": "referralCode",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                      },
+                      {
+                        "name": "dataList",
+                        "type": "bytes32[]",
+                        "internalType": "bytes32[]"
+                      }
+                    ],
+                    "internalType": "struct IBaseOrderUtils.CreateOrderParams"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  }
+                ],
+                "stateMutability": "payable"
               },
-              "signature": "updateOrder(bytes32,uint256,uint256,uint256,uint256,uint256,bool)",
               "status": "active",
-              "type": "contract_call",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x61e1116a943b27d21094599c2c5bd75e980170a5?fields=abi,compilation,proxyResolution ; retained full source: hertzflow-current-bsc-r10.json ; https://registry.npmjs.org/@hertzflow/sdk-v2/0.3.2",
+                "verifiedAt": "2026-11-02",
+                "status": "verified"
+              },
+              "protocol": "HertzFlow",
+              "operation": "createDecreaseOrder",
+              "label": "Create zero-callback position decrease request",
+              "description": "Create a market/limit/stop-loss decrease request for the caller existing position, with no chosen callback or extension data and zero native value. Existing order-vault WNT fee provisioning remains external.",
+              "executionScope": {
+                "kind": "hertzflow-zero-callback-decrease-order-v1"
+              },
               "warnings": [
-                "Static deployment/source/ABI inventory only; not live authorization, persistent runtime attestation, backing, financial safety, liquidity, successful execution or a complete workflow. Existing grants, independent policy, pauses, canonical calldata and value controls remain mandatory.",
-                "BNB Smart Chain56 direct nonproxy ExchangeRouter0x61e1116a943b27d21094599c2c5bd75e980170a5 only. Current official SDK0.3.2 published2026-09-10 binds this address. Older August GitHub config and testnet-only address-table text are not used as current mainnet mappings. Sourcify runtime/creation grade is match, not exact_match. Fixed linked libraries and immutable handlers are retained; independent dependency safety is not attested.",
-                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. New order/LP ingress is not covered.",
-                "Cancellation keys must belong to msg.sender. Pending request removal refunds existing deposited token quantities, not an executed position close: deposit long/short tokens and withdrawal/shift market tokens return to recorded account. Order cancellation returns increase/swap collateral to recorded cancellationReceiver, falling back to account; execution-fee refund receiver is recorded cancellationReceiver or receiver. Native unwrapping follows stored request flags.",
-                "Existing stored callback and callback gas limits can be invoked on cancellation; these methods cannot choose a new callback or arbitrary calldata. Request expiry/feature gates, supported order type, gas and keeper fee rules apply; current feature state is not inferred from source. Requests originally created through multichain paths may credit an existing on-chain MultichainVault ledger rather than deliver a wallet token; no cross-chain send is admitted.",
-                "updateOrder changes only caller-owned supported nonmarket order sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount, validFromTime and autoCancel; it unfreezes/touches the request. USD/price fields use protocol1e30 precision, output token quantities native decimals, validFromTime seconds. Existing execution fee is revalidated; source recordTransferIn can consume already-present WNT but no prefunding helper or top-up workflow is admitted.",
-                "Fee/reward claims debit only msg.sender funding/UI/affiliate claimable ledger for each market/token; arrays must align and payout receiver must be valid. Collateral claims additionally bind timeKeys and subtract already-claimed amount after configurable claimable/reduction factors and delay, with floor rounding at1e30 precision. Payout token quantities use native token decimals. No rewards, claimability, fee amount, positive yield or execution timing is promised.",
-                "All operations inherit mutable feature/market/fee configuration, oracle/keeper settlement, existing callback/dependency and market-token balance checks. Trading profit/loss and fees can reduce eventual amounts. Existing protocol eligibility/ownership is not granted by catalog admission.",
-                "A separate exact same-target-financial-multicall-v1 root is now admitted with independent root/used-child grants, hashes, pauses and enforced zero outer native value; arbitrary multicall execution remains excluded."
+                "Static exact-root ABI/source inventory and a block-number-pinned orderHandler getter, not a persistent runtime, position, funding, market, keeper/oracle, execution-success or financial-safety guarantee. Grants, pauses, canonical calldata/value checks and final acceptance remain independent.",
+                "Only BSC56 ExchangeRouter 0x61e1116a943b27d21094599c2c5bd75e980170a5 createOrder under mandatory hertzflow-zero-callback-decrease-order-v1. OrderType must be 4 MarketDecrease, 5 LimitDecrease or 6 StopLossDecrease; callbackContract must be zero and dataList exactly empty. Swap/increase/liquidation/other order types, extension/bridge data and selected callbacks are not admitted.",
+                "Root fixes account=msg.sender and srcChainId=0 (current chain). Decrease collateral comes from the existing position identified by account, market, collateral token, long/short side and normal/ZFP type; it is not new collateral taken from a shared principal-vault delta. Position existence, balances, type eligibility, market/feature flags, trigger/acceptable prices and keeper settlement are checked on chain, not simulated by the catalog.",
+                "Zero native value is mandatory even though the ABI is payable: msg.value is not wrapped or attributed to the execution fee. The handler still records already-present order-vault WNT for fees, validates the declared fee as a lower funding bound and overwrites it with the recorded amount. There is no maximum-fee cap on this root path and no sender attribution for that shared fee delta. Existing safe atomic fee provisioning is a prerequisite outside this capability; no sendTokens/sendWnt, principal prefunding, fee transfer or complete workflow is admitted. The existing updateOrder path already uses the same fee-recording model.",
+                "Zero chosen callback is written directly into the new order. CallbackUtils returns before new-order execution/cancellation and execution-fee refund callbacks for address0. This does not disable token/native recipient code, configured dependencies or callbacks on other previously stored orders that automatic cancellation may touch. It is not a globally callback-free or atomic-settlement promise.",
+                "Empty dataList prevents caller-supplied extension/bridge instructions. Financial swapPath contains market addresses validated by the protocol, not arbitrary target+calldata pairs; no provider/opaque-oracle argument is added. Later keeper/oracle execution and mutable market/dependency configuration remain independent, including their source/identity limitations.",
+                "USD size and price fields use protocol1e30 precision; collateral/output/fee amounts use relevant native token decimals; validFromTime is seconds. A market decrease requires validFromTime0 on chain, while limit/stop conditions can delay or prevent execution. Slippage minima, leverage, funding/borrowing/price impact and profit sharing/fees can reduce proceeds; no full or immediate close is guaranteed.",
+                "Receiver and cancellationReceiver remain financial recipients; native unwrapping/refunds can run receiver code. Existing position-type/mode, autoCancel and referral bookkeeping remain source-defined behavior and do not install wallet/permit/operator/delegation authority. No new approval, signature or administrator role is granted.",
+                "Root and order-handler retained source-service creation/runtime grades are match/match, not exact_match. November2 ABI refreshes and the orderHandler() observation at BSC block0x7d22d2d agree with retained binding0x7e953baa1bb0d8b8e14008490c3ffd22f3ea6f1a. Linked libraries, the decrease executor, live Oracle/provider implementations and live state are not independently promoted or attested.",
+                "New createOrder grant is direct-only. Existing ten HertzFlow IDs, ABIs and finite multicall child graph are unchanged; an old update/cancel/multicall grant cannot activate this selector. LP/new-principal request creation and atomic withdrawal with opaque oracle parameters remain outside this scope."
               ]
             },
             {
@@ -153717,6 +153836,70 @@
                 "Any child failure reverts the batch using ErrorUtils.revertWithParsedMessage; no allowFailure escape or guaranteed verbatim custom-error preservation is claimed."
               ],
               "abiHash": "0xa5deaee9a95266b7bdf7ebb76ab2d055387692b3687df064bf8d6742940e5648"
+            },
+            {
+              "abi": {
+                "inputs": [
+                  {
+                    "name": "key",
+                    "type": "bytes32"
+                  },
+                  {
+                    "name": "sizeDeltaUsd",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "acceptablePrice",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "triggerPrice",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "minOutputAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "validFromTime",
+                    "type": "uint256"
+                  },
+                  {
+                    "name": "autoCancel",
+                    "type": "bool"
+                  }
+                ],
+                "name": "updateOrder",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+              },
+              "capabilityId": "hertzflow-current-bsc:v1:56:0x61e1116a943b27d21094599c2c5bd75e980170a5:updateorder",
+              "chainId": 56,
+              "contract": "0x61e1116a943b27d21094599c2c5bd75e980170a5",
+              "functionName": "updateOrder",
+              "label": "HertzFlow update own pending nonmarket order",
+              "operation": "updateOrder",
+              "protocol": "HertzFlow",
+              "provenance": {
+                "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x61e1116A943b27D21094599C2c5Bd75e980170a5?fields=all",
+                "status": "verified",
+                "verifiedAt": "2026-10-24"
+              },
+              "signature": "updateOrder(bytes32,uint256,uint256,uint256,uint256,uint256,bool)",
+              "status": "active",
+              "type": "contract_call",
+              "warnings": [
+                "Static deployment/source/ABI inventory only; not live authorization, persistent runtime attestation, backing, financial safety, liquidity, successful execution or a complete workflow. Existing grants, independent policy, pauses, canonical calldata and value controls remain mandatory.",
+                "BNB Smart Chain56 direct nonproxy ExchangeRouter0x61e1116a943b27d21094599c2c5bd75e980170a5 only. Current official SDK0.3.2 published2026-09-10 binds this address. Older August GitHub config and testnet-only address-table text are not used as current mainnet mappings. Sourcify runtime/creation grade is match, not exact_match. Fixed linked libraries and immutable handlers are retained; independent dependency safety is not attested.",
+                "Selected payable methods do not pull msg.value into user collateral or execution-fee accounting: use zero native value. No sendTokens/sendWnt, shared-pool prefunding, external-call executor, new callback registration, signature generation, bridge or permission method is admitted. LP/new-principal ingress remains excluded. A separately granted direct-only createOrder scope admits only existing-position decrease modes4/5/6 with zero chosen callback, empty extension data and zero native value; it does not widen this function or the old multicall child graph.",
+                "Cancellation keys must belong to msg.sender. Pending request removal refunds existing deposited token quantities, not an executed position close: deposit long/short tokens and withdrawal/shift market tokens return to recorded account. Order cancellation returns increase/swap collateral to recorded cancellationReceiver, falling back to account; execution-fee refund receiver is recorded cancellationReceiver or receiver. Native unwrapping follows stored request flags.",
+                "Existing stored callback and callback gas limits can be invoked on cancellation; these methods cannot choose a new callback or arbitrary calldata. Request expiry/feature gates, supported order type, gas and keeper fee rules apply; current feature state is not inferred from source. Requests originally created through multichain paths may credit an existing on-chain MultichainVault ledger rather than deliver a wallet token; no cross-chain send is admitted.",
+                "updateOrder changes only caller-owned supported nonmarket order sizeDeltaUsd, acceptablePrice, triggerPrice, minOutputAmount, validFromTime and autoCancel; it unfreezes/touches the request. USD/price fields use protocol1e30 precision, output token quantities native decimals, validFromTime seconds. Existing execution fee is revalidated; source recordTransferIn can consume already-present WNT but no prefunding helper or top-up workflow is admitted.",
+                "Fee/reward claims debit only msg.sender funding/UI/affiliate claimable ledger for each market/token; arrays must align and payout receiver must be valid. Collateral claims additionally bind timeKeys and subtract already-claimed amount after configurable claimable/reduction factors and delay, with floor rounding at1e30 precision. Payout token quantities use native token decimals. No rewards, claimability, fee amount, positive yield or execution timing is promised.",
+                "All operations inherit mutable feature/market/fee configuration, oracle/keeper settlement, existing callback/dependency and market-token balance checks. Trading profit/loss and fees can reduce eventual amounts. Existing protocol eligibility/ownership is not granted by catalog admission.",
+                "A separate exact same-target-financial-multicall-v1 root is now admitted with independent root/used-child grants, hashes, pauses and enforced zero outer native value; arbitrary multicall execution remains excluded."
+              ]
             }
           ],
           "status": "active"

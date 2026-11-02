@@ -29,6 +29,7 @@ import { validateVeloraOrderBinding, validateVeloraOrderSettlement } from './exe
 import { validateRevertLending, validateRevertLendingBinding } from './execution/revert-lending';
 import { validateNapierCollect, validateNapierCollectorBinding } from './execution/napier';
 import { validateOpenOceanSwap, validateOpenOceanSwapBinding } from './execution/openocean';
+import { validateHertzDecreaseOrder, validateHertzDecreaseOrderBinding } from './execution/hertzflow';
 
 type UniswapPlanState = { targets: Set<string>; operations: number };
 
@@ -293,6 +294,7 @@ export class DefiPolicyService {
       validateRevertLendingBinding(rootFn);
       validateNapierCollectorBinding(rootFn);
       validateOpenOceanSwapBinding(rootFn);
+      validateHertzDecreaseOrderBinding(rootFn);
     } catch { this.deny('DEFI_POLICY_UNAVAILABLE', context, rootFn); }
     const uniswapKind = uniswapIdentityKind(rootFn);
     if (isFiniteMulticallScope(scope)) {
@@ -437,6 +439,13 @@ export class DefiPolicyService {
     if (scope.kind === 'openocean-empty-permit-swap-v1') {
       this.assertNativeValue(root, rootFn, context);
       try { validateOpenOceanSwap(root.data); }
+      catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
+      if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
+      return [rootNode];
+    }
+    if (scope.kind === 'hertzflow-zero-callback-decrease-order-v1') {
+      this.assertNativeValue(root, rootFn, context);
+      try { validateHertzDecreaseOrder(root.data, BigInt(root.value ?? '0')); }
       catch { this.deny('DEFI_INVALID_PARAMETERS', context, rootFn); }
       if (alreadyPlanned + 1 > MAX_DEFI_EXECUTION_NODES) this.deny('DEFI_INVALID_PARAMETERS', context, rootFn);
       return [rootNode];
