@@ -37,6 +37,7 @@ export type DefiExecutionScope =
   | Readonly<{ kind: 'polymarket-pusd-wrap-v1'; asset: string; recipientPolicy: 'withdrawal-allowlist-v1' }>
   | Readonly<{ kind: 'uniswap-universal-router-2.1.2-v1' }>
   | Readonly<{ kind: 'uniswap-v4-position-manager-v1' }>
+  | Readonly<{ kind: 'merkl-empty-claim-data-v1' }>
   | Readonly<{ kind: 'uniswap-v4-position-manager-primitive-v1' }>;
 
 export type MulticallChildBinding = Readonly<{ capabilityId: string; signature: string; abiHash: `0x${string}` }>;

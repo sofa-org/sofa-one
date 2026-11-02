@@ -58773,6 +58773,38 @@
           },
           {
             "type": "function",
+            "name": "claimWithRecipient",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "users",
+                "type": "address[]"
+              },
+              {
+                "name": "tokens",
+                "type": "address[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "proofs",
+                "type": "bytes32[][]"
+              },
+              {
+                "name": "recipients",
+                "type": "address[]"
+              },
+              {
+                "name": "datas",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "disputeTree",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -84599,6 +84631,38 @@
           },
           {
             "type": "function",
+            "name": "claimWithRecipient",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "users",
+                "type": "address[]"
+              },
+              {
+                "name": "tokens",
+                "type": "address[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "proofs",
+                "type": "bytes32[][]"
+              },
+              {
+                "name": "recipients",
+                "type": "address[]"
+              },
+              {
+                "name": "datas",
+                "type": "bytes[]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
             "name": "disputeTree",
             "stateMutability": "nonpayable",
             "inputs": [
@@ -106909,6 +106973,38 @@
               {
                 "name": "proofs",
                 "type": "bytes32[][]"
+              }
+            ],
+            "outputs": []
+          },
+          {
+            "type": "function",
+            "name": "claimWithRecipient",
+            "stateMutability": "nonpayable",
+            "inputs": [
+              {
+                "name": "users",
+                "type": "address[]"
+              },
+              {
+                "name": "tokens",
+                "type": "address[]"
+              },
+              {
+                "name": "amounts",
+                "type": "uint256[]"
+              },
+              {
+                "name": "proofs",
+                "type": "bytes32[][]"
+              },
+              {
+                "name": "recipients",
+                "type": "address[]"
+              },
+              {
+                "name": "datas",
+                "type": "bytes[]"
               }
             ],
             "outputs": []

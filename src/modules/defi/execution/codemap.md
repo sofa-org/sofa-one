@@ -21,6 +21,10 @@ provider or financial-safety responsibilities.
   wallet-only NFT recipients and empty safe-transfer bytes. PoolManager and
   supplied initialization currencies join initial/final pause checks; stored
   subscribers and receiver callbacks remain possible.
+- `merkl.ts` reserves the three reviewed Distributor claim identities and
+  requires every per-claim callback-data element to be empty. It reuses the
+  bounded recursive wire decoder for all claim/proof arrays; it does not
+  simulate proofs, grant operators or admit financial multicall composition.
 
 Finite self-delegatecall wrappers bind same-chain/same-target active children
 by capability ID, ABI hash and, where applicable, execution-scope hash.

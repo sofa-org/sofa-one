@@ -6,6 +6,7 @@ import { AMBIENT_CHAIN_ID, AMBIENT_SIGNATURE, AMBIENT_TARGET } from '../executio
 import { ENSO_STATIC_WEIROLL_ROOT_IDENTITY } from '../execution/enso-identity';
 import { isPolymarketPusdWrapIdentity, validatePolymarketPusdWrapBinding } from '../execution/pusd-identity';
 import { validateUniswapBinding } from '../execution/uniswap-identity';
+import { validateMerklClaimBinding } from '../execution/merkl';
 
 export const DEFI_MANIFEST = Symbol('DEFI_MANIFEST');
 const cmp = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -79,6 +80,7 @@ function validateFunction(fn: DefiFunctionPolicy, chain: DefiChainPolicy, contra
   if (fn.policy && (!fn.policy.ref.trim() || fn.policy.ref.length > 120 || !Number.isSafeInteger(fn.policy.version) || fn.policy.version < 1)) throw new Error('Invalid display policy identity');
   if (fn.executionScope) executionScopeHash(fn.executionScope);
   validateUniswapBinding(fn);
+  validateMerklClaimBinding(fn);
   if (isPolymarketPusdWrapIdentity(fn) || fn.executionScope?.kind === 'polymarket-pusd-wrap-v1') validatePolymarketPusdWrapBinding(fn);
   const ensoRootIdentity = (fn.capabilityId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.capabilityId)
     || (fn.chainId === ENSO_STATIC_WEIROLL_ROOT_IDENTITY.chainId

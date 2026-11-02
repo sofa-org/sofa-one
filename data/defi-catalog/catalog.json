@@ -119651,6 +119651,66 @@
               ]
             },
             {
+              "abi": {
+                "name": "claimWithRecipient",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "users",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "tokens",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "amounts",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "proofs",
+                    "type": "bytes32[][]"
+                  },
+                  {
+                    "name": "recipients",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "datas",
+                    "type": "bytes[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "capabilityId": "merkl:10:0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae:claim-with-recipient-no-callback",
+              "chainId": 10,
+              "contract": "0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae",
+              "functionName": "claimWithRecipient",
+              "label": "Merkl claim with per-call recipient and no explicit claim callback",
+              "operation": "claim",
+              "protocol": "Merkl",
+              "provenance": {
+                "sourceRef": "https://docs.merkl.xyz/earn-with-merkl/earning-with-merkl | https://sourcify.dev/server/v2/contract/10/0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae?fields=abi,sources,proxyResolution,compilation | https://sourcify.dev/server/v2/contract/10/0x10fb9a037a68D60730FB7FC2FE77BF8495223094?fields=abi,sources,proxyResolution,compilation",
+                "status": "verified",
+                "verifiedAt": "2026-11-02"
+              },
+              "signature": "claimWithRecipient(address[],address[],uint256[],bytes32[][],address[],bytes[])",
+              "status": "active",
+              "type": "contract_call",
+              "executionScope": {
+                "kind": "merkl-empty-claim-data-v1"
+              },
+              "warnings": [
+                "Exact source/ABI inventory only; not current implementation identity, eligibility, proof/root validity, balances, funding, execution success, complete workflow or financial safety. Independent grants, pauses, canonical calldata and zero native value remain mandatory.",
+                "All datas[] entries must be exactly empty bytes. The closed scope disables only Distributor IClaimRecipient.onClaim; it does not attest ERC20 token behavior or exclude token-side callbacks. No operator approval, role, permit, signature or arbitrary callback execution is granted.",
+                "Amounts are cumulative earned token amounts, not incremental payouts; source subtracts previously claimed amounts and verifies each user/token/amount Merkle leaf against its active root. All six arrays must have equal positive lengths on chain. Root changes, proof validity, already claimed state, token funding and transfer behavior may cause reversion.",
+                "Only msg.sender claiming for itself may override the per-call recipient. For other users or a zero recipient, source uses their token-specific default, then global default, then the user. Existing operator, tx.origin and governor/guardian eligibility are checked by the contract and are not installed or promised by this capability.",
+                "These are independently retrieved exact-match proxy and implementation source-service records on each chain, not a live RPC storage/bytecode attestation. Proxy upgrades, access controls, pause/root state and recipients remain mutable. Existing claim/dispute/default-recipient capabilities are unchanged.",
+                "Each dynamic array, including each nested proof, is bounded to64 entries before ordinary ABI decoding, with the existing65536-byte,8-level and1024-ABI-node limits. Source checks financial lengths and proofs; backend does not simulate reward eligibility. Not admitted as a multicall child."
+              ]
+            },
+            {
               "capabilityId": "merkl:mutable-completion-v1:10:0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae:2a25dd41",
               "type": "contract_call",
               "chainId": 10,
@@ -172529,6 +172589,66 @@
               ]
             },
             {
+              "abi": {
+                "name": "claimWithRecipient",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "users",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "tokens",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "amounts",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "proofs",
+                    "type": "bytes32[][]"
+                  },
+                  {
+                    "name": "recipients",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "datas",
+                    "type": "bytes[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "capabilityId": "merkl:137:0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae:claim-with-recipient-no-callback",
+              "chainId": 137,
+              "contract": "0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae",
+              "functionName": "claimWithRecipient",
+              "label": "Merkl claim with per-call recipient and no explicit claim callback",
+              "operation": "claim",
+              "protocol": "Merkl",
+              "provenance": {
+                "sourceRef": "https://docs.merkl.xyz/earn-with-merkl/earning-with-merkl | https://sourcify.dev/server/v2/contract/137/0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae?fields=abi,sources,proxyResolution,compilation | https://sourcify.dev/server/v2/contract/137/0x48978D35F6751582e0F5b5d7e38151db1278c800?fields=abi,sources,proxyResolution,compilation",
+                "status": "verified",
+                "verifiedAt": "2026-11-02"
+              },
+              "signature": "claimWithRecipient(address[],address[],uint256[],bytes32[][],address[],bytes[])",
+              "status": "active",
+              "type": "contract_call",
+              "executionScope": {
+                "kind": "merkl-empty-claim-data-v1"
+              },
+              "warnings": [
+                "Exact source/ABI inventory only; not current implementation identity, eligibility, proof/root validity, balances, funding, execution success, complete workflow or financial safety. Independent grants, pauses, canonical calldata and zero native value remain mandatory.",
+                "All datas[] entries must be exactly empty bytes. The closed scope disables only Distributor IClaimRecipient.onClaim; it does not attest ERC20 token behavior or exclude token-side callbacks. No operator approval, role, permit, signature or arbitrary callback execution is granted.",
+                "Amounts are cumulative earned token amounts, not incremental payouts; source subtracts previously claimed amounts and verifies each user/token/amount Merkle leaf against its active root. All six arrays must have equal positive lengths on chain. Root changes, proof validity, already claimed state, token funding and transfer behavior may cause reversion.",
+                "Only msg.sender claiming for itself may override the per-call recipient. For other users or a zero recipient, source uses their token-specific default, then global default, then the user. Existing operator, tx.origin and governor/guardian eligibility are checked by the contract and are not installed or promised by this capability.",
+                "These are independently retrieved exact-match proxy and implementation source-service records on each chain, not a live RPC storage/bytecode attestation. Proxy upgrades, access controls, pause/root state and recipients remain mutable. Existing claim/dispute/default-recipient capabilities are unchanged.",
+                "Each dynamic array, including each nested proof, is bounded to64 entries before ordinary ABI decoding, with the existing65536-byte,8-level and1024-ABI-node limits. Source checks financial lengths and proofs; backend does not simulate reward eligibility. Not admitted as a multicall child."
+              ]
+            },
+            {
               "capabilityId": "merkl:mutable-completion-v1:137:0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae:2a25dd41",
               "type": "contract_call",
               "chainId": 137,
@@ -219078,6 +219198,66 @@
               "warnings": [
                 "Catalog metadata does not establish live deployment identity, funding, liquidity, execution success or financial safety.",
                 "Aave user_rewards returns this Merkl distributor. Caller supplies users, tokens, cumulative amounts and Merkle proofs; eligibility, proof validity, claim routing and distribution state remain protocol-enforced. No arbitrary executor or administrative methods are admitted."
+              ]
+            },
+            {
+              "abi": {
+                "name": "claimWithRecipient",
+                "type": "function",
+                "inputs": [
+                  {
+                    "name": "users",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "tokens",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "amounts",
+                    "type": "uint256[]"
+                  },
+                  {
+                    "name": "proofs",
+                    "type": "bytes32[][]"
+                  },
+                  {
+                    "name": "recipients",
+                    "type": "address[]"
+                  },
+                  {
+                    "name": "datas",
+                    "type": "bytes[]"
+                  }
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+              },
+              "capabilityId": "merkl:8453:0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae:claim-with-recipient-no-callback",
+              "chainId": 8453,
+              "contract": "0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae",
+              "functionName": "claimWithRecipient",
+              "label": "Merkl claim with per-call recipient and no explicit claim callback",
+              "operation": "claim",
+              "protocol": "Merkl",
+              "provenance": {
+                "sourceRef": "https://docs.merkl.xyz/earn-with-merkl/earning-with-merkl | https://sourcify.dev/server/v2/contract/8453/0x3ef3d8ba38ebe18db133cec108f4d14ce00dd9ae?fields=abi,sources,proxyResolution,compilation | https://sourcify.dev/server/v2/contract/8453/0x64455A45d85D872Bfd7F833E367686108d13D6E6?fields=abi,sources,proxyResolution,compilation",
+                "status": "verified",
+                "verifiedAt": "2026-11-02"
+              },
+              "signature": "claimWithRecipient(address[],address[],uint256[],bytes32[][],address[],bytes[])",
+              "status": "active",
+              "type": "contract_call",
+              "executionScope": {
+                "kind": "merkl-empty-claim-data-v1"
+              },
+              "warnings": [
+                "Exact source/ABI inventory only; not current implementation identity, eligibility, proof/root validity, balances, funding, execution success, complete workflow or financial safety. Independent grants, pauses, canonical calldata and zero native value remain mandatory.",
+                "All datas[] entries must be exactly empty bytes. The closed scope disables only Distributor IClaimRecipient.onClaim; it does not attest ERC20 token behavior or exclude token-side callbacks. No operator approval, role, permit, signature or arbitrary callback execution is granted.",
+                "Amounts are cumulative earned token amounts, not incremental payouts; source subtracts previously claimed amounts and verifies each user/token/amount Merkle leaf against its active root. All six arrays must have equal positive lengths on chain. Root changes, proof validity, already claimed state, token funding and transfer behavior may cause reversion.",
+                "Only msg.sender claiming for itself may override the per-call recipient. For other users or a zero recipient, source uses their token-specific default, then global default, then the user. Existing operator, tx.origin and governor/guardian eligibility are checked by the contract and are not installed or promised by this capability.",
+                "These are independently retrieved exact-match proxy and implementation source-service records on each chain, not a live RPC storage/bytecode attestation. Proxy upgrades, access controls, pause/root state and recipients remain mutable. Existing claim/dispute/default-recipient capabilities are unchanged.",
+                "Each dynamic array, including each nested proof, is bounded to64 entries before ordinary ABI decoding, with the existing65536-byte,8-level and1024-ABI-node limits. Source checks financial lengths and proofs; backend does not simulate reward eligibility. Not admitted as a multicall child."
               ]
             },
             {
