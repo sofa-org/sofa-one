@@ -1,7 +1,9 @@
 import { CopyButton } from "@/components/CopyButton";
 import { getApiBaseUrlForDisplay, getApiBaseUrlModeLabel } from "@/lib/api";
 import { SUPPORTED_CHAINS } from "@/lib/chains";
-import { DashboardPage } from "./components/DashboardPage";
+import { DashboardPage } from "./dashboard/components/DashboardPage";
+import { Link, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 const codeClass =
   "code-block rounded-xl bg-brand-text p-5 text-sm text-brand-bg overflow-x-auto shadow-sm";
@@ -10,6 +12,11 @@ const tagClass =
   "inline-flex rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-bold tracking-wide text-amber-800";
 
 const routeSections = [
+  {
+    label: "Integration",
+    href: "#integration",
+    description: "Permissions, capability IDs, ABI and execution scope",
+  },
   {
     label: "Sign",
     href: "#sign",
@@ -141,9 +148,24 @@ function EndpointCard({
 }
 
 export default function APIDocsPage() {
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();
+    else window.scrollTo(0, 0);
+  }, [hash]);
   const apiBaseUrl = getApiBaseUrlForDisplay();
   const apiBaseUrlMode = getApiBaseUrlModeLabel();
   const apiKeyHeader = 'X-API-Key: sk_<64-hex-chars>';
+  const permissionsExample = `curl ${apiBaseUrl}/v1/permissions \\
+  -H "X-API-Key: sk_your_key_here" \\
+  -H "User-Agent: my-service/1.0"`;
+  const walletExample = `curl ${apiBaseUrl}/v1/wallets \\
+  -H "X-API-Key: sk_your_key_here" \\
+  -H "User-Agent: my-service/1.0"`;
+  const capabilityExample = `curl --get ${apiBaseUrl}/v1/capabilities \\
+  --data-urlencode "ids=CAPABILITY_ID_FROM_DASHBOARD" \\
+  -H "X-API-Key: sk_your_key_here" \\
+  -H "User-Agent: my-service/1.0"`;
   const statusQuickStart = `curl ${apiBaseUrl}/v1/transactions/TRANSACTION_ID \\
   -H "X-API-Key: sk_your_key_here" \\
   -H "User-Agent: my-service/1.0"`;
@@ -194,6 +216,16 @@ export default function APIDocsPage() {
   -H "User-Agent: my-service/1.0"`;
 
   return (
+    <div className="min-h-screen px-6 text-brand-text">
+      <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 py-6">
+        <Link to="/" className="font-serif text-xl font-medium">SOFA ONE</Link>
+        <nav aria-label="Main navigation" className="flex flex-wrap items-center gap-5 text-sm">
+          <Link to="/protocols" className="hover:text-brand-accent">Protocols</Link>
+          <Link to="/pricing" className="hover:text-brand-accent">Pricing</Link>
+          <Link to="/dashboard" className="rounded-full bg-brand-text px-5 py-2 text-white">Open dashboard</Link>
+        </nav>
+      </header>
+      <main className="pt-6">
     <DashboardPage
       title="API Documentation"
       description="Sign approved typed data and submit contract interactions from your backend. Private keys stay inside Openfort TEE infrastructure and are never returned to clients."
@@ -237,6 +269,41 @@ export default function APIDocsPage() {
             <CopyButton text={apiKeyHeader} className="w-fit shrink-0" />
           </div>
         </div>
+      </section>
+
+      <section id="integration" className="scroll-mt-8 space-y-6 rounded-2xl border border-brand-border bg-white p-6 shadow-sm">
+        <div>
+          <h2 className="font-serif text-2xl font-bold text-brand-text">From API key to first DeFi transaction</h2>
+          <p className="mt-2 text-sm leading-6 text-brand-muted">Read this page without signing in. Only account configuration in the dashboard requires a SOFA session and MFA. Run API examples on your backend, never in browser code.</p>
+        </div>
+        <ol className="list-decimal space-y-6 pl-5 text-sm leading-6 text-brand-muted">
+          <li>
+            <h3 className="font-semibold text-brand-text">Check the key before sending funds</h3>
+            <p className="mb-3">Create a wallet-bound key in <Link to="/dashboard/api-keys" className="text-brand-accent underline">API Keys</Link>, save the one-time secret, then read its configured permissions. The default key is read-only. This endpoint needs no endpoint-permission flag, but authentication, IP restrictions, freezes and billing checks still apply.</p>
+            <CopyableCodeBlock label="First request: configured permissions">{permissionsExample}</CopyableCodeBlock>
+            <p className="mt-3">The response is configuration, not an execution guarantee. In <code>all</code> mode, empty <code>allowedIds</code> does not mean no access: active, unpaused future additions are included dynamically. In <code>custom</code> mode, an empty list denies catalog access.</p>
+          </li>
+          <li>
+            <h3 className="font-semibold text-brand-text">Confirm the bound wallet and network</h3>
+            <p className="mb-3">Inspect the key&apos;s wallet metadata and chain authorization expiry. Complete or renew authorization for the exact network in <Link to="/dashboard" className="text-brand-accent underline">Wallet</Link>. Fund the user wallet address with the required assets and native gas unless a supported sponsorship policy is configured. This read does not fetch balances or attest live chain state.</p>
+            <CopyableCodeBlock label="Bound wallet metadata">{walletExample}</CopyableCodeBlock>
+          </li>
+          <li>
+            <h3 className="font-semibold text-brand-text">Select exact capability IDs and inspect their scope</h3>
+            <p className="mb-3">Use the dashboard capability selector&apos;s technical details to find IDs for the chain, contract and full function signature. A bundle is only a starting point, not a complete-workflow guarantee. Query up to 100 distinct IDs with <code>GET /v1/capabilities</code>; check <code>unknownIds</code>, active/paused state, warnings and execution scope. Definitions do not grant permission. A custom key needs every required root and child capability.</p>
+            <CopyableCodeBlock label="Lookup the selected capability definitions">{capabilityExample}</CopyableCodeBlock>
+            <p className="mt-3">Structured calls can require empty permits, zero callbacks, fixed recipients, admitted child calls or other scope-specific bounds. An outer function ABI alone does not describe those restrictions; arbitrary aggregator-generated calldata is not automatically supported.</p>
+          </li>
+          <li>
+            <h3 className="font-semibold text-brand-text">Obtain the ABI and encode the reviewed call</h3>
+            <p>Browse the <Link to="/protocols" className="text-brand-accent underline">protocol directory</Link> or <a href="/protocols.json" download className="text-brand-accent underline">download protocols.json</a>. Read <code>catalog[chainId].contracts</code> and match the exact address, protocol and full function signature before ABI encoding. <code>sign</code> is separate signing metadata. The download does not enumerate contract-call capability IDs or execution restrictions and is not a grant, live pause feed, deployment attestation or execution guarantee.</p>
+          </li>
+          <li>
+            <h3 className="font-semibold text-brand-text">Enable sending, submit once and track the result</h3>
+            <p>For transaction submission, create a key with <code>canSendTransaction</code> and an allowlist containing your backend&apos;s actual egress IP/CIDR. Review assets, amounts, spender approvals, recipients, minimum output and deadlines. Follow <a href="#send" className="text-brand-accent underline">Send</a> with <code>session_key</code> execution; keep one idempotency key for the same intent across network errors. Store the transaction ID and follow <a href="#status" className="text-brand-accent underline">Status</a>. Pending/unknown is not confirmed and is not permission to submit a new intent.</p>
+          </li>
+        </ol>
+        <p className="rounded-xl border border-brand-border bg-brand-bg p-4 text-sm leading-6 text-brand-muted">To replace a key without stopping the integration: create a new key with the required permissions, IPs and capability grants, deploy and verify it, then revoke the old key. Emergency revoke-all remains available when every integration must stop immediately; there is no bulk rotation endpoint.</p>
       </section>
 
       <section className="rounded-2xl border border-brand-border bg-white p-5 text-sm leading-6 text-brand-muted shadow-sm">
@@ -297,7 +364,7 @@ export default function APIDocsPage() {
           </div>
           <p className="max-w-xl text-sm leading-6 text-brand-muted">
             Use these chain IDs in public requests. Testnets include faucet help in the
-            wallet setup flow; mainnets require funding the EOA with real native gas.
+            wallet setup flow; mainnets require native gas in the user wallet unless a supported sponsorship policy applies.
           </p>
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -435,7 +502,7 @@ export default function APIDocsPage() {
         </EndpointCard>
       </div>
 
-      <section className="grid gap-6 md:grid-cols-2">
+      <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-brand-border bg-white p-6 shadow-sm">
           <h2 className="mb-3 font-serif text-xl font-bold text-brand-text">Validation</h2>
           <ul className="space-y-2 text-sm leading-6 text-brand-muted">
@@ -463,5 +530,7 @@ export default function APIDocsPage() {
         </div>
       </section>
     </DashboardPage>
+      </main>
+    </div>
   );
 }

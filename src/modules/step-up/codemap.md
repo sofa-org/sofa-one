@@ -21,7 +21,6 @@ Issue and validate short-lived, exact-session step-up proofs for sensitive dashb
 - Depends on PrismaService, AppSessionService, AppSession and StepUpChallenge. No unbound issuance or compatibility parameters.
 - Consumed by MfaService for issuance and StepUpGuard for validation.
 - Protected routes require full application cookie, Origin/CSRF, FrontendOnlyGuard and StepUpGuard:
-  - `POST /api-keys/rotations` (ApiKeyController)
   - `POST /api-keys`, `DELETE /api-keys`, `DELETE /api-keys/:id` (ApiKeyController)
   - `POST /wallets/withdrawal-addresses`, `DELETE /wallets/withdrawal-addresses/:id`, `POST /wallets/withdrawals` (DashboardWalletController)
   - `DELETE /auth/sessions` and sensitive API-key configuration mutations.

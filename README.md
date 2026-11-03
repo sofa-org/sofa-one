@@ -50,6 +50,33 @@ Default local ports:
 - Frontend: Vite on `3000`
 - Vite proxy: `/api` → `http://localhost:3100` with `/api` stripped
 
+### User workflow
+
+1. Read the public SPA `/docs#integration` guide before signing in. It links the
+   permission snapshot, bound wallet, capability IDs/definitions/scopes, ABI catalog,
+   transaction submission and status endpoints.
+2. Sign in with email OTP, complete MFA, create a wallet and authorize the exact
+   execution network with a future expiry. Fund the user wallet with assets/native
+   gas unless supported sponsorship is configured. Expired authorization is not Ready.
+3. Create a wallet-bound API key. Defaults are read-only; signing/sending permissions
+   require your backend's public egress IP/CIDR. Verify it with `GET /v1/permissions`.
+   Replace a key by creating and deploying/verifying the new key before revoking the
+   old one. Bulk rotation is removed; emergency revoke-all does not issue a replacement.
+4. A withdrawal is one durable browser intent. After a network error or pending/unknown
+   response, use **Resume withdrawal**, which retains the same wallet, chain, payload
+   and idempotency key; it queries a known transaction instead of resubmitting it.
+   Start another withdrawal only after a terminal result. Do not clear browser recovery
+   storage to bypass an uncertain operation.
+5. Agent authorization saves its UserOperation identity for receipt-only recovery;
+   **Retry check** never signs or sends another operation. A lost submission response
+   with no hash remains blocked for support recovery. Browser journals store only
+   operation metadata, never passwords, proof tokens or API-key secrets. If storage
+   fails after submission, keep the page open and copy the displayed operation identity.
+6. Card-payment confirmation uses bounded automatic checks. If they pause, use
+   **Check payment status** or return to the tab; only authoritative `paid: true`
+   confirms settlement. Recovery identity is bound to its originating user/session.
+
+
 ## Core commands
 
 Backend, from repo root:

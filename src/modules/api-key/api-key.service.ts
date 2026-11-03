@@ -216,84 +216,6 @@ export class ApiKeyService {
     return result;
   }
 
-  /** Atomically revoke all active keys and issue a replacement key. */
-  async rotateApiKey(userId: string, name: string, walletId: string) {
-    if (typeof walletId !== 'string' || walletId.trim().length === 0) {
-      throw new BadRequestException('walletId is required');
-    }
-    const normalized = this.normalizeCreateOptions({ name });
-    const keyMaterial = await this.generateKeyMaterial();
-
-    const events: Array<{ eventType?: string }> = [];
-    const createdKey = await this.prisma.$transaction(async (tx) => {
-      await this.lockUserKeyLifecycle(tx, userId);
-      const wallet = await tx.userWallet.findFirst({ where: { id: walletId, userId }, select: { id: true } });
-      if (!wallet) throw new NotFoundException('Wallet not found');
-      await this.defiGrants.assertGrantableInTx(tx, []);
-      const activeKeys = await tx.apiKey.findMany({
-        where: { userId, revoked: false },
-        select: { id: true, keyPrefix: true, name: true },
-      });
-
-      await tx.apiKey.updateMany({
-        where: { userId, revoked: false },
-        data: { revoked: true },
-      });
-
-      for (const key of activeKeys) {
-        events.push(await this.audit(tx, userId, key.id, 'api_key.revoked', {
-          keyPrefix: key.keyPrefix,
-          keyName: key.name,
-          metadata: { reason: 'rotation' },
-        }, true));
-      }
-
-      const created = await tx.apiKey.create({
-        data: {
-          userId,
-          walletId: wallet.id,
-          apiKeyHash: keyMaterial.hash,
-          keyPrefix: keyMaterial.keyPrefix,
-          name: normalized.name,
-          expiresAt: normalized.expiresAt,
-          allowedIps: [],
-          allowedCapabilityIds: [],
-          capabilityMode: 'all',
-          ...normalized.permissions,
-        },
-      });
-
-      events.push(await this.audit(tx, userId, created.id, 'api_key.rotated', {
-        keyPrefix: created.keyPrefix,
-        keyName: created.name,
-        metadata: {
-          revokedKeyCount: activeKeys.length,
-          expiresAt: created.expiresAt?.toISOString() ?? null,
-          permissions: this.toPermissions(created),
-          allowedCapabilityIds: created.allowedCapabilityIds,
-          capabilityMode: created.capabilityMode,
-          walletId: created.walletId,
-        },
-      }, true));
-
-      return created;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
-    await this.exportEvents(events);
-
-    return {
-      rawKey: keyMaterial.rawKey,
-      id: createdKey.id,
-      displayPrefix: this.toDisplayPrefix(createdKey.keyPrefix),
-      name: createdKey.name,
-      expiresAt: createdKey.expiresAt,
-      createdAt: createdKey.createdAt,
-      permissions: this.toPermissions(createdKey),
-      walletId: createdKey.walletId,
-      allowedCapabilityIds: createdKey.allowedCapabilityIds,
-      capabilityMode: createdKey.capabilityMode,
-    };
-  }
-
   /** List all API keys (metadata only — no secrets). */
   async listApiKeys(userId: string) {
     const keys = await this.prisma.apiKey.findMany({
@@ -386,7 +308,7 @@ export class ApiKeyService {
   /**
    * BILL-016: acknowledge destination-policy binding for API-key direct egress.
    * IAM + FrontendOnly + StepUp (controller). Idempotent CAS: already-accepted
-   * keys return success without rewriting. Never auto-set on create/rotate.
+   * keys return success without rewriting. Never auto-set on create.
    */
   async authorizeDirectEgress(keyId: string, userId: string) {
     const events: Array<{ eventType?: string }> = [];
@@ -613,7 +535,7 @@ export class ApiKeyService {
   }
 
   private async lockUserKeyLifecycle(tx: PrismaTransaction, userId: string) {
-    // A stable per-user mutex prevents concurrent create/rotate/revoke-all operations
+    // A stable per-user mutex prevents concurrent create/revoke-all operations
     // from observing stale active-key counts under READ COMMITTED.
     const users = await tx.$queryRaw<Array<{ id: string }>>`
       SELECT "id" FROM "users" WHERE "id" = ${userId}::uuid FOR NO KEY UPDATE`;

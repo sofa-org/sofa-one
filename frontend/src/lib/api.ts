@@ -81,11 +81,6 @@ export interface AuthSessionResponse {
   apiKey?: string;
 }
 
-export interface RefreshApiKeyResponse {
-  apiKey: string;
-  walletId: string;
-}
-
 export interface BalanceEntry {
   token: string;
   formatted: string | null;
@@ -318,7 +313,7 @@ export function formatApiKeyFrozenReason(reason: string | null | undefined): str
     return 'Frozen after unexpected IP or client changes on a high-risk key.';
   }
   if (lower.includes('critical risk') || lower.includes('high_risk')) {
-    return 'Frozen due to a critical risk signal. Rotate keys before reuse.';
+    return 'Frozen due to a critical risk signal. Create and deploy a replacement key, then revoke the old key.';
   }
   if (lower.includes('account_takeover')) {
     return 'Frozen as part of an account-takeover response.';
@@ -906,13 +901,6 @@ export async function deleteAllAppSessions(stepUpToken: string) {
 }
 
 export async function getMe(signal?: AbortSignal) { return authFetch<AuthSessionResponse>('/auth/me', { signal }); }
-
-export async function refreshApiKey(stepUpToken: string,
-walletId: string,) { return authFetch<RefreshApiKeyResponse>('/api-keys/rotations', {
-  method: 'POST',
-  headers: { 'X-Step-Up-Token': stepUpToken },
-  body: JSON.stringify({ walletId }),
-}); }
 
 export async function authorizeEmbeddedWallet(
   providerBearer: string,

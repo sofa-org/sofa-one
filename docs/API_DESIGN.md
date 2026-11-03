@@ -12,7 +12,7 @@ and `GET /wallets/deposits?chainId=...&walletId=...`. The previous `/send`, `/wi
 and POST deposit-info duplicates are removed.
 `GET /v1/wallets` returns only the current API key's bound wallet, not all wallets of its
 owner. The former `/v1/me/wallets` route is removed. Session synchronization uses only
-`POST /auth/session`; key rotation uses only `POST /api-keys/rotations`, not an auth route.
+`POST /auth/session`. Bulk key rotation is removed; replace a key through create, deploy/verify, then revoke.
 Dashboard IAM routes (wallets, transaction history, API-key management, billing, and
 notifications) are unversioned; public API-key routes such as `/v1/wallets/sign` and
 `/v1/transactions` remain versioned. Do not infer route audience from a shared resource name.
@@ -30,11 +30,11 @@ or reinterpreted by this response-only change. Prisma/internal agent field names
 
 ## Audience and authentication
 
-Public automation routes use API keys only. Dashboard routes use Openfort IAM bearer tokens
-and additionally apply frontend-origin protections where specified. `Origin` and `Referer`
-checks are defense-in-depth/CSRF protections, **not authentication**; they never substitute
-for valid IAM identity. Keep IAM management/history representations separate from
-API-key submission/status routes.
+Public automation routes use API keys only. Dashboard routes use MFA-verified SOFA
+application-session cookies with Origin/CSRF protections. Openfort IAM bearer identity
+is used only for login exchange and fresh wallet authorization. `Origin` and `Referer`
+are defense-in-depth/CSRF protections, **not authentication**. Keep dashboard
+management/history representations separate from API-key submission/status routes.
 
 The frontend's development `/api` base is a Vite proxy prefix stripped before forwarding
 to the backend. It is not part of the backend route: `/api/auth/...` becomes `/auth/...`,
@@ -42,11 +42,10 @@ and `/api/v1/...` becomes `/v1/...`.
 
 ## Resource and command conventions
 
-Use resource-shaped paths for transaction creation and reads. Security-sensitive actions
-such as API-key rotation remain explicit POST commands (`/api-keys/rotations`); their
-effects are intentionally documented rather than inferred from a REST verb. Rotation
-revokes **all active API keys belonging to the user across wallets**, then returns one
-replacement bound to the requested owned wallet.
+Use resource-shaped paths for transaction creation and reads. API keys are created
+individually and revoked individually after deployment cutover. Emergency
+`DELETE /api-keys` revokes all keys without issuing a replacement; it is not a rolling
+replacement workflow.
 
 ## Status and retry behavior
 
@@ -57,6 +56,20 @@ idempotency key once per logical operation and reuse that exact key and payload 
 implementing retries across invocations must pass and retain the optional `idempotencyKey`
 argument. A fresh helper call without that argument can submit a second operation; the helper
 does not own the caller's retry lifecycle.
+
+The dashboard withdrawal caller persists its exact user/wallet/chain/payload/key intent
+before sending. Resume preserves that identity across errors and reloads; a known
+transaction ID is queried through dashboard detail instead of creating another send.
+Pending/unknown outcomes block a new intent until a terminal result is observed.
+Agent registration similarly reserves and retains its UserOperation identity for
+receipt-only recovery; Retry check does not sign or broadcast another operation.
+Registration checkpoint replays for the same owned wallet, chain and transaction hash
+return the already-pending/terminal snapshot; a matching terminal result is also replayable.
+These reads do not reset state or re-grant authority. Different hashes cannot replace an
+in-flight/registered operation, contradictory terminal results are rejected, and ownership
+and frozen-state checks still apply before replay acceptance.
+If a submission response is lost before any hash is known, preserve the reservation
+and use support recovery rather than guessing that the operation was not accepted.
 
 Transaction history uses bounded page/limit pagination (up to 100) with a total count.
 Security notifications are a recent/latest feed, not a paginated history contract. Do not

@@ -10,7 +10,6 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CreateApiKeyDto, PatchApiKeyCapabilitiesDto } from './dto/create-api-key.dto';
 import { DefiCatalogService } from '../defi/defi-catalog.service';
 import { DefiBundleService } from '../defi/bundles/bundle.service';
-import { RotateApiKeyDto } from './dto/rotate-api-key.dto';
 
 @Controller('api-keys')
 @FrontendOnly()
@@ -34,16 +33,6 @@ export class ApiKeyController {
       spendLimits: dto.spendLimits,
       permissions: dto.permissions,
     });
-  }
-
-  /** Replaces every active API key for the user; walletId selects the replacement binding only. */
-  @RequireStepUp()
-  @UseGuards(StepUpGuard)
-  @Throttle({ short: { ttl: 60000, limit: 3 }, medium: { ttl: 3600000, limit: 10 } })
-  @Post('rotations')
-  async rotate(@CurrentUser('id') userId: string, @Body() dto: RotateApiKeyDto) {
-    const result = await this.apiKeyService.rotateApiKey(userId, 'Refreshed', dto.walletId);
-    return { apiKey: result.rawKey };
   }
 
   @RequireStepUp()

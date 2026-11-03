@@ -12,7 +12,7 @@ const SignInPage = lazy(() => import('./pages/SignIn'));
 const DashboardLayout = lazy(() => import('./pages/dashboard/DashboardLayout'));
 const WalletPage = lazy(() => import('./pages/dashboard/Wallet'));
 const ApiKeysPage = lazy(() => import('./pages/dashboard/ApiKeys'));
-const APIDocsPage = lazy(() => import('./pages/dashboard/Docs'));
+const APIDocsPage = lazy(() => import('./pages/Docs'));
 const TransactionsPage = lazy(() => import('./pages/dashboard/Transactions'));
 const SecurityNotificationsPage = lazy(() => import('./pages/dashboard/SecurityNotifications'));
 const BillingPage = lazy(() => import('./pages/dashboard/Billing'));
@@ -64,6 +64,7 @@ export default function App() {
             path="/protocols"
             element={<ProtocolsPage />}
           />
+          <Route path="/docs" element={<APIDocsPage />} />
           <Route
             path="/dashboard"
             element={
@@ -79,7 +80,6 @@ export default function App() {
             <Route path="transactions" element={<TransactionsPage />} />
             <Route path="notifications" element={<SecurityNotificationsPage />} />
             <Route path="billing" element={<BillingPage />} />
-            <Route path="docs" element={<APIDocsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -16,6 +16,7 @@ export type WithdrawSuccess = {
   message: string;
   transactionHash: string | null;
   chainId: number;
+  status: 'confirmed' | 'failed';
 };
 
 /** Withdraw form error; `billingBlocked` is set only for BILLING_OUTBOUND_BLOCKED. */
@@ -246,7 +247,7 @@ export function isSupportedChainId(chainId: number) {
 
 export function getAuthorizationBadgeClasses(status: string) {
   if (status === 'registered') return 'border-green-200 bg-green-50 text-green-800';
-  if (status === 'registration_failed') return 'border-red-200 bg-red-50 text-red-800';
+  if (status === 'registration_failed' || status === 'expired') return 'border-red-200 bg-red-50 text-red-800';
   if (status === 'pending_registration') return 'border-blue-200 bg-blue-50 text-blue-800';
   return 'border-amber-200 bg-amber-50 text-amber-800';
 }

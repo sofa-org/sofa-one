@@ -36,7 +36,7 @@ const PLANS: readonly PricingPlan[] = [
     team: 1,
     features: [
       'Basic wallet creation & management',
-      'Create, revoke, and rotate API keys',
+      'Create, view, and revoke API keys',
       'Testnet-first with limited mainnet access',
       'Transaction status tracking',
       'Community & documentation support',

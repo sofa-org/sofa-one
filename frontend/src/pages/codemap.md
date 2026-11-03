@@ -4,7 +4,7 @@
 Top-level route components for the SOFA ONE SPA. This directory owns the **public pages and auth entry points** (`Landing`, `SignIn`, `EmailOtpForm`) and is the **parent container for the authenticated `dashboard/` subtree**. Public pages are presentational and drive users into the Openfort email-OTP sign-in flow; the dashboard subtree (documented in its own `dashboard/codemap.md`) holds all authenticated, post-sign-in screens. No backend/API business logic lives at this level — pages compose React Router, `@openfort/react`, and shared components.
 
 ## Directory Map
-- `Landing.tsx` — `/` landing page; product pitch, public navigation, onboarding steps, feature chips, CTAs to `/sign-in` and `/dashboard/docs`.
+- `Landing.tsx` — `/` landing page; product pitch, public navigation, onboarding steps, feature chips, CTAs to `/sign-in` and `/docs`.
 - `Protocols.tsx` — unauthenticated `/protocols` directory with search, official-site links and a direct download of `/protocols.json`, whose chain entries separate `contracts` and `sign`; `supported-protocols.ts` keeps its canonical display dataset separate from the backend registry. The download is generated catalog metadata, not API-key grants, live execution guarantees or a bypass of runtime nested-execution or signing domain/wallet/payload validation.
   - The directory includes ApeSwap, BabySwap, Biswap, Dfyn, Resolv, ShibaSwap and WOOFi alongside the existing canonical SushiSwap/Uniswap/Frax entries; versions do not create duplicate product cards. KyberSwap remains excluded.
   - BabySwap links to archived official deployment documentation because its former live site serves a lander; Dfyn links to official contract documentation (direct availability could not be confirmed). The directory is informational, not an assurance of live website or protocol availability. Cards allow shrinking so long reference URLs truncate without mobile overflow.
@@ -18,9 +18,10 @@ Top-level route components for the SOFA ONE SPA. This directory owns the **publi
   - Cap, infiniFi and Noon represent reviewed Ethereum staking integrations only: Cap's four stcUSD methods use cUSD; infiniFi's two explicit Gateway V4 stake/unstake methods use iUSD rather than incompatible direct siUSD ERC-4626 calls; Noon's four sUSN methods use USN, with owner-only exits and withdrawal-handler restrictions. Their cards do not imply USDC exits, full product coverage or complete settlement workflows.
   - Reservoir, Strata and Yuzu Money cover exact Ethereum deployments: Reservoir wsrUSD's four rUSD conversion methods; Strata srUSDe's eight ordinary entry/exit overloads and four cooldown claim overloads across two contracts; Yuzu yzSyrup's six USDC deposit/mint/order-lifecycle methods. Yuzu's disabled direct redemption, Strata's junior tranche and operator/admin functions remain absent. Whole-protocol TVL is not admitted-vault TVL; no DAU/MAU claim is made.
 - `Pricing.tsx` — public `/pricing` page with links to the protocol directory and sign-in.
+- `Docs.tsx` — public `/docs`; static API reference and `/docs#integration` permissions → bound wallet → capability IDs/definitions/scopes → ABI → send/status guide. No login/MFA or wallet provider required.
 - `SignIn.tsx` — `/sign-in/*` auth shell; responsive split layout (brand panel + form panel) that lazy-loads `AuthFormPanel`.
 - `EmailOtpForm.tsx` — Openfort email OTP followed by explicit SOFA session exchange before redirect; walletReauthentication mode reconnects provider identity without replacing the SOFA session.
-- `dashboard/` — authenticated dashboard subtree (see `dashboard/codemap.md`): `DashboardLayout`, `Wallet`, `ApiKeys`, `Transactions`, `SecurityNotifications`, `Billing`, `Docs`, plus setup/step-up/helper modules. Not detailed here; see the child map.
+- `dashboard/` — authenticated dashboard subtree (see `dashboard/codemap.md`): `DashboardLayout`, `Wallet`, `ApiKeys`, `Transactions`, `SecurityNotifications`, `Billing`, plus setup/step-up/helper modules. Not detailed here; see the child map.
 - `codemap.md` — this file.
 
 ## Design/Patterns
@@ -36,6 +37,7 @@ Top-level route components for the SOFA ONE SPA. This directory owns the **publi
 - `/` → `LandingPage` (public navigation links to `/protocols` and `/pricing`)
 - `/protocols` → lazy-loaded public protocol directory; no auth provider or route guard
 - `/pricing` → `PricingPage`
+- `/docs` → public static API documentation; dashboard/sidebar and landing links use this canonical route.
 - `/sign-in/*` → `SignInPage` (renders `AuthFormPanel` → `EmailOtpForm`)
 - `/sign-up/*` → `<Navigate to="/sign-in" replace />`
 - `/dashboard` → ProtectedRoute → DashboardStepUpGate → DashboardLayout under AppSessionProvider; only index WalletPage mounts AuthProviders.

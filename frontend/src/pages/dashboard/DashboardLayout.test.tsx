@@ -23,7 +23,7 @@ function mountPage(page: ReactNode) {
       <Routes>
         <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route path="transactions" element={page} />
-          <Route path="docs" element={<h1>API reference content</h1>} />
+          <Route path="billing" element={<h1>Billing content</h1>} />
         </Route>
         <Route path="/sign-in" element={<h1>Signed out</h1>} />
       </Routes>
@@ -36,10 +36,10 @@ it('keeps navigation and logout mounted while a lazy child suspends', async () =
   mountPage(<SlowPage />);
   expect(await screen.findByRole('status')).toHaveTextContent('Loading page');
   expect(screen.queryByText('Whole app loading')).not.toBeInTheDocument();
-  expect(screen.getByRole('link', { name: 'API Docs' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Billing' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Sign out' })).toBeEnabled();
-  fireEvent.click(screen.getByRole('link', { name: 'API Docs' }));
-  expect(await screen.findByRole('heading', { name: 'API reference content' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('link', { name: 'Billing' }));
+  expect(await screen.findByRole('heading', { name: 'Billing content' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
   expect(await screen.findByRole('heading', { name: 'Signed out' })).toBeInTheDocument();
   const fetchMock = vi.mocked(globalThis.fetch);
@@ -52,9 +52,9 @@ it('contains a rejected child chunk and resets its error boundary on navigation'
   mountPage(<BrokenPage />);
   expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong');
   expect(screen.getByRole('button', { name: 'Sign out' })).toBeEnabled();
-  fireEvent.click(screen.getByRole('link', { name: 'API Docs' }));
+  fireEvent.click(screen.getByRole('link', { name: 'Billing' }));
   await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
-  expect(screen.getByRole('heading', { name: 'API reference content' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Billing content' })).toBeInTheDocument();
 });
 
 it('can revoke a session without waiting for a suspended child', async () => {

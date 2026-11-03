@@ -30,7 +30,7 @@ Top-level responsibilities in this directory:
 | --- | --- |
 | `components/` | Reusable/shared components: provider stacks (`AuthProviders`, `OpenfortAuthProvider`), route guards (`ProtectedRoute`, `PublicOnlyRoute`), MFA step-up gate (`DashboardStepUpGate`), `ErrorBoundary`, `OpenfortConfigError`, `CopyButton`, `AuthFormPanel`. No business logic; composes `@openfort/react`, Router, and `lib/api`. |
 | `lib/` | Browser-side helper layer: `api.ts` (two typed fetch transports `authFetch`/`apiFetch`, per-route wrappers, `ApiError` normalization, `DEFAULT_CHAIN_ID`), `calibur.ts` (Calibur key hashing/settings/calldata encoders + EIP-7702 EntryPoint v0.8 smart-account factory), `chains.ts` (14-chain static registry + explorer/faucet helpers). |
-| `pages/` | Public routes: `Landing.tsx`, `Protocols.tsx` (directory backed by `supported-protocols.ts`), `Pricing.tsx`, `SignIn.tsx` (split-layout auth shell that lazy-loads `AuthFormPanel`), `EmailOtpForm.tsx`. |
+| `pages/` | Public routes: `Landing.tsx`, `Docs.tsx` (`/docs` and integration guide), `Protocols.tsx` (directory backed by `supported-protocols.ts`), `Pricing.tsx`, `SignIn.tsx` (split-layout auth shell that lazy-loads `AuthFormPanel`), `EmailOtpForm.tsx`. |
 | `pages/dashboard/` | All authenticated screens under `/dashboard/*` plus the `DashboardLayout` shell, wallet-setup sub-forms, presentational helpers, step-up helpers (`step-up.ts`, `step-up-session.ts`), and the `notification-events.ts` window-event bus. |
 | `types/` | Empty (unused; request/response types are exported from `lib/api.ts`). |
 | `main.tsx`, `App.tsx`, `index.css` | Entry, routing/provider composition, global styling. |
@@ -52,6 +52,7 @@ Top-level responsibilities in this directory:
 ## Flow
 1. **Boot**: `main.tsx` renders `ErrorBoundary` → `BrowserRouter` → `App`; `App` shows a `Suspense` fallback while lazy chunks load.
 2. **Public routes**: `/` → `LandingPage`; `/protocols` → lazy-loaded, unauthenticated `ProtocolsPage`; `/pricing` → `PricingPage`; `/sign-in/*` → `SignInPage` → `AuthFormPanel` (`OpenfortAuthProvider` validates `VITE_OPENFORT_PUBLISHABLE_KEY`, renders `OpenfortConfigError` if missing; `PublicOnlyRoute` bounces authenticated users to `/dashboard`). `/sign-up/*` → redirect to `/sign-in`; `*` → `/`.
+   `/docs` is public static API documentation, outside ProtectedRoute/MFA; `/docs#integration` links permissions, wallet metadata, capability lookup and ABI materials without granting execution.
 3. **Dashboard**: ProtectedRoute → DashboardStepUpGate → DashboardLayout. Server pending-MFA sessions set up/verify TOTP before entry; only Wallet mounts heavy wallet providers.
    DashboardLayout contains its Outlet in a pathname-keyed inline ErrorBoundary and Suspense. Child chunks can suspend or fail without hiding navigation or sign-out; changing route resets the child error.
 4. **Data flow**: cookie/CSRF helpers serve dashboard reads/mutations. Wallet creation/authorization still uses provider proof, Calibur encoders and viem/wagmi; reconnecting provider identity does not exchange the application session.

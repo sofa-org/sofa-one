@@ -175,7 +175,7 @@ describe('ApiKeyService', () => {
     );
   });
 
-  it('accepts ClobAuth only through explicit create/replace grants and leaves rotation empty', async () => {
+  it('accepts ClobAuth through explicit create/replace grants', async () => {
     const capability = 'polymarket:137:clob-auth:v1';
     const service = createService();
     await service.createApiKey('user-1', { walletId: 'wallet-1', name: 'Clob', allowedCapabilityIds: [capability] } as any);
@@ -184,9 +184,6 @@ describe('ApiKeyService', () => {
     prisma.apiKey.update.mockResolvedValue({ id: 'key-1', allowedCapabilityIds: [capability] });
     await service.replaceCapabilities('key-1', 'user-1', [capability]);
     expect(grants.assertGrantableInTx).toHaveBeenLastCalledWith(prisma, [capability]);
-    prisma.apiKey.findMany.mockResolvedValue([]);
-    await service.rotateApiKey('user-1', 'Rotated', 'wallet-1');
-    expect(grants.assertGrantableInTx).toHaveBeenLastCalledWith(prisma, []);
   });
 
   it('normalizes dynamic all/custom capability semantics and rejects invalid combinations', async () => {
@@ -516,102 +513,11 @@ describe('ApiKeyService', () => {
     expect(securityEvents.exportCommitted).not.toHaveBeenCalled();
   });
 
-  it('rotates keys atomically by revoking active keys and creating one replacement', async () => {
-    jest.useFakeTimers().setSystemTime(new Date('2026-04-27T00:00:00.000Z'));
-    prisma.apiKey.findMany.mockResolvedValue([
-      { id: 'old-key-1', keyPrefix: 'sk_old11111111111111111111', name: 'Old key' },
-      { id: 'old-key-2', keyPrefix: 'sk_old22222222222222222222', name: 'Backup key' },
-    ]);
-    const service = createService();
-
-    const result = await service.rotateApiKey('user-1', 'Refreshed', 'wallet-1');
-
-    expect(result.rawKey).toMatch(/^sk_[a-f0-9]{64}$/);
-    expect(result).toEqual({
-      rawKey: expect.any(String),
-      id: 'key-1',
-      displayPrefix: 'sk_'.concat(result.rawKey.slice(3, 11), '...'),
-      name: 'Refreshed',
-      expiresAt: new Date('2026-07-26T00:00:00.000Z'),
-      createdAt: new Date('2026-04-27T00:00:00.000Z'),
-      permissions: defaultPermissions,
-      walletId: 'wallet-1',
-      allowedCapabilityIds: [],
-      capabilityMode: 'all',
-    });
-    expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
-      where: { userId: 'user-1', revoked: false },
-      data: { revoked: true },
-    });
-    expect(prisma.apiKey.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          name: 'Refreshed',
-          expiresAt: new Date('2026-07-26T00:00:00.000Z'),
-          ...defaultPermissions,
-        }),
-      }),
-    );
-    expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          action: 'api_key.revoked',
-          apiKeyId: 'old-key-1',
-          metadata: { reason: 'rotation' },
-        }),
-      }),
-    );
-    expect(securityEvents.record).toHaveBeenCalledWith(
-      expect.objectContaining({
-        eventType: 'api_key.rotated',
-        apiKeyId: 'key-1',
-        metadata: expect.objectContaining({
-          keyName: 'Refreshed',
-          details: {
-            revokedKeyCount: 2,
-            expiresAt: '2026-07-26T00:00:00.000Z',
-            permissions: defaultPermissions,
-            allowedCapabilityIds: [],
-            capabilityMode: 'all',
-            walletId: 'wallet-1',
-          },
-        }),
-      }),
-      prisma,
-      { deferExport: true },
-    );
-    expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          action: 'api_key.revoked',
-          apiKeyId: 'old-key-2',
-          metadata: { reason: 'rotation' },
-        }),
-      }),
-    );
-    expect(prisma.apiKeyEvent.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          action: 'api_key.rotated',
-          metadata: {
-            revokedKeyCount: 2,
-            expiresAt: '2026-07-26T00:00:00.000Z',
-            permissions: defaultPermissions,
-            allowedCapabilityIds: [],
-            capabilityMode: 'all',
-            walletId: 'wallet-1',
-          },
-        }),
-      }),
-    );
-  });
-
-  it('rejects null or foreign wallet bindings without creating keys or revoking on rotation', async () => {
+  it('rejects null or foreign wallet bindings without creating keys', async () => {
     const service = createService();
     (prisma as any).userWallet.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
     await expect(service.createApiKey('user-1', { name: 'No wallet' } as any)).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.createApiKey('user-1', { walletId: 'foreign-wallet', name: 'Foreign' })).rejects.toBeInstanceOf(NotFoundException);
-    await expect(service.rotateApiKey('user-1', 'Refreshed', 'foreign-wallet')).rejects.toBeInstanceOf(NotFoundException);
     expect(prisma.apiKey.create).not.toHaveBeenCalled();
     expect(prisma.apiKey.updateMany).not.toHaveBeenCalled();
   });
@@ -619,7 +525,6 @@ describe('ApiKeyService', () => {
   it.each([undefined, null, '', '   '])('rejects missing/empty walletId %p before any database work', async (walletId) => {
     const service = createService();
     await expect(service.createApiKey('user-1', { walletId, name: 'No binding' } as any)).rejects.toBeInstanceOf(BadRequestException);
-    await expect(service.rotateApiKey('user-1', 'Refresh', walletId as any)).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(prisma.userWallet.findFirst).not.toHaveBeenCalled();
     expect(prisma.apiKey.findMany).not.toHaveBeenCalled();
@@ -641,25 +546,6 @@ describe('ApiKeyService', () => {
     expect(prisma.apiKey.create).toHaveBeenCalledTimes(2);
     expect(prisma.apiKey.create).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ walletId: 'wallet-1' }) }));
     expect(prisma.apiKey.create).toHaveBeenNthCalledWith(2, expect.objectContaining({ data: expect.objectContaining({ walletId: 'wallet-1' }) }));
-  });
-
-  it('does not create a replacement key if rotation auditing fails', async () => {
-    prisma.apiKey.findMany.mockResolvedValue([
-      { id: 'old-key-1', keyPrefix: 'sk_old11111111111111111111', name: 'Old key' },
-    ]);
-    prisma.apiKeyEvent.create.mockImplementationOnce(async () => {
-      throw new Error('rotation audit failed');
-    });
-    const service = createService();
-
-    await expect(service.rotateApiKey('user-1', 'Refreshed', 'wallet-1')).rejects.toThrow(
-      'rotation audit failed',
-    );
-    expect(prisma.apiKey.updateMany).toHaveBeenCalledWith({
-      where: { userId: 'user-1', revoked: false },
-      data: { revoked: true },
-    });
-    expect(prisma.apiKey.create).not.toHaveBeenCalled();
   });
 
   it('lists masked metadata only and never selects API key hashes or allowlists', async () => {

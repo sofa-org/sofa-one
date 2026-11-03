@@ -28,10 +28,10 @@ function SessionControls() {
   </>;
 }
 function renderSession(gate = false) {
-  return render(<MemoryRouter initialEntries={['/dashboard/docs']}><AppSessionProvider>
+  return render(<MemoryRouter initialEntries={['/dashboard/billing']}><AppSessionProvider>
     <SessionControls />
     <Routes>
-      <Route path="/dashboard/docs" element={<ProtectedRoute>{gate
+      <Route path="/dashboard/billing" element={<ProtectedRoute>{gate
         ? <DashboardStepUpGate><p>Business content</p></DashboardStepUpGate>
         : <p>Business content</p>}</ProtectedRoute>} />
       <Route path="/sign-in" element={<PublicOnlyRoute><p>Email sign-in</p></PublicOnlyRoute>} />

@@ -8,18 +8,18 @@ Authenticated wallet, key, history, notification and billing screens use local S
 
 - `DashboardLayout.tsx` — shell with sidebar/mobile drawer, nav, unread-alert badge, sign-out.
 - `Wallet.tsx` — the `/dashboard` index page; wallet setup, agent registration, balances, withdrawals.
-- `ApiKeys.tsx` — `/dashboard/api-keys`; create/revoke/rotate keys, status filter, quick-start curl.
+- `ApiKeys.tsx` — `/dashboard/api-keys`; create/revoke keys, status filter, permission-discovery quick start. No bulk rotation.
 - `Transactions.tsx` — `/dashboard/transactions`; paginated transaction + signing-request history with detail drawer.
 - `SecurityNotifications.tsx` — `/dashboard/notifications`; security alert list, mark read/all-read.
 - `Billing.tsx` — `/dashboard/billing`; current plan, usage summary, cost estimate, invoices, Stripe checkout.
 - `UsdcPaymentPanel.tsx` — inline USDC payment flow for an eligible invoice (quote → pay-from-wallet with step-up + status poll, or manual claim; BILL-003 user cancel of clean pending quotes only).
-- `Docs.tsx` — `/dashboard/docs`; static public API reference (sign/send/status).
 - `components/DashboardPage.tsx` — shared page header + card primitives.
 - `Step1CreateEoa.tsx`, `Step2AuthorizeAccess.tsx` — wallet setup sub-forms (password entry; network/expiry/password + submit).
 - `BalanceDisplay.tsx`, `WithdrawForm.tsx` — balances grid and withdrawal form with allowlist management.
 - `ApiKeyBanner.tsx`, `AuthorizationBadges.tsx`, `SetupStatusBanner.tsx`, `WalletLoadingState.tsx`, `WalletIcons.tsx` — presentational helpers.
 - `wallet-helpers.ts` — pure helpers + constants for wallet/agent flows (amount parsing, gas price RPC, chain storage, expiry formatting).
 - `step-up.ts`, `step-up-session.ts` — TOTP step-up challenge and session-scoped proof token cache.
+- `wallet-recovery.ts` — per-user/per-wallet browser operation journals, stable withdrawal identities and registration UserOperation recovery; shared expiry-readiness predicate.
 - `notification-events.ts` — tiny window-event bus so the layout badge refreshes when alerts change.
 
 ## Design/Patterns
@@ -38,7 +38,7 @@ Authenticated wallet, key, history, notification and billing screens use local S
 
 ### Routing (`App.tsx`)
 
-`/dashboard` (index → `WalletPage`), `api-keys`, `transactions`, `notifications`, `billing`, `docs` — all children of `DashboardLayout`. `DashboardStepUpGate` (in `src/components/`) enforces MFA before the layout mounts; it imports `step-up-session.ts` for proof handling.
+`/dashboard` (index → `WalletPage`), `api-keys`, `transactions`, `notifications`, `billing` — children of `DashboardLayout`. `DashboardStepUpGate` (in `src/components/`) enforces MFA before the layout mounts; it imports `step-up-session.ts` for proof handling. API Docs navigation opens the independent public `/docs` route.
 
 ### DashboardLayout
 
@@ -50,12 +50,14 @@ Sidebar/mobile layout uses AppSessionProvider, loads alerts with cookies and exp
 2. **Step 1 (no EOA)**: `Step1CreateEoa` collects a recovery password; `handleConnectWallet` creates an Openfort embedded EOA (`AccountTypeEnum.EOA`, `RecoveryMethod.PASSWORD`), retries `authorizeEmbeddedWallet` up to 5×, and refreshes embedded accounts.
 3. **Step 2 (EOA exists)**: `Step2AuthorizeAccess` picks chain + expiry (≤30 days) + password. `handleRegisterAgent` verifies Calibur deployment on the chain, checks native gas (unless `VITE_OPENFORT_FEE_SPONSORSHIP_ID`), validates the agent key hash, builds `encodeRegisterKey` + `encodeUpdateKeySettings` self-calls, signs an EIP-7702 authorization via `use7702Authorization`, and submits a Calibur UserOp through Openfort (or Pimlico on Monad) bundler. Then `markAgentRegistrationTransaction` + `confirmAgentRegistration` poll the receipt and `markAgentRegistrationResult` (retrying on `AGENT_REGISTRATION_PENDING`).
    The identity panel labels the stable user wallet **Wallet Address** and the TEE EOA **Signer Address**, consuming `signerAddress` without a legacy alias. EIP-7702/TEE helper text does not imply authorization; the existing per-chain status/expiry badges remain separate evidence.
+   Registration reserves a durable browser operation before send, stores the returned UserOperation hash immediately and resumes receipt lookup without another signature/submission. Recovery does not require an Openfort login; RPC/config remains required. Unsigned retries synchronize the latest expiry with the server. A lost hash stays fail-closed; storage-write failure retains the hash in memory/copy UI and attempts a same-tab backup.
+   Ready/success/completed states require `registered` and a future expiry; timer/focus updates prevent an open page retaining stale readiness. Operation metadata is not authentication and never includes recovery passwords, step-up proofs or API-key secrets.
 4. **Balances**: `getBalancesAuth` per selected chain; refresh nonce + retry button.
-5. **Withdraw**: `WithdrawForm` manages the allowlist (`listWithdrawalAddressesAuth`/`addWithdrawalAddressAuth`/`removeWithdrawalAddressAuth`, each step-up gated) and submits `withdrawAuth` with parsed base units (`parseWithdrawalAmount`).
+5. **Withdraw**: `WithdrawForm` manages the step-up-protected allowlist and enforces the selected withdrawal chain's unexpired authorization, with an authorize/renew CTA. A durable user/wallet-bound intent retains exact chain/payload/idempotency identity across failures/reload. Pending/unknown locks new intents; Resume queries a known transaction or idempotently replays the original request. Only terminal confirmed/failed results permit an explicit new withdrawal.
 
 ### ApiKeys (`/dashboard/api-keys`)
 
-Lists keys (sorted: active by soonest expiry then last-used; revoked by newest), filters by status, enforces the 10-active-key cap, and loads the user's wallet list for binding labels. Create requires a wallet selection (preselected for a single wallet); each key's wallet binding is immutable. The list shows the bound wallet address/label, and unbound legacy keys as revoked/unbound with no rebind action. Create sends wallet ID, capability mode and configured IDs, spend limits, and permission checkboxes; shows the raw key once. `all` dynamically allows active, unpaused reviewed capabilities; `custom` allows exact IDs and `[]` denies all. Neither bypasses independent permissions or policies. Capability selection uses `GET /defi-capabilities`; inactive/paused capabilities cannot be newly granted, while existing grants can be removed. Cards show configured mode/IDs, not expanded effective IDs. Per-key edits call step-up-protected `PATCH /api-keys/:id/capabilities` with full replacement; `{capabilityMode: "all"}` resets, custom requires IDs, IDs-only remains custom, and `{}` is invalid. Revoke (per-key), rotate-all (`refreshApiKey` with a required replacement-wallet ID and warning that all keys across wallets are revoked), and emergency revoke-all are confirm-gated and step-up gated. Includes a backend-only curl quick start.
+Lists keys with lifecycle filters and bound-wallet labels; the 10 non-revoked-key cap remains per user across wallets. Create requires an owned wallet, unique name and permissions; high-risk flags dynamically require backend egress IPs and are validated before step-up. Defaults remain read-only. `all` includes active/unpaused future additions; `custom` uses exact IDs and empty denies catalog access. Capability configuration remains separate from endpoint permissions and safety policies. Technical details expose IDs/signatures/warnings; reviewed bundles support preview before replacing selections. Full-replacement capability edits, per-key revocation and emergency revoke-all remain confirm/step-up gated. Bulk rotation is removed; normal replacement uses create → deploy/verify → revoke. Quick Start begins with `GET /v1/permissions` and links `/docs#integration`.
 `canUseEoaExecution` keeps its API field name; its checkbox and list badge describe restricted EOA typed-data signing, requiring `canSign`, an approved capability and independent safety controls, never direct signer transaction sending.
 
 ### Transactions (`/dashboard/transactions`)
@@ -71,14 +73,12 @@ Fetches `listSecurityNotificationsAuth`, sorts newest-first, renders risk badges
 ### Billing (`/dashboard/billing`)
 
 Loads plans, period-scoped usage summary, and invoices in parallel. Period picker (UTC month) refetches the summary. Stripe card checkout: `createBillingCheckoutSessionAuth` → redirect to `checkoutUrl`; `?success`/`?canceled` search params render a notice then are stripped. USDC payment opens `UsdcPaymentPanel` inline; a silent invoice refresh (`refreshInvoicesSilently`, abort + request-id guarded) runs after claims and the panel auto-closes once the invoice is paid. Payability is gated client-side (`isInvoicePayableByCard`/`isInvoicePayableByUsdc`) with the backend as final authority. **BILL-003**: card stays locked while an active USDC rail/reservation exists; invoice-list banner offers **Cancel quote** only for clean pending (unreserved) USDC attempts via `cancelUsdcQuoteAuth` (confirm + loading + 409 refresh); confirming/reserved/review never show cancel.
+Card-return confirmation queries the tracked invoice's authoritative payment status independently of invoice-list pagination. Automatic polling is bounded; timeout preserves recovery identity, shows truthful paused-check copy and offers Check payment status. Focus/visibility recovery is throttled and single-flight; only `paid: true` confirms settlement. Session changes and unmount invalidate owned reads/listeners.
+Pending checkout identity is bound to its originating user/session; remounts reject stale/unbound identities instead of reviving another session's confirmation flow.
 
 ### UsdcPaymentPanel
 
 Selects Base/Ethereum mainnet/Sepolia, fetches a quote (`createUsdcQuoteAuth`), and displays **server-derived** quote facts only (exact amount/base units, token contract, chain, expected payer, treasury, expiry with 5-minute safety warning). Primary action is user-triggered **Pay from wallet** (`payUsdcFromWalletAuth` with `X-Step-Up-Token` via existing `requestStepUpToken` / session proof) — body is `paymentAttemptId` only; never auto-submits. Status is restored and polled via `getUsdcPaymentStatusAuth` (no step-up). Phases distinguish accepted/submitting, confirming, unknown/manual review, failed, and paid — **`paid: true` alone** settles the UI; accepted/hash/202-shaped responses never imply invoice paid. Duplicate pay/claim are locked while reserved/submitting/unknown/confirming. **Fail-closed recovery (B5)**: status restore/check failure or ambiguous pay POST (network/timeout/5xx) enters local recovery — keeps pay/manual claim locked, shows status-unconfirmed copy, allows only Check status; successful authoritative status clears recovery; quote refresh must not unlock a second payment. Secondary path keeps manual tx-hash claim (`createUsdcClaimAuth`). **BILL-003 Cancel quote**: only for clean pending (unreserved, evidence-free) attempts — shown on idle quote and continue-entry pending; hidden for confirming/reserved/recovery/review/terminal. Confirm dialog, loading lock, anti double-submit; success clears local quote and refreshes invoice payment status; 409 `USDC_CANCEL_NOT_ALLOWED` (and related) shows safe conflict copy and refreshes status without inventing cancel success. Safe error mapping covers expiry-too-soon, usage-debt, cooldown/allowlist, cancel-not-allowed, frozen/origin/step-up failures without provider IDs or calldata.
-
-### Docs (`/dashboard/docs`)
-
-Static reference for the three documented automation endpoints (`/v1/wallets/sign`, `/v1/transactions`, `/v1/transactions/:id`): field tables, EOA-only approved typed-data signing examples, session-key-only Calibur UserOperation sending (omission allowed; explicit EOA/unknown mode is HTTP 400 without conversion), supported networks from `SUPPORTED_CHAINS`, and error-format notes. Wallet/signer identity notes document the breaking `signerAddress` response cutover and distinguish unchanged historical execution addresses, including historical EOA signer addresses. Base URL comes from `getApiBaseUrlForDisplay`/`getApiBaseUrlModeLabel` (Vite proxy vs `VITE_API_URL`).
 
 ## Integration
 

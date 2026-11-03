@@ -198,7 +198,7 @@ GitHub Actions result; record host OS/architecture differences and the exact gat
 - `all` dynamically follows active, unpaused reviewed catalog capabilities. `custom` allows
   only exact IDs, and `[]` denies all catalog capabilities. Neither mode overrides API-key
   permissions or independent authorization and safety checks.
-- Capability create/edit/rotation routes are application-session/frontend-only; PATCH requires step-up and
+- Capability create/edit routes are application-session/frontend-only; PATCH requires step-up and
   replaces the complete configuration. These routes are intentionally absent from
   `openapi.yaml`.
 
@@ -263,7 +263,7 @@ This is intentional. Public status responses are safe by design and must not exp
 
 ## 6. Operational safety
 
-- Revoke or rotate API keys through dashboard-only endpoints.
+- Replace API keys by creating a configured key, deploying/verifying it, then revoking the old key through dashboard-only endpoints. Emergency revoke-all creates no replacement.
 - Rotate Openfort secrets through deployment secret storage and restart backend instances.
 - Run migrations before deploying code that expects schema changes; this includes the
   additive `BillingWorkerHeartbeat` migration before enabling the billing worker in

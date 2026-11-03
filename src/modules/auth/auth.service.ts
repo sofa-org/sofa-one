@@ -18,7 +18,6 @@ import { AgentStatus, type AgentStatusValue } from '../../common/agent/agent-sta
 import { getSupportedChain } from '../../common/chains/supported-chains';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { SecurityEventService } from '../security-events/security-event.service';
-import { ApiKeyService } from '../api-key/api-key.service';
 import { BillingWalletLifecycleService } from '../billing/billing-wallet-lifecycle.service';
 import type { AuthorizeEmbeddedWalletDto } from './dto/authorize-embedded-wallet.dto';
 
@@ -51,7 +50,6 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly openfort: OpenfortService,
-    private readonly apiKeyService: ApiKeyService,
     private readonly configService: ConfigService,
     private readonly walletLifecycle: BillingWalletLifecycleService,
     @Optional()
@@ -341,6 +339,12 @@ export class AuthService {
     }
 
     const authorization = this.findChainAuthorization(wallet, chainId);
+    if (authorization?.registrationTxHash === txHash &&
+        (authorization.status === AgentStatus.PendingRegistration ||
+         authorization.status === AgentStatus.Registered ||
+         authorization.status === AgentStatus.RegistrationFailed)) {
+      return { userId: user.id, wallet: this.toWalletResponse(wallet) };
+    }
     if (!authorization || (authorization.status !== AgentStatus.RegistrationRequired && authorization.status !== AgentStatus.RegistrationFailed)) {
       throw new NotFoundException('Agent registration is not pending for this chain');
     }
@@ -391,6 +395,9 @@ export class AuthService {
     }
 
     const authorization = this.findChainAuthorization(wallet, chainId);
+    if (authorization?.registrationTxHash === txHash && authorization.status === reportedStatus) {
+      return { userId: user.id, wallet: this.toWalletResponse(wallet) };
+    }
     if (!authorization || authorization.status !== AgentStatus.PendingRegistration || authorization.registrationTxHash !== txHash) {
       throw new NotFoundException('Agent registration is not pending for this chain');
     }
@@ -609,20 +616,6 @@ export class AuthService {
     }
 
     return changed ? this.findWalletWithAuthorizations(wallet.id) : wallet;
-  }
-
-  /**
-   * Revoke all existing keys and issue a fresh one.
-   */
-  async refreshApiKey(openfortUserId: string, walletId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { socialId: openfortUserId },
-    });
-    if (!user) throw new NotFoundException('User not found');
-
-    const result = await this.apiKeyService.rotateApiKey(user.id, 'Refreshed', walletId);
-
-    return { apiKey: result.rawKey };
   }
 
   private agentExpiration(requestedExpiresAt?: string): Date {

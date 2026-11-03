@@ -61,7 +61,7 @@ export default function LandingPage() {
             VIEW PRICING
           </Link>
           <Link
-            to="/dashboard/docs"
+            to="/docs"
             className="rounded-full border border-brand-border bg-white/70 px-8 py-3.5 text-sm font-medium tracking-widest text-brand-text transition-colors hover:border-brand-text hover:bg-white"
           >
             VIEW API DOCS

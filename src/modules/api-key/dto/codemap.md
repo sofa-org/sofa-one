@@ -5,7 +5,6 @@ Defines the validated request shape for API-key creation (`POST /api-keys`). The
 
 ## Files
 - `create-api-key.dto.ts` — the only production file in this directory. Contains three exported DTO classes plus four private validator constraints.
-- `rotate-api-key.dto.ts` — validated `{ walletId }` body for dashboard key rotation.
 
 ## Key Symbols
 

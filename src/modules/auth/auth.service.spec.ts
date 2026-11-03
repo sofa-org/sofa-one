@@ -1,4 +1,5 @@
 import { AuthService } from './auth.service';
+import type { ConfigService } from '@nestjs/config';
 
 jest.mock('../../core/openfort/openfort.service', () => ({ OpenfortService: class {} }));
 
@@ -47,7 +48,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
       withWalletAccountLock: jest.fn(async (_user: string, work: (tx: any, accountId: string, now: Date) => unknown) => work(tx, 'ba1', new Date())),
       assertWalletReservationAllowed: jest.fn(), recordWalletActivation: jest.fn(), initializeWalletCount: jest.fn(),
     };
-    service = new AuthService(prisma, openfort, {} as any, {} as any, lifecycle, undefined, undefined);
+    service = new AuthService(prisma, openfort, {} as ConfigService, lifecycle, undefined, undefined);
     prisma.__intent = intent;
     prisma.__tx.walletProvisioningIntent.updateMany.mockImplementation(async ({ data }: any) => {
       Object.assign(intent, data); return { count: 1 };
@@ -263,6 +264,41 @@ describe('AuthService durable embedded-wallet provisioning', () => {
     prisma.user.findUnique.mockResolvedValue({ id: 'u1', frozenAt: which === 'user' ? new Date() : null });
     prisma.userWallet.findFirst.mockResolvedValue(owned);
     await expect(service.markAgentRegistrationTransaction('of1', 84532, '0xnew', 'w1')).rejects.toThrow('frozen');
+    expect(prisma.walletChainAuthorization.updateMany).not.toHaveBeenCalled();
+  });
+
+  it.each(['pending_registration', 'registered', 'registration_failed'])('replays the same %s checkpoint without resetting its persisted state', async (status) => {
+    const saved = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status, registrationTxHash: '0xaccepted', expiresAt: new Date(futureAgentExpiresAt) }] };
+    prisma.userWallet.findFirst.mockResolvedValue(saved);
+
+    const result = await service.markAgentRegistrationTransaction('of1', 84532, '0xaccepted', 'w1');
+
+    expect(result.wallet.chainAuthorizations).toEqual([expect.objectContaining({ status, registrationTxHash: '0xaccepted' })]);
+    expect(prisma.walletChainAuthorization.updateMany).not.toHaveBeenCalled();
+  });
+
+  it.each(['registered', 'registration_failed'] as const)('replays a persisted %s result but rejects a contradictory or stale result', async (status) => {
+    const saved = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status, registrationTxHash: '0xaccepted', expiresAt: new Date(futureAgentExpiresAt) }] };
+    prisma.userWallet.findFirst.mockResolvedValue(saved);
+
+    const result = await service.markAgentRegistrationResult('of1', 84532, status, '0xaccepted', 'w1');
+    expect(result.wallet.chainAuthorizations).toEqual([expect.objectContaining({ status, registrationTxHash: '0xaccepted' })]);
+    await expect(service.markAgentRegistrationResult('of1', 84532, status, '0xstale', 'w1')).rejects.toThrow();
+    await expect(service.markAgentRegistrationResult('of1', 84532, status === 'registered' ? 'registration_failed' : 'registered', '0xaccepted', 'w1')).rejects.toThrow();
+    expect(prisma.walletChainAuthorization.updateMany).not.toHaveBeenCalled();
+  });
+
+  it.each(['pending_registration', 'registered'])('rejects another transaction hash while %s', async (status) => {
+    prisma.userWallet.findFirst.mockResolvedValue({ ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status, registrationTxHash: '0xaccepted' }] });
+    await expect(service.markAgentRegistrationTransaction('of1', 84532, '0xother', 'w1')).rejects.toThrow();
+    expect(prisma.walletChainAuthorization.updateMany).not.toHaveBeenCalled();
+  });
+
+  it.each(['user', 'wallet'])('does not let idempotent checkpoint/result replay bypass a frozen %s', async (which) => {
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', frozenAt: which === 'user' ? new Date() : null });
+    prisma.userWallet.findFirst.mockResolvedValue({ ...wallet, status: 'active', frozenAt: which === 'wallet' ? new Date() : null, agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status: 'registered', registrationTxHash: '0xaccepted' }] });
+    await expect(service.markAgentRegistrationTransaction('of1', 84532, '0xaccepted', 'w1')).rejects.toThrow();
+    await expect(service.markAgentRegistrationResult('of1', 84532, 'registered', '0xaccepted', 'w1')).rejects.toThrow();
     expect(prisma.walletChainAuthorization.updateMany).not.toHaveBeenCalled();
   });
 });

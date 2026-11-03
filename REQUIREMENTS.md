@@ -22,9 +22,9 @@ SOFA ONE provides server-side automated blockchain signing for users who authent
 
 ### 3.2 API-key lifecycle
 
-- Dashboard-authenticated users must be able to create, list, revoke, and refresh API keys.
+- Dashboard-authenticated users must be able to create, list, and revoke API keys, including emergency revoke-all without a replacement.
 - API keys must be generated as high-entropy secrets and stored only as Argon2id hashes.
-- The raw API key must be returned only at creation/rotation time.
+- The raw API key must be returned only at creation time. Replace a key through create/deploy/revoke; bulk rotation is not supported.
 - New keys must store a 27-character lookup prefix (`sk_` + 24 hex chars); legacy shorter prefixes must remain verifiable.
 - Lookup must verify every matching prefix candidate to tolerate prefix collisions.
 - A user may have at most 10 active keys.

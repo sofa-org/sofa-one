@@ -48,6 +48,13 @@ Openfort-side identity revocation is therefore bounded by that hour, not synchro
 
 All public routes use `X-API-Key`; these three read routes require no `can*` permission. Existing API-key freeze, IP and billing guards still apply. For capability lookup, `ids` is required; comma-separated values are trimmed, non-empty, unique, and at most 256 characters each (query max 25,700 chars). Invalid input returns 400; unknown IDs are returned in `unknownIds` with 200, preserving request order. `all` mode dynamically includes catalog capabilities; `custom` with `[]` grants none. Wallet listing is owner-scoped, is not a balance or live on-chain check, and omits Openfort internal IDs. Do not accept Openfort IAM-only auth on these routes.
 
+The SPA serves static API documentation at `/docs` without login or MFA. Its
+`/docs#integration` guide starts with `GET /v1/permissions`, then the bound wallet,
+capability IDs/definitions, ABI encoding and send/status. Obtain contract-call capability
+IDs from dashboard technical details; `/protocols.json` supplies ABI/signing metadata,
+not contract-call IDs, execution restrictions, grants or live pause state.
+Signing/sending permissions require a backend egress IP allowlist; read-only keys may omit it.
+
 ### Wallet and signer identity (breaking response change)
 
 Public and dashboard wallet projections use `walletAddress` for the selected user's wallet
@@ -78,7 +85,6 @@ These fields are not renamed, backfilled, or reinterpreted as the current user's
 | `DELETE` | `/auth/session` | Revoke current session/proofs and clear cookie; pending allowed |
 | `DELETE` | `/auth/sessions` | Revoke all user sessions/proofs; full MFA plus current-session step-up |
 | `GET` | `/auth/me` | Return current user wallet/authorization state |
-| `POST` | `/api-keys/rotations` | Revoke all active keys across the user and issue one replacement bound to selected wallet (step-up) |
 | `POST` | `/auth/embedded-wallet/authorize` | Full local session plus fresh Openfort bearer whose subject matches the local user; bind proven embedded EOA |
 | `POST` | `/auth/embedded-wallet/registration-transaction` | Persist submitted Calibur registration tx hash |
 | `POST` | `/auth/embedded-wallet/registration-result` | Persist final registration status |
@@ -89,8 +95,8 @@ These fields are not renamed, backfilled, or reinterpreted as the current user's
 | `GET` | `/transactions` and `/transactions/:id/detail` | Dashboard transaction history/detail; distinct from versioned API-key routes |
 | `GET` | `/api-keys` | List API-key metadata |
 | `POST` | `/api-keys` | Create API key and return raw secret once |
-| `POST` | `/api-keys/rotations` | Rotate all active keys for the user (step-up required) |
 | `DELETE` | `/api-keys/:id` | Revoke API key |
+| `DELETE` | `/api-keys` | Emergency revoke all keys without issuing a replacement |
 | `GET` | `/defi-capabilities`, `/defi-capability-bundles` | List catalog DeFi capability metadata |
 | `PATCH` | `/api-keys/:id/capabilities` | Replace the key's capability grants (step-up required) |
 | `GET/POST` | `/security-notifications/*` | List and mark security notifications |
@@ -109,10 +115,10 @@ invalidated on cookie replacement/logout. TOTP disable verifies the factor and r
 Each new API key is immutably bound to exactly one of its owner's wallets. A wallet may
 have multiple keys; the existing maximum of 10 active keys is per user across all wallets.
 Dashboard `POST /api-keys` creation requires `walletId` as a wallet UUID owned by the
-authenticated user. The dashboard-only `POST /api-keys/rotations` likewise requires
-`{ "walletId": "<wallet UUID>" }`: it revokes **all** of that user's active keys across
-all wallets and creates one replacement bound to the selected wallet. It does not move or
-rebind a surviving key. Both routes remain application-session/frontend-only and step-up protected.
+authenticated user and remains application-session/frontend-only and step-up protected.
+Bulk key rotation has been removed. For a rolling replacement, create a key with the required
+permissions, IPs and capability grants, deploy and verify it, then revoke the old key.
+`DELETE /api-keys` remains an explicit emergency stop for every key and creates no replacement.
 
 Public `POST /v1/wallets/sign` and `POST /v1/transactions` always resolve the
 execution wallet from the authenticated key's binding, not from caller selection. Send's
@@ -130,9 +136,8 @@ chain, schema, scope, freeze, pause, or any other independent policy. `custom` p
 only the exact listed IDs, with `[]` meaning no capability grants. Create with both fields
 omitted defaults to `all` and `[]`; IDs alone selects custom, including `[]`; explicit `all`
 accepts omitted or empty IDs. `custom` requires IDs, and
-`all` rejects nonempty or null IDs. List/create/rotation/PATCH expose the configured mode
-and IDs, not a materialized expansion of effective IDs. Rotation resets to `all` with an
-empty ID list while preserving its established permission/IP/TTL defaults. Dashboard step-up
+`all` rejects nonempty or null IDs. List/create/PATCH expose the configured mode
+and IDs, not a materialized expansion of effective IDs. Dashboard step-up
 PATCH accepts `{ "capabilityMode": "all" }` to reset, or custom plus the complete ID list;
 IDs-only PATCH remains custom for compatibility. `{}` is invalid.
 

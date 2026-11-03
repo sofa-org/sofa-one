@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/transactions', label: 'History', icon: History },
   { href: '/dashboard/notifications', label: 'Alerts', icon: Bell },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
-  { href: '/dashboard/docs', label: 'API Docs', icon: BookOpen },
+  { href: '/docs', label: 'API Docs', icon: BookOpen },
 ];
 
 

@@ -143,7 +143,7 @@ The `prisma/` directory is the canonical data-persistence layer for SOFA ONE. `s
 
 - **PrismaService / PrismaModule** (`src/core/database/`): Global provider; all consumers inject `PrismaService` and use generated model delegates plus `$transaction` (interactive transactions for atomic key creation, wallet provisioning, settlement, and usage recording).
 - **AuthModule** (`src/modules/auth/auth.service.ts`): `User` find-or-create, `UserWallet` provisioning, `WalletChainAuthorization` updates, `UserKnownIp` tracking.
-- **ApiKeyModule** (`src/modules/api-key/api-key.service.ts`): `ApiKey` create/list/revoke/rotate with `ApiKeyEvent` audit inside transactions.
+- **ApiKeyModule** (`src/modules/api-key/api-key.service.ts`): `ApiKey` create/list/revoke with `ApiKeyEvent` audit inside transactions. Historical rotation events remain audit records, not a supported operation.
 - **Auth guards**: ApiKeyAuthGuard handles public prefix/hash/freeze policy; AppSessionGuard resolves local session/current User/freeze state. Openfort identity verification occurs only at explicit exchange/wallet-proof boundaries.
 - **WalletModule** (`src/modules/wallet/`): `UserWallet` reads/freeze checks, `SigningRequest` create/list/update, `Transaction` writes for withdrawals, `WithdrawalPolicy`/`WithdrawalAddress` management with row locks.
 - **TransactionsModule** (`src/modules/transactions/`): `Transaction` create/update/list/status with idempotency and attribution snapshots; `TransactionPolicyService` reads transaction history for spend-limit enforcement.

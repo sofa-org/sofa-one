@@ -107,7 +107,7 @@ describe.each([
   it('sends CSRF and step-up for unsafe dashboard calls, preserving withdrawal retry keys', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('{}'));
     api.configureAppSessionTransport('csrf-secret');
-    await api.refreshApiKey('proof', 'wallet-id');
+    await api.revokeApiKeyAuth('key-id', 'proof');
     const input = ['0x1111111111111111111111111111111111111111', '100', 'USDC', 84532, 'proof', undefined, 'stable-retry-key'] as const;
     await api.withdrawAuth(...input);
     await api.withdrawAuth(...input);

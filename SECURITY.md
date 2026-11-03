@@ -42,8 +42,8 @@ These endpoints require `X-API-Key` and must reject IAM bearer and application-c
 - Store `keyPrefix` only as a lookup hint.
 - For lookup, fetch all non-revoked candidates with the submitted prefix and Argon2-verify every candidate.
 - Treat prefix collisions and legacy short prefixes as expected cases.
-- Return raw API keys only once when created/refreshed.
-- Audit create/revoke/rotate operations in `ApiKeyEvent`.
+- Return raw API keys only once when created.
+- Audit create/revoke operations in `ApiKeyEvent`; retain historical lifecycle events.
 
 ## 4. IP allowlists and proxy safety
 

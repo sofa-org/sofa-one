@@ -18,7 +18,7 @@ The container is organized around three concerns:
 | `auth/` | Openfort IAM session sync, embedded-wallet authorization/activation, Calibur agent-key registration lifecycle, API-key refresh, login-IP telemetry | [View Map](auth/codemap.md) |
 | `app-session/` | Global opaque cookie sessions, hash-only persistence, Origin/CSRF checks, pending/full MFA, fixed expiry and current/all-session revocation | [Service](app-session/app-session.service.ts) |
 | `auth/dto/` | Validated bodies for embedded-wallet authorize + agent registration endpoints | [View Map](auth/dto/codemap.md) |
-| `api-key/` | Dashboard-only API-key lifecycle (create/list/revoke/rotate), Argon2id hashing, permissions, spend limits, allowlists, dual audit | [View Map](api-key/codemap.md) |
+| `api-key/` | Dashboard-only API-key lifecycle (create/list/revoke), Argon2id hashing, permissions, spend limits, allowlists, dual audit | [View Map](api-key/codemap.md) |
 | `api-key/dto/` | Validated create-API-key request shape + permission/spend-limit sub-objects | [View Map](api-key/dto/codemap.md) |
 | `wallet/` | Wallet queries, API-key signing (EIP-191/712), withdrawal-address allowlist, USDC withdrawal policy + Calibur user-op submission, freeze enforcement | [View Map](wallet/codemap.md) |
 | `wallet-provisioning-recovery/` | Operator-only CLI support for binding an already-created provider account to a matching provisioning intent; no HTTP route or create retry/reset | [View Map](wallet-provisioning-recovery/codemap.md) |
@@ -82,7 +82,7 @@ API-key requests meter via `ApiKeyAuthGuard.recordApiCallUsage` → `billing.ass
 - **Cross-module dependency direction (policy gates):**
   - `DefiModule` is a leaf imported by `ApiKeyModule`, `TransactionsModule`, and `WalletModule`; it imports `SecurityEventModule` and uses globally available Prisma.
   - `WalletModule` and `TransactionsModule` import `EoaExecutionModule`, `SessionKeyModule`, `SecurityEventModule`, `StepUpModule`, `BillingModule`.
-  - `AuthModule` imports `ApiKeyModule` (rotate), `SecurityEventModule`, `StepUpModule`, `BillingModule`.
+  - `AuthModule` imports `SecurityEventModule`, `StepUpModule`, `BillingModule`.
   - `ApiKeyModule` imports `StepUpModule` + `SecurityEventModule`.
   - `MfaModule` imports `StepUpModule`; `StepUpModule` is imported by `MfaModule`, `AuthModule`, `ApiKeyModule`, `WalletModule`.
   - `SecurityEventModule` imports `SecurityNotificationModule` and `RequestContextModule`; `EoaExecutionModule` and `SessionKeyModule` import `SecurityEventModule`.
@@ -93,7 +93,7 @@ API-key requests meter via `ApiKeyAuthGuard.recordApiCallUsage` → `billing.ass
 
 - **Public API-key routes** (documented in `openapi.yaml`): `POST /v1/wallets/sign`, `POST /v1/transactions`, `GET /v1/transactions/:id`, `GET /v1/wallets`, plus read-only `/v1/permissions` and `/v1/capabilities`. Protected transaction/signing routes use `X-API-Key` (`ApiKeyAuthGuard` + `ApiKeyPermissionGuard`); Openfort IAM tokens are not accepted, and API-key management is never callable by API keys.
 - **Frontend-only routes** remain omitted from public OpenAPI. AppSessionGuard authenticates cookie sessions, FrontendOnlyGuard checks allowed browser origin/referer, unsafe methods require CSRF, and sensitive methods add exact-session step-up.
-- **Step-up protected** (`StepUpGuard` + `@RequireStepUp()`, `X-Step-Up-Token`): `POST /api-keys/rotations`, all `/api-keys` mutations, `POST /wallets/withdrawals`, and `POST/DELETE /wallets/withdrawal-addresses`.
+- **Step-up protected** (`StepUpGuard` + `@RequireStepUp()`, `X-Step-Up-Token`): all `/api-keys` mutations, `POST /wallets/withdrawals`, and `POST/DELETE /wallets/withdrawal-addresses`.
 - **Public unauthenticated routes:** `GET /health/live`, `GET /health/ready` (`@Public()`), and `POST /v1/billing/webhooks/stripe` (signature-verified from `req.rawBody`, `@Public()`, throttle-skipped).
 - **Freeze enforcement**: AppSessionGuard/ApiKeyAuthGuard reject frozen users; existing API-key/wallet freeze controls remain unchanged.
 - **Safe response shaping:** public transaction status and signing-request responses never expose calldata, `requestHash`, `interactionsHash`, digests, or secrets; billing/claim/reconciliation responses never expose receipt logs, calldata, RPC details, Openfort IDs, or secrets.

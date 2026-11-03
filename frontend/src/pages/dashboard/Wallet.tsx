@@ -23,6 +23,8 @@ import {
   addWithdrawalAddressAuth,
   getBalancesAuth,
   getApiErrorMessage,
+  isApiError,
+  getTransactionDetailAuth,
   hasApiErrorCode,
   listWithdrawalAddressesAuth,
   removeWithdrawalAddressAuth,
@@ -88,6 +90,10 @@ import {
   type WithdrawError,
   type WithdrawSuccess,
 } from './wallet-helpers';
+import {
+  readOperation, saveOperation, clearOperation, isAuthorizationReady, isWithdrawalTerminal,
+  type WithdrawalIntent, type RegistrationOperation,
+} from './wallet-recovery';
 
 export default function WalletPage() {
   const openfort = useOpenfort();
@@ -108,6 +114,20 @@ export default function WalletPage() {
   const [agentChainId, setAgentChainId] = useState(() =>
     getStoredChainId(AGENT_CHAIN_STORAGE_KEY, DEFAULT_CHAIN_ID),
   );
+  const [now, setNow] = useState(Date.now);
+  const [localRegistration, setLocalRegistration] = useState<RegistrationOperation | null>(null);
+  const localRegistrationRef = useRef<RegistrationOperation | null>(null);
+  const [recoveryStorageError, setRecoveryStorageError] = useState<string | null>(null);
+  const [withdrawIntent, setWithdrawIntent] = useState<WithdrawalIntent | null>(null);
+  const withdrawIntentRef = useRef<WithdrawalIntent | null>(null);
+  const withdrawInFlightRef = useRef(false);
+  const ownerRef = useRef('');
+  const currentOwner = `${user?.sessionId}:${user?.userId}:${selectedWallet?.id}`;
+  ownerRef.current = currentOwner;
+  const ownedRegistration = localRegistration && localRegistration.userId === user?.userId && localRegistration.walletId === selectedWallet?.id ? localRegistration : null;
+  const ownedWithdrawIntent = withdrawIntent && withdrawIntent.userId === user?.userId && withdrawIntent.walletId === selectedWallet?.id ? withdrawIntent : null;
+  const withdrawalAuthorization = selectedWallet?.chainAuthorizations.find((item) => item.chainId === selectedChainId);
+  const withdrawalReady = isAuthorizationReady(withdrawalAuthorization, now);
   const selectedAuthorization = selectedWallet?.chainAuthorizations.find(
     (authorization) => authorization.chainId === agentChainId,
   );
@@ -117,9 +137,9 @@ export default function WalletPage() {
       authorization.status === 'pending_registration' && authorization.registrationTxHash,
   );
   const hasRegisteredAuthorization =
-    selectedWallet?.chainAuthorizations.some((authorization) => authorization.status === 'registered') ??
+    selectedWallet?.chainAuthorizations.some((authorization) => isAuthorizationReady(authorization, now)) ??
     false;
-  const agentRegistrationChainId = pendingAuthorization?.chainId ?? agentChainId;
+  const agentRegistrationChainId = ownedRegistration?.chainId ?? pendingAuthorization?.chainId ?? agentChainId;
   const walletExplorerUrl = getExplorerAddressUrl(agentChainId, selectedWallet?.walletAddress);
   const pendingAuthorizationExplorerUrl = getExplorerTransactionUrl(
     agentRegistrationChainId,
@@ -180,6 +200,40 @@ export default function WalletPage() {
   >('idle');
 
   useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
+    const refresh = () => setNow(Date.now());
+    window.addEventListener('focus', refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh); };
+  }, []);
+
+  useEffect(() => {
+    localRegistrationRef.current = null;
+    withdrawIntentRef.current = null;
+    setLocalRegistration(null);
+    setWithdrawIntent(null);
+    setWithdrawResult(null);
+    setWithdrawError(null);
+    setWalletSetupSuccess(null);
+    setWalletSetupError(null);
+    setRecoveryPassword('');
+    setTo('');
+    setAmount('');
+    setRecoveryStorageError(null);
+    if (!user?.userId || !selectedWallet?.id || !selectedWallet.walletAddress) return;
+    try {
+      const registration = readOperation<RegistrationOperation>('registration', user.userId, selectedWallet.id, selectedWallet.walletAddress);
+      const withdrawal = readOperation<WithdrawalIntent>('withdrawal', user.userId, selectedWallet.id, selectedWallet.walletAddress);
+      localRegistrationRef.current = registration;
+      setLocalRegistration(registration);
+      withdrawIntentRef.current = withdrawal;
+      setWithdrawIntent(withdrawal);
+      if (withdrawal) setShowWithdraw(true);
+    } catch {
+      setRecoveryStorageError('Wallet recovery storage is unavailable or invalid. Restore browser storage before submitting; do not create a duplicate operation.');
+    }
+  }, [user?.sessionId, user?.userId, selectedWallet?.id, selectedWallet?.walletAddress]);
+
+  useEffect(() => {
     persistChainId(BALANCE_CHAIN_STORAGE_KEY, selectedChainId);
   }, [selectedChainId]);
 
@@ -216,23 +270,54 @@ export default function WalletPage() {
   );
 
   const checkPendingAgentRegistration = useCallback(
-    async (durationMs: number) => {
-      if (!pendingAuthorization?.registrationTxHash || !publicClient) return null;
-
+    async (durationMs: number, shouldContinue: () => boolean) => {
+      const operation = localRegistrationRef.current;
+      if (operation?.userOpHash) {
+        try { saveOperation('registration', operation); } catch { /* Retain memory and same-tab backup for retry. */ }
+      }
+      if (!publicClient) throw new Error('The chain RPC is not ready. Retry check when the network reconnects; do not authorize again.');
+      const chainId = operation?.chainId ?? pendingAuthorization?.chainId;
+      let txHash = operation?.txHash ?? pendingAuthorization?.registrationTxHash;
+      if (!chainId) return null;
+      if (publicClient.chain?.id !== undefined && publicClient.chain.id !== chainId) {
+        throw new Error('Waiting for the RPC on the pending authorization chain. Retry check; do not authorize again.');
+      }
+      if (!txHash && operation) {
+        if (!operation.userOpHash) throw new Error('The bundler submission outcome is unknown. Do not authorize again. Contact support to recover this wallet and chain operation.');
+        const usePimlico = isMonadChain(chainId);
+        const publishableKey = import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY;
+        const rpcUrl = usePimlico ? getMonadPimlicoRpcUrl(chainId) : `https://api.openfort.io/rpc/${chainId}`;
+        const bundler = createBundlerClient({
+          chain: publicClient.chain,
+          transport: http(rpcUrl, usePimlico ? undefined : { fetchOptions: { headers: { Authorization: `Bearer ${publishableKey}` } } }),
+        });
+        const receipt = await bundler.waitForUserOperationReceipt({
+          hash: operation.userOpHash as Hex, timeout: AGENT_REGISTRATION_RECEIPT_TIMEOUT_MS,
+        });
+        txHash = receipt.receipt.transactionHash;
+        if (!txHash) throw new Error('UserOperation is still pending. Retry check; do not authorize again.');
+        const saved = { ...operation, txHash };
+        if (shouldContinue()) localRegistrationRef.current = saved;
+        // Keep both hashes in memory even if storage fails; the server can
+        // retain the transaction before confirmation is attempted.
+        try { saveOperation('registration', saved); } catch { /* Original operation remains reserved. */ }
+      }
+      if (!txHash || !shouldContinue()) return null;
+      if (operation) await markAgentRegistrationTransaction({ chainId, txHash, walletId: operation.walletId });
       const deadline = Date.now() + durationMs;
-      return confirmAgentRegistration(
-        publicClient,
-        pendingAuthorization.chainId,
-        pendingAuthorization.registrationTxHash as Hex,
-        () => Date.now() < deadline,
-      );
+      const result = await confirmAgentRegistration(publicClient, chainId, txHash as Hex, () => shouldContinue() && Date.now() < deadline);
+      if (result && operation) {
+        const updated = result.wallets?.find((item) => item.id === operation.walletId) ?? (result.wallet.id === operation.walletId ? result.wallet : null);
+        const authorization = updated?.chainAuthorizations.find((item) => item.chainId === chainId);
+        if (authorization?.status === 'registered' || authorization?.status === 'registration_failed') {
+          clearOperation('registration', operation);
+          if (shouldContinue() && localRegistrationRef.current?.userId === operation.userId &&
+              localRegistrationRef.current.walletId === operation.walletId) localRegistrationRef.current = null;
+        }
+      }
+      return result;
     },
-    [
-      confirmAgentRegistration,
-      pendingAuthorization?.chainId,
-      pendingAuthorization?.registrationTxHash,
-      publicClient,
-    ],
+    [confirmAgentRegistration, pendingAuthorization?.chainId, pendingAuthorization?.registrationTxHash, publicClient],
   );
 
   useEffect(() => {
@@ -249,6 +334,7 @@ export default function WalletPage() {
     async function init() {
       try {
         const result = await getMe(controller.signal);
+        if (controller.signal.aborted) return;
 
         if (result.apiKey) {
           setApiKeyDisplay(result.apiKey);
@@ -349,123 +435,165 @@ export default function WalletPage() {
   }
 
   useEffect(() => {
-    const txHash = pendingAuthorization?.registrationTxHash;
-    const chainId = pendingAuthorization?.chainId;
-    if (!user || !publicClient || !chainId || !txHash) {
-      return;
-    }
-
+    if (!user?.userId || !selectedWalletId || walletSetupLoading || (!ownedRegistration && !pendingAuthorization?.registrationTxHash)) return;
     let cancelled = false;
-    const client = publicClient;
-    const savedTxHash = txHash;
-    const savedChainId = chainId;
-    const deadline = Date.now() + AGENT_REGISTRATION_AUTO_CHECK_MS;
+    const owner = currentOwner;
+    const isCurrent = () => !cancelled && ownerRef.current === owner;
     setAgentRegistrationCheckStatus('checking');
-    setWalletSetupError(null);
-
     async function resumeAgentRegistrationCheck() {
       try {
-        const result = await confirmAgentRegistration(
-          client,
-          savedChainId,
-          savedTxHash as Hex,
-          () => !cancelled && Date.now() < deadline,
-        );
-        if (cancelled) return;
+        const result = await checkPendingAgentRegistration(AGENT_REGISTRATION_AUTO_CHECK_MS, isCurrent);
+        if (!isCurrent()) return;
         if (result) {
           const updated = result.wallets?.find((item) => item.id === selectedWalletId) ?? (result.wallet.id === selectedWalletId ? result.wallet : null);
           if (!updated) throw new Error('The selected wallet was not returned by the server. Refresh wallet state.');
-          setWallets(result.wallets?.length ? result.wallets : [result.wallet]); setWallet(updated);
+          setWallets(result.wallets?.length ? result.wallets : [result.wallet]);
+          setWallet(updated);
+          setLocalRegistration(localRegistrationRef.current);
           setAgentRegistrationCheckStatus('idle');
+          const authorization = updated.chainAuthorizations.find((item) => item.chainId === agentRegistrationChainId);
+          if (isAuthorizationReady(authorization)) setWalletSetupSuccess('API access authorization confirmed.');
+          else setWalletSetupError('API access is not ready. The authorization failed or expired; renew it before transacting.');
           return;
         }
         setAgentRegistrationCheckStatus('timed_out');
-        setWalletSetupSuccess(
-          'Authorization transaction succeeded, but confirmation is taking longer than expected. Use Retry check to verify again.',
-        );
       } catch (err: unknown) {
-        if (cancelled) return;
+        if (!isCurrent()) return;
         setAgentRegistrationCheckStatus('timed_out');
         setWalletSetupError(getApiErrorMessage(err));
-        // Leave the saved tx hash and pending status intact; the next page visit will retry.
       }
     }
-
-    resumeAgentRegistrationCheck();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    user,
-    selectedWalletId,
-    publicClient,
-    pendingAuthorization?.chainId,
-    pendingAuthorization?.registrationTxHash,
-    confirmAgentRegistration,
-  ]);
+    void resumeAgentRegistrationCheck();
+    return () => { cancelled = true; };
+  }, [user?.sessionId, user?.userId, selectedWalletId, walletSetupLoading,
+    ownedRegistration?.userOpHash, ownedRegistration?.chainId,
+    pendingAuthorization?.registrationTxHash, checkPendingAgentRegistration, currentOwner, agentRegistrationChainId]);
 
   async function handleRetryAgentRegistrationCheck() {
+    if (agentRegistrationCheckStatus === 'checking') return;
+    const owner = currentOwner;
+    const isCurrent = () => ownerRef.current === owner;
     setAgentRegistrationCheckStatus('checking');
     setWalletSetupError(null);
     setWalletSetupSuccess(null);
-
     try {
-      const result = await checkPendingAgentRegistration(AGENT_REGISTRATION_MANUAL_CHECK_MS);
+      const result = await checkPendingAgentRegistration(AGENT_REGISTRATION_MANUAL_CHECK_MS, isCurrent);
+      if (!isCurrent()) return;
       if (result) {
         const updated = result.wallets?.find((item) => item.id === selectedWalletId) ?? (result.wallet.id === selectedWalletId ? result.wallet : null);
         if (!updated) throw new Error('The selected wallet was not returned by the server. Refresh wallet state.');
-        setWallets(result.wallets?.length ? result.wallets : [result.wallet]); setWallet(updated);
+        setWallets(result.wallets?.length ? result.wallets : [result.wallet]);
+        setWallet(updated);
+        setLocalRegistration(localRegistrationRef.current);
         setAgentRegistrationCheckStatus('idle');
-        setWalletSetupSuccess('API access authorization confirmed.');
-        return;
-      }
-
-      setAgentRegistrationCheckStatus('timed_out');
-      setWalletSetupSuccess(
-        'Authorization is still pending verification. Retry again in a moment; do not submit another authorization.',
-      );
+        if (isAuthorizationReady(updated.chainAuthorizations.find((item) => item.chainId === agentRegistrationChainId))) {
+          setWalletSetupSuccess('API access authorization confirmed.');
+        } else setWalletSetupError('API access is not ready. The authorization failed or expired; renew it before transacting.');
+      } else setAgentRegistrationCheckStatus('timed_out');
     } catch (err: unknown) {
+      if (!isCurrent()) return;
       setAgentRegistrationCheckStatus('timed_out');
       setWalletSetupError(getApiErrorMessage(err));
     }
   }
 
-  async function handleWithdraw(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleWithdraw(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (withdrawInFlightRef.current) return;
+    const owner = currentOwner;
+    const isCurrent = () => ownerRef.current === owner;
+    let submitted = false;
+    let resuming = false;
+    let intent: WithdrawalIntent | null = null;
+    withdrawInFlightRef.current = true;
     setWithdrawLoading(true);
     setWithdrawResult(null);
     setWithdrawError(null);
     try {
-      const baseUnits = parseWithdrawalAmount(amount, token);
-      const chainId = selectedChainId;
-      const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken());
-      if (!selectedWallet?.id) throw new Error('Select the wallet to withdraw from.');
-      const result = await withdrawAuth(to, baseUnits, token, chainId, stepUpToken, selectedWallet.id);
-      setWithdrawResult({
-        message: `Transaction submitted: ${result.transactionHash || result.transactionId}`,
-        transactionHash: result.transactionHash,
-        chainId,
-      });
-      setTo('');
-      setAmount('');
+      if (recoveryStorageError) throw new Error(recoveryStorageError);
+      if (!user?.userId || !selectedWallet?.id || !selectedWallet.walletAddress) throw new Error('Select the wallet to withdraw from.');
+      intent = readOperation<WithdrawalIntent>('withdrawal', user.userId, selectedWallet.id, selectedWallet.walletAddress) ?? withdrawIntentRef.current;
+      if (intent && (intent.userId !== user.userId || intent.walletId !== selectedWallet.id)) intent = null;
+      resuming = Boolean(intent);
+      if (!intent) {
+        if (!isAuthorizationReady(withdrawalAuthorization)) throw new Error('Authorize or renew API access on the selected withdrawal chain first.');
+        const baseUnits = parseWithdrawalAmount(amount, token);
+        if (BigInt(baseUnits) <= 0n) throw new Error('Enter an amount greater than zero.');
+        if (!/^0x[a-fA-F0-9]{40}$/.test(to)) throw new Error('Enter a valid recipient address.');
+        intent = {
+          userId: user.userId, walletId: selectedWallet.id, walletAddress: selectedWallet.walletAddress,
+          chainId: selectedChainId, to, token, amount: baseUnits, displayAmount: amount,
+          idempotencyKey: crypto.randomUUID(), status: 'unknown',
+        };
+        saveOperation('withdrawal', intent);
+        withdrawIntentRef.current = intent;
+        setWithdrawIntent(intent);
+      }
+      let result;
+      if (intent.transactionId) {
+        const detail = await getTransactionDetailAuth(intent.transactionId);
+        result = { transactionId: detail.id, transactionHash: detail.txHash, status: detail.status };
+      } else {
+        const stepUpToken = getDashboardStepUpToken() ?? (await requestStepUpToken());
+        if (!isCurrent()) {
+          // This newly-created intent never reached the API. Do not leave a
+          // fake unknown withdrawal behind when step-up outlives its session.
+          if (!resuming) clearOperation('withdrawal', intent);
+          return;
+        }
+        submitted = true;
+        result = await withdrawAuth(intent.to, intent.amount, intent.token, intent.chainId, stepUpToken, intent.walletId, intent.idempotencyKey);
+      }
+      intent = { ...intent, ...result };
+      if (isCurrent()) withdrawIntentRef.current = intent;
+      saveOperation('withdrawal', intent);
+      if (!isCurrent()) return;
+      setWithdrawIntent(intent);
+      if (isWithdrawalTerminal(result.status)) {
+        setWithdrawResult({
+          status: result.status as 'confirmed' | 'failed',
+          message: result.status === 'confirmed' ? 'Withdrawal confirmed.' : 'Withdrawal failed. No new withdrawal has been submitted.',
+          transactionHash: result.transactionHash, chainId: intent.chainId,
+        });
+        retryBalances();
+      }
     } catch (err: unknown) {
-      // Only treat the explicit billing block code as unpaid-invoice guidance.
-      // Network/unknown failures keep the generic message with no Billing CTA.
-      setWithdrawError({
+      // Only the first, definite pre-submission rejection can release this intent.
+      // A later validation/auth error says nothing about an earlier lost response.
+      const knownRejected = submitted && !resuming && isApiError(err) &&
+        [400, 401, 403, 422, 429].includes(err.statusCode) && !hasApiErrorCode(err, 'IDEMPOTENCY_CONFLICT');
+      if (intent && ((!submitted && !resuming) || knownRejected)) {
+        try {
+          clearOperation('withdrawal', intent);
+          if (isCurrent()) {
+            withdrawIntentRef.current = null;
+            setWithdrawIntent(null);
+          }
+        } catch { /* Keep the intent locked if storage cannot be cleared. */ }
+      }
+      if (isCurrent()) setWithdrawError({
         message: getApiErrorMessage(err),
         billingBlocked: hasApiErrorCode(err, 'BILLING_OUTBOUND_BLOCKED'),
       });
     } finally {
+      withdrawInFlightRef.current = false;
       setWithdrawLoading(false);
     }
   }
 
   function resetWithdrawForm() {
-    setWithdrawResult(null);
-    setWithdrawError(null);
-    setTo('');
-    setAmount('');
+    if (!ownedWithdrawIntent || !isWithdrawalTerminal(ownedWithdrawIntent.status)) return;
+    try {
+      clearOperation('withdrawal', ownedWithdrawIntent);
+      withdrawIntentRef.current = null;
+      setWithdrawIntent(null);
+      setWithdrawResult(null);
+      setWithdrawError(null);
+      setTo('');
+      setAmount('');
+    } catch {
+      setWithdrawError({ message: 'Could not clear the saved withdrawal. Restore browser storage before starting another.' });
+    }
   }
 
   async function handleAddWithdrawalAddress(e: React.FormEvent) {
@@ -630,6 +758,7 @@ export default function WalletPage() {
   async function handleRegisterAgent(e: React.FormEvent) {
     e.preventDefault();
     if (registerAgentInFlightRef.current) return;
+    const registrationOwner = currentOwner;
     registerAgentInFlightRef.current = true;
     setWalletSetupLoading(true);
     setWalletSetupError(null);
@@ -641,7 +770,12 @@ export default function WalletPage() {
       if (!selectedWallet?.walletAddress || !selectedWallet.signerAddress || !selectedWallet.agentKeyHash) {
         throw new Error('Missing wallet or agent key details. Please reload the page.');
       }
-      if (pendingAuthorization) {
+      const storedOperation = readOperation<RegistrationOperation>('registration', user!.userId, selectedWallet.id, selectedWallet.walletAddress);
+      if (storedOperation) {
+        localRegistrationRef.current = storedOperation;
+        setLocalRegistration(storedOperation);
+      }
+      if (pendingAuthorization || localRegistrationRef.current || recoveryStorageError) {
         throw new Error(
           'API access authorization is already checking. Wait for confirmation before authorizing again.',
         );
@@ -668,21 +802,18 @@ export default function WalletPage() {
           const provider = await openfort.client.embeddedWallet.getEthereumProvider();
           const accounts = await provider.request({ method: 'eth_accounts' });
           const first = Array.isArray(accounts) ? accounts[0] : undefined;
+          if (ownerRef.current !== registrationOwner) throw new Error('Wallet selection or session changed.');
           if (typeof first !== 'string' || !/^0x[0-9a-fA-F]{40}$/.test(first) || first.toLowerCase() !== address.toLowerCase()) throw new Error();
         } catch {
           throw new Error('Openfort could not confirm the selected wallet is active. No authorization was signed.');
         }
       };
       await verifyActiveAccount();
-      const walletAddressChanged = false;
-      let authorization = walletAddressChanged ? undefined : selectedAuthorization;
+      let authorization = selectedAuthorization;
       let currentWallet: WalletInfo | null = selectedWallet;
-      if (
-        !authorization ||
-        authorization.status === 'registered' ||
-        authorization.status === 'registration_failed'
-      ) {
+      {
         const providerBearer = await getAccessToken();
+        if (ownerRef.current !== registrationOwner) return;
         if (!providerBearer) {
           setWalletIdentityRequired(true);
           throw new Error('Reconnect Openfort before authorizing a wallet.');
@@ -693,6 +824,7 @@ export default function WalletPage() {
           chainId: agentChainId,
           agentExpiresAt: agentExpiresAt.toISOString(),
         });
+        if (ownerRef.current !== registrationOwner) return;
         currentWallet = initialized.wallets?.find((item) => item.id === selectedWallet.id) ?? (initialized.wallet.id === selectedWallet.id ? initialized.wallet : null);
         if (!currentWallet) throw new Error('The server did not return the selected wallet after authorization. Refresh and retry.');
         if (currentWallet.walletAddress?.toLowerCase() !== address.toLowerCase()) {
@@ -788,6 +920,7 @@ export default function WalletPage() {
       const owner = toAccount({
         address,
         async sign({ hash }) {
+          if (ownerRef.current !== registrationOwner) throw new Error('Wallet selection or session changed. No operation was signed.');
           return openfort.client.embeddedWallet.signMessage(hash, {
             hashMessage: false,
             arrayifyMessage: false,
@@ -856,6 +989,16 @@ export default function WalletPage() {
         bundlerRpcUrl,
         openfortPublishableKey,
       );
+      if (ownerRef.current !== registrationOwner) throw new Error('Wallet selection or session changed. No registration was submitted.');
+      const submission: RegistrationOperation = {
+        userId: user!.userId, walletId: selectedWallet.id, walletAddress: address,
+        chainId: agentChainId, userOpHash: null,
+      };
+      // Reserve a durable slot before sending. If the response is lost, reloads
+      // must remain blocked rather than sign a second operation.
+      saveOperation('registration', submission);
+      localRegistrationRef.current = submission;
+      setLocalRegistration(submission);
       const userOpHash = await bundlerClient.sendUserOperation({
         account: caliburAccount,
         calls: registrationCalls,
@@ -866,59 +1009,22 @@ export default function WalletPage() {
           ? { paymasterContext: { policyId: feeSponsorshipId } }
           : {}),
       } as never);
-      const userOpReceipt = await bundlerClient.waitForUserOperationReceipt({ hash: userOpHash });
-      const txHash =
-        (userOpReceipt as { receipt?: { transactionHash?: Hex }; transactionHash?: Hex }).receipt
-          ?.transactionHash ?? (userOpReceipt as { transactionHash?: Hex }).transactionHash;
-      if (!txHash) {
-        throw new Error(
-          `Agent registration UserOperation was submitted but no transaction hash was returned: ${userOpHash}`,
-        );
+      const operation: RegistrationOperation = { ...submission, userOpHash };
+      if (ownerRef.current === registrationOwner) {
+        localRegistrationRef.current = operation;
+        setLocalRegistration(operation);
       }
-      const pending = await markAgentRegistrationTransaction({
-        chainId: agentChainId,
-        txHash,
-        walletId: selectedWallet?.id,
-      });
-      const pendingWallet = pending.wallets?.find((item) => item.id === selectedWallet.id) ?? (pending.wallet.id === selectedWallet.id ? pending.wallet : null);
-      if (!pendingWallet) throw new Error('The selected wallet was not returned by the server. Refresh wallet state.');
-      setWallets(pending.wallets?.length ? pending.wallets : [pending.wallet]); setWallet(pendingWallet);
-
-      let result: AuthSessionResponse | null;
       try {
-        let attempts = 0;
-        result = await confirmAgentRegistration(
-          publicClient,
-          agentChainId,
-          txHash,
-          () => attempts++ < 3,
-        );
+        saveOperation('registration', operation);
       } catch {
-        setWalletSetupSuccess(`Authorization pending. We will check again next time: ${txHash}`);
-        return;
+        if (ownerRef.current === registrationOwner) setWalletSetupError(`Browser storage could not save the submitted UserOperation. Keep this page open and copy its identity: ${userOpHash}. Retry check only; do not authorize again.`);
       }
-
-      if (!result) {
-        setAgentRegistrationCheckStatus('timed_out');
-        setWalletSetupSuccess(`Authorization pending. We are still checking on-chain: ${txHash}`);
-        return;
-      }
-
-      const updated = result.wallets?.find((item) => item.id === selectedWallet.id) ?? (result.wallet.id === selectedWallet.id ? result.wallet : null);
-      if (!updated) throw new Error('The selected wallet was not returned by the server. Refresh wallet state.');
-      setWallets(result.wallets?.length ? result.wallets : [result.wallet]); setWallet(updated);
-      setAgentRegistrationCheckStatus('idle');
-      const confirmedAuthorization = updated.chainAuthorizations.find(
-        (item) => item.chainId === agentChainId,
-      );
-      if (confirmedAuthorization?.status === 'registered') {
-        setWalletSetupSuccess(`API access authorized: ${txHash}`);
-      } else {
-        setWalletSetupError(`API access authorization failed: ${txHash}`);
-      }
+      if (ownerRef.current === registrationOwner) setAgentRegistrationCheckStatus('timed_out');
     } catch (err: unknown) {
-      if (hasApiErrorCode(err, 'AUTH_PROVIDER_INVALID')) setWalletIdentityRequired(true);
-      setWalletSetupError(getApiErrorMessage(err));
+      if (ownerRef.current === registrationOwner) {
+        if (hasApiErrorCode(err, 'AUTH_PROVIDER_INVALID')) setWalletIdentityRequired(true);
+        setWalletSetupError(getApiErrorMessage(err));
+      }
     } finally {
       setWalletSetupLoading(false);
       registerAgentInFlightRef.current = false;
@@ -927,7 +1033,8 @@ export default function WalletPage() {
 
   const agentChain = SUPPORTED_CHAINS.find((chain) => chain.id === agentChainId);
   const agentChainName = agentChain?.name ?? `Chain ${agentChainId}`;
-  const selectedAuthorizationStatus = selectedAuthorization?.status ?? null;
+  const selectedAuthorizationStatus = selectedAuthorization?.status === 'registered' && !isAuthorizationReady(selectedAuthorization, now)
+    ? 'expired' : selectedAuthorization?.status ?? null;
   const shouldPromptReauthorization =
     selectedAuthorizationExpiry?.tone === 'red' || selectedAuthorizationExpiry?.tone === 'amber';
   const selectedAuthorizationExpiryClasses =
@@ -936,10 +1043,10 @@ export default function WalletPage() {
       : selectedAuthorizationExpiry?.tone === 'amber'
         ? 'border-amber-200 bg-amber-50 text-amber-800'
         : 'border-green-200 bg-green-50 text-green-800';
-  const isSelectedChainRegistered = selectedAuthorizationStatus === 'registered';
-  const isAgentRegistrationChecking = Boolean(pendingAuthorization);
+  const isSelectedChainRegistered = isAuthorizationReady(selectedAuthorization, now);
+  const isAgentRegistrationChecking = Boolean(pendingAuthorization || ownedRegistration);
   const registrationBusy = walletSetupLoading || isAgentRegistrationChecking;
-  const authorizeSubmitDisabled = registrationBusy || !providerAuthenticated || providerLoading;
+  const authorizeSubmitDisabled = registrationBusy || Boolean(recoveryStorageError) || !providerAuthenticated || providerLoading;
   const showAgentRegistrationSpinner =
     walletSetupLoading || agentRegistrationCheckStatus === 'checking';
   const setupStatus = !selectedWallet?.walletAddress
@@ -956,11 +1063,11 @@ export default function WalletPage() {
           description:
             'Your EOA has Calibur API access on at least one network. You can authorize more networks anytime.',
         }
-      : pendingAuthorization
+      : isAgentRegistrationChecking
         ? {
             title: 'Authorization pending',
             tone: 'blue',
-            description: 'The authorization transaction was submitted and is being checked.',
+            description: 'A registration operation is unresolved. Resume its check; do not submit another authorization.',
           }
         : {
             title: 'Authorize API access',
@@ -994,6 +1101,7 @@ export default function WalletPage() {
       title="Agent Wallet"
       description="Manage your secure wallets, authorize API access, then use API keys from your backend."
     >
+      {recoveryStorageError && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{recoveryStorageError}</p>}
       {providerAuthenticated && !walletIdentityRequired && (
         <div className="mb-4 flex justify-end">
           <button type="button" disabled={registrationBusy || providerLoading}
@@ -1103,7 +1211,7 @@ export default function WalletPage() {
                     <p className="mt-2 text-xs leading-5 text-brand-muted">
                       TEE-managed EOA used for backend signing. This address alone does not establish authorization; see the per-network status below.
                     </p>
-                    <AuthorizationBadges authorizations={selectedWallet.chainAuthorizations} />
+                    <AuthorizationBadges authorizations={selectedWallet.chainAuthorizations} now={now} />
                   </div>
                 )}
 
@@ -1138,6 +1246,8 @@ export default function WalletPage() {
                     walletExplorerUrl={walletExplorerUrl}
                     agentGasHelpUrl={agentGasHelpUrl}
                     pendingAuthorizationTxHash={pendingAuthorization?.registrationTxHash ?? null}
+                    pendingUserOpHash={ownedRegistration?.userOpHash ?? null}
+                    pendingOperationUnknown={Boolean(ownedRegistration && !ownedRegistration.userOpHash && !ownedRegistration.txHash)}
                     pendingAuthorizationExplorerUrl={pendingAuthorizationExplorerUrl}
                     agentRegistrationCheckStatus={agentRegistrationCheckStatus}
                     isAgentRegistrationChecking={isAgentRegistrationChecking}
@@ -1173,6 +1283,15 @@ export default function WalletPage() {
                     amount={amount}
                     token={token}
                     selectedChainId={selectedChainId}
+                    withdrawalReady={withdrawalReady}
+                    onResumeWithdrawal={() => { void handleWithdraw(); }}
+                    withdrawalIntent={ownedWithdrawIntent}
+                    recoveryStorageError={recoveryStorageError}
+                    onAuthorizeChain={() => {
+                      setAgentChainId(selectedChainId);
+                      document.getElementById('wallet-authorize-access')?.scrollIntoView?.({ behavior: 'smooth' });
+                      document.querySelector<HTMLInputElement>('#wallet-authorize-access input[type="datetime-local"]')?.focus();
+                    }}
                     withdrawLoading={withdrawLoading}
                     withdrawResult={withdrawResult}
                     withdrawError={withdrawError}

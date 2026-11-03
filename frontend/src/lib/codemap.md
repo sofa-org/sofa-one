@@ -31,7 +31,7 @@ Browser-side API and blockchain helper layer for the SOFA ONE dashboard. Three m
 ## Flow
 - **App session**: exchangeAppSession/getAppSession return identity/MFA/CSRF snapshots; deleteAppSession/deleteAllAppSessions revoke current/all sessions. getMe remains a separate wallet projection.
 - **Wallet provisioning**: authorizeEmbeddedWallet takes a fresh explicit provider bearer plus local cookie/CSRF; registration-result/transaction use only the application session.
-- **API-key rotation**: `refreshApiKey` (`POST /api-keys/rotations`) requires `{ walletId }` and an `X-Step-Up-Token`; it revokes all of the user's active keys across wallets, then binds the replacement to that wallet.
+- **API-key replacement**: create a configured key, deploy/verify it, then revoke the old key. Emergency revoke-all creates no replacement; there is no bulk rotation helper or endpoint.
 - **MFA/TOTP**: enable returns recovery codes; verify returns a proof after atomic server-session upgrade. Cached proofs are scoped to the originating session.
 - **Dashboard data**: key CRUD, wallet reads/withdrawals, notifications, history and billing use cookies/CSRF without Openfort token accessors.
 - **Public API examples**: `signWithApiKey`, `sendTransactionWithApiKey`, `getTransactionStatusWithApiKey` — the only wrappers that use `apiFetch` with an explicit API key.

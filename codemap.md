@@ -161,7 +161,7 @@ Client → POST /v1/transactions (X-API-Key only)
   → Transaction row persists request/interactions hashes and API-key attribution snapshot for audit/idempotency
   → Returns { transactionId, transactionHash, status }
 
-  Capability mode and IDs are configuration metadata, not expanded effective IDs. Create omission defaults to all with empty IDs; rotation resets to all with empty IDs; PATCH replaces full configuration (IDs-only means custom), while custom `[]` denies catalog capabilities. The one-time migration maps prior empty lists to all and nonempty lists to custom unchanged. Pause is an overlay that mode cannot override. Dedicated withdrawal and billing-payment flows remain independent of generic-send authorization.
+  Capability mode and IDs are configuration metadata, not expanded effective IDs. Create omission defaults to all with empty IDs; PATCH replaces full configuration (IDs-only means custom), while custom `[]` denies catalog capabilities. Bulk key rotation is removed; replacement uses create/deploy/revoke. The one-time migration maps prior empty lists to all and nonempty lists to custom unchanged. Pause is an overlay that mode cannot override. Dedicated withdrawal and billing-payment flows remain independent of generic-send authorization.
 
 Dashboard → POST /wallets/withdrawals (local MFA cookie + Origin/CSRF + step-up)
   → WithdrawalPolicyService enforces single/daily USDC limits and optional address allowlist cooldown, recording policy denies and high-value requests in `SecurityEvent`

@@ -100,7 +100,7 @@ formatting, throttling, request correlation) globally.
    destination/billing checks, idempotency and safe response shaping remain enforced.
 4. **Dashboard path** (wallets, transactions history, billing, MFA, API-key mgmt, security
    notifications, auth): `AppSessionGuard` + `FrontendOnlyGuard`; sensitive routes
-    (withdrawals, withdrawal-addresses, API-key mutations/rotation, step-up) add
+    (withdrawals, withdrawal-addresses, API-key mutations, step-up) add
    `StepUpGuard` (TOTP proof via `X-Step-Up-Token`).
 5. **Cross-domain data flow.** Auth provisions `User`/`UserWallet`/`WalletChainAuthorization`
    (agent-key registration state machine `registration_required → pending_registration →

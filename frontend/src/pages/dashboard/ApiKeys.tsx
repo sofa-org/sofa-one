@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppSession } from '@/components/AppSessionProvider'
 import { AlertTriangle, Plus, RotateCcw, Trash2, Loader2, X, ShieldCheck, Search } from 'lucide-react';
@@ -12,7 +12,6 @@ import {
   updateApiKeyCapabilitiesAuth,
   revokeApiKeyAuth,
   revokeAllApiKeysAuth,
-  refreshApiKey as refreshApiKeyApi,
   getMe,
   getApiErrorMessage,
   getApiBaseUrlForDisplay,
@@ -176,6 +175,8 @@ export default function ApiKeysPage() {
   const [selectedWalletId, setSelectedWalletId] = useState('');
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyAllowedIps, setNewKeyAllowedIps] = useState('');
+  const [ipAllowlistError, setIpAllowlistError] = useState<string | null>(null);
+  const ipAllowlistRef = useRef<HTMLTextAreaElement>(null);
   const [capabilities, setCapabilities] = useState<DefiCapability[]>([]);
   const [capabilitiesLoading, setCapabilitiesLoading] = useState(true);
   const [capabilitiesError, setCapabilitiesError] = useState<string | null>(null);
@@ -206,6 +207,7 @@ export default function ApiKeysPage() {
     canReadTransactionStatus: true,
     canUseEoaExecution: false,
   });
+  const requiresIpAllowlist = newKeyPermissions.canSign || newKeyPermissions.canSendTransaction || newKeyPermissions.canUseEoaExecution;
   const [newRawKey, setNewRawKey] = useState<string | null>(null);
   const [newKeyExpiresAt, setNewKeyExpiresAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -215,19 +217,9 @@ export default function ApiKeysPage() {
   const [keysRefreshing, setKeysRefreshing] = useState(false);
   const [keyStatusFilter, setKeyStatusFilter] = useState<KeyStatusFilter>(getStoredKeyStatusFilter);
   const apiBaseUrl = getApiBaseUrlForDisplay();
-  const quickStartCurl = `curl -X POST ${apiBaseUrl}/v1/transactions \
-  -H "X-API-Key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "chainId": 84532,
-    "executionMode": "session_key",
-    "idempotencyKey": "order-abc-123",
-    "interactions": [{
-      "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "data": "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000f4240",
-      "value": "0"
-    }]
-  }'`;
+  const quickStartCurl = `curl ${apiBaseUrl}/v1/permissions \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -H "User-Agent: my-service/1.0"`;
   const sortedKeys = [...keys].sort((a, b) => {
     const statusA = getApiKeyLifecycleStatus(a);
     const statusB = getApiKeyLifecycleStatus(b);
@@ -255,7 +247,7 @@ export default function ApiKeysPage() {
   const frozenKeyCount = keys.filter((key) => getApiKeyLifecycleStatus(key) === 'frozen').length;
   const expiredKeyCount = keys.filter((key) => getApiKeyLifecycleStatus(key) === 'expired').length;
   const revokedKeyCount = keys.filter((key) => getApiKeyLifecycleStatus(key) === 'revoked').length;
-  // Backend create/rotate/revoke-all still treat non-revoked rows as occupying the 10-key cap.
+  // Non-revoked rows occupy the backend's 10-key cap, including frozen and expired keys.
   const occupiedKeySlots = keys.filter((key) => !key.revoked).length;
   const remainingKeySlots = Math.max(MAX_ACTIVE_API_KEYS - occupiedKeySlots, 0);
   const hasReachedKeyLimit = remainingKeySlots === 0;
@@ -381,6 +373,10 @@ export default function ApiKeysPage() {
     setCapabilityResultLimit(30);
   }, [capabilitySearch, capabilityChainFilter, capabilityGroupFilter, capabilitySelectedOnly]);
 
+  useEffect(() => {
+    if (ipAllowlistError) ipAllowlistRef.current?.focus();
+  }, [ipAllowlistError]);
+
   async function handleCreate() {
     if (!selectedWalletId || !wallets.some((wallet) => wallet.id === selectedWalletId)) {
       setActionError('Choose a wallet for this API key.');
@@ -401,6 +397,12 @@ export default function ApiKeysPage() {
       .split(/[\s,]+/)
       .map((value) => value.trim())
       .filter(Boolean);
+    if (requiresIpAllowlist && allowedIps.length === 0) {
+      setIpAllowlistError('Enter your backend’s public egress IP address or CIDR before creating a signing or sending key.');
+      setActionError(null);
+      return;
+    }
+    setIpAllowlistError(null);
 
     const spendLimits: { daily?: string; monthly?: string } = {};
     if (newKeyDailySpendLimit.trim()) spendLimits.daily = newKeyDailySpendLimit.trim();
@@ -451,32 +453,6 @@ export default function ApiKeysPage() {
     try {
       const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken();
       await revokeApiKeyAuth(key.id, stepUpToken);
-      await fetchKeys();
-    } catch (err: unknown) {
-      setActionError(getApiErrorMessage(err));
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function handleRefresh() {
-    if (!selectedWalletId || !wallets.some((wallet) => wallet.id === selectedWalletId)) {
-      setActionError('Choose a wallet for the replacement key.');
-      return;
-    }
-    if (
-      !confirm(
-        `Rotate ${occupiedKeySlots} non-revoked API key${occupiedKeySlots === 1 ? '' : 's'} across ALL of your wallets? This revokes every non-revoked key (including frozen or expired), then creates one replacement bound to ${walletLabel(wallets.find((wallet) => wallet.id === selectedWalletId)!)}. This cannot be undone. The new raw key is shown only once.`,
-      )
-    ) {
-      return;
-    }
-    setActionLoading(true);
-    setActionError(null);
-    try {
-      const stepUpToken = getDashboardStepUpToken() ?? await requestStepUpToken();
-      const result = await refreshApiKeyApi(stepUpToken, selectedWalletId);
-      setNewRawKey(result.apiKey);
       await fetchKeys();
     } catch (err: unknown) {
       setActionError(getApiErrorMessage(err));
@@ -735,7 +711,7 @@ export default function ApiKeysPage() {
           <div className="space-y-2">
             <label htmlFor="api-key-wallet" className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">Bound wallet</label>
             {walletsLoading ? <p className="rounded-lg border border-brand-border bg-brand-bg px-4 py-2.5 text-sm text-brand-muted">Loading your wallets…</p> : wallets.length === 0 ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">No wallet is available yet. Finish wallet setup before creating or rotating an API key.</div>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">No wallet is available yet. Finish wallet setup before creating an API key.</div>
             ) : (
               <select id="api-key-wallet" value={selectedWalletId} onChange={(event) => setSelectedWalletId(event.target.value)} className="w-full rounded-lg border border-brand-border bg-white px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent">
                 {wallets.length !== 1 && <option value="">Choose a wallet</option>}
@@ -744,21 +720,27 @@ export default function ApiKeysPage() {
             )}
             <p className="text-xs leading-5 text-brand-muted">This key will always use this wallet. Its wallet cannot be changed later.</p>
           </div>
-          <details className="space-y-2 md:col-span-2 rounded-lg border border-brand-border bg-brand-bg/50 p-3">
-            <summary className="cursor-pointer text-sm font-semibold text-brand-text">Restrict by IP <span className="font-normal text-brand-muted">· optional</span></summary>
-            <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
+          <details open={requiresIpAllowlist || !!ipAllowlistError} className="space-y-2 md:col-span-2 rounded-lg border border-brand-border bg-brand-bg/50 p-3">
+            <summary className="cursor-pointer text-sm font-semibold text-brand-text">Restrict by IP <span className="font-normal text-brand-muted">· {requiresIpAllowlist ? 'required' : 'optional'}</span></summary>
+            <label htmlFor="api-key-allowed-ips" className="text-[11px] font-bold uppercase tracking-widest text-brand-muted block">
               IP allowlist
             </label>
             <textarea
+              id="api-key-allowed-ips"
+              ref={ipAllowlistRef}
+              required={requiresIpAllowlist}
+              aria-invalid={!!ipAllowlistError}
+              aria-describedby={ipAllowlistError ? 'api-key-ip-guidance api-key-ip-error' : 'api-key-ip-guidance'}
               rows={3}
               placeholder="192.0.2.10, 203.0.113.0/24"
               value={newKeyAllowedIps}
-              onChange={(e) => setNewKeyAllowedIps(e.target.value)}
+              onChange={(e) => { setNewKeyAllowedIps(e.target.value); setIpAllowlistError(null); }}
               className="w-full rounded-lg border border-brand-border px-4 py-2.5 text-sm text-brand-text focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent placeholder:text-brand-muted bg-white shadow-sm transition-colors"
             />
-            <p className="text-xs leading-5 text-brand-muted">
-              Only allow requests from trusted backend IPs. Blank allows any IP; 0.0.0.0/0 allows all IPv4 addresses.
+            <p id="api-key-ip-guidance" className="text-xs leading-5 text-brand-muted">
+              Use your backend server’s public outbound (egress) IP or CIDR, not your browser’s IP. Signing, sending, and restricted EOA keys require an allowlist; read-only keys may leave it blank. Avoid broad ranges such as 0.0.0.0/0.
             </p>
+            {ipAllowlistError && <p id="api-key-ip-error" role="alert" className="text-xs text-red-700">{ipAllowlistError}</p>}
           </details>
           </div>
           <section className="space-y-3 rounded-xl border border-brand-border bg-brand-bg/40 p-4">
@@ -953,7 +935,7 @@ export default function ApiKeysPage() {
                 Review wallet setup
               </Link>
               <Link
-                to="/dashboard/docs"
+                to="/docs"
                 className="inline-flex items-center justify-center rounded-full border border-brand-border bg-white px-5 py-2 text-sm font-semibold text-brand-text transition-all hover:border-brand-accent hover:bg-brand-bg"
               >
                 Read API docs
@@ -1124,7 +1106,7 @@ export default function ApiKeysPage() {
                       <p className="mt-1">{frozenReasonLabel}</p>
                       <p className="mt-2 text-amber-800">
                         This key cannot call the API and cannot be unfrozen in place. After MFA step-up, create a new
-                        key or use Advanced key rotation, then update your backend secret store. Never reuse a frozen
+                        key, then update your backend secret store and revoke the old key. Never reuse a frozen
                         raw key.
                       </p>
                     </div>
@@ -1148,43 +1130,16 @@ export default function ApiKeysPage() {
             {quickStartCurl}
           </pre>
           <p className="text-sm leading-6 text-brand-muted">
-            Replace the calldata with your ABI-encoded contract call. Keep API keys on your backend; do not ship them in browser code.
+            Start by inspecting your key’s effective permissions. Keep API keys on your backend; do not ship them in browser code. Before sending, configure send permission, backend egress IPs, wallet chain authorization, gas, capability grants, and ABI-encoded calldata. <Link to="/docs#integration" className="font-semibold underline">Follow the integration guide</Link>.
           </p>
         </div>
       </DashboardCard>
 
-      <details className="rounded-2xl border border-red-200 bg-red-50 p-7 shadow-sm">
-        <summary className="cursor-pointer select-none text-xl font-bold font-serif text-brand-text">
-          Advanced key rotation
-        </summary>
-        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="max-w-2xl space-y-2 text-sm text-red-800">
-            <p>
-              Rotation revokes every non-revoked key across all of your wallets, including frozen or expired keys,
-              and creates one replacement bound to the wallet selected below. Frozen keys cannot be restored.
-            </p>
-            <p>
-              The replacement raw key is shown once. Copy it into your backend secret store before deploying, then
-              remove the old keys from every environment.
-            </p>
-          </div>
-          <div className="flex w-full flex-col gap-2 sm:w-64">
-            <label htmlFor="rotate-key-wallet" className="text-[11px] font-bold uppercase tracking-widest text-red-800">Replacement wallet</label>
-            <select id="rotate-key-wallet" value={selectedWalletId} onChange={(event) => setSelectedWalletId(event.target.value)} disabled={walletsLoading || wallets.length === 0} className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-brand-text disabled:opacity-50">
-              {wallets.length !== 1 && <option value="">Choose a wallet</option>}
-              {wallets.map((wallet) => <option key={wallet.id} value={wallet.id}>{walletLabel(wallet)}</option>)}
-            </select>
-            <button
-              onClick={handleRefresh}
-              disabled={actionLoading || walletsLoading || wallets.length === 0 || !selectedWalletId}
-              className="flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-5 py-2 text-xs font-semibold text-red-700 transition-all hover:border-red-300 hover:bg-red-100 disabled:opacity-50"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Rotate All Keys
-            </button>
-          </div>
-        </div>
-      </details>
+      <DashboardCard title="Replace a key safely">
+        <p className="mt-4 text-sm leading-6 text-brand-muted">
+          Create a replacement with the intended wallet, minimum permissions, and backend IP allowlist. Save its secret, deploy it to your backend, and confirm the integration works before revoking the old key individually. Emergency revoke-all immediately stops every integration and does not create a replacement.
+        </p>
+      </DashboardCard>
     </DashboardPage>
   );
 }
