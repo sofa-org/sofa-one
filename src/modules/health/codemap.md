@@ -6,9 +6,9 @@ Public liveness and readiness probes for the SOFA ONE backend.
 
 | File                   | Responsibility                                                                                                                                                                                                                                                                |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `health.module.ts`     | Nest module wiring: registers `HealthController` + `HealthService`.                                                                                                                                                                                                           |
+| `health.module.ts`     | Imports the shared `RateLimitStorageModule`; registers `HealthController` + `HealthService`. |
 | `health.controller.ts` | `@Public()` `GET /health/live` and `GET /health/ready` routes; both are intentionally public/non-sensitive (not in `openapi.yaml`).                                                                                                                                           |
-| `health.service.ts`    | `live()` returns the base `ok`+timestamp shape; `ready()` probes the database, aggregates the billing-worker heartbeat into a non-sensitive readiness state, and returns/throws `ServiceUnavailableException` (503) according to the environment-specific readiness contract. |
+| `health.service.ts`    | Dependency-free `live()`; `ready()` retains database/billing readiness and adds safe local/distributed rate-limit operational state. |
 
 ## Design
 
@@ -17,6 +17,14 @@ Public liveness and readiness probes for the SOFA ONE backend.
 - `/health/ready` keeps the existing `database` probe and adds an aggregate
   `billingWorker` check that never exposes worker IDs, error text, secrets,
   or account/user/provider identifiers.
+- `checks.rateLimit` reports only `status: ok|degraded`,
+  `mode: distributed|memory`, and
+  `reason: null|not_configured|redis_unavailable|shutting_down`.
+  Configured Redis unavailability returns HTTP 200 with overall `status: degraded`
+  if database/billing are ready; it must not evict every API replica during a
+  shared Redis outage. Unconfigured Redis intentionally reports `ok`/`memory`.
+  Memory buckets remain per-instance and are not globally fail-closed. No Redis
+  URL, credentials, raw error, or connection identifier is exposed.
 - `BillingWorkerHealth` exposes only `enabled`, `status`
   (`disabled|starting|running|healthy|failed|stale`), the four
   `last*` timestamps, `consecutiveFailures`, and an informational
@@ -52,7 +60,7 @@ GET /health/ready → HealthService.ready()
       (DB/table missing → stale; disabled → disabled; no fresh row → stale)
   → databaseReady(): $queryRaw`SELECT 1`
   → production && (disabled|failed|stale) → throw 503
-  → else { status:'ok', checks:{ database, billingWorker } }
+  → else { status:'ok'|'degraded', checks:{ database, billingWorker, rateLimit } }
 ```
 
 ## Integration
@@ -60,6 +68,8 @@ GET /health/ready → HealthService.ready()
 - Depends on `PrismaService` (`billingWorkerHeartbeat`, `billingInvoice`,
   `billingPaymentAttempt`, `stripeWebhookEvent`, `billingUsageEvent`) and
   `ConfigService` (`billing.worker.enabled`, `nodeEnv`).
+- `ResilientThrottlerStorage` from the shared `RateLimitStorageModule` (same
+  instance used by the global throttler, never a second health-only client).
 - The heartbeat rows it reads are written by `BillingWorkerService`
   (`src/modules/billing/billing-worker.service.ts`) in `onModuleInit` and each
   `tick()`; the `BillingWorkerHeartbeat` model and its additive migration live

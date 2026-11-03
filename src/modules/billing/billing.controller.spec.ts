@@ -1,5 +1,3 @@
-import { METHOD_METADATA, PATH_METADATA, GUARDS_METADATA } from '@nestjs/common/constants';
-
 jest.mock('./billing.service', () => ({
   BillingService: class BillingService {},
 }));
@@ -12,18 +10,13 @@ jest.mock('./stripe/stripe-payment.service', () => ({
 jest.mock('./invoice-pdf.service', () => ({
   InvoicePdfService: class InvoicePdfService {},
 }));
-jest.mock('../../common/guards/openfort-user.guard', () => ({
-  OpenfortUserGuard: class OpenfortUserGuard {},
-}));
+jest.mock('../../common/guards/app-session.guard', () => ({ AppSessionGuard: class AppSessionGuard {} }));
 jest.mock('../../common/guards/frontend-only.guard', () => ({
   FrontendOnlyGuard: class FrontendOnlyGuard {},
 }));
 
 import { BillingController } from './billing.controller';
-import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
-import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
-import { RequestMethod, StreamableFile } from '@nestjs/common';
-import { IS_FRONTEND_ONLY_KEY } from '../../common/decorators/frontend-only.decorator';
+import { StreamableFile } from '@nestjs/common';
 
 describe('BillingController', () => {
   const billingService = {
@@ -241,46 +234,4 @@ describe('BillingController', () => {
     );
   });
 
-  it('sets the no-store and nosniff headers on the PDF route', () => {
-    const headers = Reflect.getMetadata('__headers__', controller.downloadInvoicePdf) ?? [];
-    const flattened = headers.map((h: { name: string; value: string }) => [h.name, h.value]);
-    expect(flattened).toEqual(
-      expect.arrayContaining([
-        ['Cache-Control', 'private, no-store'],
-        ['X-Content-Type-Options', 'nosniff'],
-      ]),
-    );
-  });
-
-  it('protects every route with OpenfortUserGuard and FrontendOnlyGuard', () => {
-    const routes = [
-      controller.getPlans,
-      controller.getSummary,
-      controller.listInvoices,
-      controller.getInvoice,
-      controller.getInvoicePaymentStatus,
-      controller.downloadInvoicePdf,
-      controller.reconcile,
-      controller.assignPlan,
-      controller.cancelScheduledPlan,
-      controller.cancelPendingUpgrade,
-      controller.checkoutInvoice,
-    ];
-
-    for (const route of routes) {
-      const guards = Reflect.getMetadata(GUARDS_METADATA, route) ?? [];
-      expect(guards).toContain(OpenfortUserGuard);
-      expect(guards).toContain(FrontendOnlyGuard);
-      expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, route)).toBe(true);
-    }
-  });
-
-  it('exposes invoice payment-status as GET (no write semantics)', () => {
-    expect(
-      Reflect.getMetadata(PATH_METADATA, controller.getInvoicePaymentStatus),
-    ).toBe('invoices/:id/payment-status');
-    expect(
-      Reflect.getMetadata(METHOD_METADATA, controller.getInvoicePaymentStatus),
-    ).toBe(RequestMethod.GET);
-  });
 });

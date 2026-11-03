@@ -33,6 +33,7 @@ export function parseTrustProxy(
 async function bootstrap() {
   const { AppModule } = await import('./app.module');
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
+  app.enableShutdownHooks();
   const logger = new Logger('Bootstrap');
 
   app.set('trust proxy', parseTrustProxy(process.env.TRUST_PROXY, process.env.NODE_ENV));

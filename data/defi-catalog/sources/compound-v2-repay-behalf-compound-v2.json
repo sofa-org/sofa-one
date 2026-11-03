@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "compound-v2",
+      "familyVersion": "mainnet@a3214f67",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643",
+          "status": "inactive",
+          "contractName": "cDAI CErc20Delegator",
+          "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "repayBorrowBehalf",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "borrower", "type": "address", "internalType": "address" },
+                { "name": "repayAmount", "type": "uint256", "internalType": "uint256" }
+              ],
+              "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+              "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"]
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0x39aa39c021dfbae8fac545936693ac917d5e7563",
+          "status": "inactive",
+          "contractName": "cUSDC CErc20",
+          "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "repayBorrowBehalf",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "borrower", "type": "address", "internalType": "address" },
+                { "name": "repayAmount", "type": "uint256", "internalType": "uint256" }
+              ],
+              "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+              "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"]
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9",
+          "status": "inactive",
+          "contractName": "cUSDT CErc20",
+          "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "repayBorrowBehalf",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "borrower", "type": "address", "internalType": "address" },
+                { "name": "repayAmount", "type": "uint256", "internalType": "uint256" }
+              ],
+              "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+              "sourceRefs": ["compound-v2-ctoken-core", "compound-v2-ctoken-interfaces", "compound-v2-erc20-core", "compound-v2-mainnet-network"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "compound-v2-mainnet-network",
+      "url": "https://raw.githubusercontent.com/compound-finance/compound-protocol/a3214f67b73310d547e00fc578e8355911c9d376/networks/mainnet.json",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official Ethereum market/address map at commit a3214f67b73310d547e00fc578e8355911c9d376. Existing accepted v2 qualification recorded the mainnet.json raw SHA-256 b76118f81f29eaad0081fe39850d68eb364b562854c40c68b678ac17f42a5f56 and identifies cDAI 0x5d3a536e4d6dbd6114cc1ead35777bab948e3643, cUSDC 0x39aa39c021dfbae8fac545936693ac917d5e7563, and cUSDT 0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9. These dated market roles do not establish current delegator or implementation runtime identity."
+    },
+    {
+      "sourceId": "compound-v2-ctoken-interfaces",
+      "url": "https://raw.githubusercontent.com/compound-finance/compound-protocol/a3214f67b73310d547e00fc578e8355911c9d376/contracts/CTokenInterfaces.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official CTokenInterfaces.sol declaration at line 249: repayBorrowBehalf(address borrower,uint repayAmount) virtual external returns (uint). The ABI is modeled as nonpayable with borrower: address, repayAmount: uint256, and one unnamed uint256 return. This is a usable Solidity declaration model, not compiler output."
+    },
+    {
+      "sourceId": "compound-v2-ctoken-core",
+      "url": "https://raw.githubusercontent.com/compound-finance/compound-protocol/a3214f67b73310d547e00fc578e8355911c9d376/contracts/CToken.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned CToken.sol lines 630–634 and 643–691 route repayBorrowBehalf through accrual, fixed comptroller permission, borrower-specific debt (including max-uint full repayment), payer token transfer-in, and debt-total updates using actual internal repayment. Protocol errors and state checks may reject or return error codes; this fixed path has no caller-chosen target, callback, or arbitrary calldata."
+    },
+    {
+      "sourceId": "compound-v2-erc20-core",
+      "url": "https://raw.githubusercontent.com/compound-finance/compound-protocol/a3214f67b73310d547e00fc578e8355911c9d376/contracts/CErc20.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned CErc20.sol lines 102–105 expose repayBorrowBehalf and return NO_ERROR after the internal repayment path; lines 161–187 perform fixed underlying transfer-in, checking transfer return behavior and actual received amount for nonstandard tokens. The uint256 return is a protocol error code, not the repaid amount or a guarantee of transaction success."
+    }
+  ],
+  "unresolved": []
+}

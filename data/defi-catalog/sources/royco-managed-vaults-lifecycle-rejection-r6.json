@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Royco",
+  "observedAt": "2026-10-24",
+  "status": "rejected-deployments-only",
+  "sourceRef": "https://www.royco.org/explore",
+  "rejectedTargets": [
+    {
+      "chainId": 1,
+      "address": "0xcd9f5907f92818bc06c9ad70217f089e190d2a32",
+      "product": "Senior Royco USDC Vault",
+      "reason": "Official primary explorer explicitly winding down, withdrawal-only, deposits closed; no exit-only exception."
+    },
+    {
+      "chainId": 1,
+      "address": "0x41ce72e04d349eb957bdc373baa9c69207032c56",
+      "product": "Royco ETH Vault",
+      "reason": "Official primary explorer explicitly winding down, withdrawal-only, deposits closed; no exit-only exception."
+    }
+  ],
+  "officialSnapshot": {
+    "sourceRef": "https://www.royco.org/explore",
+    "retrievedAt": "2026-10-24",
+    "httpStatus": 200,
+    "rawContentSha256": "65329ada9c847e51ab132f467cc29d1aeb43892970f1c2325886c4ab2ce4a919",
+    "text": "Explore | Royco Day The Senior Royco USDC Vault and the Royco ETH Vault are winding down and are now in withdrawal-only mode. Deposits are closed, but you can still withdraw your funds. Explore Positions Security Connect Wallet Liquidity and drawdown protection on\u00a0your\u00a0assets. How it works Market TVL Markets Markets Terms Privacy Policy Docs Support Your access to and use of the Royco protocol is at your own risk. The protocol and its interfaces are provided on an \u201cas-is\u201d and \u201cas-available\u201d basis without warranties of any kind, either express or implied. Displayed yield rates reflect current conditions, are variable, and are not guaranteed. Past performance, including backtested or modeled results, is not indicative of future outcomes. First-loss protection is conditional upon Junior tranche capitalization and may be insufficient to prevent loss of principal. Deposits into Royco are not bank deposits and are not insured by the FDIC or any other governmental agency. You should not deposit funds unless you understand the nature of the protocol and the extent of your exposure to risk. \u00a9 2026 Royco. All rights reserved. Legal & Disclaimers",
+    "retainedTextSha256": "acb81d90e61a786ad32c04cf0d29101a1bf9bd286e407add11a309519dadbade"
+  },
+  "scopeNote": "This rejects these managed vault deployments only, not the continuing current Royco Day protocol and distinct Locked iUSD collateral tranche. Legacy IAM offer executors are not admitted."
+}

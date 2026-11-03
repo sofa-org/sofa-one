@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "enso",
+      "familyVersion": "router-static-weiroll-v1@c032c8f9",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xf75584ef6673ad213a685a1b58cc0330b8ea22cf",
+          "status": "inactive",
+          "contractName": "Enso Router (Ethereum)",
+          "sourceRefs": ["enso-router-full-verified-abi", "enso-router-verified-source", "enso-pinned-weiroll-vm", "enso-pinned-command-builder", "enso-router-deployment-record"],
+          "abiFunctions": [
+            {
+              "inputs": [
+                {
+                  "components": [
+                    { "internalType": "enum TokenType", "name": "tokenType", "type": "uint8" },
+                    { "internalType": "bytes", "name": "data", "type": "bytes" }
+                  ],
+                  "internalType": "struct Token",
+                  "name": "tokenIn",
+                  "type": "tuple"
+                },
+                { "internalType": "bytes", "name": "data", "type": "bytes" }
+              ],
+              "name": "routeSingle",
+              "outputs": [{ "internalType": "bytes", "name": "response", "type": "bytes" }],
+              "stateMutability": "payable",
+              "type": "function",
+              "sourceId": "enso-router-full-verified-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "enso-router-full-verified-abi",
+      "url": "https://etherscan.io/address/0xf75584ef6673ad213a685a1b58cc0330b8ea22cf#code",
+      "retrievedAt": "2026-10-04T00:00:00Z",
+      "sha256": "5fd35015a8160702cd4770640e26f7a508cdda4d7143dccea86cff5d58d52e50",
+      "notes": "Retained complete 11-entry address-bound Etherscan ABI carrier; abiFunctions selects the exact routeSingle entry from that carrier. Full ABI SHA-256 is pinned here; selected function ABI identity is 0xe3045106c2f667460faa9d5d67104b5f7f70c24186421cf1dbc7a2f03624c5c9."
+    },
+    {
+      "sourceId": "enso-router-verified-source",
+      "url": "https://etherscan.io/address/0xf75584ef6673ad213a685a1b58cc0330b8ea22cf#code",
+      "retrievedAt": "2026-10-04T00:00:00Z",
+      "sha256": "c032c8f9fa1af179fbac8f6a6a052bd711e8d4bd879bb37d6681e6704c9dc7ef",
+      "notes": "Address-bound verified Solidity source body; Solidity 0.8.28. Source confirms the router constructs EnsoShortcuts(address(this)) and uses the fixed internal executor role. Does not assert current runtime, constructor, or storage-slot identity."
+    },
+    {
+      "sourceId": "enso-pinned-weiroll-vm",
+      "url": "https://github.com/EnsoBuild/enso-weiroll/tree/900250114203727ff236d3f6313673c17c2d90dd",
+      "retrievedAt": "2026-10-04T00:00:00Z",
+      "sha256": "6fac2b3700991e1b21c4e9ef4fd134ba5d1d5ae9ea6554898cdce5bbef8ce04a",
+      "notes": "Pinned Oracle VM source identity; source-body comparison only, not runtime bytecode proof."
+    },
+    {
+      "sourceId": "enso-pinned-command-builder",
+      "url": "https://github.com/EnsoBuild/enso-weiroll/tree/900250114203727ff236d3f6313673c17c2d90dd",
+      "retrievedAt": "2026-10-04T00:00:00Z",
+      "sha256": "9182d3fc05dea57d41f6b995050951a7786c25326f31cac4bc8978b3fe07cbbb",
+      "notes": "Pinned CommandBuilder source identity; source-body comparison only, not runtime bytecode proof."
+    },
+    {
+      "sourceId": "enso-router-deployment-record",
+      "url": "https://github.com/EnsoBuild/shortcuts-client-contracts/tree/483408a3219451858abcd92c2f7b19a9783c14cc/broadcast/EnsoRouterDeployer.s.sol/1",
+      "retrievedAt": "2026-10-04T00:00:00Z",
+      "sha256": null,
+      "notes": "Pinned official deployment record commit 483408a3219451858abcd92c2f7b19a9783c14cc records the Ethereum router deployment on 2025-04-03; recorded source generation is short SHA 6f012e9 and is not asserted to match current/latest code. No shortcut executor address is guessed from this record."
+    }
+  ]
+}

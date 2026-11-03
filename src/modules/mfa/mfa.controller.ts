@@ -1,38 +1,51 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { FrontendOnly } from '../../common/decorators/frontend-only.decorator';
+import { AllowPendingMfa } from '../../common/decorators/allow-pending-mfa.decorator';
 import { FrontendOnlyGuard } from '../../common/guards/frontend-only.guard';
-import { OpenfortUserGuard } from '../../common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../../common/guards/app-session.guard';
+import { AppSessionService } from '../app-session/app-session.service';
 import { TotpCodeDto } from './dto/totp.dto';
 import { MfaService } from './mfa.service';
 
-@Controller('v1/auth/mfa')
+@Controller('auth/mfa')
 @FrontendOnly()
-@UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+@UseGuards(AppSessionGuard, FrontendOnlyGuard)
 export class MfaController {
-  constructor(private readonly mfa: MfaService) {}
+  constructor(private readonly mfa: MfaService, private readonly sessions: AppSessionService) {}
 
   @Get('status')
-  status(@Req() req: any) {
-    return this.mfa.getStatus(req.user.id);
+  @AllowPendingMfa()
+  @Header('Cache-Control', 'no-store')
+  status(@Req() req: Request) {
+    return this.mfa.getStatus(req.user!.id);
   }
 
   @Post('totp/setup')
-  setup(@Req() req: any) {
-    return this.mfa.setupTotp(req.user.id, req.openfortEmail ?? req.user.email);
+  @AllowPendingMfa()
+  @Header('Cache-Control', 'no-store')
+  setup(@Req() req: Request) {
+    return this.mfa.setupTotp(req.user!.id, req.appSession!.id, req.user!.email);
   }
 
   @Post('totp/enable')
-  enable(@Req() req: any, @Body() dto: TotpCodeDto) {
-    return this.mfa.enableTotp(req.user.id, dto.code);
+  @AllowPendingMfa()
+  @Header('Cache-Control', 'no-store')
+  enable(@Req() req: Request, @Body() dto: TotpCodeDto) {
+    return this.mfa.enableTotp(req.user!.id, req.appSession!.id, dto.code);
   }
 
   @Post('totp/verify')
-  verify(@Req() req: any, @Body() dto: TotpCodeDto) {
-    return this.mfa.verifyTotp(req.user.id, dto.code);
+  @AllowPendingMfa()
+  @Header('Cache-Control', 'no-store')
+  verify(@Req() req: Request, @Body() dto: TotpCodeDto) {
+    return this.mfa.verifyTotp(req.user!.id, req.appSession!.id, dto.code);
   }
 
   @Post('totp/disable')
-  disable(@Req() req: any, @Body() dto: TotpCodeDto) {
-    return this.mfa.disableTotp(req.user.id, dto.code);
+  @Header('Cache-Control', 'no-store')
+  async disable(@Req() req: Request, @Body() dto: TotpCodeDto, @Res({ passthrough: true }) res: Response) {
+    await this.mfa.disableTotp(req.user!.id, req.appSession!.id, dto.code);
+    this.sessions.clearCookie(res);
   }
 }

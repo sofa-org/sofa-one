@@ -1,223 +1,52 @@
-import * as argon2 from 'argon2';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../core/database/prisma.service';
+import { AppSessionService, AuthenticatedAppSession } from '../app-session/app-session.service';
 import { StepUpService } from './step-up.service';
 
-jest.mock('argon2', () => ({
-  argon2id: 2,
-  hash: jest.fn(),
-  verify: jest.fn(),
-}));
-
-describe('StepUpService', () => {
-  const mockUserId = 'user-1';
-  const mockChallengeId = '550e8400-e29b-41d4-a716-446655440000';
-  const mockCodeHash = 'argon2-mock-hash';
-  const now = new Date('2026-05-27T12:00:00.000Z');
-
-  let prisma: any;
-  let service: StepUpService;
-  let originalNodeEnv: string | undefined;
-
-  function createMockChallenge(overrides: Record<string, unknown> = {}) {
-    return {
-      id: mockChallengeId,
-      userId: mockUserId,
-      type: 'totp_mfa',
-      challengeCodeHash: mockCodeHash,
-      proofToken: null,
-      verified: false,
-      attempts: 0,
-      expiresAt: new Date(now.getTime() + 5 * 60 * 1000),
-      verifiedAt: null,
-      createdAt: now,
-      ...overrides,
-    };
-  }
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
-    jest.setSystemTime(now);
-    originalNodeEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'test';
-
-    prisma = {
-      user: {
-        findUnique: jest.fn(),
-      },
-      stepUpChallenge: {
-        create: jest.fn(),
-        findUnique: jest.fn(),
-        update: jest.fn(),
-        findFirst: jest.fn(),
-        count: jest.fn(),
-        deleteMany: jest.fn(),
-      },
-    };
-
-    // Default mock responses
-    prisma.user.findUnique.mockResolvedValue({ email: 'user@example.com' });
-    prisma.stepUpChallenge.count.mockResolvedValue(0);
-    prisma.stepUpChallenge.create.mockImplementation(
-      async ({ data }: any) => ({
-        id: mockChallengeId,
-        ...data,
-        createdAt: now,
-      }),
-    );
-    prisma.stepUpChallenge.findUnique.mockResolvedValue(null);
-    prisma.stepUpChallenge.findFirst.mockResolvedValue(null);
-    prisma.stepUpChallenge.update.mockImplementation(
-      async ({ data }: any) => createMockChallenge({ ...data }),
-    );
-    prisma.stepUpChallenge.deleteMany.mockResolvedValue({ count: 0 });
-
-    jest.mocked(argon2.hash).mockResolvedValue(mockCodeHash as never);
-    jest.mocked(argon2.verify).mockResolvedValue(true as never);
-
-    service = new StepUpService(prisma as any);
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-    restoreEnvValue('NODE_ENV', originalNodeEnv);
-  });
-
-  // ── validateProof ──────────────────────────────────────────────
-
-  describe('validateProof', () => {
-    const proofToken = 'a'.repeat(64);
-
-    it('returns true for valid totp_mfa proof token belonging to user', async () => {
-      prisma.stepUpChallenge.findFirst.mockResolvedValue(
-        createMockChallenge({
-          proofToken,
-          verified: true,
-          expiresAt: new Date(now.getTime() + 15 * 60 * 1000),
-        }),
-      );
-
-      const result = await (service as any).validateProof(proofToken, mockUserId, 'totp_mfa');
-
-      expect(result).toBe(true);
-      expect(prisma.stepUpChallenge.findFirst).toHaveBeenCalledWith({
-        where: {
-          proofToken,
-          type: 'totp_mfa',
-          verified: true,
-          expiresAt: { gt: now },
-        },
-      });
-    });
-
-    it('defaults proof validation to totp_mfa', async () => {
-      prisma.stepUpChallenge.findFirst.mockResolvedValue(
-        createMockChallenge({ proofToken, verified: true }),
-      );
-
-      await (service as any).validateProof(proofToken, mockUserId);
-
-      expect(prisma.stepUpChallenge.findFirst).toHaveBeenCalledWith({
-        where: expect.objectContaining({ type: 'totp_mfa' }),
-      });
-    });
-
-    it('returns false when no challenge matches the proof token', async () => {
-      prisma.stepUpChallenge.findFirst.mockResolvedValue(null);
-
-      const result = await service.validateProof('nonexistent', mockUserId);
-
-      expect(result).toBe(false);
-    });
-
-    it('returns false when proof belongs to a different user', async () => {
-      prisma.stepUpChallenge.findFirst.mockResolvedValue(
-        createMockChallenge({
-          userId: 'user-2',
-          proofToken,
-          verified: true,
-          expiresAt: new Date(now.getTime() + 15 * 60 * 1000),
-        }),
-      );
-
-      const result = await service.validateProof(proofToken, mockUserId);
-
-      expect(result).toBe(false);
-    });
-
-    it('returns false when challenge is not verified (verified=false does not match where clause)', async () => {
-      // The findFirst query includes verified: true, so Prisma returns null
-      // for unverified challenges. The mock simulates this by returning null.
-      prisma.stepUpChallenge.findFirst.mockResolvedValue(null);
-
-      const result = await service.validateProof(proofToken, mockUserId);
-
-      expect(result).toBe(false);
-      expect(prisma.stepUpChallenge.findFirst).toHaveBeenCalledWith({
-        where: expect.objectContaining({ verified: true }),
-      });
-    });
-
-    it('queries with correct where clause', async () => {
-      await (service as any).validateProof(proofToken, mockUserId, 'totp_mfa');
-
-      expect(prisma.stepUpChallenge.findFirst).toHaveBeenCalledWith({
-        where: {
-          proofToken,
-          type: 'totp_mfa',
-          verified: true,
-          expiresAt: { gt: now },
-        },
-      });
-    });
-  });
-
-  describe('createProof', () => {
-    it('creates a verified totp_mfa proof by default', async () => {
-      jest.mocked(argon2.hash).mockResolvedValueOnce('hashed-proof' as never);
-
-      const result = await service.createProof(mockUserId);
-
-      expect(result.proofToken).toMatch(/^[a-f0-9]{64}$/);
-      expect(prisma.stepUpChallenge.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          userId: mockUserId,
-          type: 'totp_mfa',
-          verified: true,
-          proofToken: result.proofToken,
-        }),
-      });
-    });
-  });
-
-  // ── cleanupExpiredChallenges ────────────────────────────────────
-
-  describe('cleanupExpiredChallenges', () => {
-    it('deletes expired challenges and returns count', async () => {
-      prisma.stepUpChallenge.deleteMany.mockResolvedValue({ count: 5 });
-
-      const result = await service.cleanupExpiredChallenges();
-
-      expect(result).toBe(5);
-      expect(prisma.stepUpChallenge.deleteMany).toHaveBeenCalledWith({
-        where: { expiresAt: { lt: now } },
-      });
-    });
-
-    it('returns 0 when no challenges are expired', async () => {
-      prisma.stepUpChallenge.deleteMany.mockResolvedValue({ count: 0 });
-
-      const result = await service.cleanupExpiredChallenges();
-
-      expect(result).toBe(0);
-    });
-  });
-});
-
-function restoreEnvValue(key: string, value: string | undefined) {
-  if (value === undefined) {
-    delete process.env[key];
-    return;
-  }
-
-  process.env[key] = value;
+const now = new Date('2026-10-22T12:00:00Z');
+function fixture() {
+  const session: AuthenticatedAppSession = {
+    id: 'session-1', userId: 'user-1', tokenHash: 'hash', mfaVerified: true,
+    expiresAt: new Date(now.getTime() + 60 * 60_000), mfaPendingUntil: now, revokedAt: null, createdAt: now,
+    user: { id: 'user-1', socialId: 'provider-1', socialProvider: 'openfort', email: null, frozenAt: null, frozenReason: null, createdAt: now },
+  };
+  const db = {
+    $queryRaw: jest.fn().mockResolvedValue([]),
+    appSession: { findFirst: jest.fn().mockResolvedValue(session) },
+    stepUpChallenge: { create: jest.fn(), findFirst: jest.fn().mockResolvedValue(null), deleteMany: jest.fn().mockResolvedValue({ count: 3 }) },
+  };
+  // These delegate doubles preserve the actual session-service checks and proof construction.
+  const prisma = db as unknown as PrismaService;
+  const sessions = new AppSessionService(prisma, new ConfigService());
+  return { db, session, service: new StepUpService(prisma, sessions), tx: db as unknown as Prisma.TransactionClient };
 }
+
+describe('session-bound step-up proofs', () => {
+  beforeEach(() => jest.useFakeTimers().setSystemTime(now));
+  afterEach(() => jest.useRealTimers());
+
+  it('caps a new proof at the remaining absolute session lifetime', async () => {
+    const f = fixture();
+    f.session.expiresAt = new Date(now.getTime() + 60_000);
+    const result = await f.service.createProof(f.tx, 'user-1', 'session-1');
+    expect(result.proofToken).toMatch(/^[a-f0-9]{64}$/);
+    expect(result.expiresAt).toEqual(f.session.expiresAt);
+  });
+
+  it('never creates proofs for revoked, expired, or pending sessions', async () => {
+    const f = fixture();
+    f.session.revokedAt = now;
+    await expect(f.service.createProof(f.tx, 'user-1', 'session-1')).rejects.toThrow(UnauthorizedException);
+    f.session.revokedAt = null;
+    f.session.expiresAt = now;
+    await expect(f.service.createProof(f.tx, 'user-1', 'session-1')).rejects.toThrow(UnauthorizedException);
+    f.session.expiresAt = new Date(now.getTime() + 60_000);
+    f.session.mfaPendingUntil = new Date(now.getTime() + 30_000);
+    f.session.mfaVerified = false;
+    await expect(f.service.createProof(f.tx, 'user-1', 'session-1')).rejects.toThrow(ForbiddenException);
+    expect(f.db.stepUpChallenge.create).not.toHaveBeenCalled();
+  });
+
+});

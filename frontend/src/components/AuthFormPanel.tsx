@@ -4,10 +4,10 @@ import PublicOnlyRoute from './PublicOnlyRoute';
 
 export default function AuthFormPanel() {
   return (
-    <OpenfortAuthProvider>
-      <PublicOnlyRoute>
+    <PublicOnlyRoute>
+      <OpenfortAuthProvider>
         <EmailOtpForm />
-      </PublicOnlyRoute>
-    </OpenfortAuthProvider>
+      </OpenfortAuthProvider>
+    </PublicOnlyRoute>
   );
 }

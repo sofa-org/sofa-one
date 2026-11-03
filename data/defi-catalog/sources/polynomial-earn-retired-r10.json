@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Polynomial",
+  "verifiedAt": "2026-10-24",
+  "status": "rejected",
+  "reason": "Own historical Polynomial Earn product explicitly discontinued and withdrawal-only since 25 May 2023; no current ordinary maintained Ethereum/Optimism own financial deployment established. Successor Polynomial Chain is outside allowed chains and currently advertises a chain shutdown.",
+  "selectedFunctions": [],
+  "lifecycleEvidence": [
+    {"sourceRef": "https://earn.polynomial.fi/", "kind": "primary earn homepage fetched", "quote": "Earn Vaults Shutdown. Important Update: Polynomial is discontinuing the Earn Vaults, and transitioning into withdrawal-only mode starting 25 May 2023. We’re refocusing on scalable solutions for a decentralized future.", "linkedAnnouncement": "https://mirror.xyz/0xf3897707d8Fa5dC27b2A6575319e409a464eB8D8/JIBKsY-cUnGywbb69jry9mp9ETFdTF3ppvSyVa0anzQ"},
+    {"sourceRef": "https://polynomial.fi/en/mainnet/earn", "kind": "primary successor app search-index excerpt", "quote": "We are shutting down Polynomial Chain and we've paused all operations to take a snapshot. You can now withdraw from other chains starting Mar 3rd.", "linkedAnnouncement": "https://x.com/PolynomialFi/status/2022344918111494169", "retrievalLimit": "Direct rendered text unavailable beyond metadata, indexed primary app notice retained accurately as search excerpt."},
+    {"sourceRef": "https://polynomial.fi/", "kind": "primary homepage metadata fetched", "quote": "Polynomial is a fully decentralized perps exchange, powered by its own Ethereum Layer 2."}
+  ],
+  "limitations": ["The historical Earn withdrawal-only notice independently excludes the historical supported-chain product; a shutdown on Polynomial Chain alone is not asserted to prove shutdown on Optimism.", "No recovery-only or exit-only capabilities admitted; no claim immutable withdrawal contracts stopped functioning.", "Full source/ABI inventory not pursued after explicit lifecycle exclusion."],
+  "sourceRefs": ["https://earn.polynomial.fi/", "https://polynomial.fi/en/mainnet/earn", "https://polynomial.fi/", "https://x.com/PolynomialFi/status/2022344918111494169"]
+}

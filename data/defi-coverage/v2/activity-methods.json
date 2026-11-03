@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "snapshotId": "defillama-seven-evm-dex-fees-2026-10-03-m2-v1",
+  "captureTimestampUtc": "2026-10-03T19:11:22Z",
+  "activityWindowDays": 90,
+  "methods": [
+    {
+      "methodId": "dex-volume-30d-positive-occurrence-v1",
+      "providerMetric": "dexs",
+      "unit": "USD",
+      "window": "30d observation within enclosing 90d window",
+      "qualifiesAsUserActivity": true,
+      "methodology": "Positive 30d DEX volume is usage evidence within an enclosing 90d activity window, not a 90d total; zero/missing is unknown.",
+      "sourceRef": "data/defi-coverage/v2/activity-snapshot.json#activityRules",
+      "sourceIds": [
+        "2198",
+        "119",
+        "2611"
+      ],
+      "chainIds": [
+        1,
+        8453,
+        10,
+        42161,
+        137,
+        56,
+        143
+      ]
+    },
+    {
+      "methodId": "compound-v2-borrow-interest-fees-unqualified-v1",
+      "providerMetric": "fees",
+      "unit": "USD",
+      "window": "30d provider fee observation; activity interpretation unresolved",
+      "qualifiesAsUserActivity": false,
+      "providerObservedValueUsd": 86839,
+      "methodology": "The captured Ethereum Compound V2 provider fee row is labeled BORROW_INTEREST and reports financialsDailySnapshot.dailyTotalRevenueUSD. The pinned fees/compound.ts uses a subgraph financialsDailySnapshot query; this captured source does not establish that the helper computation is executed by that module or that this fee output represents user activity. Preserve as provider fee data only; do not treat as borrowing-event/accrual evidence, paid interest, borrower count, transaction count, or a 90-day total.",
+      "sourceRef": "https://github.com/DefiLlama/dimension-adapters/blob/1029ba611a85d425d3a022d5f274fd3b9c6a29a0/fees/compound.ts; data/defi-coverage/v2/activity-snapshot.json#sourceId=114.ethereum.fees",
+      "sourceIds": [
+        "114"
+      ],
+      "chainIds": [
+        1
+      ]
+    },
+    {
+      "methodId": "fees-only-not-qualified-as-user-activity-v1",
+      "providerMetric": "fees",
+      "unit": "USD",
+      "window": "30d",
+      "qualifiesAsUserActivity": false,
+      "methodology": "Unqualified fee totals do not prove lending user activity; no combined-category inference.",
+      "sourceRef": "data/defi-coverage/v2/activity-snapshot.json#sourceIdMetricRows",
+      "sourceIds": [
+        "1599",
+        "2929",
+        "212",
+        "4025",
+        "2088"
+      ],
+      "chainIds": [
+        1,
+        8453,
+        10,
+        42161,
+        137,
+        56,
+        143
+      ]
+    },
+    {
+      "methodId": "compound-v3-utilization-estimate-not-user-activity-v1",
+      "providerMetric": "fees",
+      "unit": "USD",
+      "window": "30d",
+      "qualifiesAsUserActivity": false,
+      "methodology": "Borrow rate times total borrow times interval is an estimate, not realized event/index proof.",
+      "sourceRef": "https://github.com/DefiLlama/dimension-adapters/blob/1029ba611a85d425d3a022d5f274fd3b9c6a29a0/fees/compound-v3.ts",
+      "sourceIds": [
+        "2088"
+      ],
+      "chainIds": [
+        1,
+        10,
+        137,
+        8453,
+        42161
+      ]
+    }
+  ]
+}

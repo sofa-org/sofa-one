@@ -1,0 +1,3699 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "address": "0x5C6374a2ac4EBC38DeA0Fc1F8716e5Ea1AdD94dd",
+  "protocol": "alchemix-v2",
+  "contractName": "Ethereum alUSD AlchemistV2 via TransparentUpgradeableProxy",
+  "reviewedAt": "2026-10-17",
+  "admissionStatus": "excluded-disabled-legacy-deployment",
+  "deploymentEvidence": {
+    "sourceRef": "https://github.com/alchemix-finance/deployments/blob/cd0740cf897deda5e4afc63a835f660271a3d91b/mainnet/AlchemistV2_alUSD.json",
+    "verifiedAt": "2026-10-17",
+    "chainId": 1,
+    "address": "0x5C6374a2ac4EBC38DeA0Fc1F8716e5Ea1AdD94dd",
+    "sourceType": "pinned official mainnet alUSD V2 deployment artifact plus exact-address proxy resolution",
+    "chainSourceRef": "https://github.com/alchemix-finance/deployments/blob/cd0740cf897deda5e4afc63a835f660271a3d91b/mainnet/.chainId",
+    "evidence": "Official AlchemistV2_alUSD.json identifies this exact address; adjacent .chainId is 1. This is V2 alUSD, not V1 Alchemist, V2 alETH or V3. Both Etherscan and Sourcify report the implementation recorded below.",
+    "corroboratingRefs": [
+      "https://etherscan.io/address/0x5C6374a2ac4EBC38DeA0Fc1F8716e5Ea1AdD94dd#code",
+      "https://sourcify.dev/server/v2/contract/1/0x5C6374a2ac4EBC38DeA0Fc1F8716e5Ea1AdD94dd?fields=all",
+      "https://docs.alchemix.fi/user/v3-migration"
+    ],
+    "proxyType": "TransparentUpgradeableProxy / EIP-1967",
+    "reportedProxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0x0f17d856Ecc7C8CE9Bd7d5b3e52A47ecA5e8955a",
+          "name": "AlchemistV2"
+        }
+      ]
+    },
+    "implementation": "0x0f17d856Ecc7C8CE9Bd7d5b3e52A47ecA5e8955a",
+    "deployment": {
+      "transactionHash": "0x9111a4e9ad84481f921201175b4e708d541bd3815fb8db3cfd05f43df6d00f0d",
+      "blockNumber": "14265993",
+      "transactionIndex": "41",
+      "deployer": "0x526D542FFBAe26D510cD610b8050438586fd203C"
+    },
+    "initialImplementation": "0x0d296e798ebd455a1db0fb032c916b5fc43704c5",
+    "initialProxyAdmin": "0xe0fc5cb7665041cda26969a2d1ceb5cd5046347d",
+    "historicalOfficialImplementation": {
+      "address": "0x938DBA3B746B3cc6D47C703Aac3a7485287c0ed7",
+      "sourceRef": "https://github.com/alchemix-finance/deployments/blob/cd0740cf897deda5e4afc63a835f660271a3d91b/mainnet/AlchemistV2.json",
+      "decision": "not used as applicable implementation or ABI; differs from exact-address reported current implementation"
+    },
+    "lifecycleEvidence": {
+      "sourceRef": "https://docs.alchemix.fi/user/v3-migration",
+      "retrievalStatus": "live",
+      "statement": "Official migration reference says V2-to-V3 migration completed April 2026; V2 user-facing functions were disabled to freeze positions. This independently corroborates the verified implementation bodies, not continued V2 availability."
+    },
+    "limitations": [
+      "Explorer/Sourcify proxy resolution is evidence-service observation, not a live RPC/storage/bytecode attestation.",
+      "No assumption is made that historical official artifacts still describe proxy behavior; proxy upgrades can replace the implementation."
+    ]
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x0f17d856Ecc7C8CE9Bd7d5b3e52A47ecA5e8955a?fields=all",
+    "verifiedAt": "2026-10-17",
+    "chainId": 1,
+    "address": "0x5C6374a2ac4EBC38DeA0Fc1F8716e5Ea1AdD94dd",
+    "implementation": "0x0f17d856Ecc7C8CE9Bd7d5b3e52A47ecA5e8955a",
+    "sourceType": "complete exact-address verified implementation ABI bound through proxy resolution",
+    "proxyBindingRefs": [
+      "https://sourcify.dev/server/v2/contract/1/0x5C6374a2ac4EBC38DeA0Fc1F8716e5Ea1AdD94dd?fields=all",
+      "https://etherscan.io/address/0x5C6374a2ac4EBC38DeA0Fc1F8716e5Ea1AdD94dd#code"
+    ],
+    "implementationSourceRef": "https://etherscan.io/address/0x0f17d856Ecc7C8CE9Bd7d5b3e52A47ecA5e8955a#code",
+    "sourcifyMatchId": "55975178",
+    "sourcifyVerifiedAt": "2026-10-12T09:43:30Z",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "compiler": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.13+commit.abaa5c0e",
+      "compilerSettings": {
+        "viaIR": false,
+        "metadata": {
+          "bytecodeHash": "ipfs",
+          "useLiteralContent": false
+        },
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "london",
+        "remappings": [
+          "\"ds-test/=\"../lib/ds-test/src/",
+          "\"forge-std/=\"lib/forge-std/src/",
+          "forge-std/=lib/forge-std/src/",
+          "solmate/=lib/solmate/src/",
+          "openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
+          "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+          "ds-test/=lib/forge-std/lib/ds-test/src/"
+        ]
+      },
+      "name": "AlchemistV2",
+      "fullyQualifiedName": "src/AlchemistV2.sol:AlchemistV2"
+    },
+    "implementationDeployment": {
+      "transactionHash": "0x9b2e0a6d52ed2ccb61be00b6eebf09448470a746366d18bdc44be0c9d5d134c8",
+      "blockNumber": "24793348",
+      "transactionIndex": "103",
+      "deployer": "0x886FF7a2d46dcc2276e2fD631957969441130847"
+    },
+    "sourceFile": "src/AlchemistV2.sol",
+    "verifiedSourceSha256": "57e4fba1afa601f6d925950c55f57ec3423384398a1b25eab86f1c95467fdf38",
+    "evidence": "Top-level abi is the complete applicable implementation ABI, including 79 functions, not a generic V2 interface or historical deployment ABI. proxyAbi separately retains the full verified proxy ABI; proxyFunctionInventory reviews all five proxy function entries including transparent admin() selector dispatch. Constructors, receive and fallback create no capabilities.",
+    "disabledOrdinaryActionProof": {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x0f17d856Ecc7C8CE9Bd7d5b3e52A47ecA5e8955a?fields=all",
+      "sourceFile": "src/AlchemistV2.sol",
+      "sourceRange": "426-515",
+      "sourceExcerpt": "    function deposit(\n        address yieldToken,\n        uint256 amount,\n        address recipient\n    ) external override lock returns (uint256) {\n        revert();\n    }\n\n    /// @inheritdoc IAlchemistV2Actions\n    function depositUnderlying(\n        address yieldToken,\n        uint256 amount,\n        address recipient,\n        uint256 minimumAmountOut\n    ) external override lock returns (uint256) {\n        revert();\n    }\n\n    /// @inheritdoc IAlchemistV2Actions\n    function withdraw(\n        address yieldToken,\n        uint256 shares,\n        address recipient\n    ) external override lock returns (uint256) {\n        revert();\n    }\n\n    /// @inheritdoc IAlchemistV2Actions\n    function withdrawFrom(\n        address owner,\n        address yieldToken,\n        uint256 shares,\n        address recipient\n    ) external override lock returns (uint256) {\n        revert();\n    }\n\n    /// @inheritdoc IAlchemistV2Actions\n    function withdrawUnderlying(\n        address yieldToken,\n        uint256 shares,\n        address recipient,\n        uint256 minimumAmountOut\n    ) external override lock returns (uint256) {\n        revert();\n    }\n\n    /// @inheritdoc IAlchemistV2Actions\n    function withdrawUnderlyingFrom(\n        address owner,\n        address yieldToken,\n        uint256 shares,\n        address recipient,\n        uint256 minimumAmountOut\n    ) external override lock returns (uint256) {\n        revert();\n    }\n\n    /// @inheritdoc IAlchemistV2Actions\n    function mint(uint256 amount, address recipient) external override lock {\n        revert();\n    }\n\n    /// @inheritdoc IAlchemistV2Actions\n    function mintFrom(\n        address owner,\n        uint256 amount,\n        address recipient\n    ) external override lock {\n        revert();\n    }\n\n    /// @inheritdoc IAlchemistV2Actions\n    function burn(uint256 amount, address recipient) external override lock returns (uint256) {\n        revert();\n    }\n\n    /// @inheritdoc IAlchemistV2Actions\n    function repay(address underlyingToken, uint256 amount, address recipient) external override lock returns (uint256) {\n        revert();\n    }\n\n    /// @inheritdoc IAlchemistV2Actions\n    function liquidate(\n        address yieldToken,\n        uint256 shares,\n        uint256 minimumAmountOut\n    ) external override lock returns (uint256) {\n        revert();\n    }"
+    },
+    "disabledFunctions": [
+      {
+        "functionName": "addUnderlyingToken",
+        "signature": "addUnderlyingToken(address,(uint256,uint256,uint256,uint256,uint256,uint256))",
+        "sourceLine": 318
+      },
+      {
+        "functionName": "addYieldToken",
+        "signature": "addYieldToken(address,(address,uint256,uint256,uint256))",
+        "sourceLine": 323
+      },
+      {
+        "functionName": "approveMint",
+        "signature": "approveMint(address,uint256)",
+        "sourceLine": 411
+      },
+      {
+        "functionName": "approveWithdraw",
+        "signature": "approveWithdraw(address,address,uint256)",
+        "sourceLine": 416
+      },
+      {
+        "functionName": "burn",
+        "signature": "burn(uint256,address)",
+        "sourceLine": 499
+      },
+      {
+        "functionName": "configureCreditUnlockRate",
+        "signature": "configureCreditUnlockRate(address,uint256)",
+        "sourceLine": 373
+      },
+      {
+        "functionName": "configureLiquidationLimit",
+        "signature": "configureLiquidationLimit(address,uint256,uint256)",
+        "sourceLine": 343
+      },
+      {
+        "functionName": "configureMintingLimit",
+        "signature": "configureMintingLimit(uint256,uint256)",
+        "sourceLine": 368
+      },
+      {
+        "functionName": "configureRepayLimit",
+        "signature": "configureRepayLimit(address,uint256,uint256)",
+        "sourceLine": 338
+      },
+      {
+        "functionName": "deposit",
+        "signature": "deposit(address,uint256,address)",
+        "sourceLine": 426
+      },
+      {
+        "functionName": "depositUnderlying",
+        "signature": "depositUnderlying(address,uint256,address,uint256)",
+        "sourceLine": 435
+      },
+      {
+        "functionName": "donate",
+        "signature": "donate(address,uint256)",
+        "sourceLine": 518
+      },
+      {
+        "functionName": "harvest",
+        "signature": "harvest(address,uint256)",
+        "sourceLine": 523
+      },
+      {
+        "functionName": "liquidate",
+        "signature": "liquidate(address,uint256,uint256)",
+        "sourceLine": 509
+      },
+      {
+        "functionName": "mint",
+        "signature": "mint(uint256,address)",
+        "sourceLine": 485
+      },
+      {
+        "functionName": "mintFrom",
+        "signature": "mintFrom(address,uint256,address)",
+        "sourceLine": 490
+      },
+      {
+        "functionName": "poke",
+        "signature": "poke(address)",
+        "sourceLine": 421
+      },
+      {
+        "functionName": "repay",
+        "signature": "repay(address,uint256,address)",
+        "sourceLine": 504
+      },
+      {
+        "functionName": "setKeeper",
+        "signature": "setKeeper(address,bool)",
+        "sourceLine": 313
+      },
+      {
+        "functionName": "setMaximumExpectedValue",
+        "signature": "setMaximumExpectedValue(address,uint256)",
+        "sourceLine": 383
+      },
+      {
+        "functionName": "setMaximumLoss",
+        "signature": "setMaximumLoss(address,uint256)",
+        "sourceLine": 388
+      },
+      {
+        "functionName": "setMinimumCollateralization",
+        "signature": "setMinimumCollateralization(uint256)",
+        "sourceLine": 353
+      },
+      {
+        "functionName": "setProtocolFee",
+        "signature": "setProtocolFee(uint256)",
+        "sourceLine": 358
+      },
+      {
+        "functionName": "setProtocolFeeReceiver",
+        "signature": "setProtocolFeeReceiver(address)",
+        "sourceLine": 363
+      },
+      {
+        "functionName": "setSentinel",
+        "signature": "setSentinel(address,bool)",
+        "sourceLine": 308
+      },
+      {
+        "functionName": "setTokenAdapter",
+        "signature": "setTokenAdapter(address,address)",
+        "sourceLine": 378
+      },
+      {
+        "functionName": "setTransferAdapterAddress",
+        "signature": "setTransferAdapterAddress(address)",
+        "sourceLine": 398
+      },
+      {
+        "functionName": "setTransmuter",
+        "signature": "setTransmuter(address)",
+        "sourceLine": 348
+      },
+      {
+        "functionName": "setUnderlyingTokenEnabled",
+        "signature": "setUnderlyingTokenEnabled(address,bool)",
+        "sourceLine": 328
+      },
+      {
+        "functionName": "setYieldTokenEnabled",
+        "signature": "setYieldTokenEnabled(address,bool)",
+        "sourceLine": 333
+      },
+      {
+        "functionName": "snap",
+        "signature": "snap(address)",
+        "sourceLine": 393
+      },
+      {
+        "functionName": "transferDebtV1",
+        "signature": "transferDebtV1(address,int256)",
+        "sourceLine": 403
+      },
+      {
+        "functionName": "withdraw",
+        "signature": "withdraw(address,uint256,address)",
+        "sourceLine": 445
+      },
+      {
+        "functionName": "withdrawFrom",
+        "signature": "withdrawFrom(address,address,uint256,address)",
+        "sourceLine": 454
+      },
+      {
+        "functionName": "withdrawUnderlying",
+        "signature": "withdrawUnderlying(address,uint256,address,uint256)",
+        "sourceLine": 464
+      },
+      {
+        "functionName": "withdrawUnderlyingFrom",
+        "signature": "withdrawUnderlyingFrom(address,address,uint256,address,uint256)",
+        "sourceLine": 474
+      }
+    ]
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "ERC20CallFailed",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "success",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "ExpectedValueExceeded",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "expectedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maximumExpectedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "IllegalArgument",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "IllegalState",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "LiquidationLimitExceeded",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "available",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "LockAlreadyClaimed",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "LossExceeded",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "loss",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maximumLoss",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "MintingLimitExceeded",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "available",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "MulticallFailed",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "result",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "RepayLimitExceeded",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "available",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "SlippageExceeded",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minimumAmountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "TokenDisabled",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "Unauthorized",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "Undercollateralized",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "UnsupportedToken",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "AddUnderlyingToken",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "AddYieldToken",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "AdminUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "admin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ApproveMint",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ApproveWithdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Burn",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "CreditUnlockRateUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "blocks",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Donate",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Harvest",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "minimumAmountOut",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalHarvested",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "credit",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Initialized",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "uint8"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "KeeperSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sentinel",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "flag",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Liquidate",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "credit",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "LiquidationLimitUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "maximum",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "blocks",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MaximumExpectedValueUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "maximumExpectedValue",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MaximumLossUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "maximumLoss",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MinimumCollateralizationUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "minimumCollateralization",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Mint",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MintingLimitUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "maximum",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "blocks",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PendingAdminUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "pendingAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ProtocolFeeReceiverUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "protocolFeeReceiver",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ProtocolFeeUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "protocolFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Repay",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "credit",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RepayLimitUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "maximum",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "blocks",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SentinelSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sentinel",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "flag",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Snap",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "expectedValue",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SweepRewardTokens",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "rewardToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SweepTokens",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TokenAdapterUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "tokenAdapter",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TransmuterUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "transmuter",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UnderlyingTokenEnabled",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "enabled",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "YieldTokenEnabled",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "enabled",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BPS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "FIXED_POINT_SCALAR",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "acceptAdmin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "accounts",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "debt",
+          "type": "int256",
+          "internalType": "int256"
+        },
+        {
+          "name": "depositedTokens",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "addUnderlyingToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "config",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "repayLimitMinimum",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "repayLimitMaximum",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "repayLimitBlocks",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "liquidationLimitMinimum",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "liquidationLimitMaximum",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "liquidationLimitBlocks",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct IAlchemistV2AdminActions.UnderlyingTokenConfig"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addYieldToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "config",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "adapter",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "maximumLoss",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "maximumExpectedValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "creditUnlockBlocks",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct IAlchemistV2AdminActions.YieldTokenConfig"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "admin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approveMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "approveWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "burn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "configureCreditUnlockRate",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "blocks",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "configureLiquidationLimit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "maximum",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "blocks",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "configureMintingLimit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "maximum",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "rate",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "configureRepayLimit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "maximum",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "blocks",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "convertSharesToUnderlyingTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertSharesToYieldTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertUnderlyingTokensToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertUnderlyingTokensToYield",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertYieldTokensToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertYieldTokensToUnderlying",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "debtToken",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositUnderlying",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "minimumAmountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "donate",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "getLiquidationLimitInfo",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "currentLimit",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "rate",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maximum",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getMintLimitInfo",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "currentLimit",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "rate",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maximum",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getRepayLimitInfo",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "currentLimit",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "rate",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maximum",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getSupportedUnderlyingTokens",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getSupportedYieldTokens",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getUnderlyingTokenParameters",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "decimals",
+              "type": "uint8",
+              "internalType": "uint8"
+            },
+            {
+              "name": "conversionFactor",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "enabled",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct IAlchemistV2State.UnderlyingTokenParams"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getUnderlyingTokensPerShare",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getYieldTokenParameters",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "decimals",
+              "type": "uint8",
+              "internalType": "uint8"
+            },
+            {
+              "name": "underlyingToken",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "adapter",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "maximumLoss",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "maximumExpectedValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "creditUnlockRate",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "activeBalance",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "harvestableBalance",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalShares",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "expectedValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "pendingCredit",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "distributedCredit",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "lastDistributionBlock",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "accruedWeight",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "enabled",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct IAlchemistV2State.YieldTokenParams"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getYieldTokensPerShare",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "harvest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "minimumAmountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "params",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "admin",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "debtToken",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "transmuter",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "minimumCollateralization",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "protocolFee",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "protocolFeeReceiver",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "mintingLimitMinimum",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "mintingLimitMaximum",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "mintingLimitBlocks",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "whitelist",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "internalType": "struct IAlchemistV2AdminActions.InitializationParams"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "isSupportedUnderlyingToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isSupportedYieldToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "keepers",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "liquidate",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minimumAmountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "minimumCollateralization",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mintAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "mintFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "multicall",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes[]",
+          "internalType": "bytes[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "results",
+          "type": "bytes[]",
+          "internalType": "bytes[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "normalizeDebtTokensToUnderlying",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "normalizeUnderlyingTokensToDebt",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pendingAdmin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "poke",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "positions",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "lastAccruedWeight",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "protocolFee",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "protocolFeeReceiver",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "repay",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "sentinels",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "setKeeper",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "keeper",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "flag",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setMaximumExpectedValue",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setMaximumLoss",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setMinimumCollateralization",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setPendingAdmin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setProtocolFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setProtocolFeeReceiver",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setSentinel",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "sentinel",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "flag",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setTokenAdapter",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "adapter",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setTransferAdapterAddress",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "transferAdapterAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setTransmuter",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setUnderlyingTokenEnabled",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "underlyingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "enabled",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setYieldTokenEnabled",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "enabled",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "snap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "sweep",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "totalValue",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transferAdapter",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transferDebtV1",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "debt",
+          "type": "int256",
+          "internalType": "int256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transmuter",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "version",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "whitelist",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdrawAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "withdrawFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdrawUnderlying",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "minimumAmountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdrawUnderlyingFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "yieldToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "minimumAmountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "proxyAbi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_logic",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "admin_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "AdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BeaconUpgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "beacon",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Upgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "fallback",
+      "stateMutability": "payable"
+    },
+    {
+      "name": "admin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "admin_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "changeAdmin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "implementation",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "implementation_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "upgradeTo",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "upgradeToAndCall",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "BPS",
+      "signature": "BPS()",
+      "decision": "excluded",
+      "reason": "Read-only basis-point constant; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "FIXED_POINT_SCALAR",
+      "signature": "FIXED_POINT_SCALAR()",
+      "decision": "excluded",
+      "reason": "Read-only fixed-point scalar constant; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "acceptAdmin",
+      "signature": "acceptAdmin()",
+      "decision": "excluded",
+      "reason": "Pending application administrator accepts administrative control; privileged ownership transition is excluded.",
+      "sourceLine": 293
+    },
+    {
+      "functionName": "accounts",
+      "signature": "accounts(address)",
+      "decision": "excluded",
+      "reason": "Read-only owner debt and deposited-token accounting; no transaction capability or read API is admitted.",
+      "sourceLine": 149
+    },
+    {
+      "functionName": "addUnderlyingToken",
+      "signature": "addUnderlyingToken(address,(uint256,uint256,uint256,uint256,uint256,uint256))",
+      "decision": "excluded",
+      "reason": "Administrative underlying-token registration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 318
+    },
+    {
+      "functionName": "addYieldToken",
+      "signature": "addYieldToken(address,(address,uint256,uint256,uint256))",
+      "decision": "excluded",
+      "reason": "Administrative yield-token and adapter registration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 323
+    },
+    {
+      "functionName": "admin",
+      "signature": "admin()",
+      "decision": "excluded",
+      "reason": "Read-only Alchemist application administrator (distinct from proxy administrator); no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "approveMint",
+      "signature": "approveMint(address,uint256)",
+      "decision": "excluded",
+      "reason": "Debt-mint delegation approval is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 411
+    },
+    {
+      "functionName": "approveWithdraw",
+      "signature": "approveWithdraw(address,address,uint256)",
+      "decision": "excluded",
+      "reason": "Yield-position withdrawal delegation approval is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 416
+    },
+    {
+      "functionName": "burn",
+      "signature": "burn(uint256,address)",
+      "decision": "excluded",
+      "reason": "Caller debt-token burn crediting selected recipient account debt is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 499
+    },
+    {
+      "functionName": "configureCreditUnlockRate",
+      "signature": "configureCreditUnlockRate(address,uint256)",
+      "decision": "excluded",
+      "reason": "Administrative credit-unlock block-rate configuration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 373
+    },
+    {
+      "functionName": "configureLiquidationLimit",
+      "signature": "configureLiquidationLimit(address,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Administrative underlying-token liquidation-rate configuration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 343
+    },
+    {
+      "functionName": "configureMintingLimit",
+      "signature": "configureMintingLimit(uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Administrative global minting-rate configuration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 368
+    },
+    {
+      "functionName": "configureRepayLimit",
+      "signature": "configureRepayLimit(address,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Administrative underlying-token repayment-rate configuration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 338
+    },
+    {
+      "functionName": "convertSharesToUnderlyingTokens",
+      "signature": "convertSharesToUnderlyingTokens(address,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only adapter-priced share-to-underlying conversion; no transaction capability or read API is admitted.",
+      "sourceLine": 1227
+    },
+    {
+      "functionName": "convertSharesToYieldTokens",
+      "signature": "convertSharesToYieldTokens(address,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only share-to-yield-token conversion; no transaction capability or read API is admitted.",
+      "sourceLine": 1213
+    },
+    {
+      "functionName": "convertUnderlyingTokensToShares",
+      "signature": "convertUnderlyingTokensToShares(address,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only underlying-to-share conversion; no transaction capability or read API is admitted.",
+      "sourceLine": 1262
+    },
+    {
+      "functionName": "convertUnderlyingTokensToYield",
+      "signature": "convertUnderlyingTokensToYield(address,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only adapter-priced underlying-to-yield-token conversion; no transaction capability or read API is admitted.",
+      "sourceLine": 1250
+    },
+    {
+      "functionName": "convertYieldTokensToShares",
+      "signature": "convertYieldTokensToShares(address,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only yield-token-to-share conversion; no transaction capability or read API is admitted.",
+      "sourceLine": 1200
+    },
+    {
+      "functionName": "convertYieldTokensToUnderlying",
+      "signature": "convertYieldTokensToUnderlying(address,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only adapter-priced yield-token-to-underlying conversion; no transaction capability or read API is admitted.",
+      "sourceLine": 1238
+    },
+    {
+      "functionName": "debtToken",
+      "signature": "debtToken()",
+      "decision": "excluded",
+      "reason": "Read-only configured synthetic debt token; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "deposit",
+      "signature": "deposit(address,uint256,address)",
+      "decision": "excluded",
+      "reason": "Caller-selected yield-token deposit crediting the selected recipient account is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 426
+    },
+    {
+      "functionName": "depositUnderlying",
+      "signature": "depositUnderlying(address,uint256,address,uint256)",
+      "decision": "excluded",
+      "reason": "Underlying deposit through the configured adapter for caller-selected yieldToken, crediting recipient is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 435
+    },
+    {
+      "functionName": "donate",
+      "signature": "donate(address,uint256)",
+      "decision": "excluded",
+      "reason": "Debt-token donation distributed to holders of selected yieldToken is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 518
+    },
+    {
+      "functionName": "getLiquidationLimitInfo",
+      "signature": "getLiquidationLimitInfo(address)",
+      "decision": "excluded",
+      "reason": "Read-only underlying-token liquidation limiter state; no transaction capability or read API is admitted.",
+      "sourceLine": 244
+    },
+    {
+      "functionName": "getMintLimitInfo",
+      "signature": "getMintLimitInfo()",
+      "decision": "excluded",
+      "reason": "Read-only global debt-mint limiter state; no transaction capability or read API is admitted.",
+      "sourceLine": 211
+    },
+    {
+      "functionName": "getRepayLimitInfo",
+      "signature": "getRepayLimitInfo(address)",
+      "decision": "excluded",
+      "reason": "Read-only underlying-token repayment limiter state; no transaction capability or read API is admitted.",
+      "sourceLine": 227
+    },
+    {
+      "functionName": "getSupportedUnderlyingTokens",
+      "signature": "getSupportedUnderlyingTokens()",
+      "decision": "excluded",
+      "reason": "Read-only registered underlying tokens; no transaction capability or read API is admitted.",
+      "sourceLine": 129
+    },
+    {
+      "functionName": "getSupportedYieldTokens",
+      "signature": "getSupportedYieldTokens()",
+      "decision": "excluded",
+      "reason": "Read-only registered yield tokens; no transaction capability or read API is admitted.",
+      "sourceLine": 134
+    },
+    {
+      "functionName": "getUnderlyingTokenParameters",
+      "signature": "getUnderlyingTokenParameters(address)",
+      "decision": "excluded",
+      "reason": "Read-only underlying-token decimals/conversion/enabled configuration; no transaction capability or read API is admitted.",
+      "sourceLine": 195
+    },
+    {
+      "functionName": "getUnderlyingTokensPerShare",
+      "signature": "getUnderlyingTokensPerShare(address)",
+      "decision": "excluded",
+      "reason": "Read-only adapter-priced underlying value per share; no transaction capability or read API is admitted.",
+      "sourceLine": 124
+    },
+    {
+      "functionName": "getYieldTokenParameters",
+      "signature": "getYieldTokenParameters(address)",
+      "decision": "excluded",
+      "reason": "Read-only yield-token adapter, limits, balances and credit configuration; no transaction capability or read API is admitted.",
+      "sourceLine": 203
+    },
+    {
+      "functionName": "getYieldTokensPerShare",
+      "signature": "getYieldTokensPerShare(address)",
+      "decision": "excluded",
+      "reason": "Read-only yield-token value per share; no transaction capability or read API is admitted.",
+      "sourceLine": 119
+    },
+    {
+      "functionName": "harvest",
+      "signature": "harvest(address,uint256)",
+      "decision": "excluded",
+      "reason": "Keeper yield harvesting via configured adapter is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 523
+    },
+    {
+      "functionName": "initialize",
+      "signature": "initialize((address,address,address,uint256,uint256,address,uint256,uint256,uint256,address))",
+      "decision": "excluded",
+      "reason": "One-time initializer sets administration, debt token, whitelist, transmuter and limits; initialization is privileged lifecycle configuration, not an ordinary user action.",
+      "sourceLine": 261
+    },
+    {
+      "functionName": "isSupportedUnderlyingToken",
+      "signature": "isSupportedUnderlyingToken(address)",
+      "decision": "excluded",
+      "reason": "Read-only underlying-token registration status; no transaction capability or read API is admitted.",
+      "sourceLine": 139
+    },
+    {
+      "functionName": "isSupportedYieldToken",
+      "signature": "isSupportedYieldToken(address)",
+      "decision": "excluded",
+      "reason": "Read-only yield-token registration status; no transaction capability or read API is admitted.",
+      "sourceLine": 144
+    },
+    {
+      "functionName": "keepers",
+      "signature": "keepers(address)",
+      "decision": "excluded",
+      "reason": "Read-only keeper authorization mapping; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "liquidate",
+      "signature": "liquidate(address,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Caller self-liquidation of selected yieldToken shares to reduce own debt, not third-party liquidation is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 509
+    },
+    {
+      "functionName": "minimumCollateralization",
+      "signature": "minimumCollateralization()",
+      "decision": "excluded",
+      "reason": "Read-only stored collateralization threshold; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "mint",
+      "signature": "mint(uint256,address)",
+      "decision": "excluded",
+      "reason": "Debt issuance against caller account to selected token recipient is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 485
+    },
+    {
+      "functionName": "mintAllowance",
+      "signature": "mintAllowance(address,address)",
+      "decision": "excluded",
+      "reason": "Read-only owner-to-spender debt-mint allowance; no transaction capability or read API is admitted.",
+      "sourceLine": 177
+    },
+    {
+      "functionName": "mintFrom",
+      "signature": "mintFrom(address,uint256,address)",
+      "decision": "excluded",
+      "reason": "Delegated debt issuance against selected owner account to selected token recipient is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 490
+    },
+    {
+      "functionName": "multicall",
+      "signature": "multicall(bytes[])",
+      "decision": "excluded",
+      "reason": "Payable bytes[] self-delegatecall executor; opaque nested calls are not admitted without independently applicable execution scope, and batching cannot restore reverted ordinary actions."
+    },
+    {
+      "functionName": "normalizeDebtTokensToUnderlying",
+      "signature": "normalizeDebtTokensToUnderlying(address,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only decimal-truncating debt-to-underlying normalization; no transaction capability or read API is admitted.",
+      "sourceLine": 1287
+    },
+    {
+      "functionName": "normalizeUnderlyingTokensToDebt",
+      "signature": "normalizeUnderlyingTokensToDebt(address,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only decimal-scaling underlying-to-debt normalization; no transaction capability or read API is admitted.",
+      "sourceLine": 1273
+    },
+    {
+      "functionName": "pendingAdmin",
+      "signature": "pendingAdmin()",
+      "decision": "excluded",
+      "reason": "Read-only pending application administrator; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "poke",
+      "signature": "poke(address)",
+      "decision": "excluded",
+      "reason": "Account-credit synchronization for selected owner is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 421
+    },
+    {
+      "functionName": "positions",
+      "signature": "positions(address,address)",
+      "decision": "excluded",
+      "reason": "Read-only owner/yield-token share accounting; no transaction capability or read API is admitted.",
+      "sourceLine": 165
+    },
+    {
+      "functionName": "protocolFee",
+      "signature": "protocolFee()",
+      "decision": "excluded",
+      "reason": "Read-only stored protocol-fee rate; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "protocolFeeReceiver",
+      "signature": "protocolFeeReceiver()",
+      "decision": "excluded",
+      "reason": "Read-only stored fee recipient; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "repay",
+      "signature": "repay(address,uint256,address)",
+      "decision": "excluded",
+      "reason": "Caller-selected underlying-token repayment crediting selected recipient account debt is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 504
+    },
+    {
+      "functionName": "sentinels",
+      "signature": "sentinels(address)",
+      "decision": "excluded",
+      "reason": "Read-only sentinel authorization mapping; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "setKeeper",
+      "signature": "setKeeper(address,bool)",
+      "decision": "excluded",
+      "reason": "Administrative keeper authorization is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 313
+    },
+    {
+      "functionName": "setMaximumExpectedValue",
+      "signature": "setMaximumExpectedValue(address,uint256)",
+      "decision": "excluded",
+      "reason": "Administrative yield-token deposit-cap configuration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 383
+    },
+    {
+      "functionName": "setMaximumLoss",
+      "signature": "setMaximumLoss(address,uint256)",
+      "decision": "excluded",
+      "reason": "Administrative yield-token maximum-loss configuration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 388
+    },
+    {
+      "functionName": "setMinimumCollateralization",
+      "signature": "setMinimumCollateralization(uint256)",
+      "decision": "excluded",
+      "reason": "Administrative collateralization configuration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 353
+    },
+    {
+      "functionName": "setPendingAdmin",
+      "signature": "setPendingAdmin(address)",
+      "decision": "excluded",
+      "reason": "Current application administrator nominates a successor; privileged ownership transition is excluded.",
+      "sourceLine": 286
+    },
+    {
+      "functionName": "setProtocolFee",
+      "signature": "setProtocolFee(uint256)",
+      "decision": "excluded",
+      "reason": "Administrative protocol-fee configuration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 358
+    },
+    {
+      "functionName": "setProtocolFeeReceiver",
+      "signature": "setProtocolFeeReceiver(address)",
+      "decision": "excluded",
+      "reason": "Administrative fee-recipient configuration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 363
+    },
+    {
+      "functionName": "setSentinel",
+      "signature": "setSentinel(address,bool)",
+      "decision": "excluded",
+      "reason": "Administrative sentinel authorization is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 308
+    },
+    {
+      "functionName": "setTokenAdapter",
+      "signature": "setTokenAdapter(address,address)",
+      "decision": "excluded",
+      "reason": "Administrative yield-token adapter replacement is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 378
+    },
+    {
+      "functionName": "setTransferAdapterAddress",
+      "signature": "setTransferAdapterAddress(address)",
+      "decision": "excluded",
+      "reason": "Administrative V1 transfer-adapter replacement is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 398
+    },
+    {
+      "functionName": "setTransmuter",
+      "signature": "setTransmuter(address)",
+      "decision": "excluded",
+      "reason": "Administrative transmuter replacement is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 348
+    },
+    {
+      "functionName": "setUnderlyingTokenEnabled",
+      "signature": "setUnderlyingTokenEnabled(address,bool)",
+      "decision": "excluded",
+      "reason": "Administrative underlying-token enablement is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 328
+    },
+    {
+      "functionName": "setYieldTokenEnabled",
+      "signature": "setYieldTokenEnabled(address,bool)",
+      "decision": "excluded",
+      "reason": "Administrative yield-token enablement is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 333
+    },
+    {
+      "functionName": "snap",
+      "signature": "snap(address)",
+      "decision": "excluded",
+      "reason": "Administrative expected-value snapshot is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 393
+    },
+    {
+      "functionName": "sweep",
+      "signature": "sweep(address)",
+      "decision": "excluded",
+      "reason": "Only application admin can transfer the entire balance of a registered yieldToken to admin; privileged asset extraction is excluded.",
+      "sourceLine": 527
+    },
+    {
+      "functionName": "totalValue",
+      "signature": "totalValue(address)",
+      "decision": "excluded",
+      "reason": "Read-only adapter-priced owner collateral valuation; no transaction capability or read API is admitted.",
+      "sourceLine": 1050
+    },
+    {
+      "functionName": "transferAdapter",
+      "signature": "transferAdapter()",
+      "decision": "excluded",
+      "reason": "Read-only configured V1 debt-transfer adapter; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "transferDebtV1",
+      "signature": "transferDebtV1(address,int256)",
+      "decision": "excluded",
+      "reason": "Privileged V1-transfer-adapter debt migration is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 403
+    },
+    {
+      "functionName": "transmuter",
+      "signature": "transmuter()",
+      "decision": "excluded",
+      "reason": "Read-only configured transmuter; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "version",
+      "signature": "version()",
+      "decision": "excluded",
+      "reason": "Read-only implementation version string; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "whitelist",
+      "signature": "whitelist()",
+      "decision": "excluded",
+      "reason": "Read-only stored whitelist address; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "withdraw",
+      "signature": "withdraw(address,uint256,address)",
+      "decision": "excluded",
+      "reason": "Caller-owned position share redemption into yield tokens paid to recipient is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 445
+    },
+    {
+      "functionName": "withdrawAllowance",
+      "signature": "withdrawAllowance(address,address,address)",
+      "decision": "excluded",
+      "reason": "Read-only owner-to-spender yield-token withdrawal allowance; no transaction capability or read API is admitted.",
+      "sourceLine": 186
+    },
+    {
+      "functionName": "withdrawFrom",
+      "signature": "withdrawFrom(address,address,uint256,address)",
+      "decision": "excluded",
+      "reason": "Selected owner position share redemption into yield tokens paid to recipient under withdrawal allowance is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 454
+    },
+    {
+      "functionName": "withdrawUnderlying",
+      "signature": "withdrawUnderlying(address,uint256,address,uint256)",
+      "decision": "excluded",
+      "reason": "Caller-owned position share redemption and configured-adapter unwrapping to recipient is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 464
+    },
+    {
+      "functionName": "withdrawUnderlyingFrom",
+      "signature": "withdrawUnderlyingFrom(address,address,uint256,address,uint256)",
+      "decision": "excluded",
+      "reason": "Selected owner position redemption and adapter unwrapping to recipient under withdrawal allowance is disabled: the exact reported implementation function body unconditionally calls revert(); no historical implementation behavior is admitted.",
+      "sourceLine": 474
+    }
+  ],
+  "proxyFunctionInventory": [
+    {
+      "functionName": "admin",
+      "signature": "admin()",
+      "decision": "excluded",
+      "reason": "Proxy-admin-only getter with nonpayable ABI and transparent dispatch; non-admin callers instead reach implementation admin(), the Alchemist application-admin getter. Neither is admitted."
+    },
+    {
+      "functionName": "changeAdmin",
+      "signature": "changeAdmin(address)",
+      "decision": "excluded",
+      "reason": "Privileged proxy-administrator replacement is excluded."
+    },
+    {
+      "functionName": "implementation",
+      "signature": "implementation()",
+      "decision": "excluded",
+      "reason": "Proxy-admin-only implementation getter, not an ordinary user transaction; non-admin callers delegate and this signature is absent from AlchemistV2."
+    },
+    {
+      "functionName": "upgradeTo",
+      "signature": "upgradeTo(address)",
+      "decision": "excluded",
+      "reason": "Privileged implementation replacement is excluded."
+    },
+    {
+      "functionName": "upgradeToAndCall",
+      "signature": "upgradeToAndCall(address,bytes)",
+      "decision": "excluded",
+      "reason": "Privileged implementation replacement and arbitrary initialization delegatecall bytes are excluded."
+    }
+  ],
+  "selectedFunctions": [],
+  "reviewSummary": {
+    "implementationFunctionCount": 79,
+    "implementationAdmittedCount": 0,
+    "implementationExcludedCount": 79,
+    "proxyFunctionCount": 5,
+    "proxyAdmittedCount": 0,
+    "proxyExcludedCount": 5,
+    "unconditionallyRevertingImplementationFunctionCount": 36,
+    "reason": "No ordinary entry/exit subset remains functional in the exact applicable implementation; every deposit, withdrawal, mint, delegated mint, burn, repayment and self-liquidation entry point unconditionally reverts. No catalog capabilities or frontend card should be added."
+  },
+  "reviewNotes": [
+    "The retained ABI/interface parameter vocabulary is not evidence of enabled behavior: current external action bodies revert before touching internal legacy deposit/withdraw/mint helpers.",
+    "Caller-selected yieldToken identifies the registered yield asset and its configured adapter; depositUnderlying selects yieldToken but denominates amount in its underlying asset. A recipient is the account credited on deposit/repay/burn or the token receiver on withdrawal/mint, not automatically msg.sender. Delegated From variants separately name the account owner. None is active here.",
+    "The retained interface labels ordinary actions WHITELISTED and stores a whitelist dependency. Historical whitelist eligibility, caller token allowance, debt, owner-specific mintAllowance and withdrawAllowance are not equivalent to runtime capability grants. Approvals, adequate balances or whitelisting cannot overcome the current unconditional reverts.",
+    "Retained internal accounting references adapters, token prices, share rounding/truncation, debt collateralization, token enablement, maximum loss, deposit caps and block-based mint/repay/liquidation/credit-unlock limits. These helpers do not make disabled external actions executable; current configured dependencies and parameter values were not queried.",
+    "Underlying entry/exit and self-liquidation signatures retain minimumAmountOut but no deadline; yield-token deposit/withdraw and debt mint/burn/repay have no explicit caller slippage or deadline field. No economic-safety, cooldown, liquidity or execution guarantee is made.",
+    "The application admin remains able to nominate/accept an administrator and sweep an entire supported yield-token balance to admin. Separately the transparent proxy administrator can upgrade and replace behavior; neither authority is admitted.",
+    "No controls, grants, runtime RPC requests, frontend card, catalog activation or historical implementation substitution is introduced."
+  ],
+  "officialFrontend": {
+    "url": "https://alchemix.fi/",
+    "sourceRef": "https://docs.alchemix.fi/",
+    "verifiedAt": "2026-10-17",
+    "retrievalStatus": "live",
+    "evidence": "Official documentation links this live, non-parked protocol app. The current site and docs explicitly describe V3, not an available V2 action frontend; retain as reference only, with no V2 frontend card.",
+    "legacyDocs": {
+      "url": "https://v2-docs.alchemix.fi/",
+      "resolvedUrl": "https://alchemix-finance.gitbook.io/user-docs",
+      "retrievalStatus": "live-legacy-reference",
+      "evidence": "Current official docs link this legacy V2 reference, which redirects to the official GitBook. Historical availability claims do not override the current deployed disabled implementation."
+    }
+  }
+}

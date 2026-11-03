@@ -1374,7 +1374,7 @@ describe('BillingService', () => {
       await service.recordApiCall({
         userId: 'user-1',
         sourceKey: 'api:tx-1',
-        endpoint: '/v1/transactions/send',
+        endpoint: '/v1/transactions',
         statusCode: 200,
       });
 
@@ -1393,7 +1393,7 @@ describe('BillingService', () => {
             sourceKey: 'api:tx-1',
             quantity: 1n,
             volumeUsdMicros: 0n,
-            endpoint: '/v1/transactions/send',
+            endpoint: '/v1/transactions',
             statusCode: 200,
           }),
         }),

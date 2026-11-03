@@ -1,0 +1,750 @@
+{
+  "schemaVersion": 1,
+  "chainId": 42161,
+  "capturedAt": "2026-10-15T05:22:34.373359+00:00",
+  "deploymentReference": "https://docs.sofa.org/en/developer/contracts.html",
+  "pointerObservation": {
+    "rpcUrl": "https://arbitrum-one-rpc.publicnode.com",
+    "slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+    "blockTag": "latest",
+    "limitations": "Latest slot observations; no guarantee against subsequent upgrades. Sourcify implementation artifacts exact-match where indicated; proxy slot mapping is read via public RPC."
+  },
+  "proxies": [
+    {
+      "officialName": "SmartBull ETH/USDT",
+      "address": "0x00aeca021d0f06c7dee54d58ee6af47b5645ab19",
+      "chainId": 42161,
+      "implementation": "0x4f1b513f846821559d59e8324eaef201cb5b0479",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000004f1b513f846821559d59e8324eaef201cb5b0479",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:30.717688+00:00",
+      "implementationFamilyId": "smarttrend-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "SmartBull BTC/USDT",
+      "address": "0x989897f1d976ee0b59bf0a3172c170d8f3cb84e3",
+      "chainId": 42161,
+      "implementation": "0x4f1b513f846821559d59e8324eaef201cb5b0479",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000004f1b513f846821559d59e8324eaef201cb5b0479",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:30.911567+00:00",
+      "implementationFamilyId": "smarttrend-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "SmartBear ETH/USDT",
+      "address": "0x6e72c8726c71a4cbc6e31ff7d47b399fa983c7b8",
+      "chainId": 42161,
+      "implementation": "0x4f1b513f846821559d59e8324eaef201cb5b0479",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000004f1b513f846821559d59e8324eaef201cb5b0479",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:31.217321+00:00",
+      "implementationFamilyId": "smarttrend-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "SmartBear BTC/USDT",
+      "address": "0x106825b71cce77a70b69f57a0acf9c4a6acf292a",
+      "chainId": 42161,
+      "implementation": "0x4f1b513f846821559d59e8324eaef201cb5b0479",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000004f1b513f846821559d59e8324eaef201cb5b0479",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:31.445690+00:00",
+      "implementationFamilyId": "smarttrend-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "AAVESmartBull ETH/USDT",
+      "address": "0x9c5d3c3abd633b8ea68c5a51325f8630dc620ad9",
+      "chainId": 42161,
+      "implementation": "0x5494855b98858ea4ef54d13e1d003197a387ce34",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000005494855b98858ea4ef54d13e1d003197a387ce34",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:31.650467+00:00",
+      "implementationFamilyId": "aave-smarttrend-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "AAVESmartBull BTC/USDT",
+      "address": "0x2f1c60ba96ec6925fa9bbbfc9eb7908bd35bc224",
+      "chainId": 42161,
+      "implementation": "0x5494855b98858ea4ef54d13e1d003197a387ce34",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000005494855b98858ea4ef54d13e1d003197a387ce34",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:31.875658+00:00",
+      "implementationFamilyId": "aave-smarttrend-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "AAVESmartBear ETH/USDT",
+      "address": "0x72e0906558e4ee528974cd7803bff12d9f2869c3",
+      "chainId": 42161,
+      "implementation": "0x5494855b98858ea4ef54d13e1d003197a387ce34",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000005494855b98858ea4ef54d13e1d003197a387ce34",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:32.074583+00:00",
+      "implementationFamilyId": "aave-smarttrend-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "AAVESmartBear BTC/USDT",
+      "address": "0x9377f17abde96887943e5fcc92db034c76820529",
+      "chainId": 42161,
+      "implementation": "0x5494855b98858ea4ef54d13e1d003197a387ce34",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000005494855b98858ea4ef54d13e1d003197a387ce34",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:32.265010+00:00",
+      "implementationFamilyId": "aave-smarttrend-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "DNTVault ETH/USDT",
+      "address": "0x7ecd1b5255543f4c2d7d8e475afcd01699dbe2b0",
+      "chainId": 42161,
+      "implementation": "0x4140ab4afc36b93270a9659bd8387660cc6509b5",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000004140ab4afc36b93270a9659bd8387660cc6509b5",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:32.482279+00:00",
+      "implementationFamilyId": "dnt-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "DNTVault BTC/USDT",
+      "address": "0xdfeb3460771148799b2d4344c369e2b2d6c26c42",
+      "chainId": 42161,
+      "implementation": "0x4140ab4afc36b93270a9659bd8387660cc6509b5",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000004140ab4afc36b93270a9659bd8387660cc6509b5",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:32.675521+00:00",
+      "implementationFamilyId": "dnt-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "AAVEDNTVault ETH/USDT",
+      "address": "0x3a253838121b9ad9736fafc030cf4971615d68b2",
+      "chainId": 42161,
+      "implementation": "0xfa24b9f8de8005c21fab37bda02c4989ebb70089",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x000000000000000000000000fa24b9f8de8005c21fab37bda02c4989ebb70089",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:32.866590+00:00",
+      "implementationFamilyId": "aave-dnt-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "AAVEDNTVault BTC/USDT",
+      "address": "0xd9cff1bc89f705eab2579fa2dc86e9a6f971370a",
+      "chainId": 42161,
+      "implementation": "0xfa24b9f8de8005c21fab37bda02c4989ebb70089",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x000000000000000000000000fa24b9f8de8005c21fab37bda02c4989ebb70089",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:33.066145+00:00",
+      "implementationFamilyId": "aave-dnt-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "AAVEDNTVaultV1.1 ETH/USDT",
+      "address": "0xa5492baf06692c0051d69d31458d536bacc08651",
+      "chainId": 42161,
+      "implementation": "0x8ea9638f2587b20396ec8c45dd639deb115f5211",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000008ea9638f2587b20396ec8c45dd639deb115f5211",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:33.271674+00:00",
+      "implementationFamilyId": "aave-dnt-vault-v1-1",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "AAVEDNTVaultV1.1 BTC/USDT",
+      "address": "0x75809d59a9a69226972dbb84cb2d1851c5cd0cbf",
+      "chainId": 42161,
+      "implementation": "0x8ea9638f2587b20396ec8c45dd639deb115f5211",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000008ea9638f2587b20396ec8c45dd639deb115f5211",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:33.488553+00:00",
+      "implementationFamilyId": "aave-dnt-vault-v1-1",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "LeverageDNTVault ETH/USDT",
+      "address": "0x6f4dbcfc81dd22ae3edec5f9724e43cba8c92e50",
+      "chainId": 42161,
+      "implementation": "0x3fe4fd33935bf189e39abb8b58fcdfd80daeede3",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000003fe4fd33935bf189e39abb8b58fcdfd80daeede3",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:33.705964+00:00",
+      "implementationFamilyId": "leverage-dnt-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    },
+    {
+      "officialName": "LeverageDNTVault BTC/USDT",
+      "address": "0xa8fcc1ba1d4893a4894206986b65f652d5fe04ab",
+      "chainId": 42161,
+      "implementation": "0x3fe4fd33935bf189e39abb8b58fcdfd80daeede3",
+      "eip1967Slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+      "storageValue": "0x0000000000000000000000003fe4fd33935bf189e39abb8b58fcdfd80daeede3",
+      "blockTag": "latest",
+      "pointerReadAt": "2026-10-15T05:22:33.914854+00:00",
+      "implementationFamilyId": "leverage-dnt-vault",
+      "deploymentSourceRef": "https://docs.sofa.org/en/developer/contracts.html"
+    }
+  ],
+  "implementations": [
+    {
+      "implementation": "0x4f1b513f846821559d59e8324eaef201cb5b0479",
+      "familyId": "smarttrend-vault",
+      "contractName": "SmartTrendVault",
+      "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x4f1b513f846821559d59e8324eaef201cb5b0479?fields=abi,metadata,sources,compilation",
+      "sourceFile": "contracts/vaults/SmartTrendVault.sol",
+      "exactMatch": true,
+      "match": "exact_match",
+      "runtimeMatch": "exact_match",
+      "verifiedAt": "2024-08-08T15:04:35Z",
+      "compiler": "0.8.10+commit.fc410830",
+      "language": "Solidity",
+      "abiSnapshot": {
+        "burn": {
+          "name": "burn",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "expiry",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "anchorPrices",
+              "type": "uint256[2]",
+              "internalType": "uint256[2]"
+            },
+            {
+              "name": "isMaker",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        "burnBatch": {
+          "name": "burnBatch",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "products",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "expiry",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "anchorPrices",
+                  "type": "uint256[2]",
+                  "internalType": "uint256[2]"
+                },
+                {
+                  "name": "isMaker",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "internalType": "struct SmartTrendVault.Product[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        }
+      },
+      "abiSnapshotSha256": "sha256:11573e629cf44d6c5f6308b157d946bae25e25194699c4fe936f63e32f89d68e",
+      "sourceExcerpt": {
+        "burn": "function burn(uint256 expiry, uint256[2] calldata anchorPrices, uint256 isMaker) external {\n        uint256 payoff = _burn(expiry, anchorPrices, isMaker);\n        if (payoff > 0) {\n            collateral.safeTransfer(_msgSender(), payoff);\n        }\n    }",
+        "_burn": "function _burn(uint256 expiry, uint256[2] memory anchorPrices, uint256 isMaker) internal nonReentrant returns (uint256 payoff) {\n        require(block.timestamp >= expiry, \"Vault: not expired\");\n        uint256 productId = getProductId(expiry, anchorPrices, isMaker);\n        uint256 amount = balanceOf(_msgSender(), productId);\n        require(amount > 0, \"Vault: zero amount\");\n\n        // check if settled\n        require(oracle.settlePrices(expiry) > 0, \"Vault: not settled\");\n\n        // calculate payoff by strategy\n        if (isMaker == 1) {\n            payoff = getMakerPayoff(expiry, anchorPrices, amount);\n        } else {\n            uint256 settlementFee;\n            (payoff, settlementFee) = getMinterPayoff(expiry, anchorPrices, amount);\n            if (settlementFee > 0) {\n                totalFee += settlementFee;\n            }\n        }\n\n        // burn product\n        _burn(_msgSender(), productId, amount);\n        emit Burned(_msgSender(), productId, amount, payoff);\n    }",
+        "burnBatch": "function burnBatch(Product[] calldata products) external {\n        uint256 totalPayoff = _burnBatch(products);\n\n        // check self balance of collateral and transfer payoff\n        if (totalPayoff > 0) {\n            collateral.safeTransfer(_msgSender(), totalPayoff);\n        }\n    }",
+        "_burnBatch": "function _burnBatch(Product[] calldata products) internal nonReentrant returns (uint256 totalPayoff) {\n        uint256[] memory productIds = new uint256[](products.length);\n        uint256[] memory amounts = new uint256[](products.length);\n        uint256[] memory payoffs = new uint256[](products.length);\n        uint256 settlementFee;\n        for (uint256 i = 0; i < products.length; i++) {\n            Product memory product = products[i];\n            uint256 productId = getProductId(product.expiry, product.anchorPrices, product.isMaker);\n            uint256 amount = balanceOf(_msgSender(), productId);\n            require(amount > 0, \"Vault: zero amount\");\n            require(block.timestamp >= product.expiry, \"Vault: not expired\");\n            // check if settled\n            require(oracle.settlePrices(product.expiry) > 0, \"Vault: not settled\");\n            // calculate payoff by strategy\n            if (product.isMaker == 1) {\n                payoffs[i] = getMakerPayoff(product.expiry, product.anchorPrices, amount);\n            } else {\n                uint256 fee;\n                (payoffs[i], fee) = getMinterPayoff(product.expiry, product.anchorPrices, amount);\n                if (fee > 0) {\n                    settlementFee += fee;\n                }\n            }\n            if (payoffs[i] > 0) {\n                totalPayoff += payoffs[i];\n            }\n\n            productIds[i] = productId;\n            amounts[i] = amount;\n        }\n        if (settlementFee > 0) {\n            totalFee += settlementFee;\n        }\n        // burn product\n        _burnBatch(_msgSender(), productIds, amounts);\n        emit BatchBurned(_msgSender(), productIds, amounts, payoffs);\n    }"
+      },
+      "sourceExcerptSha256": "sha256:cd567c0d1f503b9909882ba20105d56f5cd0d5313db72bff1672f744f4f4a029"
+    },
+    {
+      "implementation": "0x5494855b98858ea4ef54d13e1d003197a387ce34",
+      "familyId": "aave-smarttrend-vault",
+      "contractName": "AAVESmartTrendVault",
+      "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x5494855b98858ea4ef54d13e1d003197a387ce34?fields=abi,metadata,sources,compilation",
+      "sourceFile": "contracts/vaults/AAVESmartTrendVault.sol",
+      "exactMatch": true,
+      "match": "exact_match",
+      "runtimeMatch": "exact_match",
+      "verifiedAt": "2024-12-15T21:17:28Z",
+      "compiler": "0.8.10+commit.fc410830",
+      "language": "Solidity",
+      "abiSnapshot": {
+        "burn": {
+          "name": "burn",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "expiry",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "anchorPrices",
+              "type": "uint256[2]",
+              "internalType": "uint256[2]"
+            },
+            {
+              "name": "collateralAtRiskPercentage",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "isMaker",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        "burnBatch": {
+          "name": "burnBatch",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "products",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "expiry",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "anchorPrices",
+                  "type": "uint256[2]",
+                  "internalType": "uint256[2]"
+                },
+                {
+                  "name": "collateralAtRiskPercentage",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "isMaker",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "internalType": "struct AAVESmartTrendVault.Product[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        }
+      },
+      "abiSnapshotSha256": "sha256:47077f3409d4a3b62e65d1a5f0c6fcec64d6c16773e526b458ac943018dbb57f",
+      "sourceExcerpt": {
+        "burn": "function burn(uint256 expiry, uint256[2] calldata anchorPrices, uint256 collateralAtRiskPercentage, uint256 isMaker) external {\n        uint256 payoff = _burn(expiry, anchorPrices, collateralAtRiskPercentage, isMaker);\n        if (payoff > 0) {\n           require(pool.withdraw(address(collateral), payoff, _msgSender()) > 0, \"Vault: withdraw failed\");\n        }\n    }",
+        "_burn": "function _burn(uint256 expiry, uint256[2] memory anchorPrices, uint256 collateralAtRiskPercentage, uint256 isMaker) internal nonReentrant returns (uint256 payoff) {\n        require(block.timestamp >= expiry, \"Vault: not expired\");\n        uint256 productId = getProductId(expiry, anchorPrices, collateralAtRiskPercentage, isMaker);\n        uint256 amount = balanceOf(_msgSender(), productId);\n        require(amount > 0, \"Vault: zero amount\");\n\n        // check if settled\n        require(oracle.settlePrices(expiry) > 0, \"Vault: not settled\");\n\n        // calculate payoff by strategy\n        uint256 payoffShare;\n        if (isMaker == 1) {\n            payoffShare = getMakerPayoff(expiry, anchorPrices, collateralAtRiskPercentage, amount);\n        } else {\n            uint256 settlementFee;\n            (payoffShare, settlementFee) = getMinterPayoff(expiry, anchorPrices, collateralAtRiskPercentage, amount);\n            if (settlementFee > 0) {\n                totalFee += settlementFee;\n            }\n        }\n\n        // check self balance of collateral and transfer payoff\n        if (payoffShare > 0) {\n            payoff = payoffShare * aToken.balanceOf(address(this)) / totalSupply;\n            totalSupply -= payoffShare;\n            emit Burned(_msgSender(), productId, amount, payoff);\n        } else {\n            emit Burned(_msgSender(), productId, amount, 0);\n        }\n\n        // burn product\n        _burn(_msgSender(), productId, amount);\n    }",
+        "burnBatch": "function burnBatch(Product[] calldata products) external {\n        uint256 totalPayoff = _burnBatch(products);\n        if (totalPayoff > 0) {\n            require(pool.withdraw(address(collateral), totalPayoff, _msgSender()) > 0, \"Vault: withdraw failed\");\n        }\n    }",
+        "_burnBatch": "function _burnBatch(Product[] calldata products) internal nonReentrant returns (uint256 totalPayoff) {\n        uint256 totalPayoffShare = 0;\n        uint256[] memory productIds = new uint256[](products.length);\n        uint256[] memory amounts = new uint256[](products.length);\n        uint256[] memory payoffs = new uint256[](products.length);\n        uint256 aTokenBalance = aToken.balanceOf(address(this));\n        uint256 settlementFee;\n        for (uint256 i = 0; i < products.length; i++) {\n            Product memory product = products[i];\n            uint256 productId = getProductId(product.expiry, product.anchorPrices, product.collateralAtRiskPercentage, product.isMaker);\n            uint256 amount = balanceOf(_msgSender(), productId);\n            require(amount > 0, \"Vault: zero amount\");\n            require(block.timestamp >= product.expiry, \"Vault: not expired\");\n            // check if settled\n            require(oracle.settlePrices(product.expiry) > 0, \"Vault: not settled\");\n            // calculate payoff by strategy\n            uint256 payoffShare;\n            if (product.isMaker == 1) {\n                payoffShare = getMakerPayoff(product.expiry, product.anchorPrices, product.collateralAtRiskPercentage, amount);\n            } else {\n                uint256 fee;\n                (payoffShare, fee) = getMinterPayoff(product.expiry, product.anchorPrices, product.collateralAtRiskPercentage, amount);\n                if (fee > 0) {\n                    settlementFee += fee;\n                }\n            }\n            if (payoffShare > 0) {\n                totalPayoffShare += payoffShare;\n            }\n\n            productIds[i] = productId;\n            amounts[i] = amount;\n            payoffs[i] = payoffShare * aTokenBalance / totalSupply;\n        }\n        if (settlementFee > 0) {\n            totalFee += settlementFee;\n        }\n        // check self balance of collateral and transfer payoff\n        if (totalPayoffShare > 0) {\n            totalPayoff = totalPayoffShare * aTokenBalance / totalSupply;\n            totalSupply -= totalPayoffShare;\n        }\n\n        // burn product\n        _burnBatch(_msgSender(), productIds, amounts);\n        emit BatchBurned(_msgSender(), productIds, amounts, payoffs);\n    }"
+      },
+      "sourceExcerptSha256": "sha256:a15ff71de8bc71a925a4cff900c04e0aeadd380b4c49fe09840a6a37c0761c03"
+    },
+    {
+      "implementation": "0x4140ab4afc36b93270a9659bd8387660cc6509b5",
+      "familyId": "dnt-vault",
+      "contractName": "DNTVault",
+      "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x4140ab4afc36b93270a9659bd8387660cc6509b5?fields=abi,metadata,sources,compilation",
+      "sourceFile": "contracts/vaults/DNTVault.sol",
+      "exactMatch": true,
+      "match": "exact_match",
+      "runtimeMatch": "exact_match",
+      "verifiedAt": "2024-08-08T15:04:16Z",
+      "compiler": "0.8.10+commit.fc410830",
+      "language": "Solidity",
+      "abiSnapshot": {
+        "burn": {
+          "name": "burn",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "term",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "expiry",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "anchorPrices",
+              "type": "uint256[2]",
+              "internalType": "uint256[2]"
+            },
+            {
+              "name": "isMaker",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        "burnBatch": {
+          "name": "burnBatch",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "products",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "term",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "expiry",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "anchorPrices",
+                  "type": "uint256[2]",
+                  "internalType": "uint256[2]"
+                },
+                {
+                  "name": "isMaker",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "internalType": "struct DNTVault.Product[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        }
+      },
+      "abiSnapshotSha256": "sha256:0f838d01e0acdfc8bdb66c9e24f1fcfb6ab93c56b49c4ba3e21e81e7dfade1c9",
+      "sourceExcerpt": {
+        "burn": "function burn(uint256 term, uint256 expiry, uint256[2] calldata anchorPrices, uint256 isMaker) external {\n        uint256 payoff = _burn(term, expiry, anchorPrices, isMaker);\n        if (payoff > 0) {\n            collateral.safeTransfer(_msgSender(), payoff);\n        }\n    }",
+        "_burn": "function _burn(uint256 term, uint256 expiry, uint256[2] memory anchorPrices, uint256 isMaker) internal nonReentrant returns (uint256 payoff) {\n        (uint256 latestTerm, uint256 latestExpiry, bool _isBurnable) = isBurnable(term, expiry, anchorPrices);\n        require(_isBurnable, \"Vault: not burnable\");\n\n        // check if settled\n        require(oracle.settlePrices(latestExpiry, 1) > 0, \"Vault: not settled\");\n\n        uint256 productId = getProductId(term, expiry, anchorPrices, isMaker);\n        uint256 amount = balanceOf(_msgSender(), productId);\n        require(amount > 0, \"Vault: zero amount\");\n\n        // calculate payoff by strategy\n        if (isMaker == 1) {\n            payoff = getMakerPayoff(latestTerm, latestExpiry, anchorPrices, amount);\n        } else {\n            uint256 settlementFee;\n            (payoff, settlementFee) = getMinterPayoff(latestTerm, latestExpiry, anchorPrices, amount);\n            if (settlementFee > 0) {\n                totalFee += settlementFee;\n            }\n        }\n\n        // burn product\n        _burn(_msgSender(), productId, amount);\n        emit Burned(_msgSender(), productId, amount, payoff);\n    }",
+        "burnBatch": "function burnBatch(Product[] calldata products) external {\n        uint256 totalPayoff = _burnBatch(products);\n\n        // check self balance of collateral and transfer payoff\n        if (totalPayoff > 0) {\n            collateral.safeTransfer(_msgSender(), totalPayoff);\n        }\n    }",
+        "_burnBatch": "function _burnBatch(Product[] calldata products) internal nonReentrant returns (uint256 totalPayoff) {\n        uint256[] memory productIds = new uint256[](products.length);\n        uint256[] memory amounts = new uint256[](products.length);\n        uint256[] memory payoffs = new uint256[](products.length);\n        uint256 settlementFee;\n        for (uint256 i = 0; i < products.length; i++) {\n            Product memory product = products[i];\n\n            (uint256 latestTerm, uint256 latestExpiry, bool _isBurnable) = isBurnable(product.term, product.expiry, product.anchorPrices);\n            require(_isBurnable, \"Vault: not burnable\");\n\n            // check if settled\n            require(oracle.settlePrices(latestExpiry, 1) > 0, \"Vault: not settled\");\n\n            uint256 productId = getProductId(product.term, product.expiry, product.anchorPrices, product.isMaker);\n            uint256 amount = balanceOf(_msgSender(), productId);\n            require(amount > 0, \"Vault: zero amount\");\n\n            // calculate payoff by strategy\n            if (product.isMaker == 1) {\n                payoffs[i] = getMakerPayoff(latestTerm, latestExpiry, product.anchorPrices, amount);\n            } else {\n                uint256 fee;\n                (payoffs[i], fee) = getMinterPayoff(latestTerm, latestExpiry, product.anchorPrices, amount);\n                if (fee > 0) {\n                    settlementFee += fee;\n                }\n            }\n            if (payoffs[i] > 0) {\n                totalPayoff += payoffs[i];\n            }\n\n            productIds[i] = productId;\n            amounts[i] = amount;\n        }\n        if (settlementFee > 0) {\n            totalFee += settlementFee;\n        }\n        // burn product\n        _burnBatch(_msgSender(), productIds, amounts);\n        emit BatchBurned(_msgSender(), productIds, amounts, payoffs);\n    }"
+      },
+      "sourceExcerptSha256": "sha256:a1e3f8b515172a2b8c1b14b2b6b5fd5fd32b6a175397df1bafdf05145c04a15a"
+    },
+    {
+      "implementation": "0xfa24b9f8de8005c21fab37bda02c4989ebb70089",
+      "familyId": "aave-dnt-vault",
+      "contractName": "AAVEDNTVault",
+      "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0xfa24b9f8de8005c21fab37bda02c4989ebb70089?fields=abi,metadata,sources,compilation",
+      "sourceFile": "contracts/vaults/AAVEDNTVault.sol",
+      "exactMatch": true,
+      "match": "exact_match",
+      "runtimeMatch": "exact_match",
+      "verifiedAt": "2024-08-08T15:03:36Z",
+      "compiler": "0.8.10+commit.fc410830",
+      "language": "Solidity",
+      "abiSnapshot": {
+        "burn": {
+          "name": "burn",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "term",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "expiry",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "anchorPrices",
+              "type": "uint256[2]",
+              "internalType": "uint256[2]"
+            },
+            {
+              "name": "collateralAtRiskPercentage",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "isMaker",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        "burnBatch": {
+          "name": "burnBatch",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "products",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "term",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "expiry",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "anchorPrices",
+                  "type": "uint256[2]",
+                  "internalType": "uint256[2]"
+                },
+                {
+                  "name": "collateralAtRiskPercentage",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "isMaker",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "internalType": "struct AAVEDNTVault.Product[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        }
+      },
+      "abiSnapshotSha256": "sha256:a03a0d515a21ce321578b3274193f1695ea786969fc166d0ddaf62286a019731",
+      "sourceExcerpt": {
+        "burn": "function burn(uint256 term, uint256 expiry, uint256[2] calldata anchorPrices, uint256 collateralAtRiskPercentage, uint256 isMaker) external {\n        uint256 payoff = _burn(term, expiry, anchorPrices, collateralAtRiskPercentage, isMaker);\n        if (payoff > 0) {\n            require(pool.withdraw(address(collateral), payoff, _msgSender()) > 0, \"Vault: withdraw failed\");\n        }\n    }",
+        "_burn": "function _burn(uint256 term, uint256 expiry, uint256[2] memory anchorPrices, uint256 collateralAtRiskPercentage, uint256 isMaker) internal nonReentrant returns (uint256 payoff) {\n        (uint256 latestTerm, uint256 latestExpiry, bool _isBurnable) = isBurnable(term, expiry, anchorPrices);\n        require(_isBurnable, \"Vault: not burnable\");\n\n        // check if settled\n        require(oracle.settlePrices(latestExpiry, 1) > 0, \"Vault: not settled\");\n\n        uint256 productId = getProductId(term, expiry, anchorPrices, collateralAtRiskPercentage, isMaker);\n        uint256 amount = balanceOf(_msgSender(), productId);\n        require(amount > 0, \"Vault: zero amount\");\n\n        // calculate payoff by strategy\n        uint256 payoffShare;\n        if (isMaker == 1) {\n            payoffShare = getMakerPayoff(latestTerm, latestExpiry, anchorPrices, collateralAtRiskPercentage, amount);\n        } else {\n            uint256 settlementFee;\n            (payoffShare, settlementFee) = getMinterPayoff(latestTerm, latestExpiry, anchorPrices, collateralAtRiskPercentage, amount);\n            if (settlementFee > 0) {\n                totalFee += settlementFee;\n            }\n        }\n\n        // check self balance of collateral and transfer payoff\n        if (payoffShare > 0) {\n            payoff = payoffShare * aToken.balanceOf(address(this)) / totalSupply;\n            totalSupply -= payoffShare;\n            emit Burned(_msgSender(), productId, amount, payoff);\n        } else {\n            emit Burned(_msgSender(), productId, amount, 0);\n        }\n\n        // burn product\n        _burn(_msgSender(), productId, amount);\n    }",
+        "burnBatch": "function burnBatch(Product[] calldata products) external {\n        uint256 totalPayoff = _burnBatch(products);\n        if (totalPayoff > 0) {\n            require(pool.withdraw(address(collateral), totalPayoff, _msgSender()) > 0, \"Vault: withdraw failed\");\n        }\n    }",
+        "_burnBatch": "function _burnBatch(Product[] calldata products) internal nonReentrant returns (uint256 totalPayoff) {\n        uint256 totalPayoffShare = 0;\n        uint256[] memory productIds = new uint256[](products.length);\n        uint256[] memory amounts = new uint256[](products.length);\n        uint256[] memory payoffs = new uint256[](products.length);\n        uint256 aTokenBalance = aToken.balanceOf(address(this));\n        uint256 settlementFee;\n        for (uint256 i = 0; i < products.length; i++) {\n            Product memory product = products[i];\n\n            (uint256 latestTerm, uint256 latestExpiry, bool _isBurnable) = isBurnable(product.term, product.expiry, product.anchorPrices);\n            require(_isBurnable, \"Vault: not burnable\");\n\n            // check if settled\n            require(oracle.settlePrices(latestExpiry, 1) > 0, \"Vault: not settled\");\n\n            uint256 productId = getProductId(product.term, product.expiry, product.anchorPrices, product.collateralAtRiskPercentage, product.isMaker);\n            uint256 amount = balanceOf(_msgSender(), productId);\n            require(amount > 0, \"Vault: zero amount\");\n\n            // calculate payoff by strategy\n            uint256 payoffShare;\n            if (product.isMaker == 1) {\n                payoffShare = getMakerPayoff(latestTerm, latestExpiry, product.anchorPrices, product.collateralAtRiskPercentage, amount);\n            } else {\n                uint256 fee;\n                (payoffShare, fee) = getMinterPayoff(latestTerm, latestExpiry, product.anchorPrices, product.collateralAtRiskPercentage, amount);\n                if (fee > 0) {\n                    settlementFee += fee;\n                }\n            }\n            if (payoffShare > 0) {\n                totalPayoffShare += payoffShare;\n            }\n\n            productIds[i] = productId;\n            amounts[i] = amount;\n            payoffs[i] = payoffShare * aTokenBalance / totalSupply;\n        }\n        if (settlementFee > 0) {\n            totalFee += settlementFee;\n        }\n        // check self balance of collateral and transfer payoff\n        if (totalPayoffShare > 0) {\n            totalPayoff = totalPayoffShare * aTokenBalance / totalSupply;\n            totalSupply -= totalPayoffShare;\n        }\n\n        // burn product\n        _burnBatch(_msgSender(), productIds, amounts);\n        emit BatchBurned(_msgSender(), productIds, amounts, payoffs);\n    }"
+      },
+      "sourceExcerptSha256": "sha256:4e503077b1ff167d85bc909959071488e526c6c592fbdf165fa136ae209b54ec"
+    },
+    {
+      "implementation": "0x8ea9638f2587b20396ec8c45dd639deb115f5211",
+      "familyId": "aave-dnt-vault-v1-1",
+      "contractName": "AAVEDNTVault",
+      "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x8ea9638f2587b20396ec8c45dd639deb115f5211?fields=abi,metadata,sources,compilation",
+      "sourceFile": "contracts/vaults/AAVEDNTVault.sol",
+      "exactMatch": true,
+      "match": "exact_match",
+      "runtimeMatch": "exact_match",
+      "verifiedAt": "2024-12-15T21:18:18Z",
+      "compiler": "0.8.10+commit.fc410830",
+      "language": "Solidity",
+      "abiSnapshot": {
+        "burn": {
+          "name": "burn",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "term",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "expiry",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "anchorPrices",
+              "type": "uint256[2]",
+              "internalType": "uint256[2]"
+            },
+            {
+              "name": "collateralAtRiskPercentage",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "isMaker",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        "burnBatch": {
+          "name": "burnBatch",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "products",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "term",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "expiry",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "anchorPrices",
+                  "type": "uint256[2]",
+                  "internalType": "uint256[2]"
+                },
+                {
+                  "name": "collateralAtRiskPercentage",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "isMaker",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "internalType": "struct AAVEDNTVault.Product[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        }
+      },
+      "abiSnapshotSha256": "sha256:a03a0d515a21ce321578b3274193f1695ea786969fc166d0ddaf62286a019731",
+      "sourceExcerpt": {
+        "burn": "function burn(uint256 term, uint256 expiry, uint256[2] calldata anchorPrices, uint256 collateralAtRiskPercentage, uint256 isMaker) external {\n        uint256 payoff = _burn(term, expiry, anchorPrices, collateralAtRiskPercentage, isMaker);\n        if (payoff > 0) {\n            require(pool.withdraw(address(collateral), payoff, _msgSender()) > 0, \"Vault: withdraw failed\");\n        }\n    }",
+        "_burn": "function _burn(uint256 term, uint256 expiry, uint256[2] memory anchorPrices, uint256 collateralAtRiskPercentage, uint256 isMaker) internal nonReentrant returns (uint256 payoff) {\n        require(expiry <= block.timestamp || isMaker == 1, \"Vault: not expired\");\n\n        (uint256 latestTerm, uint256 latestExpiry, bool _isBurnable) = isBurnable(term, expiry, anchorPrices);\n        require(_isBurnable, \"Vault: not burnable\");\n\n        // check if settled\n        require(oracle.settlePrices(latestExpiry, 1) > 0, \"Vault: not settled\");\n\n        uint256 productId = getProductId(term, expiry, anchorPrices, collateralAtRiskPercentage, isMaker);\n        uint256 amount = balanceOf(_msgSender(), productId);\n        require(amount > 0, \"Vault: zero amount\");\n\n        // calculate payoff by strategy\n        uint256 payoffShare;\n        if (isMaker == 1) {\n            payoffShare = getMakerPayoff(latestTerm, latestExpiry, anchorPrices, collateralAtRiskPercentage, amount);\n        } else {\n            uint256 settlementFee;\n            (payoffShare, settlementFee) = getMinterPayoff(latestTerm, latestExpiry, anchorPrices, collateralAtRiskPercentage, amount);\n            if (settlementFee > 0) {\n                totalFee += settlementFee;\n            }\n        }\n\n        // check self balance of collateral and transfer payoff\n        if (payoffShare > 0) {\n            payoff = payoffShare * aToken.balanceOf(address(this)) / totalSupply;\n            totalSupply -= payoffShare;\n            emit Burned(_msgSender(), productId, amount, payoff);\n        } else {\n            emit Burned(_msgSender(), productId, amount, 0);\n        }\n\n        // burn product\n        _burn(_msgSender(), productId, amount);\n    }",
+        "burnBatch": "function burnBatch(Product[] calldata products) external {\n        uint256 totalPayoff = _burnBatch(products);\n        if (totalPayoff > 0) {\n            require(pool.withdraw(address(collateral), totalPayoff, _msgSender()) > 0, \"Vault: withdraw failed\");\n        }\n    }",
+        "_burnBatch": "function _burnBatch(Product[] calldata products) internal nonReentrant returns (uint256 totalPayoff) {\n        uint256 totalPayoffShare = 0;\n        uint256[] memory productIds = new uint256[](products.length);\n        uint256[] memory amounts = new uint256[](products.length);\n        uint256[] memory payoffs = new uint256[](products.length);\n        uint256 aTokenBalance = aToken.balanceOf(address(this));\n        uint256 settlementFee;\n        for (uint256 i = 0; i < products.length; i++) {\n            Product memory product = products[i];\n\n            require(product.expiry <= block.timestamp || product.isMaker == 1, \"Vault: not expired\");\n            (uint256 latestTerm, uint256 latestExpiry, bool _isBurnable) = isBurnable(product.term, product.expiry, product.anchorPrices);\n            require(_isBurnable, \"Vault: not burnable\");\n\n            // check if settled\n            require(oracle.settlePrices(latestExpiry, 1) > 0, \"Vault: not settled\");\n\n            uint256 productId = getProductId(product.term, product.expiry, product.anchorPrices, product.collateralAtRiskPercentage, product.isMaker);\n            uint256 amount = balanceOf(_msgSender(), productId);\n            require(amount > 0, \"Vault: zero amount\");\n\n            // calculate payoff by strategy\n            uint256 payoffShare;\n            if (product.isMaker == 1) {\n                payoffShare = getMakerPayoff(latestTerm, latestExpiry, product.anchorPrices, product.collateralAtRiskPercentage, amount);\n            } else {\n                uint256 fee;\n                (payoffShare, fee) = getMinterPayoff(latestTerm, latestExpiry, product.anchorPrices, product.collateralAtRiskPercentage, amount);\n                if (fee > 0) {\n                    settlementFee += fee;\n                }\n            }\n            if (payoffShare > 0) {\n                totalPayoffShare += payoffShare;\n            }\n\n            productIds[i] = productId;\n            amounts[i] = amount;\n            payoffs[i] = payoffShare * aTokenBalance / totalSupply;\n        }\n        if (settlementFee > 0) {\n            totalFee += settlementFee;\n        }\n        // check self balance of collateral and transfer payoff\n        if (totalPayoffShare > 0) {\n            totalPayoff = totalPayoffShare * aTokenBalance / totalSupply;\n            totalSupply -= totalPayoffShare;\n        }\n\n        // burn product\n        _burnBatch(_msgSender(), productIds, amounts);\n        emit BatchBurned(_msgSender(), productIds, amounts, payoffs);\n    }"
+      },
+      "sourceExcerptSha256": "sha256:acced9708d7605882c0cbd6e19fef7a3f13563277906c566699bb28e0e0daa5c"
+    },
+    {
+      "implementation": "0x3fe4fd33935bf189e39abb8b58fcdfd80daeede3",
+      "familyId": "leverage-dnt-vault",
+      "contractName": "LeverageDNTVault",
+      "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x3fe4fd33935bf189e39abb8b58fcdfd80daeede3?fields=abi,metadata,sources,compilation",
+      "sourceFile": "contracts/vaults/LeverageDNTVault.sol",
+      "exactMatch": true,
+      "match": "exact_match",
+      "runtimeMatch": "exact_match",
+      "verifiedAt": "2024-12-15T22:04:19Z",
+      "compiler": "0.8.10+commit.fc410830",
+      "language": "Solidity",
+      "abiSnapshot": {
+        "burn": {
+          "name": "burn",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "term",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "expiry",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "anchorPrices",
+              "type": "uint256[2]",
+              "internalType": "uint256[2]"
+            },
+            {
+              "name": "collateralAtRiskPercentage",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "isMaker",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        "burnBatch": {
+          "name": "burnBatch",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "products",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "term",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "expiry",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "anchorPrices",
+                  "type": "uint256[2]",
+                  "internalType": "uint256[2]"
+                },
+                {
+                  "name": "collateralAtRiskPercentage",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "isMaker",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "internalType": "struct LeverageDNTVault.Product[]"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        }
+      },
+      "abiSnapshotSha256": "sha256:3ddef6f706196226bdc668ba1faea40ce1ab189b2527475ae3f5c12928b84b0a",
+      "sourceExcerpt": {
+        "burn": "function burn(uint256 term, uint256 expiry, uint256[2] calldata anchorPrices, uint256 collateralAtRiskPercentage, uint256 isMaker) external {\n        uint256 payoff = _burn(term, expiry, anchorPrices, collateralAtRiskPercentage, isMaker);\n        if (payoff > 0) {\n            require(pool.withdraw(address(collateral), payoff, _msgSender()) > 0, \"Vault: withdraw failed\");\n        }\n    }",
+        "_burn": "function _burn(uint256 term, uint256 expiry, uint256[2] memory anchorPrices, uint256 collateralAtRiskPercentage, uint256 isMaker) internal nonReentrant returns (uint256 payoff) {\n        require(expiry <= block.timestamp || isMaker == 1, \"Vault: not expired\");\n\n        (uint256 latestTerm, uint256 latestExpiry, bool _isBurnable) = isBurnable(term, expiry, anchorPrices);\n        require(_isBurnable, \"Vault: not burnable\");\n\n        // check if settled\n        require(oracle.settlePrices(latestExpiry, 1) > 0, \"Vault: not settled\");\n\n        uint256 productId = getProductId(term, expiry, anchorPrices, collateralAtRiskPercentage, isMaker);\n        uint256 amount = balanceOf(_msgSender(), productId);\n        require(amount > 0, \"Vault: zero amount\");\n\n        // calculate payoff by strategy\n        if (isMaker == 1) {\n            payoff = getMakerPayoff(latestTerm, latestExpiry, anchorPrices, collateralAtRiskPercentage, amount);\n        } else {\n            payoff = getMinterPayoff(latestTerm, latestExpiry, anchorPrices, collateralAtRiskPercentage, amount);\n        }\n\n        // burn product\n        _burn(_msgSender(), productId, amount);\n        emit Burned(_msgSender(), productId, amount, payoff);\n\n        totalDeposit -= payoff;\n    }",
+        "burnBatch": "function burnBatch(Product[] calldata products) external {\n        uint256 totalPayoff = _burnBatch(products);\n\n        if (totalPayoff > 0) {\n            require(pool.withdraw(address(collateral), totalPayoff, _msgSender()) > 0, \"Vault: withdraw failed\");\n        }\n    }",
+        "_burnBatch": "function _burnBatch(Product[] calldata products) internal nonReentrant returns (uint256 totalPayoff) {\n        uint256[] memory productIds = new uint256[](products.length);\n        uint256[] memory amounts = new uint256[](products.length);\n        uint256[] memory payoffs = new uint256[](products.length);\n        for (uint256 i = 0; i < products.length; i++) {\n            Product memory product = products[i];\n\n            require(product.expiry <= block.timestamp || product.isMaker == 1, \"Vault: not expired\");\n            (uint256 latestTerm, uint256 latestExpiry, bool _isBurnable) = isBurnable(product.term, product.expiry, product.anchorPrices);\n            require(_isBurnable, \"Vault: not burnable\");\n\n            // check if settled\n            require(oracle.settlePrices(latestExpiry, 1) > 0, \"Vault: not settled\");\n\n            uint256 productId = getProductId(product.term, product.expiry, product.anchorPrices, product.collateralAtRiskPercentage, product.isMaker);\n            uint256 amount = balanceOf(_msgSender(), productId);\n            require(amount > 0, \"Vault: zero amount\");\n\n            // calculate payoff by strategy\n            if (product.isMaker == 1) {\n                payoffs[i] = getMakerPayoff(latestTerm, latestExpiry, product.anchorPrices, product.collateralAtRiskPercentage, amount);\n            } else {\n                payoffs[i] = getMinterPayoff(latestTerm, latestExpiry, product.anchorPrices, product.collateralAtRiskPercentage, amount);\n            }\n            if (payoffs[i] > 0) {\n                totalPayoff += payoffs[i];\n            }\n\n            productIds[i] = productId;\n            amounts[i] = amount;\n        }\n\n        // burn product\n        _burnBatch(_msgSender(), productIds, amounts);\n        emit BatchBurned(_msgSender(), productIds, amounts, payoffs);\n\n        totalDeposit -= totalPayoff;\n    }"
+      },
+      "sourceExcerptSha256": "sha256:01974af038865bc99879d8d3a5a96c86cc0d0d24e420e6153ec9e5329381114f"
+    }
+  ],
+  "limitations": [
+    "Proxy slot observations are captured at latest and are not permanent bindings; implementation may be upgraded after capture.",
+    "Sourcify exact-match artifacts and these observations do not prove current target runtime identity in the service, configuration, solvency, liquidity, financial safety, or execution success.",
+    "Catalog admission only records exact function metadata; redemption still requires caller-owned positions and protocol-specific maturity/burnability plus oracle settlement; fees and Aave withdrawal/liquidity constraints may apply.",
+    "Only burn and burnBatch are admitted. Mint, ETH burn variants, admin, token approvals and Automator2 are excluded."
+  ]
+}

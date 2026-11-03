@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-24",
+  "batch": 42,
+  "purpose": "Lifecycle rejection evidence only; not capability input. Parent authorized Steer Protocol replacement.",
+  "rejections": [
+    {
+      "protocol": "Mu Digital",
+      "decision": "excluded",
+      "reason": "Official indexed wind-down notice names AZND, loAZND and muBOND; no exit-only exception.",
+      "sourceRefs": [
+        "https://x.com/MuDigitalHQ/status/2075417387625832880",
+        "https://app.mudigital.net/",
+        "https://docs.mudigital.net/technical-reference/smart-contract-architecture/smart-contract-addresses.md"
+      ],
+      "observations": [
+        {
+          "sourceRef": "https://x.com/MuDigitalHQ/status/2075417387625832880",
+          "method": "web search official account indexed result",
+          "excerpt": "Effective immediately, Mu Digital has commenced the orderly wind-down of its products, including AZND, loAZND and muBOND. Over recent days, we have received an increased volume of enquiries regarding redemptions, both directly and through our product integrations.",
+          "limit": "Direct X retrieval unavailable without xAI credentials; indexed primary-account excerpt, not a directly fetched complete post."
+        },
+        {
+          "sourceRef": "https://app.mudigital.net/",
+          "method": "web search indexed primary app result",
+          "excerpt": "Mu Digital Redemption Portal ... Mu Digital has recorded all user data prior to the announcement of our wind down.",
+          "limit": "Direct app and website requests returned HTTP403. Redirected GitBook docs rendered application shell rather than live product documentation; these fetch limits are not independently treated as shutdown proof."
+        }
+      ]
+    },
+    {
+      "protocol": "Neutrl",
+      "decision": "excluded",
+      "reason": "Official reserve-event suspension with orderly-process messaging; no evidenced primary normal-product resumption. Frozen/recovery-only product excluded, despite accessible marketing/docs and source getters.",
+      "sourceRefs": [
+        "https://x.com/Neutrl/status/2087863440136147224",
+        "https://crypto.news/neutrl-halts-nusd-redemptions-over-reserve-concerns/",
+        "https://www.neutrl.finance/",
+        "https://docs.neutrl.finance/protocol-design/snusd"
+      ],
+      "observations": [
+        {
+          "sourceRef": "https://crypto.news/neutrl-halts-nusd-redemptions-over-reserve-concerns/",
+          "method": "Direct article fetch with attributed embedded primary post",
+          "primaryPost": "https://x.com/Neutrl/status/2087863440136147224",
+          "publishedAt": "2026-08-13",
+          "excerpt": "Neutrl has temporarily paused minting, redemptions, and other protocol functions following circumstances affecting protocol reserves. These measures have been taken in the interest of our users, after advice from legal counsel, to preserve an orderly process while the impact is\u2026",
+          "limit": "Primary X content quoted in directly read secondary article, not directly fetched full official post. Article says no restoration date. Further search-described early-redemption announcement is not independently relied upon because exact primary text could not be fetched."
+        },
+        {
+          "sourceRef": "https://docs.neutrl.finance/protocol-design/snusd",
+          "method": "Direct official documentation fetch",
+          "excerpt": "Users who prefer not to use instant unstaking can select the queued unstake option, which follows the standard 10-day cooldown period before NUSD becomes withdrawable.",
+          "limit": "Marketing/docs accessibility is not evidence that normal product operations resumed after the reserve-event suspension."
+        },
+        {
+          "sourceRef": "https://ethereum-rpc.publicnode.com",
+          "method": "Read-only configuration getters on official Ethereum sNUSD deployment",
+          "address": "0x08EFCC2F3e61185D0EA7F8830B3FEc9Bfa2EE313",
+          "requests": [
+            {
+              "jsonrpc": "2.0",
+              "id": 0,
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x08EFCC2F3e61185D0EA7F8830B3FEc9Bfa2EE313",
+                  "data": "0x38d52e0f"
+                },
+                "latest"
+              ]
+            },
+            {
+              "jsonrpc": "2.0",
+              "id": 1,
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x08EFCC2F3e61185D0EA7F8830B3FEc9Bfa2EE313",
+                  "data": "0xeb3beb29"
+                },
+                "latest"
+              ]
+            },
+            {
+              "jsonrpc": "2.0",
+              "id": 2,
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x08EFCC2F3e61185D0EA7F8830B3FEc9Bfa2EE313",
+                  "data": "0x35269315"
+                },
+                "latest"
+              ]
+            },
+            {
+              "jsonrpc": "2.0",
+              "id": 3,
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x08EFCC2F3e61185D0EA7F8830B3FEc9Bfa2EE313",
+                  "data": "0x7313ee5a"
+                },
+                "latest"
+              ]
+            },
+            {
+              "jsonrpc": "2.0",
+              "id": 4,
+              "method": "eth_call",
+              "params": [
+                {
+                  "to": "0x08EFCC2F3e61185D0EA7F8830B3FEc9Bfa2EE313",
+                  "data": "0x5c975abb"
+                },
+                "latest"
+              ]
+            }
+          ],
+          "responses": [
+            {
+              "jsonrpc": "2.0",
+              "id": 0,
+              "result": "0x000000000000000000000000e556aba6fe6036275ec1f87eda296be72c811bce"
+            },
+            {
+              "jsonrpc": "2.0",
+              "id": 1,
+              "result": "0x0000000000000000000000006cdfc009ab1c5f8114a8aa0117a7e6fcbb35bb9b"
+            },
+            {
+              "jsonrpc": "2.0",
+              "id": 2,
+              "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+            },
+            {
+              "jsonrpc": "2.0",
+              "id": 3,
+              "result": "0x0000000000000000000000000000000000000000000000000000000000093a80"
+            },
+            {
+              "jsonrpc": "2.0",
+              "id": 4,
+              "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+            }
+          ],
+          "decoded": {
+            "asset": "0xE556ABa6fe6036275Ec1f87eda296BE72C811BCE",
+            "silo": "0x6cdfc009ab1c5f8114a8aa0117a7e6fcbb35bb9b",
+            "cooldownDurationSeconds": 1,
+            "vestingPeriodSeconds": 604800,
+            "paused": false
+          },
+          "limit": "No balance/execution/backing assertion. A false local pause flag and one-second cooldown do not establish resumed normal reserve/redemption workflow; they conflict with generic ten-day docs and can also be compatible with recovery configuration."
+        }
+      ]
+    }
+  ]
+}

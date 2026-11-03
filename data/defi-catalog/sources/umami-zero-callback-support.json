@@ -1,0 +1,1431 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-11-02",
+  "protocol": "Umami",
+  "scope": "Two additional exact financial entrypoints at existing maintained Arbitrum GM BTC-backed AssetVault, with mandatory zero selected request callback. No new protocol, chain, root, permission installation or multicall composition.",
+  "lineage": "Retained umami-gm-usdc-btc-current-r4.json provides ABI indices25/47 and funding/configuration evidence. Earlier blanket callback exclusions are qualified only through existingFunctionUpdates; historical snapshots are unchanged.",
+  "executionScope": {
+    "kind": "umami-zero-request-callback-v1"
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://about.umami.finance/umami-finance/gm-vaults/vault-tokens-and-contract-addresses.md",
+    "observedAt": "2026-11-02",
+    "readerTextSha256": "a8f79c8932032dff9e3c2202c51161d2f0b72f1c8fad60d936f39fdff33935bc",
+    "content": "> For the complete documentation index, see [llms.txt](https://about.umami.finance/umami-finance/llms.txt). Markdown versions of documentation pages are available by appending `.md` to page URLs; this page is available as [Markdown](https://about.umami.finance/umami-finance/gm-vaults/vault-tokens-and-contract-addresses.md).\n\n# Vault Tokens & Contract Addresses\n\nRepository of Contract for Umami's GM Vaults\n\nDeposits in Umami's GM Vaults are represented by tokens implemented using the ERC-4626 standard for each respective vault. If the respective Vault generates a profit, PPS (Price Per Share) of your token will increase in relation to the underlying token of your Vault. Each individual Vault is represented by specific tokens.\n\n### Vault Tokens\n\n$gmUSDC (ETH Backed) -> [<mark style=\"color:purple;\">0x959f3807f0Aa7921E18c78B00B2819ba91E52FeF</mark>](https://arbiscan.io/token/0x959f3807f0Aa7921E18c78B00B2819ba91E52FeF)\\\n$gmUSDC (BTC Backed) -> [<mark style=\"color:purple;\">0x5f851F67D24419982EcD7b7765deFD64fBb50a97</mark>](https://arbiscan.io/address/0x5f851F67D24419982EcD7b7765deFD64fBb50a97)\\\n$gmWETH -> [<mark style=\"color:purple;\">0x4bCA8D73561aaEee2D3a584b9F4665310de1dD69</mark>](https://arbiscan.io/token/0x4bca8d73561aaeee2d3a584b9f4665310de1dd69)\\\n$gmWBTC -> [<mark style=\"color:purple;\">0xcd8011AaB161A75058eAb24e0965BAb0b918aF29</mark>](https://arbiscan.io/address/0xcd8011aab161a75058eab24e0965bab0b918af29)\n\n### Miscellaneous\n\nAggregateVault: 0x0Ca62954b46AfEe430D645dA493C6C783448C4eD\\\nEmitter: 0x763a5cAFb5d7252642349A64a172f7388173d3e3\\\nStorageViewer: 0xAF037670ed7B2ca464c61BBfC07365747038250f\\\nRequestHandler: 0x33a4484d5E1754210bBFBe05d3F51cDD33cC1E91",
+    "retrieval": "Reader text retained; separate urllib request returned403. Digest covers retained reader text, not original HTTP response bytes.",
+    "binding": "Official maintained GM list directly maps gmUSDC (BTC Backed) to the exact selected Arbitrum root. Its miscellaneous aggregate address is not substituted for the retained exact-root configured dependency."
+  },
+  "rootEvidence": {
+    "matchId": "5794384",
+    "creationMatch": "match",
+    "runtimeMatch": "match",
+    "verifiedAt": "2024-12-15T21:46:35Z",
+    "match": "match",
+    "chainId": "42161",
+    "address": "0x5f851F67D24419982EcD7b7765deFD64fBb50a97",
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.17+commit.8df45f5f",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {
+          "lib/gmx-synthetics/contracts/gas/GasUtils.sol": {
+            "GasUtils": "0x3d0453036f3e39ff9384f0e1c8a59b17e05277d0"
+          },
+          "lib/gmx-synthetics/contracts/market/MarketUtils.sol": {
+            "MarketUtils": "0xecdf2ce74e19d4921cc89fefb963d35e0e5171d3"
+          }
+        },
+        "optimizer": {
+          "runs": 888,
+          "enabled": true
+        },
+        "evmVersion": "london",
+        "remappings": [
+          ":@chainlink/=lib/chainlink/",
+          ":@gmx/=lib/gmx-synthetics/contracts/",
+          ":@openzeppelin/=lib/openzeppelin-contracts/",
+          ":@solady/=lib/solady/src/",
+          ":ExcessivelySafeCall/=lib/ExcessivelySafeCall/src/",
+          ":ds-test/=lib/forge-std/lib/ds-test/src/",
+          ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+          ":forge-std/=lib/forge-std/src/",
+          ":gmx-synthetics/=lib/gmx-synthetics/contracts/",
+          ":hardhat/=lib/forge-std/src/",
+          ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+          ":openzeppelin/=lib/openzeppelin-contracts/contracts/",
+          ":prb-math/=lib/prb-math/contracts/",
+          ":solady/=lib/solady/",
+          ":solmate/=lib/solmate/src/",
+          "lib/gmx-synthetics/contracts/:hardhat/=lib/forge-std/src/",
+          "lib/gmx-synthetics/contracts/:prb-math/=lib/prb-math/"
+        ]
+      },
+      "name": "AssetVault",
+      "fullyQualifiedName": "src/vaults/AssetVault.sol:AssetVault"
+    },
+    "deployment": {
+      "transactionHash": "0x88e2df7601a3513566485ff8e45e902f941cd16870c4b577214b6aace39c5443",
+      "blockNumber": "192568538",
+      "transactionIndex": "1",
+      "deployer": "0xB00ECDF42FDC9DD5C65681385A60385F546caE32"
+    },
+    "abi": [
+      {
+        "type": "constructor",
+        "inputs": [
+          {
+            "name": "_asset",
+            "type": "address",
+            "internalType": "contract ERC20"
+          },
+          {
+            "name": "_name",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "_symbol",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "_aggregateVault",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "Approval",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "spender",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Deposit",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "caller",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "assets",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          },
+          {
+            "name": "shares",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "DepositsPaused",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "indexed": false,
+            "internalType": "address"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "DepositsUnpaused",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "indexed": false,
+            "internalType": "address"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Paused",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "indexed": false,
+            "internalType": "address"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Transfer",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "from",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Unpaused",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "indexed": false,
+            "internalType": "address"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Withdraw",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "caller",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "assets",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          },
+          {
+            "name": "shares",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "WithdrawalsPaused",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "indexed": false,
+            "internalType": "address"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "WithdrawalsUnpaused",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "indexed": false,
+            "internalType": "address"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "AUTH",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "contract Auth"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "DOMAIN_SEPARATOR",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "aggregateVault",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "contract AggregateVault"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "allowance",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "approve",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "spender",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "asset",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "contract ERC20"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "balanceOf",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "burnShares",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_burnAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "cancelRequest",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "key",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "convertToAssets",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "convertToShares",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "decimals",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint8",
+            "internalType": "uint8"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minOutAfterFees",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      {
+        "name": "depositPaused",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "depositWithCallback",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minOutAfterFees",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "callback",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      {
+        "name": "lodgeAssets",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_assetAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "feeReciever",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_depositFees",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "maxDeposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "maxMint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "maxRedeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "maxWithdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "mintTo",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_mintAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_toAddress",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "name",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "string",
+            "internalType": "string"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "nonces",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "pauseDepositWithdraw",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "pauseDeposits",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "pauseWithdrawals",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "permit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "spender",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "value",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "v",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "r",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "s",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "pps",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "pricePerShare",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "previewDeposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "previewDepositFee",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "size",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "totalDepositFee",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "previewMint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "previewRedeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "previewVaultCap",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "previewWithdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "previewWithdrawalFee",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "size",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "totalWithdrawalFee",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minOutAfterFees",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      {
+        "name": "redeemWithCallback",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minOutAfterFees",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "callback",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      {
+        "name": "returnAssets",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_amt",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "returnShares",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_amt",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "symbol",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "string",
+            "internalType": "string"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "totalAssets",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "totalValueLocked",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "totalSupply",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "transfer",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "transferFrom",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "from",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "unpauseDepositWithdraw",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "unpauseDeposits",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "unpauseWithdrawals",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "updateAggregateVault",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_newAggregateVault",
+            "type": "address",
+            "internalType": "contract AggregateVault"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "withdrawalPaused",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    ],
+    "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x5f851F67D24419982EcD7b7765deFD64fBb50a97?fields=all",
+    "observedAt": "2026-11-02",
+    "rawResponseSha256": "ec49549bda98a9e359e9f8a5d795bbd4910f137dbc76469c3a85c9912ba4d177",
+    "sources": {
+      "src/vaults/AssetVault.sol": {
+        "content": "// SPDX-License-Identifier: UNLICENSED\npragma solidity 0.8.17;\n\nimport { BaseVault } from \"./BaseVault.sol\";\nimport { ERC20 } from \"solmate/tokens/ERC20.sol\";\nimport { SafeTransferLib } from \"solmate/utils/SafeTransferLib.sol\";\nimport { ReentrancyGuard } from \"solmate/utils/ReentrancyGuard.sol\";\nimport { ShareMath } from \"../libraries/ShareMath.sol\";\n\nimport { GlobalACL, REQUEST_HANDLER, AGGREGATE_VAULT_ROLE } from \"../Auth.sol\";\nimport { PausableVault } from \"../PausableVault.sol\";\nimport { AggregateVault } from \"./AggregateVault.sol\";\nimport { AggregateVaultStorage } from \"../storage/AggregateVaultStorage.sol\";\n\n/// @title AssetVault\n/// @author Umami DAO\n/// @notice ERC4626-like implementation for vault receipt tokens\ncontract AssetVault is BaseVault, PausableVault, GlobalACL, ReentrancyGuard {\n    using SafeTransferLib for ERC20;\n\n    /// @dev the aggregate vault for the strategy\n    AggregateVault public aggregateVault;\n\n    constructor(ERC20 _asset, string memory _name, string memory _symbol, address _aggregateVault)\n        BaseVault(_asset, _name, _symbol)\n        GlobalACL(AggregateVault(payable(_aggregateVault)).AUTH())\n    {\n        aggregateVault = AggregateVault(payable(_aggregateVault));\n    }\n\n    // DEPOSIT & WITHDRAW\n    // ------------------------------------------------------------------------------------------\n\n    /**\n     * @notice Deposit a specified amount of assets and mint corresponding shares to the receiver\n     * @param assets The amount of assets to deposit\n     * @param minOutAfterFees Minimum amount out after fees\n     * @param receiver The address to receive the minted shares\n     * @return shares The estimate amount of shares minted for the deposited assets\n     */\n    function deposit(uint256 assets, uint256 minOutAfterFees, address receiver)\n        public\n        payable\n        override\n        whenDepositNotPaused\n        nonReentrant\n        returns (uint256 shares)\n    {\n        // Check for rounding error since we round down in previewDeposit.\n        require((shares = previewDeposit(assets)) != 0, \"ZERO_SHARES\");\n        require(\n            totalAssets() + assets <= previewVaultCap() + asset.balanceOf(address(this)), \"AssetVault: over vault cap\"\n        );\n        // Transfer assets to aggregate vault, transfer before minting or ERC777s could reenter.\n        asset.safeTransferFrom(msg.sender, address(this), assets);\n        aggregateVault.handleDeposit{ value: msg.value }(assets, minOutAfterFees, receiver, msg.sender, address(0));\n\n        emit Deposit(msg.sender, receiver, assets, shares);\n    }\n\n    /**\n     * @notice Redeem a specified amount of shares by burning them and transferring the corresponding amount of assets to the receiver\n     * @param shares The amount of shares to redeem\n     * @param minOutAfterFees Minimum amount out after fees\n     * @param receiver The address to receive the corresponding assets\n     * @param owner The address of the share owner\n     * @return assets The estimate amount of assets transferred for the redeemed shares\n     */\n    function redeem(uint256 shares, uint256 minOutAfterFees, address receiver, address owner)\n        public\n        payable\n        override\n        whenWithdrawalNotPaused\n        nonReentrant\n        returns (uint256 assets)\n    {\n        require(shares > 0, \"AssetVault: !shares > 0\");\n        assets = totalSupply == 0 ? shares : ShareMath.sharesToAsset(shares, pps(), decimals);\n        if (msg.sender != owner) _checkAllowance(owner, shares);\n        require(assets <= asset.balanceOf(address(aggregateVault)), \"AssetVault: assets not available\");\n\n        // Check for rounding error since we round down in previewRedeem.\n        require(previewRedeem(shares) != 0, \"ZERO_ASSETS\");\n\n        // transfer shares in\n        ERC20(address(this)).safeTransferFrom(owner, address(this), shares);\n\n        // handle withdraw\n        aggregateVault.handleWithdraw{ value: msg.value }(shares, minOutAfterFees, receiver, msg.sender, address(0));\n\n        emit Withdraw(owner, receiver, owner, assets, shares);\n    }\n\n    // WITH CALLBACKS\n    // ------------------------------------------------------------------------------------------\n\n    /**\n     * @notice Deposit a specified amount of assets and mint corresponding shares to the receiver\n     * @param assets The amount of assets to deposit\n     * @param minOutAfterFees Minimum amount out after fees\n     * @param receiver The address to receive the minted shares\n     * @param callback The address to callback to after execution\n     * @return shares The estimate amount of shares minted for the deposited assets\n     */\n    function depositWithCallback(uint256 assets, uint256 minOutAfterFees, address receiver, address callback)\n        public\n        payable\n        whenDepositNotPaused\n        nonReentrant\n        returns (uint256 shares)\n    {\n        // Check for rounding error since we round down in previewDeposit.\n        require((shares = previewDeposit(assets)) != 0, \"ZERO_SHARES\");\n        require(\n            totalAssets() + assets <= previewVaultCap() + asset.balanceOf(address(this)), \"AssetVault: over vault cap\"\n        );\n        // Transfer assets to aggregate vault, transfer before minting or ERC777s could reenter.\n        asset.safeTransferFrom(msg.sender, address(this), assets);\n        aggregateVault.handleDeposit{ value: msg.value }(assets, minOutAfterFees, receiver, msg.sender, callback);\n        emit Deposit(msg.sender, receiver, assets, shares);\n    }\n\n    /**\n     * @notice Redeem a specified amount of shares by burning them and transferring the corresponding amount of assets to the receiver\n     * @param shares The amount of shares to redeem\n     * @param minOutAfterFees Minimum amount out after fees\n     * @param receiver The address to receive the corresponding assets\n     * @param owner The address of the share owner\n     * @param callback The address to callback to after execution\n     * @return assets The estimate amount of assets transferred for the redeemed shares\n     */\n    function redeemWithCallback(\n        uint256 shares,\n        uint256 minOutAfterFees,\n        address receiver,\n        address owner,\n        address callback\n    ) public payable whenWithdrawalNotPaused nonReentrant returns (uint256 assets) {\n        require(shares > 0, \"AssetVault: !shares > 0\");\n        assets = totalSupply == 0 ? shares : ShareMath.sharesToAsset(shares, pps(), decimals);\n\n        if (msg.sender != owner) _checkAllowance(owner, shares);\n\n        // Check for rounding error since we round down in previewRedeem.\n        require(previewRedeem(shares) != 0, \"ZERO_ASSETS\");\n\n        // transfer shares in\n        ERC20(address(this)).safeTransferFrom(owner, address(this), shares);\n\n        // handle withdrawal\n        aggregateVault.handleWithdraw{ value: msg.value }(shares, minOutAfterFees, receiver, msg.sender, callback);\n\n        emit Withdraw(owner, receiver, owner, assets, shares);\n    }\n\n    /**\n     * @notice Cancels a vault request for this vault\n     * @param key The request key to cancel\n     */\n    function cancelRequest(uint256 key) external {\n        AggregateVaultStorage.OCRequest memory request = aggregateVault.getRequest(key);\n        require(request.vault == address(this), \"AssetVault: invalid vault\");\n        require(request.sender == msg.sender, \"AssetVault: invalid account\");\n\n        if (request.isDeposit) {\n            asset.safeTransfer(msg.sender, request.amount);\n        } else {\n            ERC20(address(this)).safeTransfer(msg.sender, request.amount);\n        }\n\n        aggregateVault.clearRequest(key);\n    }\n\n    // MATH\n    // ------------------------------------------------------------------------------------------\n\n    /**\n     * @notice Get the total value locked (TVL) of the vault\n     * @return totalValueLocked The current total value locked\n     */\n    function totalAssets() public view override returns (uint256 totalValueLocked) {\n        (bool success, bytes memory ret) =\n            address(aggregateVault).staticcall(abi.encodeCall(AggregateVault.getVaultTVL, (address(this), false)));\n\n        // bubble up error message\n        if (!success) {\n            assembly {\n                let length := mload(ret)\n                revert(add(32, ret), length)\n            }\n        }\n        totalValueLocked = abi.decode(ret, (uint256));\n    }\n\n    /**\n     * @notice Get the price per share (PPS) of the vault\n     * @return pricePerShare The current price per share\n     */\n    function pps() public view returns (uint256 pricePerShare) {\n        (bool success, bytes memory ret) =\n            address(aggregateVault).staticcall(abi.encodeCall(AggregateVault.getVaultPPS, (address(this), true, false)));\n\n        // bubble up error message\n        if (!success) {\n            assembly {\n                let length := mload(ret)\n                revert(add(32, ret), length)\n            }\n        }\n\n        pricePerShare = abi.decode(ret, (uint256));\n    }\n\n    /**\n     * @notice Convert a specified amount of assets to shares\n     * @param assets The amount of assets to convert\n     * @return - The amount of shares corresponding to the given assets\n     */\n    function convertToShares(uint256 assets) public view override returns (uint256) {\n        return totalSupply == 0 ? assets : ShareMath.assetToShares(assets, pps(), decimals);\n    }\n\n    /**\n     * @notice Convert a specified amount of shares to assets\n     * @param shares The amount of shares to convert\n     * @return - The amount of assets corresponding to the given shares\n     */\n    function convertToAssets(uint256 shares) public view override returns (uint256) {\n        return totalSupply == 0 ? shares : ShareMath.sharesToAsset(shares, pps(), decimals);\n    }\n\n    /**\n     * @notice Preview the amount of shares for a given deposit amount\n     * @param assets The amount of assets to deposit\n     * @return - The amount of shares for the given deposit amount\n     */\n    function previewDeposit(uint256 assets) public view override returns (uint256) {\n        uint256 assetFee = previewDepositFee(assets);\n        if (assetFee >= assets) return 0;\n        return convertToShares(assets - assetFee);\n    }\n\n    /**\n     * @notice Preview the amount of assets for a given redeem amount\n     * @param shares The amount of shares to redeem\n     * @return The amount of assets for the given redeem amount\n     */\n    function previewRedeem(uint256 shares) public view override returns (uint256) {\n        uint256 assets = ShareMath.sharesToAsset(shares, pps(), decimals);\n        uint256 assetFee = previewWithdrawalFee(assets);\n        if (assetFee >= assets) return 0;\n        return assets - assetFee;\n    }\n\n    // DEPOSIT & WITHDRAW LIMIT\n    // ------------------------------------------------------------------------------------------\n\n    /**\n     * @notice Get the maximum deposit amount for an address\n     * @dev _address The address to check the maximum deposit amount for\n     * @dev returns the maximum deposit amount for the given address\n     */\n    function maxDeposit(address) public view override returns (uint256) {\n        uint256 cap = previewVaultCap();\n        uint256 tvl_ = totalAssets();\n        return cap > tvl_ ? cap - tvl_ : 0;\n    }\n\n    /**\n     * @notice Get the maximum mint amount for an address\n     */\n    function maxMint(address) public view override returns (uint256) {\n        uint256 cap = previewVaultCap();\n        uint256 tvl_ = totalAssets();\n        return cap > tvl_ ? convertToShares(cap - tvl_) : 0;\n    }\n\n    /**\n     * @notice Get the maximum withdrawal amount for an address\n     * @param owner The address to check the maximum withdrawal amount for\n     * @return The maximum withdrawal amount for the given address\n     */\n    function maxWithdraw(address owner) public view override returns (uint256) {\n        uint256 aggBalance = asset.balanceOf(address(aggregateVault));\n        uint256 userMaxAssets = convertToAssets(balanceOf[owner]);\n        return aggBalance > userMaxAssets ? userMaxAssets : aggBalance;\n    }\n\n    /**\n     * @notice Get the maximum redeem amount for an address\n     * @param owner The address to check the maximum redeem amount for\n     * @return - The maximum redeem amount for the given address\n     */\n    function maxRedeem(address owner) public view override returns (uint256) {\n        uint256 aggBalance = convertToShares(asset.balanceOf(address(aggregateVault)));\n        return aggBalance > balanceOf[owner] ? balanceOf[owner] : aggBalance;\n    }\n\n    // UTILS\n    // ------------------------------------------------------------------------------------------\n\n    /**\n     * @notice Pause deposit and withdrawal operations\n     */\n    function pauseDepositWithdraw() external onlyAggregateVault {\n        _pause();\n    }\n\n    /**\n     * @notice Unpause deposit and withdrawal operations\n     */\n    function unpauseDepositWithdraw() external onlyAggregateVault {\n        _unpause();\n    }\n\n    /**\n     * @notice Pause deposits operations\n     */\n    function pauseDeposits() external onlyConfigurator {\n        _pauseDeposit();\n    }\n\n    /**\n     * @notice Unpause deposit operations\n     */\n    function unpauseDeposits() external onlyConfigurator {\n        _unpauseDeposit();\n    }\n\n    /**\n     * @notice Pause withdrawal operations\n     */\n    function pauseWithdrawals() external onlyConfigurator {\n        _pauseWithdrawal();\n    }\n\n    /**\n     * @notice Unpause withdrawal operations\n     */\n    function unpauseWithdrawals() external onlyConfigurator {\n        _unpauseWithdrawal();\n    }\n\n    /**\n     * @notice Update the aggregate vault to a new instance\n     * @param _newAggregateVault The new aggregate vault instance to update to\n     */\n    function updateAggregateVault(AggregateVault _newAggregateVault) external onlyConfigurator {\n        aggregateVault = _newAggregateVault;\n    }\n\n    /**\n     * @notice Mint a specified amount of shares to an address\n     * @param _mintAmount The amount of shares to mint\n     * @param _toAddress The address to mint\n     */\n    function mintTo(uint256 _mintAmount, address _toAddress) external validateMintCallAuth(_toAddress) {\n        _mint(_toAddress, _mintAmount);\n    }\n\n    /**\n     * @notice Burn tokens during order execution\n     * @param _burnAmount The amount of shares to burn\n     */\n    function burnShares(uint256 _burnAmount) external onlyRequestHandler {\n        _burn(address(this), _burnAmount);\n    }\n\n    /**\n     * @notice Lodge the underlying assets for a deposit execution\n     * @param _assetAmount The amount of assets to lodge\n     */\n    function lodgeAssets(uint256 _assetAmount, address feeReciever, uint256 _depositFees) external onlyRequestHandler {\n        asset.safeTransfer(address(aggregateVault), _assetAmount);\n        if (_depositFees > 0 && feeReciever != address(0)) asset.safeTransfer(feeReciever, _depositFees);\n    }\n\n    /**\n     * @notice Return deposited assets\n     */\n    function returnAssets(address _to, uint256 _amt) external onlyRequestHandler {\n        asset.safeTransfer(_to, _amt);\n    }\n\n    /**\n     * @notice Return withdraw request shares\n     */\n    function returnShares(address _to, uint256 _amt) external onlyRequestHandler {\n        ERC20(address(this)).safeTransfer(_to, _amt);\n    }\n\n    /**\n     * @notice Preview the deposit fee for a specified amount of assets\n     * @param size The amount of assets to preview the deposit fee for\n     * @return totalDepositFee The total deposit fee for the specified amount of assets\n     */\n    function previewDepositFee(uint256 size) public view returns (uint256 totalDepositFee) {\n        (bool success, bytes memory ret) = address(aggregateVault).staticcall(\n            abi.encodeCall(AggregateVault.previewDepositFee, (address(asset), size, false))\n        );\n        if (!success) {\n            assembly {\n                let length := mload(ret)\n                revert(add(32, ret), length)\n            }\n        }\n        totalDepositFee = abi.decode(ret, (uint256));\n    }\n\n    /**\n     * @notice Preview the withdrawal fee for a specified amount of assets\n     * @param size The amount of assets to preview the withdrawal fee for\n     * @return totalWithdrawalFee The total withdrawal fee for the specified amount of assets\n     */\n    function previewWithdrawalFee(uint256 size) public view returns (uint256 totalWithdrawalFee) {\n        (bool success, bytes memory ret) = address(aggregateVault).staticcall(\n            abi.encodeCall(AggregateVault.previewWithdrawalFee, (address(asset), size, false))\n        );\n        if (!success) {\n            assembly {\n                let length := mload(ret)\n                revert(add(32, ret), length)\n            }\n        }\n        totalWithdrawalFee = abi.decode(ret, (uint256));\n    }\n\n    /**\n     * @notice Preview the deposit cap for the vault\n     * @return - The current deposit cap for the vault\n     */\n    function previewVaultCap() public view returns (uint256) {\n        return aggregateVault.previewVaultCap(address(asset));\n    }\n\n    /**\n     * @dev Check the owners spend allowance\n     */\n    function _checkAllowance(address owner, uint256 shares) internal {\n        uint256 allowed = allowance[owner][msg.sender]; // Saves gas for limited approvals.\n        if (allowed != type(uint256).max) allowance[owner][msg.sender] = allowed - shares;\n    }\n\n    /// @dev validate the mint call\n    modifier validateMintCallAuth(address _mintTo) {\n        require(\n            (_mintTo == aggregateVault.getVaultTimelockAddress(address(asset)) && address(aggregateVault) == msg.sender)\n                || AUTH.hasRole(REQUEST_HANDLER, msg.sender),\n            \"AssetVault: !validateMintCallAuth\"\n        );\n        _;\n    }\n}\n"
+      },
+      "src/vaults/AggregateVault.sol": {
+        "content": "// SPDX-License-Identifier: UNLICENSED\npragma solidity 0.8.17;\n\nimport { ERC20 } from \"solmate/tokens/ERC20.sol\";\nimport { TransferUtils } from \"../libraries/TransferUtils.sol\";\nimport { Auth, GlobalACL, SWAP_KEEPER, KEEPER_ROLE, REQUEST_HANDLER } from \"../Auth.sol\";\nimport { AssetVault } from \"./AssetVault.sol\";\nimport { AggregateVaultStorage } from \"../storage/AggregateVaultStorage.sol\";\nimport { PositionManagerRouter, WhitelistedTokenRegistry } from \"../position-managers/PositionManagerRouter.sol\";\nimport { Multicall } from \"../libraries/Multicall.sol\";\nimport { NettingMath } from \"../libraries/NettingMath.sol\";\nimport { HookType } from \"../interfaces/IHookExecutor.sol\";\nimport { Emitter } from \"../peripheral/Emitter.sol\";\nimport { Delegatecall } from \"../libraries/Delegatecall.sol\";\nimport { OracleWrapper } from \"../peripheral/OracleWrapper.sol\";\nimport { AggregateVaultHelper } from \"../peripheral/AggregateVaultHelper.sol\";\nimport { IAssetVault } from \"../interfaces/IAssetVault.sol\";\nimport { IVaultFees } from \"../interfaces/IVaultFees.sol\";\nimport { SafeTransferLib } from \"solmate/utils/SafeTransferLib.sol\";\nimport { IPositionManager } from \"../interfaces/IPositionManager.sol\";\nimport { Solarray } from \"../libraries/Solarray.sol\";\n\nenum Peripheral {\n    HookHandler,\n    EventEmitter,\n    OracleWrapper,\n    GMI,\n    AggregateVaultHelper,\n    GmxV2Handler,\n    FeeHelper,\n    RequestHandler,\n    UniswapV3SwapManager\n}\n\nenum ConfigItem {\n    VaultFees,\n    ShouldCheckNetting,\n    ShouldUseGmxFee,\n    L1BlockTolerance,\n    ExecutionGasAmounts,\n    RebalanceKeeper,\n    FeeRecipient,\n    VaultCaps,\n    Thresholds\n}\n\nusing Delegatecall for address;\nusing SafeTransferLib for ERC20;\n\n/// @title AggregateVault\n/// @author Umami Devs\n/// @notice Contains common logic for all asset vaults and core keeper interactions\ncontract AggregateVault is Multicall, AggregateVaultStorage, PositionManagerRouter, GlobalACL {\n    // ERRORS\n    // ------------------------------------------------------------------------------------------\n\n    /// @dev address should not be zero\n    error ZeroAddress();\n    /// @dev gas is not above the min required for the keeper execution\n    error MinGasRequirement();\n    /// @dev amount should be greater than 0\n    error AmountEqualsZero();\n    /// @dev vault rebalance is open\n    error RebalanceOpen();\n    /// @dev vault rebealance is closed\n    error RebalanceNotOpen();\n    /// @dev netting check has failed for the parameters passed\n    error FailedNettingCheck();\n    /// @dev config validation failed on set\n    error FailedConfigValidation();\n    /// @dev delevate view did not revert\n    error DelegateViewRevert();\n    /// @dev oracle price length is not equal to config requirement\n    error OraclePriceSizeInvalid();\n    /// @dev caller is not the asset vault\n    error NotAssetVault();\n    /// @dev not RequestHandler or AssetVault\n    error notRequestHandlerOrAssetVault();\n    /// @dev already paused\n    error AggregateVault__AlreadyPaused();\n    /// @dev invalid config item\n    error AggregateVault__InvalidConfigItem();\n\n    constructor(Auth _auth, WhitelistedTokenRegistry _whitelistedTokenRegistry)\n        PositionManagerRouter(_whitelistedTokenRegistry)\n        GlobalACL(_auth)\n    { }\n\n    // DEPOSIT & WITHDRAW\n    // ------------------------------------------------------------------------------------------\n\n    /**\n     * @notice Handles a deposit of a specified amount of an ERC20 asset into the AggregateVault from an account, with a deposit fee deducted.\n     * @param assets The amount of the asset to be deposited.\n     * @param account The address of the account from which the deposit will be made.\n     */\n    function handleDeposit(uint256 assets, uint256 minOutAfterFees, address account, address sender, address callback)\n        external\n        payable\n        onlyAssetVault\n    {\n        if (assets == 0) revert AmountEqualsZero();\n        if (account == address(0)) revert ZeroAddress();\n        AVStorage storage stg = _getStorage();\n        uint256 gas = _gasRequirement(callback != address(0));\n        if (msg.value < gas * tx.gasprice) revert MinGasRequirement();\n\n        // store request data\n        uint256 key = _saveRequest(sender, account, msg.sender, callback, true, assets, minOutAfterFees);\n\n        // send execution gas cost\n        TransferUtils.transferNativeAsset(stg.rebalanceKeeper, msg.value);\n\n        _executeHook(HookType.DEPOSIT_HOOK, msg.data[4:]);\n\n        // emit request event\n        Emitter(stg.emitter).emitDepositRequest(key, account, msg.sender);\n    }\n\n    /**\n     * @notice Handles a withdrawal of a specified amount of an ERC20 asset from the AggregateVault to an account, with a withdrawal fee deducted.\n     * @param shares The amount of the shares to be withdrawn.\n     * @param account The address of the account to which the withdrawal will be made.\n     */\n    function handleWithdraw(uint256 shares, uint256 minOutAfterFees, address account, address sender, address callback)\n        external\n        payable\n        onlyAssetVault\n    {\n        if (shares == 0) revert AmountEqualsZero();\n        if (account == address(0)) revert ZeroAddress();\n        AVStorage storage stg = _getStorage();\n        uint256 gas = _gasRequirement(callback != address(0));\n        if (msg.value < gas * tx.gasprice) revert MinGasRequirement();\n\n        // store request data\n        uint256 key = _saveRequest(sender, account, msg.sender, callback, false, shares, minOutAfterFees);\n\n        // send execution gas cost\n        TransferUtils.transferNativeAsset(stg.rebalanceKeeper, msg.value);\n\n        _executeHook(HookType.WITHDRAW_HOOK, msg.data[4:]);\n\n        // emit request event\n        Emitter(stg.emitter).emitWithdrawalRequest(key, account, msg.sender);\n    }\n\n    /**\n     * @notice clear a request from storage when a request is cancelled or fulfilled by handler\n     */\n    function clearRequest(uint256 key) external onlyRequestHandlerOrAssetVault returns (OCRequest memory order) {\n        AVStorage storage stg = _getStorage();\n        order = stg.pendingRequests[key];\n        delete stg.pendingRequests[key];\n    }\n\n    /**\n     * @notice releases funds for withdrawal to the user, can only be called by the request handler\n     * @param underlyingToken the underlying vault token for the request\n     * @param account the account the request was made for\n     * @param assets the amounf of assets\n     * @param baseWithdrawalFee size of the base withdrawal fee calculated in request handler\n     * @param managmentPerformanceFee the size of the managment and performance fee prorata for the withdrawal\n     */\n    function releaseWithdrawal(\n        address underlyingToken,\n        address account,\n        uint256 assets,\n        uint256 baseWithdrawalFee,\n        uint256 managmentPerformanceFee\n    ) external onlyRequestHandler {\n        TransferUtils.transferAsset(underlyingToken, account, assets);\n        VaultState storage vaultState = _getVaultState();\n        if (baseWithdrawalFee > 0) {\n            TransferUtils.transferAsset(underlyingToken, vaultState.withdrawalFeeEscrow, baseWithdrawalFee);\n        }\n        if (managmentPerformanceFee > 0) {\n            TransferUtils.transferAsset(underlyingToken, vaultState.feeRecipient, managmentPerformanceFee);\n        }\n    }\n\n    /**\n     * @notice Increments the epoch deposit/withdraw delta.\n     */\n    function incrementEpochDelta(address asset, int256 amount) external onlyRequestHandler {\n        AssetVaultStorage storage vaultStg = _getVaultFromAsset(asset);\n        vaultStg.epochDelta += amount;\n    }\n\n    // REBALANCE\n    // ------------------------------------------------------------------------------------------\n\n    /**\n     * @notice Executes a multicall in the context of the aggregate vault.\n     * @param data the calls to be executed.\n     * @return results the return values of each call.\n     */\n    function multicall(bytes[] calldata data)\n        external\n        payable\n        onlyRole(KEEPER_ROLE)\n        returns (bytes[] memory results, uint256[] memory gasEstimates)\n    {\n        (results, gasEstimates) = _multicall(data);\n    }\n\n    /**\n     * @notice Opens the rebalance period and validates next rebalance state.\n     * @param nextVaultIndexAlloc next vault GMI allocations in $\n     * @param nextIndexComposition the composition of the GMI index\n     * @param externalPosition the external position the vaults are taking on in $\n     * @param priceData token price data.\n     * @param _hook hook\n     */\n    function openRebalancePeriod(\n        uint256[2] memory nextVaultIndexAlloc,\n        uint256[2] memory nextIndexComposition,\n        int256 externalPosition,\n        SetPricesParams memory priceData,\n        bytes memory _hook\n    ) external onlyRole(KEEPER_ROLE) setOraclePricing(priceData) {\n        // before rebalance hook\n        _executeHook(HookType.OPEN_REBALANCE_HOOK, _hook);\n        VaultState storage vaultState = _getVaultState();\n        if (vaultState.rebalanceOpen) revert RebalanceOpen();\n\n        // check netting constraint\n        checkNettingConstraint(\n            Solarray.arraySum(nextVaultIndexAlloc), nextVaultIndexAlloc, nextIndexComposition, externalPosition\n        );\n\n        // pause vault deposits\n        pauseDeposits();\n\n        // set rebalance storage\n        RebalanceState storage rebalanceState = _getRebalanceState();\n        rebalanceState.indexAllocation = nextVaultIndexAlloc;\n        rebalanceState.indexComposition = nextIndexComposition;\n        rebalanceState.externalPosition = externalPosition;\n        rebalanceState.epoch = vaultState.epoch;\n\n        // cache the rebalance PPS\n        AssetVaultStorage[2] storage assetVaults = _getAssetVaultEntries();\n        for (uint256 i = 0; i < 2; i++) {\n            vaultState.rebalancePPS[i] = getVaultPPS(assetVaults[i].vault, false, true);\n        }\n        vaultState.rebalanceOpen = true;\n\n        Emitter(_getEmitter()).emitOpenRebalance(\n            block.timestamp, nextVaultIndexAlloc, nextIndexComposition, externalPosition\n        );\n    }\n\n    /**\n     * @notice Closes a rebalance period and validates current state is valid.\n     */\n    function closeRebalancePeriod(SetPricesParams memory priceData, bytes memory _hook)\n        external\n        onlyRole(KEEPER_ROLE)\n        setOraclePricing(priceData)\n    {\n        VaultState storage vaultState = _getVaultState();\n        if (!vaultState.rebalanceOpen) revert RebalanceNotOpen();\n        RebalanceState storage rebalanceState = _getRebalanceState();\n\n        address aggregateVaultHelper = _getStorage().aggregateVaultHelper;\n        bytes memory gmiValue = aggregateVaultHelper.delegateCall(\n            abi.encodeCall(AggregateVaultHelper.getVaultsGmiValue, (vaultState.epoch, true))\n        );\n        uint256[2] memory vaultIndexAllocation = abi.decode(gmiValue, (uint256[2]));\n\n        // check netting constraint\n        checkNettingConstraint(\n            Solarray.arraySum(vaultIndexAllocation),\n            rebalanceState.indexAllocation,\n            rebalanceState.indexComposition,\n            rebalanceState.externalPosition\n        );\n\n        // calculate the new netted positions\n        (int256[2][2] memory nettedMatrix,) = NettingMath.calculateNettedPositions(\n            rebalanceState.externalPosition, rebalanceState.indexComposition, vaultIndexAllocation\n        );\n\n        AssetVaultStorage[2] storage assetVaults = _getAssetVaultEntries();\n\n        // collect fees\n        if (vaultState.epoch > 0) _collectVaultRebalanceFees(assetVaults);\n\n        // reset epoch delta\n        _resetEpochDeltas();\n\n        vaultState.rebalanceOpen = false;\n        vaultState.indexAllocation = rebalanceState.indexAllocation;\n\n        // set netted positions\n        _setPositions(nettedMatrix, rebalanceState.externalPosition);\n\n        // finalise tvl checkpoint\n        _setCheckpointTvls(assetVaults);\n\n        // note set last to not trigger internal pnl\n        vaultState.epoch += 1;\n        vaultState.lastRebalanceTime = block.timestamp;\n\n        // after rebalance hook\n        _executeHook(HookType.CLOSE_REBALANCE_HOOK, _hook);\n\n        // unpause vaults\n        unpauseDeposits();\n\n        Emitter(_getEmitter()).emitCloseRebalance(block.timestamp);\n    }\n\n    /**\n     * @notice Checks if the netting constraint is satisfied for the given input values.\n     * @dev Reverts if the netting constraint is not satisfied.\n     * @param vaultCumulativeHoldings The total dollars deposited in backing.\n     * @param indexComposition composition of the backing index.\n     * @param vaultHoldings amount held by each vault.\n     * @param externalPosition the external position to hedge.\n     */\n    function checkNettingConstraint(\n        uint256 vaultCumulativeHoldings,\n        uint256[2] memory vaultHoldings,\n        uint256[2] memory indexComposition,\n        int256 externalPosition\n    ) internal view {\n        if (_getStorage().shouldCheckNetting) {\n            if (\n                !NettingMath.isNetted(\n                    vaultCumulativeHoldings, indexComposition, vaultHoldings, externalPosition, _getNettedThreshold()\n                )\n            ) {\n                revert FailedNettingCheck();\n            }\n        }\n    }\n\n    // VIEWS\n    // ------------------------------------------------------------------------------------------\n\n    /**\n     * @notice vault rebalance in progress\n     */\n    function rebalanceOpen() external view returns (bool) {\n        return _getVaultState().rebalanceOpen;\n    }\n\n    /**\n     * @notice preview a vault request\n     * @param key The request key to query for\n     * @return - The OCRequest corresponding to the key if set\n     */\n    function getRequest(uint256 key) external view returns (OCRequest memory) {\n        return _getStorage().pendingRequests[key];\n    }\n\n    /**\n     * @notice Gets the current asset vault price per share (PPS)\n     * @param _assetVault The address of the asset vault whose PPS is being queried\n     * @param useLlo should use the low latency oracle price\n     * @return _tvl The current asset vault PPS\n     */\n    function getVaultPPS(address _assetVault, bool isDeposit, bool useLlo) public returns (uint256) {\n        address aggregateVaultHelper = _getStorage().aggregateVaultHelper;\n        bytes memory ret = aggregateVaultHelper.delegateCall(\n            abi.encodeCall(AggregateVaultHelper.getVaultPPS, (_assetVault, isDeposit, useLlo))\n        );\n        return abi.decode(ret, (uint256));\n    }\n\n    /**\n     * @notice Gets the current asset vault total value locked (TVL)\n     * @param _assetVault The address of the asset vault whose TVL is being queried\n     * @param useLlo should use the low latency oracle price\n     * @return _tvl The current asset vault TVL\n     */\n    function getVaultTVL(address _assetVault, bool useLlo) public returns (uint256 _tvl) {\n        address aggregateVaultHelper = _getStorage().aggregateVaultHelper;\n        bytes memory ret =\n            aggregateVaultHelper.delegateCall(abi.encodeCall(AggregateVaultHelper.getVaultTVL, (_assetVault, useLlo)));\n        return abi.decode(ret, (uint256));\n    }\n\n    /**\n     * @notice preview deposit fee\n     * @param size The size of the deposit for which the fee is being calculated\n     * @return totalDepositFee The calculated deposit fee\n     */\n    function previewDepositFee(address token, uint256 size, bool useLlo) external returns (uint256 totalDepositFee) {\n        address feeHelper = _getFeeHelper();\n        (bytes memory ret) = feeHelper.delegateCall(abi.encodeCall(IVaultFees.getDepositFee, (token, size, useLlo)));\n        (totalDepositFee) = abi.decode(ret, (uint256));\n    }\n\n    /**\n     * @notice preview withdrawal fee\n     * @param token The address of the token for which the withdrawal fee is being calculated\n     * @param size The size of the withdrawal for which the fee is being calculated\n     * @return totalWithdrawalFee The calculated withdrawal fee\n     */\n    function previewWithdrawalFee(address token, uint256 size, bool useLlo)\n        external\n        returns (uint256 totalWithdrawalFee)\n    {\n        address feeHelper = _getFeeHelper();\n        (bytes memory ret) = feeHelper.delegateCall(abi.encodeCall(IVaultFees.getWithdrawalFee, (token, size, useLlo)));\n        uint256 baseFee;\n        (totalWithdrawalFee, baseFee) = abi.decode(ret, (uint256, uint256));\n        totalWithdrawalFee += baseFee;\n    }\n\n    /**\n     * @notice Preview the asset vault cap\n     * @param _asset The address of the asset whose vault cap is being queried\n     * @return The current asset vault cap\n     */\n    function previewVaultCap(address _asset) external view returns (uint256) {\n        uint256 vidx = _getTokenToAssetVaultIndex()[_asset];\n        VaultState memory state = _getVaultState();\n        return state.vaultCaps[vidx];\n    }\n\n    /**\n     * @notice Preview the timelock address for an asset vault\n     * @param _asset The address of the asset whose vault timelock is being queried\n     * @return timelock address of the timelock contract\n     */\n    function getVaultTimelockAddress(address _asset) external view returns (address timelock) {\n        AssetVaultStorage storage vaultStg = _getVaultFromAsset(_asset);\n        return vaultStg.timelockYieldBoost;\n    }\n\n    /**\n     * @dev reads storage slots in the contract returned as bytes32[] result\n     */\n    function readStorageSlots(bytes32[] calldata _slots) external view returns (bytes32[] memory _values) {\n        _values = new bytes32[](_slots.length);\n        for (uint256 i; i < _slots.length; i++) {\n            uint256 value;\n            bytes32 slot = _slots[i];\n            assembly {\n                value := sload(slot)\n            }\n            _values[i] = bytes32(value);\n        }\n    }\n\n    /**\n     * @notice Update asset vault receipt contracts\n     * @param assetVaults An array of new asset vault entries\n     */\n    function setAssetVaults(AssetVaultStorage[2] calldata assetVaults) external onlyConfigurator {\n        AssetVaultStorage[2] storage vaults = _getAssetVaultEntries();\n        mapping(address => uint256) storage tokenToAssetVaultIndex = _getTokenToAssetVaultIndex();\n        mapping(address => uint256) storage vaultToAssetVaultIndex = _getVaultToAssetVaultIndex();\n\n        for (uint256 i = 0; i < 2; i++) {\n            vaults[i] = assetVaults[i];\n            tokenToAssetVaultIndex[assetVaults[i].token] = i;\n            vaultToAssetVaultIndex[assetVaults[i].vault] = i;\n        }\n    }\n\n    // CONFIG\n    // ------------------------------------------------------------------------------------------\n\n    /**\n     * @notice Set the peripheral contract addresses\n     * @param peripheral The enum value of the peripheral type\n     * @param addr The address of the peripheral contract\n     */\n    function setPeripheral(Peripheral peripheral, address addr) external onlyConfigurator {\n        AVStorage storage stg = _getStorage();\n        if (peripheral == Peripheral.HookHandler) {\n            stg.hookHandler = addr;\n        } else if (peripheral == Peripheral.EventEmitter) {\n            stg.emitter = addr;\n        } else if (peripheral == Peripheral.OracleWrapper) {\n            stg.oracleWrapper = addr;\n        } else if (peripheral == Peripheral.GMI) {\n            stg.gmi = payable(addr);\n        } else if (peripheral == Peripheral.AggregateVaultHelper) {\n            stg.aggregateVaultHelper = addr;\n        } else if (peripheral == Peripheral.GmxV2Handler) {\n            stg.gmxV2Handler = addr;\n        } else if (peripheral == Peripheral.FeeHelper) {\n            stg.feeHelper = addr;\n        } else if (peripheral == Peripheral.RequestHandler) {\n            stg.requestHandler = addr;\n        } else if (peripheral == Peripheral.UniswapV3SwapManager) {\n            stg.uniswapV3SwapManager = addr;\n        } else {\n            revert(\"AggregateVault: invalid peripheral\");\n        }\n    }\n\n    function setConfig(ConfigItem _item, bytes calldata _data) external onlyConfigurator {\n        AVStorage storage stg = _getStorage();\n        if (_item == ConfigItem.VaultFees) {\n            (uint256 performanceFee, uint256 managementFee, uint256 withdrawalFee, uint256 depositFee) =\n                abi.decode(_data, (uint256, uint256, uint256, uint256));\n            _getStorage().vaultFees = VaultFees({\n                performanceFee: performanceFee,\n                managementFee: managementFee,\n                withdrawalFee: withdrawalFee,\n                depositFee: depositFee\n            });\n        } else if (_item == ConfigItem.ShouldCheckNetting) {\n            bool val = abi.decode(_data, (bool));\n            stg.shouldCheckNetting = val;\n        } else if (_item == ConfigItem.ShouldUseGmxFee) {\n            bool val = abi.decode(_data, (bool));\n            stg.shouldUseGmxFee = val;\n        } else if (_item == ConfigItem.L1BlockTolerance) {\n            uint8 newBlockTolerance = abi.decode(_data, (uint8));\n            _setL1BlockTolerance(newBlockTolerance);\n        } else if (_item == ConfigItem.ExecutionGasAmounts) {\n            (uint256 executionGasAmount, uint256 executionGasAmountCallback) = abi.decode(_data, (uint256, uint256));\n            stg.executionGasAmount = executionGasAmount;\n            stg.executionGasAmountCallback = executionGasAmountCallback;\n        } else if (_item == ConfigItem.RebalanceKeeper) {\n            address newKeeper = abi.decode(_data, (address));\n            _setRebalanceKeeper(newKeeper);\n        } else if (_item == ConfigItem.FeeRecipient) {\n            (address recipient, address depositFeeEscrow, address withdrawalFeeEscrow) =\n                abi.decode(_data, (address, address, address));\n            VaultState storage state = _getVaultState();\n            state.feeRecipient = recipient;\n            state.depositFeeEscrow = depositFeeEscrow;\n            state.withdrawalFeeEscrow = withdrawalFeeEscrow;\n        } else if (_item == ConfigItem.VaultCaps) {\n            (uint256[2] memory caps) = abi.decode(_data, (uint256[2]));\n            VaultState storage state = _getVaultState();\n            state.vaultCaps = caps;\n        } else if (_item == ConfigItem.Thresholds) {\n            (uint256 newNettedThreshold, uint256 zeroSumPnlThreshold, uint256 swapSlippage) =\n                abi.decode(_data, (uint256, uint256, uint256));\n\n            if (\n                zeroSumPnlThreshold == 0 || zeroSumPnlThreshold >= 1e18 || newNettedThreshold == 0\n                    || newNettedThreshold >= 10_000\n            ) revert FailedConfigValidation();\n\n            stg.zeroSumPnlThreshold = zeroSumPnlThreshold;\n            stg.nettedThreshold = newNettedThreshold;\n            stg.swapSlippage = swapSlippage;\n        } else {\n            revert AggregateVault__InvalidConfigItem();\n        }\n    }\n\n    /**\n     * @notice Add a new position manager to the list of position managers\n     * @param _manager The address of the new position manager\n     */\n    function addPositionManager(IPositionManager _manager) external onlyConfigurator {\n        IPositionManager[] storage positionManagers = _getPositionManagers();\n        positionManagers.push(_manager);\n    }\n\n    // DELEGATE VIEWS\n    // ------------------------------------------------------------------------------------------\n\n    /**\n     * @notice Executes a delegate view to the specified target with the provided data and decodes the response as bytes.\n     */\n    function delegateview(address _target, bytes calldata _data) external returns (bool _success, bytes memory _ret) {\n        (bool success, bytes memory ret) = address(this).call(abi.encodeCall(this.delegateviewRevert, (_target, _data)));\n        if (success) revert DelegateViewRevert();\n        (_success, _ret) = abi.decode(ret, (bool, bytes));\n    }\n\n    /**\n     * @notice Executes a delegate call to the specified target with the provided data and reverts on error.\n     */\n    function delegateviewRevert(address _target, bytes memory _data) external {\n        (bool success, bytes memory ret) = _target.delegatecall(_data);\n        bytes memory encoded = abi.encode(success, ret);\n        /// @solidity memory-safe-assembly\n        assembly {\n            revert(add(encoded, 0x20), mload(encoded))\n        }\n    }\n\n    // INTERNAL\n    // ------------------------------------------------------------------------------------------\n\n    /**\n     * @notice Collects vault rebalance fees, mints timelock shares and distributes them.\n     */\n    function _collectVaultRebalanceFees(AssetVaultStorage[2] memory assetVaults) internal {\n        uint256 performanceFeeInAsset;\n        uint256 managementFeeInAsset;\n        uint256 timelockYieldMintAmount;\n        uint256 totalVaultFee;\n        address feeHelper = _getFeeHelper();\n        VaultState storage vaultState = _getVaultState();\n        for (uint256 i = 0; i < 2; i++) {\n            (bytes memory ret) = feeHelper.delegateCall(\n                abi.encodeCall(IVaultFees.getVaultRebalanceFees, (assetVaults[i].token, vaultState.lastRebalanceTime))\n            );\n            (performanceFeeInAsset, managementFeeInAsset, timelockYieldMintAmount, totalVaultFee) =\n                abi.decode(ret, (uint256, uint256, uint256, uint256));\n\n            if (totalVaultFee > 0) {\n                TransferUtils.transferAsset(assetVaults[i].token, vaultState.feeRecipient, totalVaultFee);\n            }\n            if (timelockYieldMintAmount > 0 && assetVaults[i].timelockYieldBoost != address(0)) {\n                AssetVault(assetVaults[i].vault).mintTo(timelockYieldMintAmount, assetVaults[i].timelockYieldBoost);\n            }\n\n            Emitter(_getEmitter()).emitCollectVaultFees(\n                totalVaultFee,\n                performanceFeeInAsset,\n                managementFeeInAsset,\n                timelockYieldMintAmount,\n                assetVaults[i].vault\n            );\n        }\n    }\n\n    /**\n     * @notice Resets the epoch deposit/withdraw delta for all asset vaults.\n     */\n    function _resetEpochDeltas() internal {\n        AssetVaultStorage[2] storage assetVaults = _getAssetVaultEntries();\n        assetVaults[0].epochDelta = int256(0);\n        assetVaults[1].epochDelta = int256(0);\n    }\n\n    /**\n     * @notice Sets the checkpoint TVL for all asset vaults.\n     */\n    function _setCheckpointTvls(AssetVaultStorage[2] storage assetVaults) internal {\n        assetVaults[0].lastCheckpointTvl = getVaultTVL(assetVaults[0].vault, true);\n        assetVaults[1].lastCheckpointTvl = getVaultTVL(assetVaults[1].vault, true);\n    }\n\n    // UTILS\n    // ------------------------------------------------------------------------------------------\n\n    function depositEth() external payable onlyRole(KEEPER_ROLE) { }\n\n    function withdrawEth(uint256 amount) external payable onlyRole(KEEPER_ROLE) {\n        TransferUtils.transferNativeAsset(msg.sender, amount);\n    }\n\n    /**\n     * @notice Pause deposits and withdrawals for the asset vaults\n     */\n    function pauseDeposits() public onlyRole(KEEPER_ROLE) {\n        AssetVaultStorage[2] storage assetVaults = _getAssetVaultEntries();\n        for (uint256 i = 0; i < 2; i++) {\n            bool isPaused = IAssetVault(assetVaults[i].vault).depositPaused()\n                || IAssetVault(assetVaults[i].vault).withdrawalPaused();\n            if (isPaused) revert AggregateVault__AlreadyPaused();\n            IAssetVault(assetVaults[i].vault).pauseDepositWithdraw();\n        }\n    }\n\n    /**\n     * @notice Unpause deposits and withdrawals for the asset vaults\n     */\n    function unpauseDeposits() public onlyRole(KEEPER_ROLE) {\n        AssetVaultStorage[2] storage assetVaults = _getAssetVaultEntries();\n        for (uint256 i = 0; i < 2; i++) {\n            IAssetVault(assetVaults[i].vault).unpauseDepositWithdraw();\n        }\n    }\n\n    /**\n     * @notice Sets the oracle ricing\n     */\n    modifier setOraclePricing(SetPricesParams memory prices) {\n        if (prices.realtimeFeedTokens.length != prices.realtimeFeedData.length) revert OraclePriceSizeInvalid();\n        for (uint256 i = 0; i < prices.realtimeFeedTokens.length; i++) {\n            OracleWrapper(payable(_getOracleWrapper())).setAndGetLloPrice(\n                prices.realtimeFeedTokens[i], prices.realtimeFeedData[i]\n            );\n        }\n        _;\n    }\n\n    /**\n     * @notice Ensures the caller is an asset vault.\n     */\n    modifier onlyAssetVault() {\n        if (!_isAssetVault()) revert NotAssetVault();\n        _;\n    }\n\n    /**\n     * @notice Ensures the caller is the RequestHandler or the AssetVault.\n     */\n    modifier onlyRequestHandlerOrAssetVault() {\n        if (!(_isAssetVault() || AUTH.hasRole(REQUEST_HANDLER, msg.sender))) revert notRequestHandlerOrAssetVault();\n        _;\n    }\n\n    /**\n     * @notice check if the sender is an assetVault\n     */\n    function _isAssetVault() internal view returns (bool) {\n        AssetVaultStorage[2] storage assetVaults = _getAssetVaultEntries();\n        for (uint256 i = 0; i < 2; ++i) {\n            if (msg.sender == assetVaults[i].vault) {\n                return true;\n            }\n        }\n        return false;\n    }\n\n    /**\n     * @dev returns the gas requirement for call execution.\n     */\n    function _gasRequirement(bool _callback) internal view returns (uint256) {\n        return _callback ? _getStorage().executionGasAmountCallback : _getStorage().executionGasAmount;\n    }\n\n    /// @dev To be implemented by inheriting contracts to restrict certain functions to a configurator role.\n    function _onlyConfigurator() internal override onlyConfigurator { }\n\n    /// @dev To be implemented by inheriting contracts to validate the caller's authorization for execute calls.\n    function _validateExecuteCallAuth() internal override onlyRole(KEEPER_ROLE) { }\n\n    /**\n     * @notice Ensures the caller is permissioned to swap.\n     */\n    function _onlySwapIssuer() internal override onlyRole(SWAP_KEEPER) { }\n}\n"
+      },
+      "src/storage/AggregateVaultStorage.sol": {
+        "content": "// SPDX-License-Identifier: UNLICENSED\npragma solidity 0.8.17;\n\nimport { Delegatecall } from \"../libraries/Delegatecall.sol\";\nimport { IHookExecutor, HookType } from \"../interfaces/IHookExecutor.sol\";\nimport { IPositionManager } from \"../interfaces/IPositionManager.sol\";\nimport { IArbSys } from \"../interfaces/IArbSys.sol\";\nimport { ARBSYS } from \"../constants.sol\";\n\nbytes32 constant STORAGE_SLOT = keccak256(\"AggregateVault.storage\");\n\n/// @title LibAggregateVaultStorage\n/// @author Umami Devs\n/// @notice Library for some storage logic\nlibrary LibAggregateVaultStorage {\n    function getStorage() internal pure returns (AggregateVaultStorage.AVStorage storage _storage) {\n        bytes32 slot = STORAGE_SLOT;\n\n        assembly {\n            _storage.slot := slot\n        }\n    }\n\n    function getTokenToAssetVaultIndex()\n        internal\n        view\n        returns (mapping(address => uint256) storage _tokenToAssetVaultIndex)\n    {\n        _tokenToAssetVaultIndex = getStorage().tokenToAssetVaultIndex;\n    }\n\n    /**\n     * @dev Retrieves the vault state from storage.\n     * @return _vaultState The current vault state.\n     */\n    function getVaultState() internal view returns (AggregateVaultStorage.VaultState storage _vaultState) {\n        _vaultState = getStorage().vaultState;\n    }\n\n    /**\n     * @dev Retrieves the current rebalance state from storage.\n     * @return _rebalanceState The current rebalance state.\n     */\n    function getRebalanceState() internal view returns (AggregateVaultStorage.RebalanceState storage _rebalanceState) {\n        _rebalanceState = getStorage().rebalanceState;\n    }\n\n    function getEmitter() internal view returns (address _emitter) {\n        _emitter = getStorage().emitter;\n    }\n}\n\n/// @title AggregateVaultStorage\n/// @author Umami Devs\n/// @notice Storage inheritance for AggregateVault\nabstract contract AggregateVaultStorage {\n    error InvalidAsset();\n\n    enum CallType {\n        Call,\n        DelegateCall\n    }\n\n    struct AssetVaultStorage {\n        // size 8\n        address vault; // 0\n        address token; // 1\n        address timelockYieldBoost; // 2\n        uint256 feeWatermarkPPS; // 3\n        uint256 feeWatermarkDate; // 4\n        int256 epochDelta; // 5\n        uint256 lastCheckpointTvl; // 6\n        uint256 timelockBoostPercent; // 7\n        uint8 decimals;\n    }\n\n    struct SetPricesParams {\n        address[] realtimeFeedTokens;\n        bytes[] realtimeFeedData;\n    }\n\n    struct RebalanceState {\n        // size 6\n        uint256[2] indexAllocation; // 0\n        uint256[2] indexComposition; // 2\n        int256 externalPosition; // 4\n        uint256 epoch; // 5\n    }\n\n    struct VaultState {\n        // size 12\n        uint256 epoch; // 0\n        bool rebalanceOpen; // 1\n        uint256 lastRebalanceTime; // 2\n        address feeRecipient; // 3\n        address depositFeeEscrow; // 4\n        address withdrawalFeeEscrow; // 5\n        uint256[2] indexAllocation; // 6\n        uint256[2] vaultCaps; // 8\n        uint256[2] rebalancePPS; // 10\n    }\n\n    struct VaultFees {\n        // size 4\n        uint256 performanceFee; // 0\n        uint256 managementFee; // 1\n        uint256 withdrawalFee; // 2\n        uint256 depositFee; // 3\n    }\n\n    /// @dev open close request\n    struct OCRequest {\n        address sender;\n        address account;\n        address vault;\n        address callback;\n        bool isDeposit;\n        uint256 amount;\n        uint256 minOut;\n        uint256 requestBlock;\n    }\n\n    struct AVStorage {\n        /// @dev vault state\n        VaultState vaultState; // 0-11\n        /// @notice The array of asset vault entries.\n        AssetVaultStorage[2] vaults; // 12-19, 19-26\n        /// @dev vault fee storage\n        VaultFees vaultFees; // 27-30\n        /// @notice The mapping of token addresses to asset vault indices.\n        mapping(address => uint256) tokenToAssetVaultIndex; // 31\n        /// @notice The mapping of vault indices to asset vault indices.\n        mapping(address => uint256) vaultToAssetVaultIndex; // 32\n        /// @notice The current rebalance state.\n        RebalanceState rebalanceState; // 33-39\n        /// @dev |.....||depositHook|withdrawHook|openHook|closeHook|\n        bytes32 hooksConfig; // 40\n        address hookHandler; // 41\n        /// @dev event emitter\n        address emitter;\n        uint256 requestNonce;\n        /// @notice The array of position manager contracts.\n        IPositionManager[] positionManagers; // 44\n        /// @dev active external position size\n        int256 externalPosition; // 45\n        /// @dev the vault netted positions\n        int256[2][2] nettedPositions; // 46-49\n        /// @dev open/close request storage: nonce => request\n        mapping(uint256 => OCRequest) pendingRequests; // 50\n        /// @dev execution keeper address for gas rebates\n        address rebalanceKeeper; // 51\n        /// @dev fee logic\n        address feeHelper; // 52\n        /// @dev execution amount for regular request\n        uint256 executionGasAmount; // 53\n        /// @dev execution amount for callback request\n        uint256 executionGasAmountCallback; // 54\n        /// @notice Maps epoch IDs to the last netted prices.\n        mapping(uint256 => int256[2]) lastNettedPrices; // 55\n        /// @notice The zero sum PnL threshold value.\n        uint256 zeroSumPnlThreshold;\n        /// @dev block tolerance for acceptable LLO price\n        uint8 L1BlockTolerance;\n        /// @notice Flag to indicate whether netting should be checked.\n        bool shouldCheckNetting; // 57\n        /// @notice The netted threshold value.\n        uint256 nettedThreshold;\n        /// @notice oracle contract.\n        address oracleWrapper;\n        uint256[2] vaultGmiAttribution; // SHORT_TOKEN, LONG_TOKEN\n        /// @notice GMI index\n        address payable gmi;\n        /// @notice Active helper contract\n        address aggregateVaultHelper;\n        /// @notice active GMX V2 handler contract\n        address gmxV2Handler;\n        /// @notice Active request handler\n        address requestHandler;\n        /// @notice If the GMX fee logic should be used on deposit/withdrawal\n        bool shouldUseGmxFee;\n        /// @notice UNIV3 swap manager\n        address uniswapV3SwapManager;\n        /// @notice Slippage param for uniswap\n        uint256 swapSlippage;\n        /// @notice if the last pps was above watermark\n        bool[2] isAboveWatermark;\n    }\n\n    /**\n     * @dev Retrieves the storage struct of the contract.\n     * @return _storage The storage struct containing all contract state variables.\n     */\n    function _getStorage() internal pure returns (AVStorage storage _storage) {\n        _storage = LibAggregateVaultStorage.getStorage();\n    }\n\n    /**\n     * @dev Retrieves the vault state from storage.\n     * @return _vaultState The current vault state.\n     */\n    function _getVaultState() internal view returns (VaultState storage _vaultState) {\n        _vaultState = _getStorage().vaultState;\n    }\n\n    function _getEmitter() internal view returns (address _emitter) {\n        _emitter = _getStorage().emitter;\n    }\n\n    function _getRequestHandler() internal view returns (address _rhandler) {\n        _rhandler = _getStorage().requestHandler;\n    }\n\n    function _getOracleWrapper() internal view returns (address) {\n        return _getStorage().oracleWrapper;\n    }\n\n    function _getGmxV2Handler() internal view returns (address) {\n        return _getStorage().gmxV2Handler;\n    }\n\n    function _getShouldUseGmxFee() internal view returns (bool) {\n        return _getStorage().shouldUseGmxFee;\n    }\n\n    function _getL1BlockTolerance() internal view returns (uint8) {\n        return _getStorage().L1BlockTolerance;\n    }\n\n    /**\n     * @dev Retrieves the vault entries array from storage.\n     * @return vaults The array of asset vault entries.\n     */\n    function _getAssetVaultEntries() internal view returns (AssetVaultStorage[2] storage) {\n        return _getStorage().vaults;\n    }\n\n    /**\n     * @dev Sets the rebalance keeper in storage.\n     */\n    function _setL1BlockTolerance(uint8 newTolerance) internal {\n        _getStorage().L1BlockTolerance = newTolerance;\n    }\n\n    /**\n     * @dev Sets the rebalance keeper in storage.\n     */\n    function _setRebalanceKeeper(address newKeeper) internal {\n        _getStorage().rebalanceKeeper = newKeeper;\n    }\n\n    /**\n     * @dev Retrieves the current rebalance state from storage.\n     * @return _rebalanceState The current rebalance state.\n     */\n    function _getRebalanceState() internal view returns (RebalanceState storage _rebalanceState) {\n        _rebalanceState = _getStorage().rebalanceState;\n    }\n\n    /**\n     * @dev Retrieves the netted threshold from storage.\n     * @return _nettedThreshold The current netted threshold value.\n     */\n    function _getNettedThreshold() internal view returns (uint256 _nettedThreshold) {\n        _nettedThreshold = _getStorage().nettedThreshold;\n    }\n\n    /**\n     * @dev Retrieves the array of position managers from storage.\n     * @return _positionManagers The array of position managers.\n     */\n    function _getPositionManagers() internal view returns (IPositionManager[] storage _positionManagers) {\n        _positionManagers = _getStorage().positionManagers;\n    }\n\n    /**\n     * @dev Retrieves the vault to asset vault index mapping from storage.\n     * @return _vaultToAssetVaultIndex The mapping of vault addresses to asset vault indexes.\n     */\n    function _getVaultToAssetVaultIndex()\n        internal\n        view\n        returns (mapping(address => uint256) storage _vaultToAssetVaultIndex)\n    {\n        _vaultToAssetVaultIndex = _getStorage().vaultToAssetVaultIndex;\n    }\n\n    /**\n     * @dev Retrieves the token to asset vault index mapping from storage.\n     * @return _tokenToAssetVaultIndex The mapping of token addresses to asset vault indexes.\n     */\n    function _getTokenToAssetVaultIndex()\n        internal\n        view\n        returns (mapping(address => uint256) storage _tokenToAssetVaultIndex)\n    {\n        _tokenToAssetVaultIndex = _getStorage().tokenToAssetVaultIndex;\n    }\n\n    /**\n     * @dev Retrieves the netted positions matrix from storage.\n     * @return _nettedPositions The matrix of netted positions.\n     */\n    function _getNettedPositions() internal view returns (int256[2][2] storage _nettedPositions) {\n        _nettedPositions = _getStorage().nettedPositions;\n    }\n\n    /**\n     * @dev Retrieves the netted prices at epoch.\n     * @return _nettedPrices The array of netted prices.\n     */\n    function _getNettedPrices(uint256 epoch) internal view returns (int256[2] storage _nettedPrices) {\n        _nettedPrices = _getStorage().lastNettedPrices[epoch];\n    }\n\n    /**\n     * @dev Retrieves the zero sum PnL threshold from storage.\n     * @return _zeroSumPnlThreshold The current zero sum PnL threshold value.\n     */\n    function _getZeroSumPnlThreshold() internal view returns (uint256 _zeroSumPnlThreshold) {\n        _zeroSumPnlThreshold = _getStorage().zeroSumPnlThreshold;\n    }\n\n    /**\n     * @dev Retrieves the external position from storage.\n     * @return _extenralPosition The positions.\n     */\n    function _getExternalPosition() internal view returns (int256 _extenralPosition) {\n        _extenralPosition = _getStorage().externalPosition;\n    }\n\n    /**\n     * @dev Retrieves the fee helper from storage.\n     * @return _feeHelper The current fee helper.\n     */\n    function _getFeeHelper() internal view returns (address _feeHelper) {\n        _feeHelper = _getStorage().feeHelper;\n    }\n\n    /**\n     * @dev Retrieves the vault fees struct from storage.\n     * @return _vaultFees The current vault fees.\n     */\n    function _getVaultFees() internal view returns (VaultFees storage _vaultFees) {\n        _vaultFees = _getStorage().vaultFees;\n    }\n\n    /**\n     * @dev Retrieves the asset vault entry for the given asset address.\n     * @param asset The asset address for which to retrieve the vault entry.\n     * @return vault The asset vault entry for the given asset address.\n     */\n    function _getVaultFromAsset(address asset) internal view returns (AssetVaultStorage storage vault) {\n        AssetVaultStorage[2] storage vaults = _getAssetVaultEntries();\n        if (vaults[0].token == asset) {\n            return vaults[0];\n        } else if (vaults[1].token == asset) {\n            return vaults[1];\n        } else {\n            revert InvalidAsset();\n        }\n    }\n\n    /**\n     * @dev Sets the netted positions matrix in storage.\n     * @param _nettedPositions The updated netted positions matrix.\n     */\n    function _setPositions(int256[2][2] memory _nettedPositions, int256 _externalPosition) internal {\n        int256[2][2] storage nettedPositions = _getNettedPositions();\n        _getStorage().externalPosition = _externalPosition;\n        nettedPositions[0][0] = _nettedPositions[0][0];\n        nettedPositions[0][1] = _nettedPositions[0][1];\n        nettedPositions[1][0] = _nettedPositions[1][0];\n        nettedPositions[1][1] = _nettedPositions[1][1];\n    }\n\n    /**\n     * @dev Sets the vault GMI attribution array in storage.\n     * @param vaultGmiAttribution The updated vault GMI attribution array.\n     */\n    function _setVaultGmiAttribution(uint256[2] memory vaultGmiAttribution) internal {\n        uint256[2] storage gmiAttribution = _getStorage().vaultGmiAttribution;\n        gmiAttribution[0] = vaultGmiAttribution[0];\n        gmiAttribution[1] = vaultGmiAttribution[1];\n    }\n\n    /**\n     * @notice Get the AssetVaultEntry at the given index.\n     * @param _idx The index of the AssetVaultEntry.\n     * @return _assetVault The AssetVaultEntry at the given index.\n     */\n    function _getAssetVaultEntry(uint256 _idx) internal view returns (AssetVaultStorage storage _assetVault) {\n        _assetVault = _getAssetVaultEntries()[_idx];\n    }\n\n    // HOOKS\n    // ------------------------------------------------------------------------\n\n    function _isHookEnabledMask(HookType _type) internal pure returns (uint256) {\n        uint256 hookNum = uint256(_type);\n        return 1 << ((hookNum * 2) + 1);\n    }\n\n    function _hookCallTypeMask(HookType _type) internal pure returns (uint256) {\n        uint256 hookNum = uint256(_type);\n        return 1 << (hookNum * 2);\n    }\n\n    function _getHook(HookType _type) internal view returns (bool _isEnabled, bool _isDelegateHook) {\n        bytes32 config = _getStorage().hooksConfig;\n        uint256 isEnabledMask = _isHookEnabledMask(_type);\n        uint256 callTypeMask = _hookCallTypeMask(_type);\n        _isEnabled = (uint256(config) & isEnabledMask) != 0;\n        _isDelegateHook = (uint256(config) & callTypeMask) != 0;\n    }\n\n    function _enableHook(HookType _type, CallType _callType) internal {\n        bytes32 config = _getStorage().hooksConfig;\n        uint256 isEnabledMask = _isHookEnabledMask(_type);\n        uint256 callTypeMask = _hookCallTypeMask(_type);\n        // cleared\n        config = bytes32(uint256(config) & ~(isEnabledMask | callTypeMask));\n        // set\n        config = bytes32(uint256(config) | isEnabledMask | (_callType == CallType.DelegateCall ? callTypeMask : 0));\n        _getStorage().hooksConfig = config;\n    }\n\n    function _disableHook(HookType _type) internal {\n        bytes32 config = _getStorage().hooksConfig;\n        uint256 isEnabledMask = _isHookEnabledMask(_type);\n        uint256 callTypeMask = _hookCallTypeMask(_type);\n        config = bytes32(uint256(config) & ~(isEnabledMask | callTypeMask));\n        _getStorage().hooksConfig = config;\n    }\n\n    function _executeHook(HookType _hookType, bytes memory _cd) internal returns (bytes memory) {\n        (bool isEnabled, bool isDelegateHook) = _getHook(_hookType);\n        if (isEnabled) {\n            address hookHandler = _getStorage().hookHandler;\n            bytes memory hcd = abi.encodeCall(IHookExecutor.executeHook, (_hookType, _cd));\n\n            if (isDelegateHook) {\n                return Delegatecall.delegateCall(hookHandler, hcd);\n            } else {\n                (bool success, bytes memory ret) = hookHandler.call(hcd);\n                if (!success) {\n                    assembly {\n                        let length := mload(ret)\n                        let start := add(ret, 0x20)\n                        revert(start, length)\n                    }\n                }\n                return ret;\n            }\n        }\n        return hex\"\";\n    }\n\n    function _getBlockNumber() internal view returns (uint256 _blockNumber) {\n        _blockNumber = IArbSys(ARBSYS).arbBlockNumber();\n    }\n\n    // REQUESTS\n    // ------------------------------------------------------------------------\n\n    function _saveRequest(\n        address sender,\n        address account,\n        address vault,\n        address callback,\n        bool isDeposit,\n        uint256 amount,\n        uint256 minOut\n    ) internal returns (uint256 requestNonce) {\n        AVStorage storage stg = _getStorage();\n        stg.pendingRequests[++stg.requestNonce] = OCRequest({\n            sender: sender,\n            account: account,\n            vault: vault,\n            callback: callback,\n            isDeposit: isDeposit,\n            amount: amount,\n            minOut: minOut,\n            requestBlock: _getBlockNumber()\n        });\n        return stg.requestNonce;\n    }\n\n    function _getRequest(uint256 key) internal view returns (OCRequest memory order) {\n        AVStorage storage stg = _getStorage();\n        order = stg.pendingRequests[key];\n    }\n\n    function _getLongToken() internal view returns (address _longToken) {\n        _longToken = _getStorage().vaults[1].token;\n    }\n\n    function _getShortToken() internal view returns (address _shortToken) {\n        _shortToken = _getStorage().vaults[0].token;\n    }\n}\n"
+      },
+      "lib/solmate/src/tokens/ERC20.sol": {
+        "content": "// SPDX-License-Identifier: AGPL-3.0-only\npragma solidity >=0.8.0;\n\n/// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.\n/// @author Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC20.sol)\n/// @author Modified from Uniswap (https://github.com/Uniswap/uniswap-v2-core/blob/master/contracts/UniswapV2ERC20.sol)\n/// @dev Do not manually set balances without updating totalSupply, as the sum of all user balances must not exceed it.\nabstract contract ERC20 {\n    /*//////////////////////////////////////////////////////////////\n                                 EVENTS\n    //////////////////////////////////////////////////////////////*/\n\n    event Transfer(address indexed from, address indexed to, uint256 amount);\n\n    event Approval(address indexed owner, address indexed spender, uint256 amount);\n\n    /*//////////////////////////////////////////////////////////////\n                            METADATA STORAGE\n    //////////////////////////////////////////////////////////////*/\n\n    string public name;\n\n    string public symbol;\n\n    uint8 public immutable decimals;\n\n    /*//////////////////////////////////////////////////////////////\n                              ERC20 STORAGE\n    //////////////////////////////////////////////////////////////*/\n\n    uint256 public totalSupply;\n\n    mapping(address => uint256) public balanceOf;\n\n    mapping(address => mapping(address => uint256)) public allowance;\n\n    /*//////////////////////////////////////////////////////////////\n                            EIP-2612 STORAGE\n    //////////////////////////////////////////////////////////////*/\n\n    uint256 internal immutable INITIAL_CHAIN_ID;\n\n    bytes32 internal immutable INITIAL_DOMAIN_SEPARATOR;\n\n    mapping(address => uint256) public nonces;\n\n    /*//////////////////////////////////////////////////////////////\n                               CONSTRUCTOR\n    //////////////////////////////////////////////////////////////*/\n\n    constructor(\n        string memory _name,\n        string memory _symbol,\n        uint8 _decimals\n    ) {\n        name = _name;\n        symbol = _symbol;\n        decimals = _decimals;\n\n        INITIAL_CHAIN_ID = block.chainid;\n        INITIAL_DOMAIN_SEPARATOR = computeDomainSeparator();\n    }\n\n    /*//////////////////////////////////////////////////////////////\n                               ERC20 LOGIC\n    //////////////////////////////////////////////////////////////*/\n\n    function approve(address spender, uint256 amount) public virtual returns (bool) {\n        allowance[msg.sender][spender] = amount;\n\n        emit Approval(msg.sender, spender, amount);\n\n        return true;\n    }\n\n    function transfer(address to, uint256 amount) public virtual returns (bool) {\n        balanceOf[msg.sender] -= amount;\n\n        // Cannot overflow because the sum of all user\n        // balances can't exceed the max uint256 value.\n        unchecked {\n            balanceOf[to] += amount;\n        }\n\n        emit Transfer(msg.sender, to, amount);\n\n        return true;\n    }\n\n    function transferFrom(\n        address from,\n        address to,\n        uint256 amount\n    ) public virtual returns (bool) {\n        uint256 allowed = allowance[from][msg.sender]; // Saves gas for limited approvals.\n\n        if (allowed != type(uint256).max) allowance[from][msg.sender] = allowed - amount;\n\n        balanceOf[from] -= amount;\n\n        // Cannot overflow because the sum of all user\n        // balances can't exceed the max uint256 value.\n        unchecked {\n            balanceOf[to] += amount;\n        }\n\n        emit Transfer(from, to, amount);\n\n        return true;\n    }\n\n    /*//////////////////////////////////////////////////////////////\n                             EIP-2612 LOGIC\n    //////////////////////////////////////////////////////////////*/\n\n    function permit(\n        address owner,\n        address spender,\n        uint256 value,\n        uint256 deadline,\n        uint8 v,\n        bytes32 r,\n        bytes32 s\n    ) public virtual {\n        require(deadline >= block.timestamp, \"PERMIT_DEADLINE_EXPIRED\");\n\n        // Unchecked because the only math done is incrementing\n        // the owner's nonce which cannot realistically overflow.\n        unchecked {\n            address recoveredAddress = ecrecover(\n                keccak256(\n                    abi.encodePacked(\n                        \"\\x19\\x01\",\n                        DOMAIN_SEPARATOR(),\n                        keccak256(\n                            abi.encode(\n                                keccak256(\n                                    \"Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)\"\n                                ),\n                                owner,\n                                spender,\n                                value,\n                                nonces[owner]++,\n                                deadline\n                            )\n                        )\n                    )\n                ),\n                v,\n                r,\n                s\n            );\n\n            require(recoveredAddress != address(0) && recoveredAddress == owner, \"INVALID_SIGNER\");\n\n            allowance[recoveredAddress][spender] = value;\n        }\n\n        emit Approval(owner, spender, value);\n    }\n\n    function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {\n        return block.chainid == INITIAL_CHAIN_ID ? INITIAL_DOMAIN_SEPARATOR : computeDomainSeparator();\n    }\n\n    function computeDomainSeparator() internal view virtual returns (bytes32) {\n        return\n            keccak256(\n                abi.encode(\n                    keccak256(\"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)\"),\n                    keccak256(bytes(name)),\n                    keccak256(\"1\"),\n                    block.chainid,\n                    address(this)\n                )\n            );\n    }\n\n    /*//////////////////////////////////////////////////////////////\n                        INTERNAL MINT/BURN LOGIC\n    //////////////////////////////////////////////////////////////*/\n\n    function _mint(address to, uint256 amount) internal virtual {\n        totalSupply += amount;\n\n        // Cannot overflow because the sum of all user\n        // balances can't exceed the max uint256 value.\n        unchecked {\n            balanceOf[to] += amount;\n        }\n\n        emit Transfer(address(0), to, amount);\n    }\n\n    function _burn(address from, uint256 amount) internal virtual {\n        balanceOf[from] -= amount;\n\n        // Cannot underflow because a user's balance\n        // will never be larger than the total supply.\n        unchecked {\n            totalSupply -= amount;\n        }\n\n        emit Transfer(from, address(0), amount);\n    }\n}\n"
+      },
+      "lib/solmate/src/utils/SafeTransferLib.sol": {
+        "content": "// SPDX-License-Identifier: AGPL-3.0-only\npragma solidity >=0.8.0;\n\nimport {ERC20} from \"../tokens/ERC20.sol\";\n\n/// @notice Safe ETH and ERC20 transfer library that gracefully handles missing return values.\n/// @author Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/SafeTransferLib.sol)\n/// @dev Use with caution! Some functions in this library knowingly create dirty bits at the destination of the free memory pointer.\n/// @dev Note that none of the functions in this library check that a token has code at all! That responsibility is delegated to the caller.\nlibrary SafeTransferLib {\n    /*//////////////////////////////////////////////////////////////\n                             ETH OPERATIONS\n    //////////////////////////////////////////////////////////////*/\n\n    function safeTransferETH(address to, uint256 amount) internal {\n        bool success;\n\n        /// @solidity memory-safe-assembly\n        assembly {\n            // Transfer the ETH and store if it succeeded or not.\n            success := call(gas(), to, amount, 0, 0, 0, 0)\n        }\n\n        require(success, \"ETH_TRANSFER_FAILED\");\n    }\n\n    /*//////////////////////////////////////////////////////////////\n                            ERC20 OPERATIONS\n    //////////////////////////////////////////////////////////////*/\n\n    function safeTransferFrom(\n        ERC20 token,\n        address from,\n        address to,\n        uint256 amount\n    ) internal {\n        bool success;\n\n        /// @solidity memory-safe-assembly\n        assembly {\n            // Get a pointer to some free memory.\n            let freeMemoryPointer := mload(0x40)\n\n            // Write the abi-encoded calldata into memory, beginning with the function selector.\n            mstore(freeMemoryPointer, 0x23b872dd00000000000000000000000000000000000000000000000000000000)\n            mstore(add(freeMemoryPointer, 4), and(from, 0xffffffffffffffffffffffffffffffffffffffff)) // Append and mask the \"from\" argument.\n            mstore(add(freeMemoryPointer, 36), and(to, 0xffffffffffffffffffffffffffffffffffffffff)) // Append and mask the \"to\" argument.\n            mstore(add(freeMemoryPointer, 68), amount) // Append the \"amount\" argument. Masking not required as it's a full 32 byte type.\n\n            success := and(\n                // Set success to whether the call reverted, if not we check it either\n                // returned exactly 1 (can't just be non-zero data), or had no return data.\n                or(and(eq(mload(0), 1), gt(returndatasize(), 31)), iszero(returndatasize())),\n                // We use 100 because the length of our calldata totals up like so: 4 + 32 * 3.\n                // We use 0 and 32 to copy up to 32 bytes of return data into the scratch space.\n                // Counterintuitively, this call must be positioned second to the or() call in the\n                // surrounding and() call or else returndatasize() will be zero during the computation.\n                call(gas(), token, 0, freeMemoryPointer, 100, 0, 32)\n            )\n        }\n\n        require(success, \"TRANSFER_FROM_FAILED\");\n    }\n\n    function safeTransfer(\n        ERC20 token,\n        address to,\n        uint256 amount\n    ) internal {\n        bool success;\n\n        /// @solidity memory-safe-assembly\n        assembly {\n            // Get a pointer to some free memory.\n            let freeMemoryPointer := mload(0x40)\n\n            // Write the abi-encoded calldata into memory, beginning with the function selector.\n            mstore(freeMemoryPointer, 0xa9059cbb00000000000000000000000000000000000000000000000000000000)\n            mstore(add(freeMemoryPointer, 4), and(to, 0xffffffffffffffffffffffffffffffffffffffff)) // Append and mask the \"to\" argument.\n            mstore(add(freeMemoryPointer, 36), amount) // Append the \"amount\" argument. Masking not required as it's a full 32 byte type.\n\n            success := and(\n                // Set success to whether the call reverted, if not we check it either\n                // returned exactly 1 (can't just be non-zero data), or had no return data.\n                or(and(eq(mload(0), 1), gt(returndatasize(), 31)), iszero(returndatasize())),\n                // We use 68 because the length of our calldata totals up like so: 4 + 32 * 2.\n                // We use 0 and 32 to copy up to 32 bytes of return data into the scratch space.\n                // Counterintuitively, this call must be positioned second to the or() call in the\n                // surrounding and() call or else returndatasize() will be zero during the computation.\n                call(gas(), token, 0, freeMemoryPointer, 68, 0, 32)\n            )\n        }\n\n        require(success, \"TRANSFER_FAILED\");\n    }\n\n    function safeApprove(\n        ERC20 token,\n        address to,\n        uint256 amount\n    ) internal {\n        bool success;\n\n        /// @solidity memory-safe-assembly\n        assembly {\n            // Get a pointer to some free memory.\n            let freeMemoryPointer := mload(0x40)\n\n            // Write the abi-encoded calldata into memory, beginning with the function selector.\n            mstore(freeMemoryPointer, 0x095ea7b300000000000000000000000000000000000000000000000000000000)\n            mstore(add(freeMemoryPointer, 4), and(to, 0xffffffffffffffffffffffffffffffffffffffff)) // Append and mask the \"to\" argument.\n            mstore(add(freeMemoryPointer, 36), amount) // Append the \"amount\" argument. Masking not required as it's a full 32 byte type.\n\n            success := and(\n                // Set success to whether the call reverted, if not we check it either\n                // returned exactly 1 (can't just be non-zero data), or had no return data.\n                or(and(eq(mload(0), 1), gt(returndatasize(), 31)), iszero(returndatasize())),\n                // We use 68 because the length of our calldata totals up like so: 4 + 32 * 2.\n                // We use 0 and 32 to copy up to 32 bytes of return data into the scratch space.\n                // Counterintuitively, this call must be positioned second to the or() call in the\n                // surrounding and() call or else returndatasize() will be zero during the computation.\n                call(gas(), token, 0, freeMemoryPointer, 68, 0, 32)\n            )\n        }\n\n        require(success, \"APPROVE_FAILED\");\n    }\n}\n"
+      }
+    },
+    "sourceSubsetQualification": "Full original ABI and full contents of selected compilation source files retained. AggregateVault and AggregateVaultStorage are contextual compilation sources only, not current configured dependency identity evidence; unrelated compilation files and bytecodes omitted."
+  },
+  "retainedConfigurationEvidence": {
+    "sourceRef": "https://arbiscan.io/readContract?m=normal&a=0x5f851F67D24419982EcD7b7765deFD64fBb50a97&v=0x5f851F67D24419982EcD7b7765deFD64fBb50a97",
+    "verifiedAt": "2026-10-23",
+    "values": {
+      "aggregateVault": "0x1E914730B4Cd343aE14530F0BBF6b350d83B833d",
+      "AUTH": "0x48c0d4861358a9b0Bb9a0A3321a65A95a1E62ad6",
+      "asset": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+      "decimals": 6,
+      "depositPaused": false,
+      "withdrawalPaused": false
+    },
+    "limitations": "Explorer-reported read values only, not fresh RPC/runtime identity attestation. Omitted numerical balances, TVL and activity claims."
+  },
+  "configuredDependencyEvidence": {
+    "address": "0x1E914730B4Cd343aE14530F0BBF6b350d83B833d",
+    "chainId": 42161,
+    "sourceRef": "https://about.umami.finance/umami-finance/gm-vaults/asset-buffer-and-withdraws.md",
+    "binding": "Current readContract address corroborates official BTC buffer address. Exact-address Sourcify fields=all returned 404; Arbiscan code and Blockscout requests returned 403.",
+    "abi": null,
+    "sourceStatus": "Current deployed aggregate ABI/implementation unknown and excluded; full AggregateVault source in vault compilation retained only as contextual source, not substituted as exact current dependency.",
+    "functionInventory": [],
+    "unresolvedSurface": "No arbitrary facet/route/callback or aggregate function admission; selected vault calls cannot choose aggregate target or callback."
+  },
+  "retainedLifecycleEvidence": {
+    "verifiedAt": "2026-10-23",
+    "status": "active",
+    "sourceRefs": [
+      "https://about.umami.finance/umami-finance/overview/welcome-to-umami.md",
+      "https://about.umami.finance/umami-finance/llms.txt",
+      "https://umami.finance/vaults",
+      "https://arbiscan.io/readContract?m=normal&a=0x5f851F67D24419982EcD7b7765deFD64fBb50a97&v=0x5f851F67D24419982EcD7b7765deFD64fBb50a97"
+    ],
+    "observations": [
+      "Current about.umami.finance presents Umami as operating Bonsai SubDAO with GM vaults, not team wind-down. Current docs index separates glp-vaults-deprecated from maintained gm-vaults.",
+      "Official served frontend bundle lists gmusdc_wbtc as GM USDC with GMX V2 WBTC-USDC source and exact target.",
+      "Explorer read snapshot reports selected BTC-backed vault deposits and withdrawals unpaused. ETH-backed vault depositPaused=true was observed separately and that deployment is not selected; pause alone is not labeled protocol retirement."
+    ]
+  },
+  "sourceSemantics": {
+    "rootDeposit": "rootEvidence.sources[\"src/vaults/AssetVault.sol\"].content decoded lines105-121: nonzero preview, capacity, caller USDC transfer under existing allowance, payable fixed aggregate handleDeposit with selected callback. Zero forwarded at argument3.",
+    "rootRedeem": "Same root source lines132-154: positive shares, estimated assets, existing owner-to-caller allowance consumption when different, external self-call transferFrom under owner-to-AssetVault allowance, payable fixed aggregate handleWithdraw. Zero forwarded at argument4.",
+    "redemptionDifference": "Ordinary redeem decoded line80 requires assets <= aggregate USDC balance. redeemWithCallback lines132-154 omits it; zero callback does not restore this local liquidity precheck.",
+    "existingAllowance": "Root lines439-442 consumes owner-to-caller share allowance. Retained solmate ERC20.transferFrom source consumes allowance[from][msg.sender] for the external self-call; msg.sender is the AssetVault, requiring owner-to-AssetVault allowance.",
+    "asynchronousContext": "Contextual AggregateVault lines97-144 stores requests, computes gas requirement by callback!=zero, forwards all ETH to rebalanceKeeper and runs configured deposit/withdraw hooks. Contextual AggregateVaultStorage lines465-485 stores callback alongside sender/receiver/vault/amount/minimum/block. This does not bind the current configured aggregate implementation.",
+    "funding": "USDC principal from caller existing allowance; owner shares from owner existing allowances. Payable ETH funds execution fees. Returned shares/assets are estimates, not completed settlement. No live funded execution or identity claim."
+  },
+  "limitations": [
+    "Static exact-root source/ABI observation only, not live runtime identity, current configuration, funded execution, liquidity, settlement, complete workflow or financial-safety assurance. Independent grants, pauses, canonical calldata bounds and final acceptance remain mandatory.",
+    "Only Arbitrum42161 gmUSDC BTC-backed AssetVault 0x5f851f67d24419982ecd7b7765defd64fbb50a97 is admitted. Maintained GM deployment evidence does not admit deprecated GLP products or any other Umami root. Retained configuration identifies native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831,6 decimals; vault shares also have6 decimals.",
+    "Mandatory umami-zero-request-callback-v1 requires the selected callback address to be exactly zero. This disables only the user-selected request callback; configured protocol hooks, token behavior and asynchronous keepers remain. No new permit, allowance, operator, role, delegation or presign installation is admitted; no multicall child composition is added.",
+    "Payable native ETH is keeper execution-fee funding, not USDC principal. Exact root forwards all msg.value to its configured aggregate. Contextual aggregate source requires configured gas times tx.gasprice and forwards all supplied value to rebalanceKeeper without an excess refund here. No fixed fee quote or zero-native-value restriction is imposed.",
+    "minOutAfterFees is forwarded, not locally enforced by the AssetVault; contextual aggregate source stores it for deferred handling. No caller deadline or immediate settlement/min-output guarantee. Rounding, dynamic fees, pauses, keeper/oracle execution, hooks, buffers and rebalancing may affect acceptance and outcomes.",
+    "Exact root source-service creationMatch/runtimeMatch are match/match, not exact_match; direct AssetVault is reported nonproxy. These are direct source-service observations, not fresh RPC bytecode/configuration attestations. Configurator can replace aggregateVault or pause operations.",
+    "Retained configured aggregate 0x1e914730b4cd343ae14530f0bbf6b350d83b833d has unknown current deployed ABI/implementation. Its source bundled with the root compilation is contextual only, not independently bound current dependency code. The same fixed configurable dependency is used by ordinary supported calls; it is not admitted as a target and its evidence grade is not upgraded.",
+    "Umami jurisdictional participation requirements remain; no KYC eligibility, legal suitability, balances, sufficient allowance or successful settlement is inferred."
+  ],
+  "additions": [
+    {
+      "abi": {
+        "name": "depositWithCallback",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256"
+          },
+          {
+            "name": "minOutAfterFees",
+            "type": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address"
+          },
+          {
+            "name": "callback",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "shares",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "capabilityId": "umami-gm-usdc-btc:v1:42161:0x5f851f67d24419982ecd7b7765defd64fbb50a97:deposit-with-zero-request-callback",
+      "chainId": 42161,
+      "contract": "0x5f851f67d24419982ecd7b7765defd64fbb50a97",
+      "functionName": "depositWithCallback",
+      "label": "Umami GM BTC vault deposit with zero selected callback",
+      "operation": "deposit",
+      "protocol": "Umami",
+      "provenance": {
+        "sourceRef": "https://about.umami.finance/umami-finance/gm-vaults/vault-tokens-and-contract-addresses.md | https://sourcify.dev/server/v2/contract/42161/0x5f851F67D24419982EcD7b7765deFD64fBb50a97?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-11-02"
+      },
+      "signature": "depositWithCallback(uint256,uint256,address,address)",
+      "status": "active",
+      "type": "contract_call",
+      "executionScope": {
+        "kind": "umami-zero-request-callback-v1"
+      },
+      "warnings": [
+        "Static exact-root source/ABI observation only, not live runtime identity, current configuration, funded execution, liquidity, settlement, complete workflow or financial-safety assurance. Independent grants, pauses, canonical calldata bounds and final acceptance remain mandatory.",
+        "Only Arbitrum42161 gmUSDC BTC-backed AssetVault 0x5f851f67d24419982ecd7b7765defd64fbb50a97 is admitted. Maintained GM deployment evidence does not admit deprecated GLP products or any other Umami root. Retained configuration identifies native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831,6 decimals; vault shares also have6 decimals.",
+        "Mandatory umami-zero-request-callback-v1 requires the selected callback address to be exactly zero. This disables only the user-selected request callback; configured protocol hooks, token behavior and asynchronous keepers remain. No new permit, allowance, operator, role, delegation or presign installation is admitted; no multicall child composition is added.",
+        "Payable native ETH is keeper execution-fee funding, not USDC principal. Exact root forwards all msg.value to its configured aggregate. Contextual aggregate source requires configured gas times tx.gasprice and forwards all supplied value to rebalanceKeeper without an excess refund here. No fixed fee quote or zero-native-value restriction is imposed.",
+        "minOutAfterFees is forwarded, not locally enforced by the AssetVault; contextual aggregate source stores it for deferred handling. No caller deadline or immediate settlement/min-output guarantee. Rounding, dynamic fees, pauses, keeper/oracle execution, hooks, buffers and rebalancing may affect acceptance and outcomes.",
+        "Exact root source-service creationMatch/runtimeMatch are match/match, not exact_match; direct AssetVault is reported nonproxy. These are direct source-service observations, not fresh RPC bytecode/configuration attestations. Configurator can replace aggregateVault or pause operations.",
+        "Retained configured aggregate 0x1e914730b4cd343ae14530f0bbf6b350d83b833d has unknown current deployed ABI/implementation. Its source bundled with the root compilation is contextual only, not independently bound current dependency code. The same fixed configurable dependency is used by ordinary supported calls; it is not admitted as a target and its evidence grade is not upgraded.",
+        "Umami jurisdictional participation requirements remain; no KYC eligibility, legal suitability, balances, sufficient allowance or successful settlement is inferred.",
+        "Transfers assets from caller to this AssetVault using existing caller-to-vault USDC allowance; native ETH cannot fund this principal. Requires nonzero preview shares and vault capacity on chain. The returned shares are an estimate of asynchronously issued shares, not final minted shares or completed settlement.",
+        "Callback argument3 (zero-based) must be zero. At zero, the exact root forwards the same aggregate arguments as ordinary deposit. Explicit receiver and minOutAfterFees remain caller choices; contextual aggregate source rejects a zero receiver."
+      ]
+    },
+    {
+      "abi": {
+        "name": "redeemWithCallback",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256"
+          },
+          {
+            "name": "minOutAfterFees",
+            "type": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "callback",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "assets",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "capabilityId": "umami-gm-usdc-btc:v1:42161:0x5f851f67d24419982ecd7b7765defd64fbb50a97:redeem-with-zero-request-callback",
+      "chainId": 42161,
+      "contract": "0x5f851f67d24419982ecd7b7765defd64fbb50a97",
+      "functionName": "redeemWithCallback",
+      "label": "Umami GM BTC vault redemption request with zero selected callback",
+      "operation": "redeem",
+      "protocol": "Umami",
+      "provenance": {
+        "sourceRef": "https://about.umami.finance/umami-finance/gm-vaults/vault-tokens-and-contract-addresses.md | https://sourcify.dev/server/v2/contract/42161/0x5f851F67D24419982EcD7b7765deFD64fBb50a97?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-11-02"
+      },
+      "signature": "redeemWithCallback(uint256,uint256,address,address,address)",
+      "status": "active",
+      "type": "contract_call",
+      "executionScope": {
+        "kind": "umami-zero-request-callback-v1"
+      },
+      "warnings": [
+        "Static exact-root source/ABI observation only, not live runtime identity, current configuration, funded execution, liquidity, settlement, complete workflow or financial-safety assurance. Independent grants, pauses, canonical calldata bounds and final acceptance remain mandatory.",
+        "Only Arbitrum42161 gmUSDC BTC-backed AssetVault 0x5f851f67d24419982ecd7b7765defd64fbb50a97 is admitted. Maintained GM deployment evidence does not admit deprecated GLP products or any other Umami root. Retained configuration identifies native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831,6 decimals; vault shares also have6 decimals.",
+        "Mandatory umami-zero-request-callback-v1 requires the selected callback address to be exactly zero. This disables only the user-selected request callback; configured protocol hooks, token behavior and asynchronous keepers remain. No new permit, allowance, operator, role, delegation or presign installation is admitted; no multicall child composition is added.",
+        "Payable native ETH is keeper execution-fee funding, not USDC principal. Exact root forwards all msg.value to its configured aggregate. Contextual aggregate source requires configured gas times tx.gasprice and forwards all supplied value to rebalanceKeeper without an excess refund here. No fixed fee quote or zero-native-value restriction is imposed.",
+        "minOutAfterFees is forwarded, not locally enforced by the AssetVault; contextual aggregate source stores it for deferred handling. No caller deadline or immediate settlement/min-output guarantee. Rounding, dynamic fees, pauses, keeper/oracle execution, hooks, buffers and rebalancing may affect acceptance and outcomes.",
+        "Exact root source-service creationMatch/runtimeMatch are match/match, not exact_match; direct AssetVault is reported nonproxy. These are direct source-service observations, not fresh RPC bytecode/configuration attestations. Configurator can replace aggregateVault or pause operations.",
+        "Retained configured aggregate 0x1e914730b4cd343ae14530f0bbf6b350d83b833d has unknown current deployed ABI/implementation. Its source bundled with the root compilation is contextual only, not independently bound current dependency code. The same fixed configurable dependency is used by ordinary supported calls; it is not admitted as a target and its evidence grade is not upgraded.",
+        "Umami jurisdictional participation requirements remain; no KYC eligibility, legal suitability, balances, sufficient allowance or successful settlement is inferred.",
+        "Escrows owner shares via an external ERC20 self-call. Existing owner-to-AssetVault share allowance is required even when owner equals caller; caller different from owner additionally consumes existing owner-to-caller share allowance. No permission is installed. Receiver chooses settlement destination; cancellation uses recorded initiating sender, not necessarily owner or receiver.",
+        "Callback argument4 (zero-based) must be zero. Positive shares and nonzero preview assets are checked on chain; returned assets are an estimate, not an immediate underlying payout. Unlike ordinary redeem, redeemWithCallback omits the local aggregate-USDC-balance precheck even at zero callback, so no equivalent immediate-liquidity rejection is claimed. Acceptance and deferred settlement still depend on fixed configured protocol machinery."
+      ]
+    }
+  ],
+  "existingFunctionUpdates": [
+    {
+      "capabilityId": "umami-gm-usdc-btc:v1:42161:0x5f851f67d24419982ecd7b7765defd64fbb50a97:cancel-request",
+      "warnings": [
+        "Static exact-deployment ABI/source inventory only; no runtime identity, execution, liquidity, funding, complete-workflow or financial-safety assurance. Independent grants, pause checks and canonical-calldata controls remain mandatory.",
+        "Only Arbitrum gmUSDC BTC-backed vault 0x5f851F67D24419982EcD7b7765deFD64fBb50a97 is selected, not old GLP vaults or the ETH-backed gmUSDC whose deposit pause was observed. Underlying is 6-decimal native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831, not bridged USDC.e; vault shares also have 6 decimals.",
+        "Deposit transfers caller USDC into this vault using allowance to this vault, then forwards a request to its configured aggregate vault. Receiver is explicit; zero is rejected in the bundled aggregate source. The immediate return value is an estimate, not minted-share or settlement confirmation. No standalone prefunding is admitted.",
+        "Redeem escrows owner shares in this vault rather than immediately burning/paying them. Owner must approve the vault to transfer shares even when owner equals caller; a different caller additionally consumes owner-to-caller share allowance. Receiver controls settlement destination, whereas cancellation refunds the recorded initiating sender, not necessarily owner or receiver.",
+        "Both deposit and redeem are payable because msg.value is forwarded to the aggregate for keeper execution gas, not ETH principal. Bundled aggregate code requires msg.value >= configured gas requirement times tx.gasprice and forwards all supplied value to rebalanceKeeper, without an excess refund in these entrypoints; documented approximately 0.001 ETH is not a fixed fee quote.",
+        "minOutAfterFees is forwarded into the pending request without local enforcement. Bundled aggregate source stores it for deferred execution; current exact aggregate/request-handler source and minimum-enforcement implementation were not independently bound, and no live execution/min-output guarantee is asserted. No caller deadline is present.",
+        "Conversions floor at the share price and dynamic fees can consume small inputs; deposit requires nonzero preview shares and capacity, ordinary redeem requires nonzero preview assets and sufficient aggregate USDC before it can even queue. The separately scoped redeemWithCallback still requires nonzero preview assets but omits that local aggregate-balance precheck, even at zero callback; no equivalent immediate-liquidity rejection is asserted. Documented fees are 2% annual management and 20% yield plus dynamic entry/exit fees; actual configured execution-time rates may differ.",
+        "Requests depend on keeper/oracle execution, configured hooks, buffers and rebalancing; no fixed settlement delay or payout guarantee. cancelRequest checks exact vault and initiating sender, returns escrowed USDC or shares and clears the pending request; already cleared/executed or unavailable escrow requests can revert, and keeper ETH is not refunded by this function.",
+        "Explorer snapshot reports depositPaused=false, withdrawalPaused=false, aggregateVault=0x1E914730B4Cd343aE14530F0BBF6b350d83B833d and asset=USDC. These are point-in-time reported values, not persistence or runtime attestation. Configurator can pause operations or replace aggregateVault; the immutable AUTH reference is not automatically replaced with it.",
+        "Nonzero caller-selected request callbacks remain excluded. The two separately granted callback entrypoints are admitted only under mandatory zero-request-callback scope at this exact root; zero disables neither configured protocol hooks nor asynchronous keepers. Permit, approvals/transfers, privileged share accounting, pause/configuration and all views remain excluded. The fixed configured aggregate dependency may revert or change; its source bundled in the vault compilation is contextual only, not an independently verified current deployed aggregate ABI. Umami requires lawful jurisdictional participation; no KYC eligibility or legal suitability is inferred."
+      ]
+    },
+    {
+      "capabilityId": "umami-gm-usdc-btc:v1:42161:0x5f851f67d24419982ecd7b7765defd64fbb50a97:deposit",
+      "warnings": [
+        "Static exact-deployment ABI/source inventory only; no runtime identity, execution, liquidity, funding, complete-workflow or financial-safety assurance. Independent grants, pause checks and canonical-calldata controls remain mandatory.",
+        "Only Arbitrum gmUSDC BTC-backed vault 0x5f851F67D24419982EcD7b7765deFD64fBb50a97 is selected, not old GLP vaults or the ETH-backed gmUSDC whose deposit pause was observed. Underlying is 6-decimal native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831, not bridged USDC.e; vault shares also have 6 decimals.",
+        "Deposit transfers caller USDC into this vault using allowance to this vault, then forwards a request to its configured aggregate vault. Receiver is explicit; zero is rejected in the bundled aggregate source. The immediate return value is an estimate, not minted-share or settlement confirmation. No standalone prefunding is admitted.",
+        "Redeem escrows owner shares in this vault rather than immediately burning/paying them. Owner must approve the vault to transfer shares even when owner equals caller; a different caller additionally consumes owner-to-caller share allowance. Receiver controls settlement destination, whereas cancellation refunds the recorded initiating sender, not necessarily owner or receiver.",
+        "Both deposit and redeem are payable because msg.value is forwarded to the aggregate for keeper execution gas, not ETH principal. Bundled aggregate code requires msg.value >= configured gas requirement times tx.gasprice and forwards all supplied value to rebalanceKeeper, without an excess refund in these entrypoints; documented approximately 0.001 ETH is not a fixed fee quote.",
+        "minOutAfterFees is forwarded into the pending request without local enforcement. Bundled aggregate source stores it for deferred execution; current exact aggregate/request-handler source and minimum-enforcement implementation were not independently bound, and no live execution/min-output guarantee is asserted. No caller deadline is present.",
+        "Conversions floor at the share price and dynamic fees can consume small inputs; deposit requires nonzero preview shares and capacity, ordinary redeem requires nonzero preview assets and sufficient aggregate USDC before it can even queue. The separately scoped redeemWithCallback still requires nonzero preview assets but omits that local aggregate-balance precheck, even at zero callback; no equivalent immediate-liquidity rejection is asserted. Documented fees are 2% annual management and 20% yield plus dynamic entry/exit fees; actual configured execution-time rates may differ.",
+        "Requests depend on keeper/oracle execution, configured hooks, buffers and rebalancing; no fixed settlement delay or payout guarantee. cancelRequest checks exact vault and initiating sender, returns escrowed USDC or shares and clears the pending request; already cleared/executed or unavailable escrow requests can revert, and keeper ETH is not refunded by this function.",
+        "Explorer snapshot reports depositPaused=false, withdrawalPaused=false, aggregateVault=0x1E914730B4Cd343aE14530F0BBF6b350d83B833d and asset=USDC. These are point-in-time reported values, not persistence or runtime attestation. Configurator can pause operations or replace aggregateVault; the immutable AUTH reference is not automatically replaced with it.",
+        "Nonzero caller-selected request callbacks remain excluded. The two separately granted callback entrypoints are admitted only under mandatory zero-request-callback scope at this exact root; zero disables neither configured protocol hooks nor asynchronous keepers. Permit, approvals/transfers, privileged share accounting, pause/configuration and all views remain excluded. The fixed configured aggregate dependency may revert or change; its source bundled in the vault compilation is contextual only, not an independently verified current deployed aggregate ABI. Umami requires lawful jurisdictional participation; no KYC eligibility or legal suitability is inferred."
+      ]
+    },
+    {
+      "capabilityId": "umami-gm-usdc-btc:v1:42161:0x5f851f67d24419982ecd7b7765defd64fbb50a97:redeem",
+      "warnings": [
+        "Static exact-deployment ABI/source inventory only; no runtime identity, execution, liquidity, funding, complete-workflow or financial-safety assurance. Independent grants, pause checks and canonical-calldata controls remain mandatory.",
+        "Only Arbitrum gmUSDC BTC-backed vault 0x5f851F67D24419982EcD7b7765deFD64fBb50a97 is selected, not old GLP vaults or the ETH-backed gmUSDC whose deposit pause was observed. Underlying is 6-decimal native USDC 0xaf88d065e77c8cC2239327C5EDb3A432268e5831, not bridged USDC.e; vault shares also have 6 decimals.",
+        "Deposit transfers caller USDC into this vault using allowance to this vault, then forwards a request to its configured aggregate vault. Receiver is explicit; zero is rejected in the bundled aggregate source. The immediate return value is an estimate, not minted-share or settlement confirmation. No standalone prefunding is admitted.",
+        "Redeem escrows owner shares in this vault rather than immediately burning/paying them. Owner must approve the vault to transfer shares even when owner equals caller; a different caller additionally consumes owner-to-caller share allowance. Receiver controls settlement destination, whereas cancellation refunds the recorded initiating sender, not necessarily owner or receiver.",
+        "Both deposit and redeem are payable because msg.value is forwarded to the aggregate for keeper execution gas, not ETH principal. Bundled aggregate code requires msg.value >= configured gas requirement times tx.gasprice and forwards all supplied value to rebalanceKeeper, without an excess refund in these entrypoints; documented approximately 0.001 ETH is not a fixed fee quote.",
+        "minOutAfterFees is forwarded into the pending request without local enforcement. Bundled aggregate source stores it for deferred execution; current exact aggregate/request-handler source and minimum-enforcement implementation were not independently bound, and no live execution/min-output guarantee is asserted. No caller deadline is present.",
+        "Conversions floor at the share price and dynamic fees can consume small inputs; deposit requires nonzero preview shares and capacity, ordinary redeem requires nonzero preview assets and sufficient aggregate USDC before it can even queue. The separately scoped redeemWithCallback still requires nonzero preview assets but omits that local aggregate-balance precheck, even at zero callback; no equivalent immediate-liquidity rejection is asserted. Documented fees are 2% annual management and 20% yield plus dynamic entry/exit fees; actual configured execution-time rates may differ.",
+        "Requests depend on keeper/oracle execution, configured hooks, buffers and rebalancing; no fixed settlement delay or payout guarantee. cancelRequest checks exact vault and initiating sender, returns escrowed USDC or shares and clears the pending request; already cleared/executed or unavailable escrow requests can revert, and keeper ETH is not refunded by this function.",
+        "Explorer snapshot reports depositPaused=false, withdrawalPaused=false, aggregateVault=0x1E914730B4Cd343aE14530F0BBF6b350d83B833d and asset=USDC. These are point-in-time reported values, not persistence or runtime attestation. Configurator can pause operations or replace aggregateVault; the immutable AUTH reference is not automatically replaced with it.",
+        "Nonzero caller-selected request callbacks remain excluded. The two separately granted callback entrypoints are admitted only under mandatory zero-request-callback scope at this exact root; zero disables neither configured protocol hooks nor asynchronous keepers. Permit, approvals/transfers, privileged share accounting, pause/configuration and all views remain excluded. The fixed configured aggregate dependency may revert or change; its source bundled in the vault compilation is contextual only, not an independently verified current deployed aggregate ABI. Umami requires lawful jurisdictional participation; no KYC eligibility or legal suitability is inferred."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1016 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "address": "0x2E6cd2d30aa43f40aa81619ff4b6E0a41479B13F",
+  "protocol": "sushiswap-v3",
+  "deploymentEvidence": {
+    "sourceRef": "https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/deployments/ethereum/SwapRouter.json ; https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/deployments/ethereum/.chainId",
+    "verifiedAt": "2026-10-16",
+    "chainId": 1,
+    "address": "0x2E6cd2d30aa43f40aa81619ff4b6E0a41479B13F",
+    "transactionHash": "0x00fb4044e0c8976455fbabbdde3165efb7b260226a576138bac4ace5e176fa84",
+    "constructorArguments": [
+      "0xbACEB8eC6b9355Dfc0269C18bac9d6E2Bdc29C4F",
+      "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+    ],
+    "evidence": "Pinned official Ethereum hardhat-deploy artifact binds exact address, receipt, constructor arguments and full ABI. Adjacent .chainId contains 1. Reviewed source is direct constructor-bound SwapRouter, not a proxy. No independent live bytecode/storage check is claimed."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/deployments/ethereum/SwapRouter.json ; https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/contracts/SwapRouter.sol",
+    "verifiedAt": "2026-10-16",
+    "chainId": 1,
+    "address": "0x2E6cd2d30aa43f40aa81619ff4b6E0a41479B13F",
+    "evidence": "ABI is copied from the same pinned official deployment record, not generic Uniswap ABI. SwapRouter, Path, CallbackValidation, PeripheryPayments and PeripheryPaymentsWithFee source reviewed at this commit.",
+    "supportingRefs": [
+      "https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/contracts/libraries/Path.sol",
+      "https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/contracts/libraries/CallbackValidation.sol",
+      "https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/contracts/base/PeripheryPayments.sol",
+      "https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/contracts/base/PeripheryPaymentsWithFee.sol"
+    ]
+  },
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_factory",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_WETH9",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "WETH9",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes",
+              "name": "path",
+              "type": "bytes"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "deadline",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountOutMinimum",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct ISwapRouter.ExactInputParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "exactInput",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "tokenIn",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "tokenOut",
+              "type": "address"
+            },
+            {
+              "internalType": "uint24",
+              "name": "fee",
+              "type": "uint24"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "deadline",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountOutMinimum",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint160",
+              "name": "sqrtPriceLimitX96",
+              "type": "uint160"
+            }
+          ],
+          "internalType": "struct ISwapRouter.ExactInputSingleParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "exactInputSingle",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes",
+              "name": "path",
+              "type": "bytes"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "deadline",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountOut",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountInMaximum",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct ISwapRouter.ExactOutputParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "exactOutput",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "tokenIn",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "tokenOut",
+              "type": "address"
+            },
+            {
+              "internalType": "uint24",
+              "name": "fee",
+              "type": "uint24"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "deadline",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountOut",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountInMaximum",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint160",
+              "name": "sqrtPriceLimitX96",
+              "type": "uint160"
+            }
+          ],
+          "internalType": "struct ISwapRouter.ExactOutputSingleParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "exactOutputSingle",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "factory",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "data",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "multicall",
+      "outputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "results",
+          "type": "bytes[]"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "refundETH",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "selfPermit",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiry",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "selfPermitAllowed",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiry",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "selfPermitAllowedIfNecessary",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "selfPermitIfNecessary",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountMinimum",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        }
+      ],
+      "name": "sweepToken",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountMinimum",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeBips",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "feeRecipient",
+          "type": "address"
+        }
+      ],
+      "name": "sweepTokenWithFee",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "amount0Delta",
+          "type": "int256"
+        },
+        {
+          "internalType": "int256",
+          "name": "amount1Delta",
+          "type": "int256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_data",
+          "type": "bytes"
+        }
+      ],
+      "name": "uniswapV3SwapCallback",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountMinimum",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        }
+      ],
+      "name": "unwrapWETH9",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountMinimum",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeBips",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "feeRecipient",
+          "type": "address"
+        }
+      ],
+      "name": "unwrapWETH9WithFee",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "WETH9",
+      "signature": "WETH9()",
+      "decision": "excluded",
+      "reason": "Exclude read-only immutable wrapped-native getter; no transaction or read API added."
+    },
+    {
+      "functionName": "exactInput",
+      "signature": "exactInput((bytes,address,uint256,uint256,uint256))",
+      "decision": "admitted",
+      "reason": "Admit explicit exact-input multihop swap. Packed path encodes token addresses and uint24 pool fees, not executor addresses or calldata; source derives pools from immutable factory, uses caller as first payer, checks deadline and minimum output."
+    },
+    {
+      "functionName": "exactInputSingle",
+      "signature": "exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))",
+      "decision": "admitted",
+      "reason": "Admit explicit exact-input single-pool swap with input/output tokens, pool fee, recipient, deadline, amountIn, minimum output and price limit. Callback payer is msg.sender and callback sender must be the factory-derived pool."
+    },
+    {
+      "functionName": "exactOutput",
+      "signature": "exactOutput((bytes,address,uint256,uint256,uint256))",
+      "decision": "admitted",
+      "reason": "Admit explicit exact-output multihop swap. Packed path is reversed output-to-input token/fee routing, not arbitrary execution; source enforces deadline and maximum input, and verifies pool callbacks."
+    },
+    {
+      "functionName": "exactOutputSingle",
+      "signature": "exactOutputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))",
+      "decision": "admitted",
+      "reason": "Admit explicit exact-output single-pool swap with maximum input, recipient, deadline and price limit. With nonzero price limit source may return less than amountOut; caller must account for this documented behavior."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "decision": "excluded",
+      "reason": "Exclude read-only immutable factory getter; no transaction or read API added."
+    },
+    {
+      "functionName": "multicall",
+      "signature": "multicall(bytes[])",
+      "decision": "excluded",
+      "reason": "Exclude opaque delegatecall batch. Existing same-target multicall scope binds only its separately reviewed NPM child language; no new router child execution scope is introduced."
+    },
+    {
+      "functionName": "refundETH",
+      "signature": "refundETH()",
+      "decision": "excluded",
+      "reason": "Exclude standalone shared-router native balance recovery from this swap-only admission. Refund is a separate whole-balance operation, not automatic per-swap settlement; callers must not leave native surplus."
+    },
+    {
+      "functionName": "selfPermit",
+      "signature": "selfPermit(address,uint256,uint256,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Exclude token-permit/signature authorization; existing allowance-based swaps are selected separately."
+    },
+    {
+      "functionName": "selfPermitAllowed",
+      "signature": "selfPermitAllowed(address,uint256,uint256,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Exclude token-permit/signature authorization; existing allowance-based swaps are selected separately."
+    },
+    {
+      "functionName": "selfPermitAllowedIfNecessary",
+      "signature": "selfPermitAllowedIfNecessary(address,uint256,uint256,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Exclude token-permit/signature authorization; existing allowance-based swaps are selected separately."
+    },
+    {
+      "functionName": "selfPermitIfNecessary",
+      "signature": "selfPermitIfNecessary(address,uint256,uint256,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Exclude token-permit/signature authorization; existing allowance-based swaps are selected separately."
+    },
+    {
+      "functionName": "sweepToken",
+      "signature": "sweepToken(address,uint256,address)",
+      "decision": "excluded",
+      "reason": "Exclude standalone sweep of entire shared-router token balance to caller-selected recipient from this swap-only admission; no isolated per-swap balance entitlement is established."
+    },
+    {
+      "functionName": "sweepTokenWithFee",
+      "signature": "sweepTokenWithFee(address,uint256,address,uint256,address)",
+      "decision": "excluded",
+      "reason": "Exclude standalone shared-router token sweep with caller-selected fee distribution; not a selected swap and no isolated per-swap balance entitlement is established."
+    },
+    {
+      "functionName": "uniswapV3SwapCallback",
+      "signature": "uniswapV3SwapCallback(int256,int256,bytes)",
+      "decision": "excluded",
+      "reason": "Exclude pool-only callback accepting signed deltas and encoded payer data. It is not a top-level user action; source restricts msg.sender to factory-derived pool."
+    },
+    {
+      "functionName": "unwrapWETH9",
+      "signature": "unwrapWETH9(uint256,address)",
+      "decision": "excluded",
+      "reason": "Exclude standalone shared-router WETH balance unwrap to caller-selected recipient; output should be directed to the intended nonzero token recipient by the admitted swap."
+    },
+    {
+      "functionName": "unwrapWETH9WithFee",
+      "signature": "unwrapWETH9WithFee(uint256,address,uint256,address)",
+      "decision": "excluded",
+      "reason": "Exclude standalone shared-router WETH balance unwrap with caller-selected fee distribution; not part of selected direct token settlement."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "sushiswap-v3:v3:1:0x2e6cd2d30aa43f40aa81619ff4b6e0a41479b13f:exact-input",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x2E6cd2d30aa43f40aa81619ff4b6E0a41479B13F",
+      "functionName": "exactInput",
+      "signature": "exactInput((bytes,address,uint256,uint256,uint256))",
+      "abi": {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "bytes",
+                "name": "path",
+                "type": "bytes"
+              },
+              {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amountOutMinimum",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISwapRouter.ExactInputParams",
+            "name": "params",
+            "type": "tuple"
+          }
+        ],
+        "name": "exactInput",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and bound ABI: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/deployments/ethereum/SwapRouter.json ; chain: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/deployments/ethereum/.chainId ; source: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/contracts/SwapRouter.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "sushiswap-v3",
+      "label": "SushiSwap V3 exactInput",
+      "operation": "exact-input",
+      "warnings": [
+        "Caller selects token pair/path, pool fee, recipient, deadline, input/output bounds and price limit where present; source admission does not validate those financial choices.",
+        "Packed path bytes encode token addresses and uint24 fees, not arbitrary external executor calldata. Exact-output multihop paths are reversed relative to exact-input paths.",
+        "All four functions are payable and can spend native ETH when paying WETH. Excess msg.value and unspent native input are NOT automatically refunded; refundETH is not admitted here. Prefer pre-approved WETH/ERC20 input with zero value to avoid leaving publicly recoverable router surplus.",
+        "A zero recipient redirects output to the router; sweep/unwrap helpers and multicall are not admitted here. Use an intended nonzero token recipient and do not rely on later recovery or native-output settlement.",
+        "With nonzero sqrtPriceLimitX96, exactOutputSingle can receive less than requested output. Fee-on-transfer/rebasing/nonstandard tokens, balances, allowances, liquidity, gas and successful execution are not attested.",
+        "This is the direct Sushi V3 periphery SwapRouter, not RouteProcessor or Universal Router. Catalog metadata is not a grant or current runtime-bytecode, complete-workflow or financial-safety attestation; independent permission and pause controls remain required."
+      ]
+    },
+    {
+      "capabilityId": "sushiswap-v3:v3:1:0x2e6cd2d30aa43f40aa81619ff4b6e0a41479b13f:exact-input-single",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x2E6cd2d30aa43f40aa81619ff4b6E0a41479B13F",
+      "functionName": "exactInputSingle",
+      "signature": "exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))",
+      "abi": {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "tokenIn",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "tokenOut",
+                "type": "address"
+              },
+              {
+                "internalType": "uint24",
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amountIn",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amountOutMinimum",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint160",
+                "name": "sqrtPriceLimitX96",
+                "type": "uint160"
+              }
+            ],
+            "internalType": "struct ISwapRouter.ExactInputSingleParams",
+            "name": "params",
+            "type": "tuple"
+          }
+        ],
+        "name": "exactInputSingle",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and bound ABI: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/deployments/ethereum/SwapRouter.json ; chain: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/deployments/ethereum/.chainId ; source: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/contracts/SwapRouter.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "sushiswap-v3",
+      "label": "SushiSwap V3 exactInputSingle",
+      "operation": "exact-input-single",
+      "warnings": [
+        "Caller selects token pair/path, pool fee, recipient, deadline, input/output bounds and price limit where present; source admission does not validate those financial choices.",
+        "Packed path bytes encode token addresses and uint24 fees, not arbitrary external executor calldata. Exact-output multihop paths are reversed relative to exact-input paths.",
+        "All four functions are payable and can spend native ETH when paying WETH. Excess msg.value and unspent native input are NOT automatically refunded; refundETH is not admitted here. Prefer pre-approved WETH/ERC20 input with zero value to avoid leaving publicly recoverable router surplus.",
+        "A zero recipient redirects output to the router; sweep/unwrap helpers and multicall are not admitted here. Use an intended nonzero token recipient and do not rely on later recovery or native-output settlement.",
+        "With nonzero sqrtPriceLimitX96, exactOutputSingle can receive less than requested output. Fee-on-transfer/rebasing/nonstandard tokens, balances, allowances, liquidity, gas and successful execution are not attested.",
+        "This is the direct Sushi V3 periphery SwapRouter, not RouteProcessor or Universal Router. Catalog metadata is not a grant or current runtime-bytecode, complete-workflow or financial-safety attestation; independent permission and pause controls remain required."
+      ]
+    },
+    {
+      "capabilityId": "sushiswap-v3:v3:1:0x2e6cd2d30aa43f40aa81619ff4b6e0a41479b13f:exact-output",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x2E6cd2d30aa43f40aa81619ff4b6E0a41479B13F",
+      "functionName": "exactOutput",
+      "signature": "exactOutput((bytes,address,uint256,uint256,uint256))",
+      "abi": {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "bytes",
+                "name": "path",
+                "type": "bytes"
+              },
+              {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amountOut",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amountInMaximum",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ISwapRouter.ExactOutputParams",
+            "name": "params",
+            "type": "tuple"
+          }
+        ],
+        "name": "exactOutput",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and bound ABI: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/deployments/ethereum/SwapRouter.json ; chain: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/deployments/ethereum/.chainId ; source: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/contracts/SwapRouter.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "sushiswap-v3",
+      "label": "SushiSwap V3 exactOutput",
+      "operation": "exact-output",
+      "warnings": [
+        "Caller selects token pair/path, pool fee, recipient, deadline, input/output bounds and price limit where present; source admission does not validate those financial choices.",
+        "Packed path bytes encode token addresses and uint24 fees, not arbitrary external executor calldata. Exact-output multihop paths are reversed relative to exact-input paths.",
+        "All four functions are payable and can spend native ETH when paying WETH. Excess msg.value and unspent native input are NOT automatically refunded; refundETH is not admitted here. Prefer pre-approved WETH/ERC20 input with zero value to avoid leaving publicly recoverable router surplus.",
+        "A zero recipient redirects output to the router; sweep/unwrap helpers and multicall are not admitted here. Use an intended nonzero token recipient and do not rely on later recovery or native-output settlement.",
+        "With nonzero sqrtPriceLimitX96, exactOutputSingle can receive less than requested output. Fee-on-transfer/rebasing/nonstandard tokens, balances, allowances, liquidity, gas and successful execution are not attested.",
+        "This is the direct Sushi V3 periphery SwapRouter, not RouteProcessor or Universal Router. Catalog metadata is not a grant or current runtime-bytecode, complete-workflow or financial-safety attestation; independent permission and pause controls remain required."
+      ]
+    },
+    {
+      "capabilityId": "sushiswap-v3:v3:1:0x2e6cd2d30aa43f40aa81619ff4b6e0a41479b13f:exact-output-single",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x2E6cd2d30aa43f40aa81619ff4b6E0a41479B13F",
+      "functionName": "exactOutputSingle",
+      "signature": "exactOutputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))",
+      "abi": {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "tokenIn",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "tokenOut",
+                "type": "address"
+              },
+              {
+                "internalType": "uint24",
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amountOut",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amountInMaximum",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint160",
+                "name": "sqrtPriceLimitX96",
+                "type": "uint160"
+              }
+            ],
+            "internalType": "struct ISwapRouter.ExactOutputSingleParams",
+            "name": "params",
+            "type": "tuple"
+          }
+        ],
+        "name": "exactOutputSingle",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and bound ABI: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/deployments/ethereum/SwapRouter.json ; chain: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/deployments/ethereum/.chainId ; source: https://github.com/sushiswap/v3-periphery/blob/5c4e99c9af11adcc03e0255a15d378d432b74ec0/contracts/SwapRouter.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "sushiswap-v3",
+      "label": "SushiSwap V3 exactOutputSingle",
+      "operation": "exact-output-single",
+      "warnings": [
+        "Caller selects token pair/path, pool fee, recipient, deadline, input/output bounds and price limit where present; source admission does not validate those financial choices.",
+        "Packed path bytes encode token addresses and uint24 fees, not arbitrary external executor calldata. Exact-output multihop paths are reversed relative to exact-input paths.",
+        "All four functions are payable and can spend native ETH when paying WETH. Excess msg.value and unspent native input are NOT automatically refunded; refundETH is not admitted here. Prefer pre-approved WETH/ERC20 input with zero value to avoid leaving publicly recoverable router surplus.",
+        "A zero recipient redirects output to the router; sweep/unwrap helpers and multicall are not admitted here. Use an intended nonzero token recipient and do not rely on later recovery or native-output settlement.",
+        "With nonzero sqrtPriceLimitX96, exactOutputSingle can receive less than requested output. Fee-on-transfer/rebasing/nonstandard tokens, balances, allowances, liquidity, gas and successful execution are not attested.",
+        "This is the direct Sushi V3 periphery SwapRouter, not RouteProcessor or Universal Router. Catalog metadata is not a grant or current runtime-bytecode, complete-workflow or financial-safety attestation; independent permission and pause controls remain required."
+      ]
+    }
+  ]
+}

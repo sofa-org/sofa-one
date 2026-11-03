@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "mantle-meth-staking",
+      "familyVersion": "staking@b3698f2d",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xe3cbd06d7dadb3f4e6557bab7edd924cd1489e8f",
+          "status": "inactive",
+          "contractName": "Staking",
+          "sourceRefs": [
+            "mantle-meth-official-docs",
+            "mantle-meth-official-deployment",
+            "mantle-meth-verified-proxy",
+            "mantle-meth-verified-implementation"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "minMETHAmount",
+                  "type": "uint256"
+                }
+              ],
+              "name": "stake",
+              "outputs": [],
+              "stateMutability": "payable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "mantle-meth-official-docs",
+                "mantle-meth-official-deployment",
+                "mantle-meth-verified-proxy",
+                "mantle-meth-verified-implementation"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "mantle-meth-official-docs",
+      "url": "https://docs.mantle.xyz/meth/components/smart-contracts/staking-meth",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Official Mantle mETH staking documentation identifies the Ethereum Staking role and stake(uint256) method. This evidence identifies the staking contract role, not an mETH token target, current proxy implementation, initialized storage, live configuration, funding, or execution outcome. Documentation/source inspection date is 2026-10-06 UTC."
+    },
+    {
+      "sourceId": "mantle-meth-official-deployment",
+      "url": "https://github.com/mantle-lsp/contracts/blob/bbc4e8bf7d3e3b4ca0c5be07aba409ac66611c76/.mainnet.env",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Pinned official mantle-lsp/contracts commit bbc4e8bf7d3e3b4ca0c5be07aba409ac66611c76, published 2026-05-22, .mainnet.env lists the Ethereum Staking role at 0xe3cbd06d7dadb3f4e6557bab7edd924cd1489e8f. Official repository Staking.sol carrier SHA-256 446670f9a21ac536fa01e9a381e935564dd4d4615fd72ee1e96a404801252772. This repository source differs from the separately address-bound verified implementation source; no whole-source equivalence is asserted."
+    },
+    {
+      "sourceId": "mantle-meth-verified-proxy",
+      "url": "https://etherscan.io/address/0xe3cbd06d7dadb3f4e6557bab7edd924cd1489e8f#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Address-bound Etherscan proxy carrier for target 0xe3cbd06d7dadb3f4e6557bab7edd924cd1489e8f; proxy HTML SHA-256 02579d6c8cf21be3ce1e6d4eff13f199b583da9161abe89f70d78612bf1cb401. Etherscan's dated association links implementation 0x01a360392c74b5b8bf4973f438ff3983507a06a2; this does not prove current proxy implementation, initialized storage, or current runtime identity."
+    },
+    {
+      "sourceId": "mantle-meth-verified-implementation",
+      "url": "https://etherscan.io/address/0x01a360392c74b5b8bf4973f438ff3983507a06a2#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Address-bound Etherscan verified implementation source Staking.sol SHA-256 b3698f2db4860792f87622abfce1004230c49a0f361b87f664b2bcbb6778f445; full implementation ABI SHA-256 25352d7a32971ebf6e4caa8560d54b21bc77e97d0860c68fd19ac0e4fb57788c; exact selected stake(uint256) ABI carrier SHA-256 084cb1e85719366ae23da9e63850a0ed93bf0a22370ab1d98a5c435a100bcf03; implementation HTML SHA-256 f28fb3c970888854be8f2b6138fab4262d076edaffa16785e2f8e67c2c3a91ae. Source is the address-bound verified contract body, not compiler proof or proof that the pinned repository source is byte/code-equivalent. The dated proxy association does not prove the present implementation or storage configuration."
+    }
+  ],
+  "unresolved": []
+}

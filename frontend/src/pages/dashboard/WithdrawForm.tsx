@@ -4,12 +4,18 @@ import { CopyButton } from '@/components/CopyButton';
 import { SUPPORTED_CHAINS } from '@/lib/chains';
 import type { ListWithdrawalAddressesResponse, WithdrawalToken } from '@/lib/api';
 import type { WithdrawError, WithdrawSuccess } from './wallet-helpers';
+import { isWithdrawalTerminal, type WithdrawalIntent } from './wallet-recovery';
 
 export interface WithdrawFormProps {
   to: string;
   amount: string;
   token: WithdrawalToken;
   selectedChainId: number;
+  withdrawalReady: boolean;
+  withdrawalIntent: WithdrawalIntent | null;
+  recoveryStorageError: string | null;
+  onAuthorizeChain: () => void;
+  onResumeWithdrawal: () => void;
   withdrawLoading: boolean;
   withdrawResult: WithdrawSuccess | null;
   withdrawError: WithdrawError | null;
@@ -38,6 +44,11 @@ export function WithdrawForm({
   amount,
   token,
   selectedChainId,
+  withdrawalReady,
+  withdrawalIntent,
+  recoveryStorageError,
+  onAuthorizeChain,
+  onResumeWithdrawal,
   withdrawLoading,
   withdrawResult,
   withdrawError,
@@ -65,10 +76,29 @@ export function WithdrawForm({
   const amountHelp = token === 'NATIVE'
     ? `Enter a ${nativeCurrencySymbol} amount in native token units. Leave enough ${nativeCurrencySymbol} for gas.`
     : `Enter a ${token} amount. Keep enough native gas on this chain for the transaction.`;
+  const intentPending = Boolean(withdrawalIntent && !isWithdrawalTerminal(withdrawalIntent.status));
 
   return (
     <div className="pt-6 border-t border-brand-border">
       <h3 className="text-base font-bold font-serif text-brand-text mb-6">Withdraw</h3>
+
+      {recoveryStorageError && <p role="alert" className="mb-4 text-sm text-red-800">{recoveryStorageError}</p>}
+      {!withdrawalReady && (
+        <div role="status" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          <p>Withdrawals require current API authorization on {SUPPORTED_CHAINS.find((chain) => chain.id === selectedChainId)?.name ?? `chain ${selectedChainId}`}. Balances remain available.</p>
+          <button type="button" onClick={onAuthorizeChain} className="mt-2 font-semibold underline">Authorize / renew this chain</button>
+        </div>
+      )}
+      {withdrawalIntent && (
+        <div role="status" className="mb-4 space-y-2 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
+          <p>{intentPending ? 'Withdrawal outcome is not confirmed. Resume this saved withdrawal; do not submit a duplicate.' : `Saved withdrawal status: ${withdrawalIntent.status}.`}</p>
+          <p className="break-all">{withdrawalIntent.displayAmount} {withdrawalIntent.token} to {withdrawalIntent.to} on chain {withdrawalIntent.chainId}.</p>
+          <p className="break-all font-mono text-xs">Intent: {withdrawalIntent.idempotencyKey}</p>
+          {withdrawalIntent.transactionId && <p className="break-all font-mono text-xs">Transaction: {withdrawalIntent.transactionId}</p>}
+          {intentPending ? <button type="button" disabled={withdrawLoading || Boolean(recoveryStorageError)} onClick={onResumeWithdrawal} className="font-semibold underline disabled:opacity-50">{withdrawLoading ? 'Checking withdrawal...' : 'Resume withdrawal'}</button>
+            : !withdrawResult && <button type="button" onClick={onReset} className="font-semibold underline">Withdraw another</button>}
+        </div>
+      )}
 
       {withdrawError && (
         <div className="mb-6 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -89,10 +119,10 @@ export function WithdrawForm({
       )}
 
       {withdrawResult && (
-        <div className="mb-6 space-y-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800 shadow-sm">
+        <div className={`mb-6 space-y-3 rounded-xl border p-4 text-sm font-medium shadow-sm ${withdrawResult.status === 'confirmed' ? 'border-green-200 bg-green-50 text-green-800' : 'border-red-200 bg-red-50 text-red-800'}`}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
+              {withdrawResult.status === 'confirmed' ? <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" /> : <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />}
               <span>{withdrawResult.message}</span>
             </div>
             <button
@@ -232,6 +262,7 @@ export function WithdrawForm({
       </section>
 
       <form onSubmit={onSubmit} className="space-y-6">
+        <fieldset disabled={withdrawLoading || Boolean(withdrawalIntent)}>
         <div>
           <label className="text-[11px] font-bold uppercase tracking-widest text-brand-muted mb-2 block">
             Recipient Address
@@ -297,13 +328,14 @@ export function WithdrawForm({
         <div className="pt-2">
           <button
             type="submit"
-            disabled={withdrawLoading}
+            disabled={withdrawLoading || !withdrawalReady || Boolean(withdrawalIntent) || Boolean(recoveryStorageError)}
             className="flex items-center justify-center gap-2 rounded-full bg-brand-text px-8 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-brand-text/90 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50"
           >
             {withdrawLoading && <Loader2 className="h-4 w-4 animate-spin" />}
             <span>{withdrawLoading ? 'Submitting...' : 'Send Withdrawal'}</span>
           </button>
         </div>
+        </fieldset>
       </form>
     </div>
   );

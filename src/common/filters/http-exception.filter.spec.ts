@@ -2,6 +2,7 @@ import {
   BadRequestException,
   BadGatewayException,
   InternalServerErrorException,
+  HttpException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ function createHost(exceptionRequest: Record<string, unknown> = {}) {
   const response = {
     status: jest.fn().mockReturnThis(),
     json: jest.fn(),
+    setHeader: jest.fn(),
   };
   const request = {
     method: 'GET',
@@ -153,5 +155,26 @@ describe('HttpExceptionFilter', () => {
         message: 'Internal server error',
       }),
     );
+  });
+
+  it('preserves a valid rate-limit retry value and sets Retry-After', () => {
+    const { host, response } = createHost();
+    new HttpExceptionFilter().catch(new HttpException({ code: 'POLYMARKET_SIGN_RATE_LIMITED', message: 'Rate limit', retryAfterSeconds: 12 }, 429), host);
+    expect(response.setHeader).toHaveBeenCalledWith('Retry-After', '12');
+    expect(response.json).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 429, code: 'POLYMARKET_SIGN_RATE_LIMITED', retryAfterSeconds: 12 }));
+  });
+
+  it.each([0, -2, 1.5, '12', Number.POSITIVE_INFINITY])('drops invalid retryAfterSeconds %s', (retryAfterSeconds) => {
+    const { host, response } = createHost();
+    new HttpExceptionFilter().catch(new HttpException({ code: 'POLYMARKET_SIGN_RATE_LIMITED', message: 'Rate limit', retryAfterSeconds }, 429), host);
+    expect(response.setHeader).not.toHaveBeenCalled();
+    expect(response.json).toHaveBeenCalledWith(expect.not.objectContaining({ retryAfterSeconds: expect.anything() }));
+  });
+
+  it('does not pass retry metadata through for non-429 exceptions', () => {
+    const { host, response } = createHost();
+    new HttpExceptionFilter().catch(new HttpException({ code: 'OTHER', message: 'No', retryAfterSeconds: 12 }, 400), host);
+    expect(response.setHeader).not.toHaveBeenCalled();
+    expect(response.json).toHaveBeenCalledWith(expect.not.objectContaining({ retryAfterSeconds: expect.anything() }));
   });
 });

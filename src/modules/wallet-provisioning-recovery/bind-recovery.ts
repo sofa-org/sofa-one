@@ -71,22 +71,22 @@ export async function bindProvisionedAccount(
     if (!wallet) throw new Error('Wallet not found');
     if (wallet.userId !== owner.userId) throw new Error('Wallet owner changed during recovery');
     if ((wallet.agentOpenfortAccountId && wallet.agentOpenfortAccountId !== input.accountId) ||
-        (wallet.agentWalletAddress && wallet.agentWalletAddress.toLowerCase() !== address.toLowerCase()) ||
+        (wallet.signerAddress && wallet.signerAddress.toLowerCase() !== address.toLowerCase()) ||
         (wallet.agentKeyHash && wallet.agentKeyHash.toLowerCase() !== hash.toLowerCase())) throw new Error('Wallet already has conflicting agent identity');
     if (intent.agentOpenfortAccountId && intent.agentOpenfortAccountId !== input.accountId) throw new Error('Intent already assigned to another provider account');
-    if ((intent.agentWalletAddress && intent.agentWalletAddress.toLowerCase() !== address.toLowerCase()) ||
+    if ((intent.signerAddress && intent.signerAddress.toLowerCase() !== address.toLowerCase()) ||
         (intent.agentKeyHash && intent.agentKeyHash.toLowerCase() !== hash.toLowerCase())) throw new Error('Intent has conflicting provider identity');
     const otherWallet = await tx.userWallet.findFirst({ where: { id: { not: input.walletId }, OR: [
-      { agentOpenfortAccountId: input.accountId }, { agentWalletAddress: { equals: address, mode: 'insensitive' } },
+      { agentOpenfortAccountId: input.accountId }, { signerAddress: { equals: address, mode: 'insensitive' } },
     ] }, select: { id: true } });
     const otherIntent = await tx.walletProvisioningIntent.findFirst({ where: { walletId: { not: input.walletId }, OR: [
-      { agentOpenfortAccountId: input.accountId }, { agentWalletAddress: { equals: address, mode: 'insensitive' } },
+      { agentOpenfortAccountId: input.accountId }, { signerAddress: { equals: address, mode: 'insensitive' } },
     ] }, select: { walletId: true } });
     if (otherWallet || otherIntent) throw new Error('Provider account or address is already assigned elsewhere');
     const now = new Date();
     const updated = await tx.walletProvisioningIntent.updateMany({
       where: { walletId: input.walletId, dispatchToken: input.dispatchToken, status: intent.status },
-      data: { status: 'provisioned', agentOpenfortAccountId: input.accountId, agentWalletAddress: address, agentKeyHash: hash,
+      data: { status: 'provisioned', agentOpenfortAccountId: input.accountId, signerAddress: address, agentKeyHash: hash,
         resolution: 'operator_bound', resolutionDetails: `operator=${input.operator}; evidence=${input.evidence}`.slice(0, 1000), resolvedAt: now },
     });
     if (updated.count !== 1) throw new Error('Intent compare-and-set failed');

@@ -1,0 +1,38 @@
+{
+  "protocol": "Yodeswap",
+  "website": "https://yodeswap.dog/",
+  "reviewedAt": "2026-10-24",
+  "status": "excluded",
+  "chainId": 2000,
+  "reason": "Primary own repository identifies DogeChain mainnet chain2000, outside allowed chains1,10,56,137,143,8453,42161. No supported-chain own deployment established; no new chain added.",
+  "sourceRefs": [
+    "https://github.com/yodedex/yodeswap-default-tokenlist",
+    "https://raw.githubusercontent.com/yodedex/yodeswap-default-tokenlist/696cafc9a9cba70e6617ec3439cd7ef76d2052dd/README.md"
+  ],
+  "primarySource": {
+    "url": "https://raw.githubusercontent.com/yodedex/yodeswap-default-tokenlist/696cafc9a9cba70e6617ec3439cd7ef76d2052dd/README.md",
+    "revision": "696cafc9a9cba70e6617ec3439cd7ef76d2052dd",
+    "sha256": "71dac2eb103a3ee119e3080c67dbdecd932cd06e7d755e843de2b4dde39c982d",
+    "content": "---\ndescription: 'Build on Yodeswap and need help? let us know.'\n---\n\n## \u2728 Building on Yodeswap and DogeChain\n\n## **Yodeswap Mainnet Contracts:**\n\n`Mainnet Deployed @ https://yodeswap.dog`\n\n**Router Address**: `0x72d85Ab47fBfc5E7E04a8bcfCa1601D8f8cE1a50`\n\n**Factory Address**: `0xAaA04462e35f3e40D798331657cA015169e005d7`\n\n**Multicall Address**: `0xBBa16192B6F91765ABDFb795934835113D6d552B`\n\n**WWDOGE Address**: `0xB7ddC6414bf4F5515b52D8BdD69973Ae205ff101`\n\n## How to get your token LOGO on Yodeswap:\n\n### 1. Image for the Token Logo <a id=\"1-image-for-the-token-logo\"></a>\n\n> * **File Extension**: `png` . Uppercase `PNG` is considered invalid\n> * **File Name**\uff1a`logo.png`\n> * **Size**: `256px by 256px`\n> * **Background**: Transparent is a must\n\n### 2. Token Information File <a id=\"2-token-information-file\"></a>\n\n> * Fork the repository and add the token information (example below) to yodeswap.tokenlist.json\n> * Create a folder under assets/{blockchainName}/{tokenAddress}\n> * Add the token icon (logo.png) under the folder created in the previous step\n> * Add the token information in the yodeswap.tokenlist.json file, in the format shown below\n\nThe sample below shows what information has to be included on the `yodeswap.tokenlist.json` file.  \nPlease make sure that the details are accurate and follows the formatting.  \nThe contract address should follow the checksum address format \\(see next requirement\\).\n\n```\n{\n       \"chainId\":2000,\n       \"address\":\"0x6FC4563460d5f45932C473334d5c1C5B4aEA0E01\",\n       \"name\":\"Yodedex Token\",\n       \"symbol\":\"YODE\",\n       \"decimals\":18,\n       \"logoURI\":\"https://raw.githubusercontent.com/yodedex/yodeswap-default-tokenlist/main/assets/dogechain/0x6FC4563460d5f45932C473334d5c1C5B4aEA0E01/logo.png\"\n\n},\n\n```\n\n## How to get your LOGO Approved\n\nFork and Submit @ [https://github.com/yodedex/yodeswap-default-tokenlist](https://github.com/yodedex/yodeswap-default-tokenlist) \n\nThe Pull request will be screened before it gets added to the repository. In order to get approved, your submission must meet the following requirements.\n\n* **Project has a website.**\n* **Has a social media presence.**\n* **Project must have some trading volume (ie. > $ 20k). This is subject to per project review**\n* **Verified Contract on DogeChain Explorer.**\n* **Detailed Token Information.**\n"
+  },
+  "targets": [
+    {
+      "chainId": 2000,
+      "address": "0x72d85ab47fbfc5e7e04a8bcfca1601d8f8ce1a50",
+      "role": "Router",
+      "status": "excluded_unsupported_chain"
+    },
+    {
+      "chainId": 2000,
+      "address": "0xaaa04462e35f3e40d798331657ca015169e005d7",
+      "role": "Factory",
+      "status": "excluded_unsupported_chain"
+    }
+  ],
+  "fullAbi": [],
+  "selectedFunctions": [],
+  "functionDecisions": [],
+  "limitations": [
+    "No ABI/source inventory attempted on unsupported chain. Third-party deprecated labeling not promoted into primary shutdown proof; chain exclusion is sufficient."
+  ]
+}

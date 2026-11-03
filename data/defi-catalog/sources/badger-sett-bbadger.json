@@ -1,0 +1,1280 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "address": "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
+  "protocol": "badger-sett",
+  "website": "https://github.com/Badger-Finance/badger-legacy-sunset",
+  "deploymentEvidence": {
+    "sourceRef": "https://badger.com/ ; https://github.com/Badger-Finance/badger-legacy-sunset ; https://etherscan.io/address/0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28#code",
+    "verifiedAt": "2026-10-17",
+    "chainId": 1,
+    "address": "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
+    "deployment": {
+      "transactionHash": "0x39d1e7320c5fedec1182d3c417548ef890b5905778f6d6c3226aa13bbc0901bc",
+      "blockNumber": "11380871",
+      "transactionIndex": "72",
+      "deployer": "0xDA25ee226E534d868f0Dd8a459536b03fEE9079b"
+    },
+    "proxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0x9376B47E7eC9D4cfd5313Dc1FB0DFF4F61E8c481",
+          "name": "SettV1h"
+        }
+      ]
+    },
+    "evidence": "Official site explicitly links the legacy-sunset repository, whose Ethereum vault table maps BADGER to this proxy and instructs withdrawAll. Exact explorer and Sourcify independently resolve SettV1h implementation 0x9376B47E7eC9D4cfd5313Dc1FB0DFF4F61E8c481. Legacy frontend removal is not taken to imply all on-chain exits are unpaused or executable."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x19d97d8fa813ee2f51ad4b4e04ea08baf4dffc28?fields=abi,compilation,deployment,proxyResolution ; https://sourcify.dev/server/v2/contract/1/0x9376b47e7ec9d4cfd5313dc1fb0dff4f61e8c481?fields=abi,compilation,deployment,proxyResolution ; https://sourcify.dev/server/v2/contract/1/0x9376b47e7ec9d4cfd5313dc1fb0dff4f61e8c481?fields=sources",
+    "verifiedAt": "2026-10-17",
+    "chainId": 1,
+    "address": "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
+    "implementationAddress": "0x9376B47E7eC9D4cfd5313Dc1FB0DFF4F61E8c481",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.6.12+commit.27d51765",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "istanbul",
+        "remappings": []
+      },
+      "name": "SettV1h",
+      "fullyQualifiedName": "SettV1h.sol:SettV1h"
+    },
+    "implementationDeployment": {
+      "transactionHash": "0xd15fc6cb7a182d30121f122bd6f4fc5d7b20e411734de7d7b88e6921cde0d33d",
+      "blockNumber": "13772365",
+      "transactionIndex": "160",
+      "deployer": "0x283C857BA940A61828d9F4c09e3fceE2e7aEF3f7"
+    },
+    "proxyMatch": {
+      "creation": "match",
+      "runtime": "match"
+    },
+    "implementationMatch": {
+      "creation": "match",
+      "runtime": "match"
+    },
+    "sourceFile": "SettV1h.sol",
+    "sourceSha256": "98e10d6379f991d32d2c56e1828ed576469b4a238c4024ecad54694be00171d8",
+    "evidence": "Full original implementation ABI followed by full original proxy ABI; all 47 function entries individually reviewed. No generic prior Sett interface substituted. Selected fragments preserve original ABI exactly. Reported source matches and proxy resolution are not independent fresh runtime checks."
+  },
+  "abi": [
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "FullPricePerShareUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "blockNumber",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "GAC",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IGac"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "MULTISIG",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "approveContractAccess",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "approved",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "available",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balance",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "blockLock",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "controller",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decreaseAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "subtractedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositAll",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositFor",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "earn",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "getPricePerFullShare",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "governance",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "harvest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "reserve",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "increaseAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "addedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_controller",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_governance",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_keeper",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_overrideTokenName",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "_namePrefix",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "_symbolPrefix",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "keeper",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "max",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "min",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "patchBalances",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "revokeContractAccess",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setController",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_controller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setGovernance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_governance",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setKeeper",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_keeper",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setMin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_min",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setStrategist",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_strategist",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "strategist",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "token",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IERC20Upgradeable"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "trackFullPricePerShare",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdrawAll",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_logic",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_admin",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "AdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Upgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "fallback",
+      "stateMutability": "payable"
+    },
+    {
+      "name": "admin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "changeAdmin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "implementation",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "upgradeTo",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "upgradeToAndCall",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "GAC",
+      "signature": "GAC()",
+      "decision": "excluded",
+      "reason": "Read-only GAC getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "MULTISIG",
+      "signature": "MULTISIG()",
+      "decision": "excluded",
+      "reason": "Read-only MULTISIG getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "allowance",
+      "signature": "allowance(address,address)",
+      "decision": "excluded",
+      "reason": "Read-only allowance getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "approve",
+      "signature": "approve(address,uint256)",
+      "decision": "excluded",
+      "reason": "Share-token approval management is outside the reviewed underlying exit scope."
+    },
+    {
+      "functionName": "approveContractAccess",
+      "signature": "approveContractAccess(address)",
+      "decision": "excluded",
+      "reason": "Governance-only caller-contract allowlist administration."
+    },
+    {
+      "functionName": "approved",
+      "signature": "approved(address)",
+      "decision": "excluded",
+      "reason": "Read-only approved getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "available",
+      "signature": "available()",
+      "decision": "excluded",
+      "reason": "Read-only available getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "balance",
+      "signature": "balance()",
+      "decision": "excluded",
+      "reason": "Read-only balance getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "balanceOf",
+      "signature": "balanceOf(address)",
+      "decision": "excluded",
+      "reason": "Read-only balanceOf getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "blockLock",
+      "signature": "blockLock(address)",
+      "decision": "excluded",
+      "reason": "Read-only blockLock getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "controller",
+      "signature": "controller()",
+      "decision": "excluded",
+      "reason": "Read-only controller getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "decimals",
+      "signature": "decimals()",
+      "decision": "excluded",
+      "reason": "Read-only decimals getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "decreaseAllowance",
+      "signature": "decreaseAllowance(address,uint256)",
+      "decision": "excluded",
+      "reason": "Share-token allowance decrease is outside the reviewed underlying exit scope."
+    },
+    {
+      "functionName": "deposit",
+      "signature": "deposit(uint256)",
+      "decision": "excluded",
+      "reason": "Excluded from this legacy exit-only admission: current official site removes legacy-vault frontend access and directs users to withdrawal instructions; no renewed deposit support is claimed."
+    },
+    {
+      "functionName": "depositAll",
+      "signature": "depositAll()",
+      "decision": "excluded",
+      "reason": "Excluded legacy whole-balance deposit; sunset guide is used for exits, not advertising renewed deposits."
+    },
+    {
+      "functionName": "depositFor",
+      "signature": "depositFor(address,uint256)",
+      "decision": "excluded",
+      "reason": "Excluded legacy third-party-recipient deposit; this admission is exit-only."
+    },
+    {
+      "functionName": "earn",
+      "signature": "earn()",
+      "decision": "excluded",
+      "reason": "Keeper/governance-only controller deployment of idle assets; not caller share withdrawal."
+    },
+    {
+      "functionName": "getPricePerFullShare",
+      "signature": "getPricePerFullShare()",
+      "decision": "excluded",
+      "reason": "Read-only getPricePerFullShare getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "governance",
+      "signature": "governance()",
+      "decision": "excluded",
+      "reason": "Read-only governance getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "harvest",
+      "signature": "harvest(address,uint256)",
+      "decision": "excluded",
+      "reason": "Controller-only reserve-token transfer; not caller share withdrawal."
+    },
+    {
+      "functionName": "increaseAllowance",
+      "signature": "increaseAllowance(address,uint256)",
+      "decision": "excluded",
+      "reason": "Share-token allowance increase is outside the reviewed underlying exit scope."
+    },
+    {
+      "functionName": "initialize",
+      "signature": "initialize(address,address,address,address,bool,string,string)",
+      "decision": "excluded",
+      "reason": "Initializer establishes token, controller, roles and share metadata; excluded."
+    },
+    {
+      "functionName": "keeper",
+      "signature": "keeper()",
+      "decision": "excluded",
+      "reason": "Read-only keeper getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "max",
+      "signature": "max()",
+      "decision": "excluded",
+      "reason": "Read-only max getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "min",
+      "signature": "min()",
+      "decision": "excluded",
+      "reason": "Read-only min getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "name",
+      "signature": "name()",
+      "decision": "excluded",
+      "reason": "Read-only name getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "patchBalances",
+      "signature": "patchBalances()",
+      "decision": "excluded",
+      "reason": "Governance-only patch transfers balances from fixed exploiter addresses to multisig; not ordinary user execution."
+    },
+    {
+      "functionName": "revokeContractAccess",
+      "signature": "revokeContractAccess(address)",
+      "decision": "excluded",
+      "reason": "Governance-only caller-contract allowlist revocation."
+    },
+    {
+      "functionName": "setController",
+      "signature": "setController(address)",
+      "decision": "excluded",
+      "reason": "Governance-only mutable controller dependency replacement."
+    },
+    {
+      "functionName": "setGovernance",
+      "signature": "setGovernance(address)",
+      "decision": "excluded",
+      "reason": "Governance-only authority replacement."
+    },
+    {
+      "functionName": "setKeeper",
+      "signature": "setKeeper(address)",
+      "decision": "excluded",
+      "reason": "Governance-only keeper replacement."
+    },
+    {
+      "functionName": "setMin",
+      "signature": "setMin(uint256)",
+      "decision": "excluded",
+      "reason": "Governance-only idle/strategy allocation threshold update."
+    },
+    {
+      "functionName": "setStrategist",
+      "signature": "setStrategist(address)",
+      "decision": "excluded",
+      "reason": "Governance-only strategist replacement."
+    },
+    {
+      "functionName": "strategist",
+      "signature": "strategist()",
+      "decision": "excluded",
+      "reason": "Read-only strategist getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "symbol",
+      "signature": "symbol()",
+      "decision": "excluded",
+      "reason": "Read-only symbol getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "token",
+      "signature": "token()",
+      "decision": "excluded",
+      "reason": "Read-only token getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "totalSupply",
+      "signature": "totalSupply()",
+      "decision": "excluded",
+      "reason": "Read-only totalSupply getter/quote; excluded from transaction capabilities, not a read API."
+    },
+    {
+      "functionName": "trackFullPricePerShare",
+      "signature": "trackFullPricePerShare()",
+      "decision": "excluded",
+      "reason": "Authorized actor-only price event emission; maintenance rather than user exit."
+    },
+    {
+      "functionName": "transfer",
+      "signature": "transfer(address,uint256)",
+      "decision": "excluded",
+      "reason": "Share-token transfer is outside this exit-only admission; GAC blacklist and block-lock constraints are not bypassed."
+    },
+    {
+      "functionName": "transferFrom",
+      "signature": "transferFrom(address,address,uint256)",
+      "decision": "excluded",
+      "reason": "Delegated share-token transfer is outside this exit-only admission; source additionally enforces GAC transferFromDisabled."
+    },
+    {
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary share-denominated legacy exit burns caller shares and pays underlying to caller. Source retains GAC pause, contract-access defense, blacklist and same-block lock; may call controller.withdraw if idle funds are insufficient."
+    },
+    {
+      "functionName": "withdrawAll",
+      "signature": "withdrawAll()",
+      "decision": "admitted",
+      "reason": "Ordinary full-share legacy exit invokes the same internal withdrawal using caller balance. All GAC/access/blacklist/block-lock checks remain authoritative."
+    },
+    {
+      "functionName": "admin",
+      "signature": "admin()",
+      "decision": "excluded",
+      "reason": "Proxy administrative getter/dispatcher, not user exit."
+    },
+    {
+      "functionName": "changeAdmin",
+      "signature": "changeAdmin(address)",
+      "decision": "excluded",
+      "reason": "Proxy administration replacement, excluded."
+    },
+    {
+      "functionName": "implementation",
+      "signature": "implementation()",
+      "decision": "excluded",
+      "reason": "Proxy implementation dispatcher, not user exit."
+    },
+    {
+      "functionName": "upgradeTo",
+      "signature": "upgradeTo(address)",
+      "decision": "excluded",
+      "reason": "Proxy implementation upgrade, excluded."
+    },
+    {
+      "functionName": "upgradeToAndCall",
+      "signature": "upgradeToAndCall(address,bytes)",
+      "decision": "excluded",
+      "reason": "Proxy implementation upgrade with opaque delegatecall data, excluded."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "badger-sett:v1h:1:0x19d97d8fa813ee2f51ad4b4e04ea08baf4dffc28:withdraw",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256)",
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://badger.com/ ; https://github.com/Badger-Finance/badger-legacy-sunset ; https://etherscan.io/address/0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28#code ; ABI: https://sourcify.dev/server/v2/contract/1/0x19d97d8fa813ee2f51ad4b4e04ea08baf4dffc28?fields=abi,compilation,deployment,proxyResolution ; https://sourcify.dev/server/v2/contract/1/0x9376b47e7ec9d4cfd5313dc1fb0dff4f61e8c481?fields=abi,compilation,deployment,proxyResolution ; https://sourcify.dev/server/v2/contract/1/0x9376b47e7ec9d4cfd5313dc1fb0dff4f61e8c481?fields=sources",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "badger-sett",
+      "label": "Badger bBADGER legacy exit withdraw",
+      "operation": "withdraw",
+      "warnings": [
+        "Official badger.com no longer provides legacy vault frontends and links the legacy-sunset exit guide. This record admits only withdraw/withdrawAll at the exact bBADGER proxy, not deposits, staking, eBTC or other Setts.",
+        "Share amounts are bBADGER units, not underlying BADGER amounts or a fixed 1:1 exchange. WithdrawAll consumes the caller entire share balance; underlying goes to msg.sender with zero native value, without requiring share allowance.",
+        "GAC.paused, blacklist checks, same-block locks and _defend remain on-chain restrictions. Caller must be tx.origin or governance-approved; smart-account/session-key transactions may revert unless contract access is approved. No approval/role changes are granted.",
+        "Withdrawal burns shares before requesting any shortfall from the mutable controller. If the controller returns less than requested, payout is reduced without a caller-set minimum or deadline; fees, rounding and token behavior can reduce receipts.",
+        "Proxy upgrades and mutable controller/strategy/GAC configuration remain independent risks. Source-service implementation resolution and ABI review are not a fresh runtime identity, balance, liquidity, successful execution, backing or financial-safety attestation. Catalog entries create no API-key grant and bypass no execution controls."
+      ]
+    },
+    {
+      "capabilityId": "badger-sett:v1h:1:0x19d97d8fa813ee2f51ad4b4e04ea08baf4dffc28:withdraw-all",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28",
+      "functionName": "withdrawAll",
+      "signature": "withdrawAll()",
+      "abi": {
+        "name": "withdrawAll",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://badger.com/ ; https://github.com/Badger-Finance/badger-legacy-sunset ; https://etherscan.io/address/0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28#code ; ABI: https://sourcify.dev/server/v2/contract/1/0x19d97d8fa813ee2f51ad4b4e04ea08baf4dffc28?fields=abi,compilation,deployment,proxyResolution ; https://sourcify.dev/server/v2/contract/1/0x9376b47e7ec9d4cfd5313dc1fb0dff4f61e8c481?fields=abi,compilation,deployment,proxyResolution ; https://sourcify.dev/server/v2/contract/1/0x9376b47e7ec9d4cfd5313dc1fb0dff4f61e8c481?fields=sources",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "badger-sett",
+      "label": "Badger bBADGER legacy exit withdrawAll",
+      "operation": "withdraw-all",
+      "warnings": [
+        "Official badger.com no longer provides legacy vault frontends and links the legacy-sunset exit guide. This record admits only withdraw/withdrawAll at the exact bBADGER proxy, not deposits, staking, eBTC or other Setts.",
+        "Share amounts are bBADGER units, not underlying BADGER amounts or a fixed 1:1 exchange. WithdrawAll consumes the caller entire share balance; underlying goes to msg.sender with zero native value, without requiring share allowance.",
+        "GAC.paused, blacklist checks, same-block locks and _defend remain on-chain restrictions. Caller must be tx.origin or governance-approved; smart-account/session-key transactions may revert unless contract access is approved. No approval/role changes are granted.",
+        "Withdrawal burns shares before requesting any shortfall from the mutable controller. If the controller returns less than requested, payout is reduced without a caller-set minimum or deadline; fees, rounding and token behavior can reduce receipts.",
+        "Proxy upgrades and mutable controller/strategy/GAC configuration remain independent risks. Source-service implementation resolution and ABI review are not a fresh runtime identity, balance, liquidity, successful execution, backing or financial-safety attestation. Catalog entries create no API-key grant and bypass no execution controls."
+      ]
+    }
+  ]
+}

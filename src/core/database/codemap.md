@@ -8,7 +8,7 @@ Central persistence layer for the SOFA ONE backend. Owns the single Prisma clien
 ### prisma.service.ts
 - **Symbols**: `PrismaService` (class, `@Injectable`, `extends PrismaClient`, implements `OnModuleInit`, `OnModuleDestroy`).
 - **Responsibility**: Instantiate and manage the Prisma client bound to Postgres via the `@prisma/adapter-pg` driver adapter.
-- **Constructor**: `super({ adapter: new PrismaPg(process.env.DATABASE_URL!) })` — reads `DATABASE_URL` directly from the environment (non-null asserted; validated upstream by `src/config/env.validation.ts`).
+- **Constructor**: Reads DATABASE_URL and appends `-c timezone=UTC` to effective connection startup options before constructing PrismaPg. Existing options are preserved; every pooled connection returns UTC timestamptz wall time as required by the installed adapter.
 - **Inputs**: `process.env.DATABASE_URL` (Postgres connection string).
 - **Outputs**: Full generated Prisma client API (models, queries, transactions) inherited from `PrismaClient`; lifecycle hooks `$connect`/`$disconnect`.
 - **Lifecycle**: `onModuleInit()` → `await this.$connect()`; `onModuleDestroy()` → `await this.$disconnect()`.
@@ -36,7 +36,7 @@ Central persistence layer for the SOFA ONE backend. Owns the single Prisma clien
 
 ## Integration
 - **Imported by**: `src/app.module.ts` (root module, `imports: [PrismaModule]`).
-- **Consumed by** (inject `PrismaService`): `auth`, `api-key`, `wallet` (incl. `withdrawal-policy`), `transactions` (incl. `transaction-policy`), `session-key`, `eoa-execution`, `mfa`, `step-up`, `security-events`, `security-notifications`, `billing` (incl. `stripe`, `onchain/usdc-payment`, `billing-reconciliation`, `billing-entitlement`), `health`, and guards `api-key-auth`, `openfort-user`, `either-auth`.
+- **Consumed by**: Feature services and application/API-key guards. Application sessions load current User/freeze state locally; Openfort IAM is not used by this persistence layer.
 - **Transaction reuse**: `wallet.service.ts` and `withdrawal-policy.service.ts` accept `PrismaService | Prisma.TransactionClient` so the same client participates in `$transaction` scopes.
 - **Health**: `health.service.ts` uses `PrismaService` for DB liveness checks.
 - **Tests**: Widely mocked via `{ provide: PrismaService, useValue: ... }` across `*.spec.ts` files.

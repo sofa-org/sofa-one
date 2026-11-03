@@ -1,0 +1,2851 @@
+{
+  "schemaVersion": 1,
+  "chainId": 42161,
+  "address": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+  "protocol": "ramses-v1",
+  "version": "v1",
+  "contractName": "Router via RamsesTransparentUpgradeableProxy",
+  "reviewedAt": "2026-10-18",
+  "website": "https://www.ramses.xyz/docs/legacy-liquidity",
+  "websiteEvidence": {
+    "sourceRef": "https://www.ramses.xyz/docs/legacy-liquidity ; https://www.ramses.xyz/docs/raw/legacy-liquidity.md ; https://www.ramses.xyz/ ; https://old.ramses.xyz/liquidity ; https://old.ramses.xyz/_next/static/chunks/pages/_app-a4adcad635962842.js",
+    "verifiedAt": "2026-10-18",
+    "evidence": "Current ramses.xyz root serves Ramses X metadata and current official documentation describes legacy stable/volatile liquidity; no unrelated domain-lander content observed. Use official legacy-liquidity documentation as an informational frontend directory link, not an assertion that current UI routes through this historical V1 router. Old frontend metadata still identifies Ramses on Arbitrum; its published app bundle contains the unsupported-version notice recorded in lifecycle. Current deployment docs bind a DIFFERENT newer classic router and do not replace historical V1 attribution."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses",
+    "verifiedAt": "2026-10-18",
+    "chainId": 42161,
+    "address": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+    "sourceType": "archived official Arbitrum CORE deployment mapping plus exact-chain/address proxy resolution",
+    "officialMappingExcerpt": "Contract Addresses for RAMSES on Arbitrum: CORE: PairFactory: 0xAAA20D08e59F6561f242b08513D36266C5A29415; Router: 0xAAA87963EFeB6f7E0a2711F397663105Acb1805e; RamsesTimelock: 0x9314fC5633329d285F744108D637E1222CEbae1c. Separate RAMSES CL Contracts section lists RamsesV2Factory, RouterV2 and UniversalRouter.",
+    "deployment": {
+      "transactionHash": "0xf980d4e240875a271582ef63e356b6b83e284c220c3a559fc7e5d341c1446995",
+      "blockNumber": "69820005",
+      "transactionIndex": "2",
+      "deployer": "0x9CF91D36146AB033Bf0f6A605C8951527A22F8Ba"
+    },
+    "proxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37",
+          "name": "Router"
+        }
+      ]
+    },
+    "implementation": "0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37",
+    "proxyBindingRef": "https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all",
+    "evidence": "2023-12-07 archived official deployment page explicitly maps CORE Router on Arbitrum to this exact proxy, separately from CL RouterV2 and UniversalRouter. Exact chain-42161 Sourcify record identifies RamsesTransparentUpgradeableProxy and reports Router implementation 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Implementation exact-address record supplies matching full ABI/source. Calls target this proxy, never the implementation.",
+    "newerDeploymentNotSelected": {
+      "sourceRef": "https://www.ramses.xyz/docs/raw/contract-addresses.md",
+      "address": "0x1614a7e1fe63960B4684867a62080acd2404757f",
+      "evidence": "Current Arbitrum V2 AMM (Legacy) table lists this different Legacy Router with PairFactory 0xADd32480630A16dfAcEe6eeFcB3ab2181449Dc3B; source-service record compiles Solidity 0.8.30 Router with different interface and added staking/exact-output methods. No identity/version conflation: neither address nor its ABI is admitted here."
+    },
+    "limitations": [
+      "Proxy resolution is source-service-reported evidence, not a fresh RPC/storage or implementation-persistence attestation.",
+      "Factory/weth/pairCodeHash are once-initialized router storage, not immutables. The official historical factory address is attributable; no current proxy storage, initializer calldata, wrapped-native address, balances or pool configuration is asserted.",
+      "Direct Arbiscan proxy retrieval returned HTTP 403. No captcha, wallet connection, human approval or credentialed API was used or required; exact-address Sourcify proxy/implementation evidence was available."
+    ]
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+    "verifiedAt": "2026-10-18",
+    "chainId": 42161,
+    "address": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+    "implementation": "0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37",
+    "sourceType": "exact implementation deployed ABI/source bound by exact proxy resolution; full proxy ABI/source retained",
+    "proxyBindingRefs": [
+      "https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all"
+    ],
+    "matchId": "78190",
+    "sourcifyVerifiedAt": "2024-08-08T10:42:55Z",
+    "reportedMatch": "exact_match",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.13+commit.abaa5c0e",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "london",
+        "remappings": []
+      },
+      "name": "Router",
+      "fullyQualifiedName": "contracts/Router.sol:Router"
+    },
+    "implementationDeployment": {
+      "transactionHash": "0x7005403f9811ccc358646c23ece65f36373496c70b649dc58a2c09d0b0706467",
+      "blockNumber": "88222760",
+      "transactionIndex": "3",
+      "deployer": "0x9CF91D36146AB033Bf0f6A605C8951527A22F8Ba"
+    },
+    "proxyMatchId": "5793993",
+    "proxySourcifyVerifiedAt": "2024-12-15T20:57:12Z",
+    "proxyReportedMatch": "exact_match",
+    "proxyReportedCreationMatch": "exact_match",
+    "proxyReportedRuntimeMatch": "exact_match",
+    "sourceFile": "contracts/Router.sol",
+    "sourceSha256": "10bca216756c3e9aa9467e47ef23cf707271087fc9e43aae4ca8b8f617f60451",
+    "sourceHashRecipe": "SHA-256 of exact complete UTF-8 source content returned by source service without newline/whitespace normalization.",
+    "sourceFilesSha256": {
+      "contracts/Router.sol": "10bca216756c3e9aa9467e47ef23cf707271087fc9e43aae4ca8b8f617f60451",
+      "contracts/interfaces/IPair.sol": "ebafc50d3fddca092d98a7bef2036e8fbbfeb36689b3378f6504aab91624d194",
+      "contracts/interfaces/IWETH.sol": "1725efcbf5a9c7d50a90ae60e3fc7c75a7c691677cb03c1a270ba9de13ab25fb",
+      "contracts/interfaces/IERC20.sol": "87eabd7c9b23ef05d1f3eea093b208609d11a92d9e2dd3ce03c2446bd4b30856",
+      "contracts/interfaces/IRouter.sol": "824afd107d1c412b3ab5ac40c64b68cd3d216bb7b7027d4b67ba497e3c6a0a6b",
+      "contracts/interfaces/IPairFactory.sol": "13f5102a81fea6a2ba565b2cc3b6f147d1e5bb141c64127fd7d9649fb75f4034",
+      "@openzeppelin/contracts/utils/Address.sol": "8160a4242e8a7d487d940814e5279d934e81f0436689132a4e73394bab084a6d",
+      "@openzeppelin/contracts/utils/math/Math.sol": "8059d642ec219d0b9b62fbc76912079529cf494cac988abe5e371f1168b29b0f",
+      "@openzeppelin/contracts/proxy/utils/Initializable.sol": "493ad76e926f92dbd2500548cf3ce783e2965993ae67fec229ee21a87bf6b972"
+    },
+    "proxySourceFile": "contracts/RamsesTransparentUpgradeableProxy.sol",
+    "proxySourceSha256": "3ee11185a75fc5644c73d3d97069abd11dcea9e9382e7b3f98009771a8a52968",
+    "catalogAbiNormalization": "None. Complete original implementation ABI followed by complete original proxy ABI is retained in top-level abi. All selected fragments are unchanged implementation function entries including tuple components, names, outputs, internalType and stateMutability. No generic Solidly/Uniswap ABI or unbound repo implementation is substituted.",
+    "evidence": "Top-level abi concatenates all 30 implementation ABI entries (28 functions, Initialized event, receive) and all 12 proxy ABI entries (6 functions, constructor, 3 events, fallback, receive). All 34 callable function entries are reviewed with abiOrigin. Router body, actual imported Initializable/Math and dependency interfaces plus proxy dispatch/upgrade mechanics were inspected. Constructor/fallback/receive/events create no capabilities. No current bytecode identity or independently audited external pair/token implementation is claimed."
+  },
+  "dependencyEvidence": {
+    "officialFactory": "0xAAA20D08e59F6561f242b08513D36266C5A29415",
+    "factoryAttributionRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses",
+    "factoryProxyResolutionRef": "https://sourcify.dev/server/v2/contract/42161/0xAAA20D08e59F6561f242b08513D36266C5A29415?fields=abi,compilation,proxyResolution",
+    "reportedFactoryImplementation": "0xAA9B8a7430474119A442ef0C2Bf88f7c3c776F2F",
+    "factoryImplementationSourceRef": "https://sourcify.dev/server/v2/contract/42161/0xAA9B8a7430474119A442ef0C2Bf88f7c3c776F2F?fields=sources,compilation",
+    "factorySourceFile": "contracts/factories/PairFactory.sol",
+    "factorySourceSha256": "c85c9d0d734cef2fdba2fb7da607629b37c03a822d8f1062c718bf50a0746382",
+    "evidence": "Historical official factory is itself reported as an EIP1967 proxy. Its bound PairFactory source stores getPair/isPair mappings, creates TransparentUpgradeableProxy pairs, initializes them and calls setFeeSplit; hardcoded timelock can change pairImplementation for future creations. Fee manager can set stable/volatile fees and per-pair overrides (MAX_FEE 500 in source, comment 5%), and change fee splits; pauser can change isPaused. These source semantics are not current fee/pause/state claims. No exact individual pool implementation or token deployment is admitted or attested.",
+    "dependencyLimitations": "Factory evidence explains external mutable dependencies; it is not proof of current router factory storage, pair implementation identity, wrapped-native storage or an external dependency audit."
+  },
+  "lifecycle": {
+    "sourceRef": "https://old.ramses.xyz/liquidity ; https://old.ramses.xyz/_next/static/chunks/pages/_app-a4adcad635962842.js",
+    "verifiedAt": "2026-10-18",
+    "publishedNotice": "Starting May 1st, this version of Ramses will no longer be supported and will not receive updates. Contracts remain immutably deployed and permissionless. Add liquidity to Ramses V3 for the latest features and continued support.",
+    "evidence": "Published old frontend app JavaScript also asks users to accept heightened security risks from unmaintained protocols. The notice does not specify a year. Its immutable-contract statement is not adopted: exact V1 router, documented factory and factory-created pair sources are upgradeable. The notice is frontend support cessation, not source evidence of unconditional router action reverts or all-pool shutdown; ordinary existing ABI actions are inventoried/admitted without current liquidity or full workflow proof."
+  },
+  "sourceSemantics": {
+    "routes": "route[] is an explicit (address from,address to,bool stable) array, not opaque executable bytes. Ordinary quotes/transfer/swap choose pairs from initialized factory.getPair. The obsolete CREATE2 comment and cached pairCodeHash do not describe this implementation pairFor body. Caller must supply a coherent contiguous route. Both swap loops use empty pair callback data; there is no user-supplied executor/target/data, delegatecall, multicall or router reward hook in the selected implementation actions.",
+    "fees": "Router does not impose its own fixed swap arithmetic or fee. getAmountsOut asks selected pair.getAmountOut; fee-supporting loop instead calls getAmountOut comparing stable and volatile quotes then executes the chosen route type, retaining mismatch/revert risk. External pool/factory fee changes remain authoritative.",
+    "native": "ETH-named methods wrap/unwrap initialized weth. Router receive asserts weth sender. Native adds refund unused msg.value to caller; both native exact-input swap variants consume all msg.value and have no unused-input refund. Native-output ordinary swap unwraps calculated output, fee-supporting swap unwraps whole router weth balance. Native transfers use empty calldata with forwarded gas and require success. No current weth storage address or execution compatibility is asserted.",
+    "liquidity": "_addLiquidity first requires both desired amounts >= minimums; creates factory pair if absent, then uses desired amounts for empty reserves or optimizes one side and checks its minimum. This differs from forks without the initial two minimum checks. No minimum LP-output exists. Removals burn caller LP transferred by allowance and check gross pair-burn amounts; native supporting removal forwards entire router token balance.",
+    "authority": "Initialize is once-only via imported Initializable; no factory/weth setters in implementation, but proxy upgrade can replace logic and alter storage semantics. recoverFunds transfers selected router token balance only for hardcoded timelock, excluded. Transparent proxy admin cannot fallback to ordinary implementation actions and can replace implementation/admin. Proxy initialize(address,address,bytes) is distinct from excluded router initialize(address,address).",
+    "limitations": "No runtime bytecode/state check, implementation persistence, initialized dependency identity, pool backing/fee configuration, approvals, balances, liquidity, successful execution or financial-safety guarantee. Existing authorization/grants, pauses, canonical ABI/value validation and independent signing/execution policy remain authoritative."
+  },
+  "abi": [
+    {
+      "name": "Initialized",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "uint8"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UNSAFE_swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct Router.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "amountTokenDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct Router.route[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getReserves",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_weth",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "isPair",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "pair",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pairFor",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pair",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quoteAddLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quoteRemoveLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "recoverFunds",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "sortTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "token0",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "token1",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "swapExactETHForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct Router.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct Router.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactTokensForETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct Router.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct Router.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct Router.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSimple",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenFrom",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenTo",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct Router.route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "weth",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IWETH"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    },
+    {
+      "type": "constructor",
+      "inputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "AdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BeaconUpgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "beacon",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Upgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "fallback",
+      "stateMutability": "payable"
+    },
+    {
+      "name": "admin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "admin_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "changeAdmin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "implementation",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "implementation_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_logic",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "admin_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "upgradeTo",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "upgradeToAndCall",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "UNSAFE_swapExactTokensForTokens",
+      "signature": "UNSAFE_swapExactTokensForTokens(uint256[],(address,address,bool)[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Exclude specialized caller-supplied per-hop amounts: funds first pair and calls _swap without computing quotes or enforcing a final amountOutMin; deadline alone does not supply the ordinary swap bound."
+    },
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,bool,uint256,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit token/token stable-or-volatile liquidity addition. Transfers caller tokens by allowance into factory-selected pair (creating it if absent), checks desired amounts against both minimums and optimized actual amount against its minimum, and mints LP to recipient. Deadline enforced; no minimum LP-output parameter."
+    },
+    {
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,bool,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "payable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit token/native-ETH stable-or-volatile liquidity addition. Transfers caller tokens, wraps required msg.value using initialized weth, mints LP to recipient and refunds unused ETH to caller. Both desired minimums checked before optimization; deadline enforced and no minimum LP-output argument."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "stateMutability": "view",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Initialized factory-address getter; read-only dependency introspection, not a transaction capability."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(uint256,address,address)",
+      "stateMutability": "view",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Read-only comparison of stable and volatile pair quotes; returns the greater quote/type, not an executable swap."
+    },
+    {
+      "functionName": "getAmountsOut",
+      "signature": "getAmountsOut(uint256,(address,address,bool)[])",
+      "stateMutability": "view",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Read-only chained quotes for explicit route tuples; no transaction or read-API capability added."
+    },
+    {
+      "functionName": "getReserves",
+      "signature": "getReserves(address,address,bool)",
+      "stateMutability": "view",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Read-only pair reserve lookup reordered by token address; excluded helper."
+    },
+    {
+      "functionName": "initialize",
+      "signature": "initialize(address,address)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Exclude once-only router initialization of factory/weth and cached pairCodeHash; lifecycle/dependency control is not ordinary swap/liquidity authority."
+    },
+    {
+      "functionName": "isPair",
+      "signature": "isPair(address)",
+      "stateMutability": "view",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Read-only configured-factory membership lookup; excluded helper."
+    },
+    {
+      "functionName": "pairFor",
+      "signature": "pairFor(address,address,bool)",
+      "stateMutability": "view",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Read-only configured-factory getPair lookup, despite obsolete CREATE2 source comment; excluded helper."
+    },
+    {
+      "functionName": "quoteAddLiquidity",
+      "signature": "quoteAddLiquidity(address,address,bool,uint256,uint256)",
+      "stateMutability": "view",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Read-only liquidity amount/LP-share estimate; does not provide a mint-output guarantee or transaction capability."
+    },
+    {
+      "functionName": "quoteRemoveLiquidity",
+      "signature": "quoteRemoveLiquidity(address,address,bool,uint256)",
+      "stateMutability": "view",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Read-only reserve/total-supply withdrawal estimate; excluded helper, not an exit."
+    },
+    {
+      "functionName": "recoverFunds",
+      "signature": "recoverFunds(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Exclude privileged arbitrary-token recovery to caller-selected recipient, restricted in source to hardcoded RamsesTimelock 0x9314fC5633329d285F744108D637E1222CEbae1c."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,bool,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/token removal. Transfers caller LP allowance into factory-selected pair and burns to recipient; checks both burn-accounting minimums and deadline, not recipient post-tax balances."
+    },
+    {
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,bool,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/native-ETH removal. Burns caller LP via allowance to router, checks both burn-accounting minimums and deadline, forwards calculated token amount and unwraps calculated weth amount to recipient."
+    },
+    {
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,bool,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit non-permit fee-supporting token/native removal. Checks burn-accounting minimums and deadline, forwards entire router token balance and unwraps calculated weth output; token minimum does not guarantee post-tax recipient receipt."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermit",
+      "signature": "removeLiquidityETHWithPermit(address,bool,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit and approveMax allowance authority; corresponding explicit non-permit removal is selected separately."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,bool,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit and approveMax allowance authority; corresponding explicit non-permit removal is selected separately."
+    },
+    {
+      "functionName": "removeLiquidityWithPermit",
+      "signature": "removeLiquidityWithPermit(address,address,bool,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit and approveMax allowance authority; corresponding explicit non-permit removal is selected separately."
+    },
+    {
+      "functionName": "sortTokens",
+      "signature": "sortTokens(address,address)",
+      "stateMutability": "pure",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Pure token ordering/address validation helper; excluded from transaction capabilities."
+    },
+    {
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "payable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit exact-input native-ETH swap. Requires first route input equal initialized weth, wraps full msg.value, quotes selected routes, checks final output minimum and deadline and sends pair output to recipient; no swap dust refund."
+    },
+    {
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "payable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting native-ETH exact-input swap. Wraps all msg.value, requires weth first input, checks recipient balance increase and deadline. Per-hop maximum stable/volatile quote may mismatch the selected pool and revert."
+    },
+    {
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/native-ETH swap. Requires last route output equal initialized weth, transfers caller input by allowance, checks quoted output minimum and deadline, receives calculated weth output at router and unwraps/sends that calculated amount."
+    },
+    {
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting token/native-ETH exact-input swap. Uses actual hop input and deadline, requires weth final output, minimum-checks and unwraps entire router weth balance for recipient. Per-hop maximum stable/volatile quote may mismatch selected pool and revert."
+    },
+    {
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit multihop exact-input token swap. Quotes caller-selected (from,to,stable) routes via factory pairs, checks final amountOutMin and deadline, funds first pair atomically from caller allowance and routes pair outputs with empty callback bytes."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSimple",
+      "signature": "swapExactTokensForTokensSimple(uint256,uint256,address,address,bool,address,uint256)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit single-hop exact-input token swap. Builds one (from,to,stable) route, quotes that selected pair, bounds final output by amountOutMin and enforces deadline; transfers caller input by allowance and calls pair with empty callback data."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "abiOrigin": "implementation",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting exact-input token swap. Uses balance-minus-reserve actual input per hop and checks recipient token balance increase against amountOutMin plus deadline. Loop quotes maximum of stable/volatile pairs but executes caller-selected type, which can cause revert if it cannot satisfy the larger quote."
+    },
+    {
+      "functionName": "weth",
+      "signature": "weth()",
+      "stateMutability": "view",
+      "abiOrigin": "implementation",
+      "decision": "excluded",
+      "reason": "Initialized wrapped-native-address getter; read-only dependency introspection, not a transaction capability."
+    },
+    {
+      "functionName": "admin",
+      "signature": "admin()",
+      "stateMutability": "payable",
+      "abiOrigin": "proxy",
+      "decision": "excluded",
+      "reason": "Exclude payable proxy-admin introspection dispatcher; source enforces zero value for admin callers and otherwise forwards to implementation. Not ordinary router authority."
+    },
+    {
+      "functionName": "changeAdmin",
+      "signature": "changeAdmin(address)",
+      "stateMutability": "payable",
+      "abiOrigin": "proxy",
+      "decision": "excluded",
+      "reason": "Exclude privileged proxy-admin replacement."
+    },
+    {
+      "functionName": "implementation",
+      "signature": "implementation()",
+      "stateMutability": "payable",
+      "abiOrigin": "proxy",
+      "decision": "excluded",
+      "reason": "Exclude payable proxy-admin implementation introspection dispatcher; not an ordinary router action or read API."
+    },
+    {
+      "functionName": "initialize",
+      "signature": "initialize(address,address,bytes)",
+      "stateMutability": "payable",
+      "abiOrigin": "proxy",
+      "decision": "excluded",
+      "reason": "Exclude proxy initialization of logic/admin with optional opaque delegatecall data; not an ordinary router action."
+    },
+    {
+      "functionName": "upgradeTo",
+      "signature": "upgradeTo(address)",
+      "stateMutability": "payable",
+      "abiOrigin": "proxy",
+      "decision": "excluded",
+      "reason": "Exclude privileged implementation upgrade; no upgrade authority admitted."
+    },
+    {
+      "functionName": "upgradeToAndCall",
+      "signature": "upgradeToAndCall(address,bytes)",
+      "stateMutability": "payable",
+      "abiOrigin": "proxy",
+      "decision": "excluded",
+      "reason": "Exclude privileged implementation upgrade followed by opaque delegated execution."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:add-liquidity",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,bool,uint256,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "amountADesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 addLiquidity",
+      "operation": "add-liquidity",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    },
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:add-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "amountTokenDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 addLiquidityETH",
+      "operation": "add-liquidity-eth",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    },
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 removeLiquidity",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    },
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:remove-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 removeLiquidityETH",
+      "operation": "remove-liquidity-eth",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    },
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 removeLiquidityETHSupportingFeeOnTransferTokens",
+      "operation": "remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    },
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:swap-exact-eth-for-tokens",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct Router.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 swapExactETHForTokens",
+      "operation": "swap-exact-eth-for-tokens",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    },
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct Router.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    },
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:swap-exact-tokens-for-eth",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct Router.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 swapExactTokensForETH",
+      "operation": "swap-exact-tokens-for-eth",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    },
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct Router.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    },
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:swap-exact-tokens-for-tokens",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct Router.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 swapExactTokensForTokens",
+      "operation": "swap-exact-tokens-for-tokens",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    },
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:swap-exact-tokens-for-tokens-simple",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "swapExactTokensForTokensSimple",
+      "signature": "swapExactTokensForTokensSimple(uint256,uint256,address,address,bool,address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSimple",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "tokenFrom",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenTo",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 swapExactTokensForTokensSimple",
+      "operation": "swap-exact-tokens-for-tokens-simple",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    },
+    {
+      "capabilityId": "ramses-v1:v1:42161:0xaaa87963efeb6f7e0a2711f397663105acb1805e:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 42161,
+      "contract": "0xAAA87963EFeB6f7E0a2711F397663105Acb1805e",
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct Router.route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20231207171216id_/https://docs.ramses.exchange/resources/deployed-contract-addresses ; https://sourcify.dev/server/v2/contract/42161/0xAAA87963EFeB6f7E0a2711F397663105Acb1805e?fields=all ; https://sourcify.dev/server/v2/contract/42161/0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "ramses-v1",
+      "label": "Ramses V1 swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects tokens, stable/volatile route tuples, contiguous path, recipient, amounts, minimums and deadline. Caller balances, token/LP allowances, tax behavior, gas and financial parameters remain independent responsibilities.",
+        "Payable selected functions spend native ETH through initialized weth; nonpayable functions require zero native value. Native adds refund unused ETH to caller; exact-input native swaps spend all msg.value. Native sends use empty calldata and may revert for incompatible receivers.",
+        "Router is an upgradeable transparent proxy, not immutable. Reported implementation is 0x0E216DD4f1B5eA81006d41b79F9a1A69A38f3E37. Factory/weth are initialized storage dependencies, not constructor immutables; current values, initialization state, proxy admin and future upgrades are unattested.",
+        "pairFor uses configured factory getPair, not the saved pairCodeHash. Pair implementations, factory fee configuration and external tokens can change or revert behavior. Router adds no separate fee/reward hook; pair fee logic is external and no fixed fee is promised.",
+        "Fee-supporting hops quote the greater stable/volatile output but execute caller-selected pool type; mismatches can revert. Supporting native removal forwards entire router token balance; supporting token/native swaps unwrap entire router weth balance. Removal minimums are burn accounting, not net post-tax receipt.",
+        "Liquidity adds check desired amounts against both minimums before optimization and check the optimized side again. No minimum LP-output argument exists. Ordinary routes pass empty pair callback bytes; no permit, unsafe per-hop amounts, initializer, recovery, proxy administration or opaque executor is admitted.",
+        "Legacy frontend bundle announces support/update cessation starting May 1st (year unspecified) and warns of unmaintained-protocol risk. Its claim that contracts are immutable is not adopted: verified router, factory and factory-created pairs use upgradeable proxies. Directory docs link is informational, not a promise of legacy UI support.",
+        "Sourcify exact_match labels are preserved as reported historical source-service statuses, not a fresh runtime/dependency identity, funding, liquidity, execution or financial-safety attestation. Catalog metadata grants no API-key permission and bypasses no grant, pause, canonical ABI/value or independent signing/execution control."
+      ]
+    }
+  ],
+  "reviewSummary": {
+    "implementationAbiEntries": 30,
+    "proxyAbiEntries": 12,
+    "totalAbiEntries": 42,
+    "implementationFunctions": 28,
+    "proxyFunctions": 6,
+    "reviewedFunctions": 34,
+    "admittedFunctions": 12,
+    "excludedFunctions": 22,
+    "ordinarySwapFunctions": 7,
+    "nonPermitLiquidityFunctions": 5,
+    "excludedReadOnlyImplementationFunctions": 10,
+    "excludedImplementationStateChangingFunctions": 6,
+    "excludedProxyFunctions": 6,
+    "payableAdmittedFunctions": 3,
+    "scope": "Historical Arbitrum V1 proxy only: seven ordinary exact-input swaps and five non-permit liquidity actions. Exclude all getters, unsafe supplied-hop amounts, permits, initialization, recovery, proxy administration and opaque upgrade execution. Not current V3, UniversalRouter, newer classic router, gauge staking or direct pool capability."
+  }
+}

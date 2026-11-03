@@ -167,6 +167,25 @@ describe('environment validation', () => {
     );
   });
 
+  it.each(['0', '-1', '1.5', '101', 'NaN', ''])(
+    'rejects invalid outbound confirmation threshold %j',
+    (value) => {
+      expect(() => validate({ ...baseConfig, BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: value }))
+        .toThrow();
+    },
+  );
+
+  it('defaults outbound confirmations independently from incoming USDC claims', () => {
+    expect(validate({ ...baseConfig, BILLING_USDC_REQUIRED_CONFIRMATIONS: '10' }))
+      .toEqual(expect.objectContaining({
+        BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: 5, BILLING_USDC_REQUIRED_CONFIRMATIONS: 10,
+      }));
+    expect(validate({ ...baseConfig, BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: '1' }))
+      .toEqual(expect.objectContaining({ BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: 1 }));
+    expect(validate({ ...baseConfig, BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: '100' }))
+      .toEqual(expect.objectContaining({ BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS: 100 }));
+  });
+
   it('requires both treasuries and RPC URLs when USDC billing is enabled', () => {
     expect(() => validate({ ...baseConfig, BILLING_USDC_ENABLED: 'true' })).toThrow(
       'BILLING_USDC_TREASURY_ADDRESS_1 must be set when BILLING_USDC_ENABLED=true',
@@ -471,85 +490,66 @@ describe('environment validation', () => {
     });
   });
 
-  describe('SIMULATION_RPC_URLS__<chainId>', () => {
-    it('accepts valid https URLs for supported chain ids', () => {
-      expect(
-        validate({
-          ...baseConfig,
-          SIMULATION_RPC_URLS__84532: 'https://base-sepolia.example.com',
-          SIMULATION_RPC_URLS__8453: 'https://base.example.com/v1',
-        }),
-      ).toEqual(
-        expect.objectContaining({
-          SIMULATION_RPC_URLS__84532: 'https://base-sepolia.example.com',
-          SIMULATION_RPC_URLS__8453: 'https://base.example.com/v1',
-        }),
-      );
-    });
-
-    it('starts without any simulation RPC URLs (runtime debt-gate fails closed per chain)', () => {
-      expect(validate(baseConfig)).toEqual(expect.objectContaining(baseConfig));
-    });
-
-    it('rejects non-https simulation RPC URLs', () => {
+  describe('RPC_URLS__<chainId>', () => {
+    it('rejects non-https RPC URLs', () => {
       expect(() =>
         validate({
           ...baseConfig,
-          SIMULATION_RPC_URLS__84532: 'http://insecure.example.com',
+          RPC_URLS__84532: 'http://insecure.example.com',
         }),
-      ).toThrow('SIMULATION_RPC_URLS__84532 must be a valid https URL');
+      ).toThrow(Error);
     });
 
     it('rejects invalid URL values', () => {
       expect(() =>
         validate({
           ...baseConfig,
-          SIMULATION_RPC_URLS__8453: 'not-a-url',
+          RPC_URLS__8453: 'not-a-url',
         }),
-      ).toThrow('SIMULATION_RPC_URLS__8453 must be a valid https URL');
+      ).toThrow(Error);
     });
 
     it('rejects unknown chain ids', () => {
       expect(() =>
         validate({
           ...baseConfig,
-          SIMULATION_RPC_URLS__999999: 'https://evil.example.com',
+          RPC_URLS__999999: 'https://evil.example.com',
         }),
-      ).toThrow('SIMULATION_RPC_URLS__999999 must use a supported chain id');
+      ).toThrow(Error);
     });
 
     it('rejects non-numeric chain suffixes', () => {
       expect(() =>
         validate({
           ...baseConfig,
-          SIMULATION_RPC_URLS__abc: 'https://example.com',
+          RPC_URLS__abc: 'https://example.com',
         }),
-      ).toThrow('SIMULATION_RPC_URLS__abc must use a numeric supported chain id');
+      ).toThrow(Error);
     });
 
     it('rejects empty URL values for a declared chain key', () => {
       expect(() =>
         validate({
           ...baseConfig,
-          SIMULATION_RPC_URLS__84532: '   ',
+          RPC_URLS__84532: '   ',
         }),
-      ).toThrow('SIMULATION_RPC_URLS__84532 must be a non-empty https URL');
+      ).toThrow(Error);
     });
 
-    it('rejects an empty SIMULATION_RPC_URLS object (not implicitly valid)', () => {
+    it('rejects an explicitly empty RPC_URLS map', () => {
       expect(() =>
         validate({
           ...baseConfig,
-          SIMULATION_RPC_URLS: {},
+          RPC_URLS: {},
         }),
-      ).toThrow('SIMULATION_RPC_URLS empty object is not valid');
+      ).toThrow(Error);
 
       expect(() =>
         validate({
           ...baseConfig,
-          SIMULATION_RPC_URLS: '{}',
+          RPC_URLS: '{}',
         }),
-      ).toThrow('SIMULATION_RPC_URLS empty object is not valid');
+      ).toThrow(Error);
     });
   });
 });

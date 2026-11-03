@@ -1,7 +1,6 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
-import { BillingQuotaExceededException } from './billing-quota.exception';
 import { formatUtcMonth, parsePeriod } from './billing.utils';
 import { isAssignmentEntitlementValid, validAssignmentWhere, validatePlanVersion } from './billing-plan-validation';
 
@@ -113,61 +112,6 @@ export class BillingEntitlementService {
       ...FREE_FALLBACK,
       effectivePeriod: formatUtcMonth(start),
     };
-  }
-
-  /**
-   * Transaction-aware active-wallet hard-quota seam (Phase 2C). Must be called
-   * inside the same interactive transaction that will create/activate the
-   * wallet so the count and the activation share one snapshot (no
-   * check-then-act race). Re-authorizing an already-active wallet
-   * (`status='active'`, `walletAddress IS NOT NULL`, `frozenAt IS NULL`) is
-   * idempotent and always allowed. Only an activation that would add a new
-   * active wallet is gated: when the current active count is already at or
-   * above the plan's `includedWallets`, a `BillingQuotaExceededException`
-   * (429, metric `active_wallets`) is raised. Enterprise/custom null wallet
-   * terms fail closed with an explicit business error — never treated as
-   * unlimited or zero.
-   */
-  async assertWalletActivationAllowed(
-    userId: string,
-    tx: Prisma.TransactionClient,
-    period?: string,
-  ): Promise<void> {
-    const { start } = parsePeriod(period);
-    const entitlements = await this.resolveEntitlements(userId, start, tx);
-    const includedWallets = entitlements.includedWallets;
-
-    if (includedWallets === null) {
-      throw new ConflictException(
-        'Cannot activate wallet: plan has Enterprise custom/null wallet terms requiring review',
-      );
-    }
-
-    const existing = await tx.userWallet.findFirst({ where: { userId } });
-    const alreadyActive = Boolean(
-      existing && existing.status === 'active' && existing.walletAddress !== null && existing.frozenAt === null,
-    );
-    if (alreadyActive) return;
-
-    const activeCount = await tx.userWallet.count({
-      where: { userId, status: 'active', walletAddress: { not: null }, frozenAt: null },
-    });
-
-    if (activeCount >= includedWallets) {
-      throw new BillingQuotaExceededException(
-        'active_wallets',
-        includedWallets,
-        entitlements.effectivePeriod,
-        this.secondsUntilNextUtcMonth(),
-      );
-    }
-  }
-
-  /** Seconds until the next UTC month start (when the wallet quota resets). */
-  private secondsUntilNextUtcMonth(): number {
-    const now = new Date();
-    const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-    return Math.max(Math.ceil((nextMonth.getTime() - now.getTime()) / 1000), 1);
   }
 
   async getPlanForPeriod(userId: string, period?: string): Promise<PlanForPeriodResult> {

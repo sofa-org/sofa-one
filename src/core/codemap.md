@@ -25,7 +25,7 @@ src/core/
 ## Design/Patterns
 - **全局模块（`@Global()`）**：`PrismaModule` 与 `OpenfortModule` 均标记为全局，各自只提供并导出单一服务，使 `PrismaService` / `OpenfortService` 可在任意模块注入而无需重复 import。
 - **继承 vs 组合**：`PrismaService extends PrismaClient`，将全部生成的 model/query/transaction 方法直接暴露在注入的服务上。
-- **门面（Facade）**：`OpenfortService` 包装 Openfort SDK 客户端与 viem bundler 客户端，向调用方暴露高层领域方法（建钱包、校验会话/密钥、提交 UserOp、直发交易、安全回执查询）。
+- **门面（Facade）**：`OpenfortService` 包装 Openfort SDK 客户端与 viem bundler 客户端，向调用方暴露建 signer、校验会话/密钥、提交 UserOp、受限链下签名与安全回执查询；不提供 signer EOA 直接发送交易。
 - **配置驱动 + 构造注入**：`OpenfortService` 构造器从 `ConfigService` 读取 `openfort.*` / `pimlico.*` 配置初始化客户端；`PrismaService` 直接读 `process.env.DATABASE_URL`（上游 `src/config/env.validation.ts` 已校验）。
 - **生命周期钩子**：`PrismaService` 实现 `OnModuleInit`/`OnModuleDestroy`，在启动时 `$connect()`、关闭时 `$disconnect()`。
 - **错误归一化**：`OpenfortService` 将所有外部失败经 `logOpenfortError` 记录并转换为带 `API_ERROR_CODES` 业务错误码的 Nest `HttpException`；`withTimeout` 用 `Promise.race` 提供超时保护。
@@ -37,7 +37,7 @@ src/core/
 1. **启动**：`AppModule`（`src/app.module.ts`）imports `PrismaModule` 与 `OpenfortModule`；`PrismaService` 构造时绑定 `PrismaPg` adapter，`onModuleInit()` 调用 `$connect()` 打开连接池。
 2. **持久化**：feature 服务注入 `PrismaService`，直接调用生成方法（如 `prisma.user.findUnique`、`prisma.$transaction`）完成所有 DB 读写；`wallet` / `withdrawal-policy` 等服务接受 `PrismaService | Prisma.TransactionClient` 以参与 `$transaction` 作用域。
 3. **钱包/签名**：`OpenfortService` 提供 `createBackendWallet` / `createAgentWallet`（TEE 后端 EOA + 代理签名者）、`verifyIamSession` / `authorizeEmbeddedAddress`（会话与嵌入式地址归属校验）、`verifyAgentKeyRegistration`（Calibur EIP-7702 delegation + session key 链上校验）。
-4. **交易执行**：`sendUserOperation` 按链选 RPC → 估算 gas 费用 → 挂 paymaster（可赞助）或估算 gas 上限（无赞助）→ `bundlerClient.sendUserOperation` → 等待回执；`sendBackendTransaction` 由后端 EOA 直发；`signData` 仅签名不广播。
+4. **交易执行**：`submitUserOperation` 用后端 agent 签署用户 Calibur 钱包的 UserOperation，保存其 hash 后由 `waitForUserOperationReceipt` 查询 inclusion；bundler 按链使用 Openfort 或 Pimlico。`signData` 仅签名不广播，与用户钱包执行独立。
 5. **回执查询**：`getTransactionReceipt` 返回安全、可判别联合的 `SanitizedReceipt`，供计费对账使用；缺失/失败返回可重试的 `not_found` / `error`。
 6. **关闭**：`onModuleDestroy()` 调用 `$disconnect()` 关闭连接池。
 

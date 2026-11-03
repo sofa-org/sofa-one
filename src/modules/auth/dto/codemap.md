@@ -1,7 +1,7 @@
 # Code Map for /src/modules/auth/dto
 
 ## Responsibility
-Validated request-body shapes for the embedded-wallet authorization and Calibur agent-key registration endpoints of the auth module. These DTOs define the contract between the frontend dashboard and the `POST /auth/embedded-wallet/*` routes.
+Validated request-body shapes for embedded-wallet authorization and agent-key registration.
 
 ## Design/Patterns
 - Plain NestJS DTO classes annotated with `class-validator` decorators; no inheritance or shared base class.

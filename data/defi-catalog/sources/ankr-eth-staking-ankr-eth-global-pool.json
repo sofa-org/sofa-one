@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "ankr-eth-global-pool",
+      "familyVersion": "global-pool-r46@c3723c49",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x84db6ee82b7cf3b47e8f19270abde5718b936670",
+          "status": "inactive",
+          "contractName": "AnkrETHGlobalPool",
+          "sourceRefs": [
+            "ankr-eth-official-staking-docs",
+            "ankr-eth-global-pool-implementation",
+            "ankr-eth-global-pool-proxy"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [],
+              "name": "stakeAndClaimAethC",
+              "outputs": [],
+              "stateMutability": "payable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "ankr-eth-official-staking-docs",
+                "ankr-eth-global-pool-implementation",
+                "ankr-eth-global-pool-proxy"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "ankr-eth-official-staking-docs",
+      "url": "https://github.com/Ankr-network/ankr-docs/tree/0af3485c25398404e27cef67f58956f01cc9bb79/pages/staking-for-developers/smart-contract-api/eth-api.mdx",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Pinned official Ankr-network/ankr-docs commit 0af3485c25398404e27cef67f58956f01cc9bb79 documentation (pages dated 2026-09-10) identifies stakeAndClaimAethC() as the ETH staking-and-claim operation and names the Mainnet GlobalPool Proxy 0x84db6ee82b7cf3b47e8f19270abde5718b936670. The staking smart-contract page identifies the Ethereum pool role. Documentation and the ankrETH product name do not establish the configured token, current proxy implementation/storage, funding, liquidity, or outcome. Inspection date 2026-10-06 is distinct from documentation publication date."
+    },
+    {
+      "sourceId": "ankr-eth-global-pool-implementation",
+      "url": "https://etherscan.io/address/0xecce8778214fd9fe37c141a00cff19853ef5bc4a#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Address-bound Etherscan verified implementation carrier for GlobalPool_R46.sol at implementation 0xecce8778214fd9fe37c141a00cff19853ef5bc4a; exact source path legacy/contracts/upgrades/GlobalPool_R46.sol. Source SHA-256 c3723c491b75321ca596d9daa39127a027561a84d945c94ecf3452105338f2e8; full implementation ABI SHA-256 3cadf93ae204bb935056e644c41ec4b07463d8e8fbfdecdc8bb1ae9e44a6a1e0; selected stakeAndClaimAethC ABI carrier SHA-256 2eb144bee40fd177027034b9c033fb9fcda496e4d147e8f232183d0a9ad660cc; implementation-page HTML SHA-256 605c78bfe627335395e8364e3572685c92ff157a31c338a7382f5dd9372e8ebb. Inspection supports the fixed configured _aethContract share accounting/mint/claim/transfer path, not compiler output or current proxy/storage/token configuration."
+    },
+    {
+      "sourceId": "ankr-eth-global-pool-proxy",
+      "url": "https://etherscan.io/address/0x84db6ee82b7cf3b47e8f19270abde5718b936670#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Address-bound Etherscan GlobalPool proxy carrier; proxy-page HTML SHA-256 2aee535fb8cd6f67fcae207dbd6615a493c115ecbbc50546c8646b9463164279 links the documented role and implementation 0xecce8778214fd9fe37c141a00cff19853ef5bc4a as a dated association only, not proof of current implementation, initialized storage, configured _aethContract, or live runtime behavior."
+    }
+  ],
+  "unresolved": []
+}

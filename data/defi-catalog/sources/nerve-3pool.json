@@ -1,0 +1,1528 @@
+{
+  "schemaVersion": 1,
+  "chainId": 56,
+  "address": "0x1B3771a66ee31180906972580adE9b81AFc5fCDc",
+  "protocol": "nerve-3pool",
+  "version": "v1",
+  "website": "https://medium.com/synapse-protocol/synapses-mainnet-launch-the-hadean-phase-d09fc74b2272",
+  "websiteEvidence": {
+    "sourceRef": "https://medium.com/synapse-protocol/synapses-mainnet-launch-the-hadean-phase-d09fc74b2272 ; https://web.archive.org/web/20210727151541id_/https://docs.nerve.fi/",
+    "verifiedAt": "2026-10-17",
+    "evidence": "Independently read the official successor Synapse announcement, which explicitly identifies former Nerve, links its old application and instructs Nerve pool migration. Use this surviving attributable legacy/migration reference for informational frontend display instead of dead app.nerve.fi/docs.nerve.fi domains, which returned TLS certificate errors. Archived official Nerve homepage establishes Binance Smart Chain and BUSD/USDT/USDC 3pool identity; no operating exchange UI claim."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://web.archive.org/web/20210614021619id_/https://docs.nerve.fi/fundamentals/contract-addresses ; https://sourcify.dev/server/v2/contract/56/0x1B3771a66ee31180906972580adE9b81AFc5fCDc?fields=abi,compilation,deployment,proxyResolution ; https://sourcify.dev/server/v2/contract/56/0x1B3771a66ee31180906972580adE9b81AFc5fCDc?fields=creationBytecode",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0x1B3771a66ee31180906972580adE9b81AFc5fCDc",
+    "deployment": {
+      "transactionHash": "0x453de270eda04fb333d647daef916dec6998d46f496b09603b68f0b4b05527e0",
+      "blockNumber": "5289331",
+      "transactionIndex": "5",
+      "deployer": "0xC9b1C8be257c8a896EC3e48B18F785324ba4c5f5"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "lpToken": "0xf2511b5E4FB0e5E2d123004b672BA14850478C14",
+    "constructorArguments": "0x000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000001c00000000000000000000000000000000000000000000000000000000000000240000000000000000000000000000000000000000000000000000000000000028000000000000000000000000000000000000000000000000000000000000000c800000000000000000000000000000000000000000000000000000000003d0900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000041cdb400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c9b1c8be257c8a896ec3e48b18f785324ba4c5f50000000000000000000000000000000000000000000000000000000000000003000000000000000000000000e9e7cea3dedca5984780bafc599bd69add087d5600000000000000000000000055d398326f99059ff775485246999027b31979550000000000000000000000008ac76a51cc950d9822d68b83fe1ad97b32cd580d0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000012000000000000000000000000000000000000000000000000000000000000000e4e657276652033706f6f6c204c500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007334e52562d4c5000000000000000000000000000000000000000000000000000",
+    "initialTokens": [
+      {
+        "symbol": "BUSD",
+        "address": "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
+        "decimals": 18
+      },
+      {
+        "symbol": "USDT",
+        "address": "0x55d398326f99059fF775485246999027B3197955",
+        "decimals": 18
+      },
+      {
+        "symbol": "USDC",
+        "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+        "decimals": 18
+      }
+    ],
+    "evidence": "Archived official Contract Addresses table explicitly names 3pool Pool at this exact address and separately lists 3Pool LP (3NRV-LP). Archived official overview establishes BSC. Exact-chain Sourcify record identifies direct Swap deployment with constructor, non-proxy resolution and deployed-source ABI: no clone, upgradeable proxy or separate implementation ABI is needed. Constructor transformation values bind token order BUSD/USDT/USDC, all 18 decimals, LP name Nerve 3pool LP and symbol 3NRV-LP. Not a successor Synapse pool or metapool. Explorer direct retrieval returned HTTP 403; no explorer-only assertion is needed."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x1B3771a66ee31180906972580adE9b81AFc5fCDc?fields=abi,compilation,deployment,proxyResolution ; https://sourcify.dev/server/v2/contract/56/0x1B3771a66ee31180906972580adE9b81AFc5fCDc?fields=sources ; https://github.com/nerve-finance/contracts/blob/bda7578cd1c8aab1a5ae316f58c0356730570578/Swap.sol",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0x1B3771a66ee31180906972580adE9b81AFc5fCDc",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.6.12+commit.27d51765",
+      "compilerSettings": {
+        "libraries": {
+          "contracts/SwapUtils.sol": {
+            "SwapUtils": "0x4427b78af4d150a5a1173e8593a84e1003dd8bad"
+          }
+        },
+        "optimizer": {
+          "runs": 10000,
+          "enabled": true
+        }
+      },
+      "name": "Swap",
+      "fullyQualifiedName": "contracts/Swap.sol:Swap"
+    },
+    "matchId": "29331022",
+    "reportedCreationMatch": "match",
+    "reportedRuntimeMatch": "match",
+    "sourceServiceVerifiedAt": "2026-05-20T13:41:25Z",
+    "sourceFile": "contracts/Swap.sol",
+    "sourceSha256": "6df727ef48f5cee54563bf23d138b404f1e6b372ceb6f59c8b84a5bcec4be313",
+    "officialCommit": "bda7578cd1c8aab1a5ae316f58c0356730570578",
+    "evidence": "Complete original 49-entry exact deployed Swap ABI preserved unchanged; 34 callable functions, 14 events and one constructor. Not a generic Saddle/Curve ABI. Pinned official Swap.sol equals deployed source after stripping trailing whitespace at file end. Source service reports match, not exact_match; this is not an independent fresh runtime attestation. No legacy constant/payable flags occur, so selected ABI fragment is unchanged.",
+    "linkedLibrary": {
+      "address": "0x4427b78af4d150a5a1173e8593a84e1003dd8bad",
+      "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x4427b78af4d150a5a1173e8593a84e1003dd8bad?fields=compilation,sources",
+      "compilation": {
+        "language": "Solidity",
+        "compiler": "solc",
+        "compilerVersion": "0.6.12+commit.27d51765",
+        "compilerSettings": {
+          "libraries": {
+            "contracts/MathUtils.sol": {
+              "MathUtils": "0x4ab8eb2591ab616dbac98e3d467018de22945947"
+            }
+          },
+          "optimizer": {
+            "runs": 10000,
+            "enabled": true
+          }
+        },
+        "name": "SwapUtils",
+        "fullyQualifiedName": "contracts/SwapUtils.sol:SwapUtils"
+      },
+      "sourceFile": "contracts/SwapUtils.sol",
+      "sourceSha256": "e0abe42558c21a142060e8b5c81ba1276db00f31c5bfc3ad1388d832a524893b",
+      "includedPoolSourceSha256": "cc578ca54f9d98e0ea9d6ecf9e033821a06fbcbe96d76b3c792aab6f13d030f9",
+      "evidence": "Pool compilation library map binds this exact SwapUtils address. Exact-address library SwapUtils.sol equals the file included with pool source after stripping trailing whitespace at file end; raw SHA256 differs. Withdrawal accounting is reviewed from this actual linked library, not from a generic fork or current repository. Its compiler map links MathUtils at 0x4ab8eb2591ab616dbac98e3d467018de22945947; proportional removal does not call the invariant/MathUtils solver."
+    }
+  },
+  "lifecycleEvidence": {
+    "sourceRef": "https://medium.com/synapse-protocol/synapses-mainnet-launch-the-hadean-phase-d09fc74b2272 ; https://web.archive.org/web/20210824083800id_/https://docs.nerve.fi/nerve-ecosystem/stable-swap-3pool",
+    "verifiedAt": "2026-10-17",
+    "status": "legacy migration; pause-independent proportional exit-only admission",
+    "officialNotice": "Over the next 24 hours, NRV rewards for the BSC Nerve liquidity pools will begin to be discontinued. We recommend that you unstake LP tokens from Nerve here, remove liquidity, and migrate to new pools.",
+    "evidence": "Official 2021-08-29 successor notice explicitly includes Stablecoin 3pool and recommends balanced removal or overweight-asset removal to avoid penalties. It is evidence of migration and reward discontinuation, not proof of current pause state or an all-pool pause. Historical Nerve docs describe 3pool deposits/staking and zero withdrawal fees; they predate migration and are not current availability/fee evidence. No unsupported shutdown, exploit, pause or live-state claim is made.",
+    "admissionEffect": "Admit only proportional removal whose deployed source deliberately omits whenNotPaused. Exclude new deposits/trading under legacy migration policy and retain single-token/imbalanced withdrawal signatures as excluded pause-gated historical paths; no human design/evidence blocker for this ordinary exit."
+  },
+  "sourceReview": {
+    "proportionalExit": {
+      "signature": "removeLiquidity(uint256,uint256[],uint256)",
+      "modifiers": [
+        "nonReentrant",
+        "deadlineCheck(deadline)"
+      ],
+      "noWhenNotPaused": true,
+      "body": "return swapStorage.removeLiquidity(amount, minAmounts);",
+      "evidence": "Exact deployed Swap.sol explicitly documents that liquidity can be removed even when paused. Actual linked SwapUtils checks caller LP balance and minimum-array cardinality, computes each recorded balance times feeAdjustedAmount divided by LP totalSupply, enforces per-token minimums, subtracts balances and transfers to msg.sender, then burns caller LP with burnFrom. No caller-selected executor, callback data, recipient or nested target exists."
+    },
+    "pauseGatedUserFunctions": [
+      "addLiquidity(uint256[],uint256,uint256)",
+      "removeLiquidityImbalance(uint256[],uint256,uint256)",
+      "removeLiquidityOneToken(uint256,uint8,uint256,uint256)",
+      "swap(uint8,uint8,uint256,uint256,uint256)"
+    ],
+    "withdrawalAccounting": "feeAdjustedAmount = amount * (10**10 - calculateCurrentWithdrawFee(account)) / 10**10; output[i] = recordedBalance[i] * feeAdjustedAmount / totalSupply. Withdrawal fee decays over four weeks from recipient depositTimestamp using withdrawFeeMultiplier; LP-token transfers/mints/burns call updateUserWithdrawFee, which ignores address(0). Source return values/minimums are pre-transfer amounts.",
+    "excludedSurfaces": "Owner administration and LP-only accounting callback excluded. This deployed ABI exposes no initializer, flash-loan, permit, arbitrary executor, fallback or receive; none is fabricated or admitted."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_pooledTokens",
+          "type": "address[]",
+          "internalType": "contract IERC20[]"
+        },
+        {
+          "name": "decimals",
+          "type": "uint8[]",
+          "internalType": "uint8[]"
+        },
+        {
+          "name": "lpTokenName",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "lpTokenSymbol",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "_a",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_fee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_adminFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_depositFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_withdrawFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_devaddr",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "AddLiquidity",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "provider",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "tokenAmounts",
+          "type": "uint256[]",
+          "indexed": false,
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "fees",
+          "type": "uint256[]",
+          "indexed": false,
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "invariant",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "lpTokenSupply",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "NewAdminFee",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newAdminFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "NewDepositFee",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newDepositFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "NewSwapFee",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newSwapFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "NewWithdrawFee",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newWithdrawFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OwnershipTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Paused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RampA",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldA",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newA",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "initialTime",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "futureTime",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RemoveLiquidity",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "provider",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "tokenAmounts",
+          "type": "uint256[]",
+          "indexed": false,
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "lpTokenSupply",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RemoveLiquidityImbalance",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "provider",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "tokenAmounts",
+          "type": "uint256[]",
+          "indexed": false,
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "fees",
+          "type": "uint256[]",
+          "indexed": false,
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "invariant",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "lpTokenSupply",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RemoveLiquidityOne",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "provider",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "lpTokenAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "lpTokenSupply",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "boughtId",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokensBought",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "StopRampA",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "currentA",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "time",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TokenSwap",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "buyer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "tokensSold",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokensBought",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "soldId",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        },
+        {
+          "name": "boughtId",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Unpaused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "minToMint",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "calculateCurrentWithdrawFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "calculateRemoveLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "calculateRemoveLiquidityOneToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenIndex",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "availableTokenAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "calculateSwap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenIndexFrom",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "tokenIndexTo",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "dx",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "calculateTokenAmount",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "deposit",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getA",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAPrecise",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAdminBalance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "index",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDepositTimestamp",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "index",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IERC20"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getTokenBalance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "index",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getTokenIndex",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getVirtualPrice",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "paused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "rampA",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "futureA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "futureTime",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minAmounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityImbalance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "maxBurnAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityOneToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenIndex",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "minAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setAdminFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newAdminFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setDefaultDepositFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newDepositFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setDefaultWithdrawFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newWithdrawFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setDevAddress",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_devaddr",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setSwapFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newSwapFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "stopRampA",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenIndexFrom",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "tokenIndexTo",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "dx",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minDy",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapStorage",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "initialA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "futureA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "initialATime",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "futureATime",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "swapFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "adminFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "defaultDepositFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "defaultWithdrawFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "devaddr",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "lpToken",
+          "type": "address",
+          "internalType": "contract LPToken"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transferOwnership",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unpause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateUserWithdrawFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "transferAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdrawAdminFees",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(uint256[],uint256,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "lifecycleDeposit",
+      "reason": "Historical explicit deposit is whenNotPaused; official successor notice discontinues Nerve pool rewards and directs liquidity migration, so new deposits are not advertised."
+    },
+    {
+      "functionName": "calculateCurrentWithdrawFee",
+      "signature": "calculateCurrentWithdrawFee(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "calculateRemoveLiquidity",
+      "signature": "calculateRemoveLiquidity(address,uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "calculateRemoveLiquidityOneToken",
+      "signature": "calculateRemoveLiquidityOneToken(address,uint256,uint8)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "calculateSwap",
+      "signature": "calculateSwap(uint8,uint8,uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "calculateTokenAmount",
+      "signature": "calculateTokenAmount(address,uint256[],bool)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "getA",
+      "signature": "getA()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "getAPrecise",
+      "signature": "getAPrecise()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "getAdminBalance",
+      "signature": "getAdminBalance(uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "getDepositTimestamp",
+      "signature": "getDepositTimestamp(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "getToken",
+      "signature": "getToken(uint8)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "getTokenBalance",
+      "signature": "getTokenBalance(uint8)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "getTokenIndex",
+      "signature": "getTokenIndex(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "getVirtualPrice",
+      "signature": "getVirtualPrice()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "owner",
+      "signature": "owner()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "pause",
+      "signature": "pause()",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Owner-only emergency pause administration."
+    },
+    {
+      "functionName": "paused",
+      "signature": "paused()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "rampA",
+      "signature": "rampA(uint256,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Owner-only amplification-ramp administration."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(uint256,uint256[],uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "category": "proportionalExit",
+      "reason": "Explicit proportional LP redemption has nonReentrant and deadlineCheck but deliberately no whenNotPaused. Exact linked library transfers each pooled asset to caller and burns caller LP with burnFrom; suitable for legacy exit-only admission."
+    },
+    {
+      "functionName": "removeLiquidityImbalance",
+      "signature": "removeLiquidityImbalance(uint256[],uint256,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "lifecyclePauseGatedExit",
+      "reason": "Historical imbalanced removal is whenNotPaused and can be unavailable on a paused legacy pool. Only pause-independent proportional removal is selected; this is not a claim that the live pool is paused."
+    },
+    {
+      "functionName": "removeLiquidityOneToken",
+      "signature": "removeLiquidityOneToken(uint256,uint8,uint256,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "lifecyclePauseGatedExit",
+      "reason": "Historical single-token removal is whenNotPaused and can be unavailable on a paused legacy pool. Only pause-independent proportional removal is selected; this is not a claim that the live pool is paused."
+    },
+    {
+      "functionName": "renounceOwnership",
+      "signature": "renounceOwnership()",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Owner-only ownership relinquishment, not a user pool operation."
+    },
+    {
+      "functionName": "setAdminFee",
+      "signature": "setAdminFee(uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Owner-only administrative fee configuration."
+    },
+    {
+      "functionName": "setDefaultDepositFee",
+      "signature": "setDefaultDepositFee(uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Owner-only deposit fee configuration."
+    },
+    {
+      "functionName": "setDefaultWithdrawFee",
+      "signature": "setDefaultWithdrawFee(uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Owner-only withdrawal fee configuration affecting past deposits as well."
+    },
+    {
+      "functionName": "setDevAddress",
+      "signature": "setDevAddress(address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Privileged development-fee recipient replacement; pool wrapper is onlyOwner and linked library additionally requires current devaddr."
+    },
+    {
+      "functionName": "setSwapFee",
+      "signature": "setSwapFee(uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Owner-only swap fee configuration."
+    },
+    {
+      "functionName": "stopRampA",
+      "signature": "stopRampA()",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Owner-only amplification-ramp cancellation."
+    },
+    {
+      "functionName": "swap",
+      "signature": "swap(uint8,uint8,uint256,uint256,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "lifecycleTrading",
+      "reason": "Historical explicit token-index swap is whenNotPaused; excluded from legacy exit-only admission because official successor notice directs migration out of Nerve pools, not renewed trading support."
+    },
+    {
+      "functionName": "swapStorage",
+      "signature": "swapStorage()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "category": "readOnly",
+      "reason": "Read-only pool state, ownership, token lookup or quote helper; no transaction capability or read API admitted."
+    },
+    {
+      "functionName": "transferOwnership",
+      "signature": "transferOwnership(address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Owner-only ownership replacement, not a user pool operation."
+    },
+    {
+      "functionName": "unpause",
+      "signature": "unpause()",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Owner-only emergency unpause administration."
+    },
+    {
+      "functionName": "updateUserWithdrawFee",
+      "signature": "updateUserWithdrawFee(address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "lpTokenAccountingCallback",
+      "reason": "LP-token-only withdrawal-fee accounting callback; msg.sender must equal swapStorage.lpToken. Not a general user action or arbitrary callback capability."
+    },
+    {
+      "functionName": "withdrawAdminFees",
+      "signature": "withdrawAdminFees()",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "category": "ownerAdministration",
+      "reason": "Owner-only collection of surplus/admin fees to owner, not user liquidity removal."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "nerve-3pool:v1:56:0x1b3771a66ee31180906972580ade9b81afc5fcdc:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x1B3771a66ee31180906972580adE9b81AFc5fCDc",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(uint256,uint256[],uint256)",
+      "abi": {
+        "name": "removeLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minAmounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "official deployment: https://web.archive.org/web/20210614021619id_/https://docs.nerve.fi/fundamentals/contract-addresses ; exact deployed ABI: https://sourcify.dev/server/v2/contract/56/0x1B3771a66ee31180906972580adE9b81AFc5fCDc?fields=abi,compilation,deployment,proxyResolution ; deployed source: https://sourcify.dev/server/v2/contract/56/0x1B3771a66ee31180906972580adE9b81AFc5fCDc?fields=sources ; linked library: https://sourcify.dev/server/v2/contract/56/0x4427b78af4d150a5a1173e8593a84e1003dd8bad?fields=compilation,sources ; official lifecycle: https://medium.com/synapse-protocol/synapses-mainnet-launch-the-hadean-phase-d09fc74b2272",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "nerve-3pool",
+      "label": "Nerve Finance BSC 3pool proportional withdrawal (legacy exit-only)",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Legacy exit-only admission: the official Synapse mainnet announcement dated 2021-08-29 directs users to unstake, remove liquidity and migrate out of former Nerve pools while discontinuing NRV rewards. This does not revive Nerve deposits, trading, incentives or bridge operations. The notice does not assert an all-pool pause, and no live pause state is claimed.",
+        "Call this exact original BSC 3pool deployment, not its LP token, a metapool, bridge, linked library or successor Synapse pool. Constructor-bound order is BUSD (0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56), USDT (0x55d398326f99059fF775485246999027B3197955), USDC (0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d), all 18 decimals on BSC. minAmounts must have three entries in that order and native asset units. These Binance-Peg assets are not interchangeable with Ethereum-native stablecoins.",
+        "amount is 18-decimal Nerve 3pool LP (3NRV-LP) units. Caller must hold LP tokens and grant the pool sufficient allowance for burnFrom; staked LP must first be unstaked through a separately unadmitted staking contract. Underlying outputs go to msg.sender, with no configurable recipient. Nonpayable call requires zero native BNB value.",
+        "Caller sets LP amount, each token minimum and deadline. Output uses recorded balances and total LP supply, reduces the burned amount by the current time-decaying withdrawal fee, then truncates proportional outputs. LP transfers reset/weight recipient withdrawal-fee accounting; historical documentation of zero fees is not a guarantee of current fees. Minimums are checked before token transfers and do not guarantee net receipt from taxed/nonstandard tokens.",
+        "Proportional removal deliberately remains callable while paused and avoids the invariant solver, but balances, LP supply, token transfers, allowance, deadline and live configuration can still make it revert. BUSD lifecycle, Binance-Peg backing/custody and stablecoin depeg risks remain; no token backing, liquidity or successful redemption is established.",
+        "Exact-address source/ABI provenance and source-service match are not a fresh runtime bytecode, configuration, financial-safety, execution-success or complete-workflow attestation. Catalog metadata assigns no API-key grant and bypasses no independent authorization or pause control."
+      ]
+    }
+  ],
+  "reviewSummary": {
+    "abiEntryCount": 49,
+    "functionCount": 34,
+    "eventCount": 14,
+    "constructorCount": 1,
+    "fallbackCount": 0,
+    "receiveCount": 0,
+    "selectedFunctionCount": 1,
+    "excludedFunctionCount": 33,
+    "excludedByCategory": {
+      "lifecycleDeposit": 1,
+      "readOnly": 16,
+      "ownerAdministration": 12,
+      "lifecyclePauseGatedExit": 2,
+      "lifecycleTrading": 1,
+      "lpTokenAccountingCallback": 1
+    },
+    "selectedSignatures": [
+      "removeLiquidity(uint256,uint256[],uint256)"
+    ],
+    "blockers": [],
+    "limitations": [
+      "Legacy migration excludes continued trading/deposit support; pause-gated alternative withdrawals remain excluded without falsely asserting current pause state.",
+      "No live bytecode, pause, ownership, balances, backing, liquidity, allowance, execution, complete-workflow or financial-safety attestation.",
+      "Nerve evidence is reachable and the ordinary pause-independent proportional exit needs no new execution-scope design; Ellipsis alternate was not needed."
+    ]
+  }
+}

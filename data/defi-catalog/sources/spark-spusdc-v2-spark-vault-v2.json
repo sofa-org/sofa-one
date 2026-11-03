@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "spark-vault-v2",
+      "familyVersion": "v1.0.1@0a686ba2",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x28b3a8fb53b741a8fd78c0fb9a6b2393d896a43d",
+          "status": "inactive",
+          "contractName": "SparkVault",
+          "sourceRefs": [
+            "spark-official-savings-docs",
+            "spark-official-address-registry",
+            "spark-vault-v2-verified-source"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver",
+                  "type": "address"
+                }
+              ],
+              "name": "deposit",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "spark-official-savings-docs",
+                "spark-official-address-registry",
+                "spark-vault-v2-verified-source"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver",
+                  "type": "address"
+                }
+              ],
+              "name": "mint",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "spark-official-savings-docs",
+                "spark-official-address-registry",
+                "spark-vault-v2-verified-source"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "owner",
+                  "type": "address"
+                }
+              ],
+              "name": "withdraw",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "spark-official-savings-docs",
+                "spark-official-address-registry",
+                "spark-vault-v2-verified-source"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "owner",
+                  "type": "address"
+                }
+              ],
+              "name": "redeem",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "spark-official-savings-docs",
+                "spark-official-address-registry",
+                "spark-vault-v2-verified-source"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "spark-official-savings-docs",
+      "url": "https://docs.spark.finance/products/spark-savings",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Official Spark Savings product documentation identifies the spUSDC Savings Vault product and describes the product flow. Documentation does not establish current proxy implementation/storage initialization or live asset configuration."
+    },
+    {
+      "sourceId": "spark-official-address-registry",
+      "url": "https://github.com/sparkdotfi/spark-address-registry/blob/98091964e0ef9f74bb2b6da3646f8e6d16448588/src/Ethereum.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official Ethereum address registry declares SPARK_VAULT_V2_SPUSDC at the exact target and SPARK_VAULT_V2_IMPL at 0x1b992302652a92611dcd5090d1cb388c6377f455; its source comment points to SparkVault.sol@0a686ba (v1.0.1). A dated registry declaration is not current proxy/runtime proof."
+    },
+    {
+      "sourceId": "spark-vault-v2-verified-source",
+      "url": "https://etherscan.io/address/0x28b3a8fb53b741a8fd78c0fb9a6b2393d896a43d#code",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Exact-target Etherscan implementation page and extracted full ABI inspected 2026-10-05 UTC. HTML SHA-256 80264d8b3a89fd54e4e53f8a2b14b6ce444af9471897d777cc0d1cecee5be101; full SparkVault.sol implementation source SHA-256 f34765be4b67b953131b0b8f1ad562a485a73474ba7400786fb0b497140c873d; extracted ABI SHA-256 b8d1cc2f3af24c6daa2dfc3495c3f65093a038c0d3352021ecd719baa0ab09c9. The verified implementation source matches pinned spark-vaults-v2 SparkVault.sol v1.0.1 at commit 0a686ba2fcf874bc1542171a323779ba73ac2dc5. Source/implementation correspondence does not establish proxy implementation or initialized asset storage at target."
+    }
+  ],
+  "unresolved": []
+}

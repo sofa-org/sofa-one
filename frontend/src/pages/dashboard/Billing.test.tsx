@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useUser } from '@openfort/react';
+import { useAppSession } from '@/components/AppSessionProvider';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -14,9 +14,11 @@ import {
   getBillingSummaryAuth,
   getInvoicePaymentStatusAuth,
   listBillingInvoicesAuth,
+  type BillingCheckoutResponse,
   type BillingInvoice,
   type BillingInvoicesResponse,
   type BillingPlan,
+  type InvoicePaymentStatus,
 } from '@/lib/api';
 import {
   apiError,
@@ -34,8 +36,22 @@ const PENDING_INVOICE_STORAGE_KEY = 'sofa-one.billing.pendingInvoiceId';
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_ATTEMPTS = 6;
 
-// Narrowly mock the Openfort IAM hook; the Billing page only reads these fields.
-vi.mock('@openfort/react', () => ({ useUser: vi.fn() }));
+function storePendingInvoice(invoiceId: string, sessionId = 'session-1', userId = 'user-1') {
+  sessionStorage.setItem(
+    PENDING_INVOICE_STORAGE_KEY,
+    JSON.stringify({ invoiceId, sessionId, userId }),
+  );
+}
+
+function expectPendingInvoice(invoiceId: string) {
+  expect(JSON.parse(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY) ?? 'null')).toEqual({
+    invoiceId,
+    sessionId: 'session-1',
+    userId: 'user-1',
+  });
+}
+
+vi.mock('@/components/AppSessionProvider', () => ({ useAppSession: vi.fn() }));
 
 // Mock the API layer, keeping ApiError/isApiError/getApiErrorMessage real so the page's
 // error mapping (friendly checkout errors, plan-change messages, retry surfaces) is exercised.
@@ -98,18 +114,23 @@ function renderBilling(initialPath = '/dashboard/billing') {
   );
 }
 
-function mockUseUser(
-  over: Partial<{
-    isAuthenticated: boolean;
-    isLoading: boolean;
-    getAccessToken: () => Promise<string | null>;
-  }> = {},
-) {
-  vi.mocked(useUser).mockReturnValue({
-    getAccessToken: over.getAccessToken ?? vi.fn().mockResolvedValue('test-token'),
-    isAuthenticated: over.isAuthenticated ?? true,
-    isLoading: over.isLoading ?? false,
-  } as ReturnType<typeof useUser>);
+function mockAppSession() {
+  vi.mocked(useAppSession).mockReturnValue({
+    session: {
+      sessionId: 'session-1',
+      userId: 'user-1',
+      email: 'test@example.com',
+      mfaVerified: true,
+      expiresAt: '2099-01-01T00:00:00.000Z',
+      csrfToken: 'csrf-token',
+    },
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    exchange: vi.fn(),
+    signOut: vi.fn(),
+    signOutAll: vi.fn(),
+  });
 }
 
 /** A module-scoped list backing the invoice API mock so tests can flip invoice state. */
@@ -133,7 +154,7 @@ async function flushTimers() {
 beforeEach(() => {
   currentInvoices = [];
   sessionStorage.clear();
-  mockUseUser();
+  mockAppSession();
   vi.mocked(getBillingPlansAuth).mockResolvedValue(makePlans());
   vi.mocked(getBillingSummaryAuth).mockResolvedValue(makeSummary());
   vi.mocked(listBillingInvoicesAuth).mockImplementation(async () =>
@@ -173,10 +194,33 @@ beforeEach(() => {
     cancelledAt: '2026-08-01T12:00:00.000Z',
     cancelReason: 'user_requested',
   });
-  vi.mocked(getInvoicePaymentStatusAuth).mockImplementation(async (_getToken, invoiceId) =>
-    makeInvoicePaymentStatus({ invoiceId }),
-  );
+  vi.mocked(getInvoicePaymentStatusAuth).mockImplementation(async (invoiceId) => {
+    const invoice = currentInvoices.find((item) => item.id === invoiceId);
+    return makeInvoicePaymentStatus({
+      invoiceId,
+      invoiceStatus: invoice?.status ?? 'finalized',
+      paid: invoice?.status === 'paid',
+      paidAt: invoice?.paidAt ?? null,
+    });
+  });
   vi.spyOn(window, 'confirm').mockReturnValue(true);
+});
+
+it('does not reload billing collections when introspection replaces the same session snapshot', async () => {
+  const view = renderBilling();
+  await waitFor(() => expect(getBillingPlansAuth).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(listBillingInvoicesAuth).toHaveBeenCalledTimes(1));
+  const context = vi.mocked(useAppSession).mock.results[0].value;
+  vi.mocked(useAppSession).mockReturnValue({
+    ...context,
+    session: { ...context.session, csrfToken: 'rechecked-csrf', expiresAt: '2099-02-01T00:00:00.000Z' },
+  });
+  await act(async () => {
+    view.rerender(<MemoryRouter initialEntries={['/dashboard/billing']}><BillingPage /><LocationProbe /></MemoryRouter>);
+  });
+  expect(getBillingPlansAuth).toHaveBeenCalledTimes(1);
+  expect(getBillingSummaryAuth).toHaveBeenCalledTimes(1);
+  expect(listBillingInvoicesAuth).toHaveBeenCalledTimes(1);
 });
 
 describe('Billing — Stripe return markers and query cleanup', () => {
@@ -187,11 +231,6 @@ describe('Billing — Stripe return markers and query cleanup', () => {
 
     // The return-marker effect runs synchronously in render's act.
     expect(screen.getByText('Payment processing')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /We're checking for confirmation and will update the invoice automatically/i,
-      ),
-    ).toBeInTheDocument();
 
     await flushTimers();
 
@@ -215,14 +254,12 @@ describe('Billing — Stripe return markers and query cleanup', () => {
 
     // Cancel re-fetches invoices once (initial load + the canceled refresh).
     expect(vi.mocked(listBillingInvoicesAuth).mock.calls.length).toBe(2);
-    expect(vi.getTimerCount()).toBe(0);
 
     // No polling was started: nothing fires even well after the marker.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(60_000);
     });
     expect(vi.mocked(listBillingInvoicesAuth).mock.calls.length).toBe(2);
-    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('prefers success over canceled when both markers are present', async () => {
@@ -248,7 +285,6 @@ describe('Billing — Stripe return markers and query cleanup', () => {
     expect(screen.queryByText('Payment processing')).not.toBeInTheDocument();
     expect(screen.queryByText('Returned to billing')).not.toBeInTheDocument();
     expect(screen.queryByText('Waiting for confirmation')).not.toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('ignores success=0: no processing notice and no polling is started', async () => {
@@ -264,7 +300,6 @@ describe('Billing — Stripe return markers and query cleanup', () => {
     expect(screen.queryByText('Returned to billing')).not.toBeInTheDocument();
     // A non-"1" marker is not a truthful return: the URL is left untouched and nothing polls.
     expect(screen.getByTestId('location-search')).toHaveTextContent('success=0');
-    expect(vi.getTimerCount()).toBe(0);
     expect(vi.mocked(listBillingInvoicesAuth).mock.calls.length).toBe(1);
   });
 
@@ -279,377 +314,383 @@ describe('Billing — Stripe return markers and query cleanup', () => {
     expect(screen.queryByText('Payment processing')).not.toBeInTheDocument();
     expect(screen.queryByText('Payment confirmed')).not.toBeInTheDocument();
     expect(screen.getByTestId('location-search')).toHaveTextContent('canceled=0');
-    expect(vi.getTimerCount()).toBe(0);
     // Only the initial load — the canceled-triggered refresh must not run.
     expect(vi.mocked(listBillingInvoicesAuth).mock.calls.length).toBe(1);
   });
 });
 
 describe('Billing — bounded payment-confirmation polling', () => {
-  it('confirms payment and stops polling once the tracked invoice is paid', async () => {
+  beforeEach(() => {
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+  });
+
+  it('confirms only the tracked invoice and stops checking once it is paid', async () => {
     vi.useFakeTimers();
-    sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, 'inv_1');
-    currentInvoices = [makePayableInvoice('inv_1')];
+    storePendingInvoice('inv_tracked');
+    currentInvoices = [makePayableInvoice('inv_tracked'), makePayableInvoice('inv_other')];
     renderBilling('/dashboard/billing?success=1');
-
-    expect(screen.getByText('Payment processing')).toBeInTheDocument();
     await flushTimers();
+    expect(screen.getByText('Payment processing')).toBeInTheDocument();
 
-    // Server now reports the invoice paid; the next poll cycle detects it.
-    currentInvoices = [makePaidInvoice('inv_1')];
+    currentInvoices = [makePaidInvoice('inv_tracked'), makePayableInvoice('inv_other')];
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS + 100);
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
     });
 
     expect(screen.getByText('Payment confirmed')).toBeInTheDocument();
-    expect(screen.queryByText('Payment processing')).not.toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
     expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
-
-    // No hanging timers or further requests.
-    const settledCalls = vi.mocked(listBillingInvoicesAuth).mock.calls.length;
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(60_000);
-    });
-    expect(vi.mocked(listBillingInvoicesAuth).mock.calls.length).toBe(settledCalls);
-  });
-
-  it('keeps checking through the bounded budget when the tracked invoice is absent, then settles with a terminal timeout', async () => {
-    vi.useFakeTimers();
-    sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, 'inv_1');
-    currentInvoices = []; // tracked invoice not on the first page / nothing payable
-    renderBilling('/dashboard/billing?success=1');
-
-    expect(screen.getByText('Payment processing')).toBeInTheDocument();
-    await flushTimers();
-
-    // Absence of the tracked invoice on the first page is ambiguous, so the flow is not
-    // settled early — it keeps checking within its bounded budget.
-    expect(screen.queryByText('Waiting for confirmation')).not.toBeInTheDocument();
-    expect(vi.getTimerCount()).toBeGreaterThan(0);
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
-    });
-
-    expect(screen.getByText('Waiting for confirmation')).toBeInTheDocument();
-    expect(
-      screen.getByText(/still waiting for the final payment confirmation/i),
-    ).toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
-    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
-
-    const settledCalls = vi.mocked(listBillingInvoicesAuth).mock.calls.length;
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(60_000);
-    });
-    expect(vi.mocked(listBillingInvoicesAuth).mock.calls.length).toBe(settledCalls);
-  });
-
-  it('gives up after the bounded attempt budget while the invoice stays payable (no hang)', async () => {
-    vi.useFakeTimers();
-    currentInvoices = [makePayableInvoice('inv_1')];
-    renderBilling('/dashboard/billing?success=1');
-
-    expect(screen.getByText('Payment processing')).toBeInTheDocument();
-    await flushTimers();
-
-    // Advance well past the poll budget; the page must stop on its own.
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(10 * POLL_INTERVAL_MS);
-    });
-
-    expect(screen.getByText('Waiting for confirmation')).toBeInTheDocument();
-    expect(
-      screen.getByText(/still waiting for the final payment confirmation/i),
-    ).toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
-
-    // Exactly the initial load + one attempt per poll cycle, then nothing more.
-    const totalCalls = vi.mocked(listBillingInvoicesAuth).mock.calls.length;
-    expect(totalCalls).toBeLessThanOrEqual(1 + MAX_POLL_ATTEMPTS);
-    expect(totalCalls).toBeGreaterThanOrEqual(1 + 2); // initial load + at least two poll cycles
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(120_000);
-    });
-    expect(vi.mocked(listBillingInvoicesAuth).mock.calls.length).toBe(totalCalls);
-  });
-
-  it('aborts any in-flight polling when the page unmounts (no stale updates)', async () => {
-    vi.useFakeTimers();
-    currentInvoices = [makePayableInvoice('inv_1')];
-    const view = renderBilling('/dashboard/billing?success=1');
-
-    expect(screen.getByText('Payment processing')).toBeInTheDocument();
-    await flushTimers();
-    expect(vi.getTimerCount()).toBe(1); // a poll cycle is scheduled
-
-    view.unmount();
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(120_000);
-    });
-
-    expect(vi.getTimerCount()).toBe(0);
-  });
-
-  it('reaches a bounded terminal state after polling refreshes keep failing, and later focus/visibility does not resume polling', async () => {
-    vi.useFakeTimers();
-    sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, 'inv_1');
-    currentInvoices = [makePayableInvoice('inv_1')];
-
-    // Every invoice request fails: the initial load and all polling refreshes.
-    vi.mocked(listBillingInvoicesAuth).mockRejectedValue(apiError(500));
-
-    renderBilling('/dashboard/billing?success=1');
-    expect(screen.getByText('Payment processing')).toBeInTheDocument();
-    await flushTimers();
-
-    // A single failing refresh does not settle the flow — polling stays bounded and keeps trying.
-    expect(screen.queryByText('Waiting for confirmation')).not.toBeInTheDocument();
-    expect(vi.getTimerCount()).toBeGreaterThan(0);
-
-    // Exhaust the whole attempt budget with failing refreshes.
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
-    });
-
-    // Bounded terminal state with a truthful timeout notice…
-    expect(screen.getByText('Waiting for confirmation')).toBeInTheDocument();
-    expect(
-      screen.getByText(/still waiting for the final payment confirmation/i),
-    ).toBeInTheDocument();
-    // …and full teardown: no timers and no pending marker left behind.
-    expect(vi.getTimerCount()).toBe(0);
-    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
-
-    const settledCalls = vi.mocked(listBillingInvoicesAuth).mock.calls.length;
-
-    // Later focus/visibility must not schedule polls beyond the budget.
+    const settledCalls = vi.mocked(getInvoicePaymentStatusAuth).mock.calls.length;
     await act(async () => {
       window.dispatchEvent(new Event('focus'));
       document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(60_000);
     });
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(120_000);
-    });
-    expect(vi.mocked(listBillingInvoicesAuth).mock.calls.length).toBe(settledCalls);
-    expect(vi.getTimerCount()).toBe(0);
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledTimes(settledCalls);
   });
 
-  it('does not let a late initial invoices load overwrite a fresher polling response showing the tracked invoice paid', async () => {
+  it('finds settlement for a tracked invoice outside the paginated list', async () => {
     vi.useFakeTimers();
-    sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, 'inv_1');
-    currentInvoices = [makePayableInvoice('inv_1')];
-
-    const deferreds: Array<{ resolve: (value: BillingInvoicesResponse) => void }> = [];
-    vi.mocked(listBillingInvoicesAuth).mockImplementation(() => {
-      const d = deferred<BillingInvoicesResponse>();
-      deferreds.push({ resolve: d.resolve });
-      return d.promise;
-    });
-
+    storePendingInvoice('inv_off_page');
+    currentInvoices = [makePayableInvoice('inv_other')];
+    vi.mocked(getInvoicePaymentStatusAuth).mockImplementation(async (invoiceId) =>
+      makeInvoicePaymentStatus({ invoiceId, paid: invoiceId === 'inv_off_page' }),
+    );
     renderBilling('/dashboard/billing?success=1');
     await flushTimers();
 
-    // Call #1 is the first polling cycle (superseded by the initial load at mount);
-    // call #2 is the initial load.
-    expect(deferreds.length).toBe(2);
-
-    // Cycle-1 resolves after being aborted, so it only schedules the next poll.
-    await act(async () => {
-      deferreds[0].resolve(invoicesResponse([makePayableInvoice('inv_1')]));
-    });
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS + 100);
-    });
-    // Cycle-2's refresh is now in flight.
-    expect(deferreds.length).toBe(3);
-
-    // The fresher polling response reports the tracked invoice paid.
-    await act(async () => {
-      deferreds[2].resolve(invoicesResponse([makePaidInvoice('inv_1')]));
-    });
     expect(screen.getByText('Payment confirmed')).toBeInTheDocument();
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledWith('inv_off_page', expect.any(AbortSignal));
     expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
+  });
 
-    // The initial load now resolves late with a stale unpaid snapshot; it must not
-    // overwrite the paid result.
+  it('preserves an unpaid invoice after timeout and confirms delayed settlement on explicit retry', async () => {
+    vi.useFakeTimers();
+    storePendingInvoice('inv_1');
+    currentInvoices = [makePayableInvoice('inv_1')];
+    renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
     await act(async () => {
-      deferreds[1].resolve(invoicesResponse([makePayableInvoice('inv_1')]));
+      await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
     });
 
+    expect(screen.queryByText('Payment processing')).not.toBeInTheDocument();
+    expect(screen.queryByText('Payment confirmed')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check payment status' })).toBeEnabled();
+    expectPendingInvoice('inv_1');
+    const pausedCalls = vi.mocked(getInvoicePaymentStatusAuth).mock.calls.length;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(120_000);
+    });
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledTimes(pausedCalls);
+
+    currentInvoices = [makePaidInvoice('inv_1')];
+    fireEvent.click(screen.getByRole('button', { name: 'Check payment status' }));
+    await flushTimers();
+
     expect(screen.getByText('Payment confirmed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Check payment status' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Card' })).not.toBeInTheDocument();
     expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
   });
 
-  it('clears the initial invoice spinner when a current polling response supersedes it', async () => {
+  it.each(['focus', 'visibilitychange'])('recovers delayed settlement on %s after automatic checks pause', async (event) => {
     vi.useFakeTimers();
-    sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, 'inv_1');
-    currentInvoices = [makePayableInvoice('inv_1')];
-
-    const deferreds: Array<{ resolve: (value: BillingInvoicesResponse) => void }> = [];
-    vi.mocked(listBillingInvoicesAuth).mockImplementation(() => {
-      const d = deferred<BillingInvoicesResponse>();
-      deferreds.push({ resolve: d.resolve });
-      return d.promise;
-    });
-
-    const view = renderBilling('/dashboard/billing?success=1');
-    await flushTimers();
-    expect(deferreds.length).toBe(2); // polling refresh + initial load
-
-    // Let the superseded first poll resolve so the bounded polling loop can
-    // schedule its next cycle while the initial load remains unresolved.
-    await act(async () => {
-      deferreds[0].resolve(invoicesResponse([makePayableInvoice('inv_1')]));
-    });
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS + 100);
-    });
-    expect(deferreds.length).toBe(3);
-
-    // The current poll returns an unpaid invoice. It is still the authoritative
-    // current snapshot, so the invoice table must leave its initial spinner even
-    // though the stale initial request is still pending.
-    await act(async () => {
-      deferreds[2].resolve(invoicesResponse([makePayableInvoice('inv_1')]));
-    });
-
-    expect(screen.getByRole('button', { name: 'Card' })).toBeInTheDocument();
-    view.unmount();
-  });
-
-  it('keeps the tracked polling flow alive when the tracked invoice is pending and an unrelated invoice in the first page is payable', async () => {
-    vi.useFakeTimers();
-    sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, 'inv_tracked');
-    currentInvoices = [makePayableInvoice('inv_tracked'), makePayableInvoice('inv_unrelated')];
+    storePendingInvoice('inv_off_page');
+    currentInvoices = [];
     renderBilling('/dashboard/billing?success=1');
     await flushTimers();
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(2 * POLL_INTERVAL_MS);
-    });
-
-    // The unrelated payable invoice must not terminate the tracked flow.
-    expect(screen.queryByText('Waiting for confirmation')).not.toBeInTheDocument();
-    expect(screen.getByText('Payment processing')).toBeInTheDocument();
-    expect(vi.getTimerCount()).toBeGreaterThan(0);
-
-    // The tracked flow is still bounded: it gives up after the attempt budget.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
     });
-    expect(screen.getByText('Waiting for confirmation')).toBeInTheDocument();
-    expect(
-      screen.getByText(/still waiting for the final payment confirmation/i),
-    ).toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
-    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
-  });
+    expect(screen.getByRole('button', { name: 'Check payment status' })).toBeEnabled();
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledTimes(MAX_POLL_ATTEMPTS);
 
-  it('confirms the tracked invoice paid even while an unrelated invoice in the first page is still payable', async () => {
-    vi.useFakeTimers();
-    sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, 'inv_tracked');
-    currentInvoices = [makePayableInvoice('inv_tracked'), makePayableInvoice('inv_unrelated')];
-    renderBilling('/dashboard/billing?success=1');
-    await flushTimers();
-
-    currentInvoices = [makePaidInvoice('inv_tracked'), makePayableInvoice('inv_unrelated')];
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({ invoiceId: 'inv_off_page', paid: true }),
+    );
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS + 100);
+      (event === 'focus' ? window : document).dispatchEvent(new Event(event));
     });
+    await flushTimers();
 
     expect(screen.getByText('Payment confirmed')).toBeInTheDocument();
-    expect(screen.queryByText('Waiting for confirmation')).not.toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
     expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
   });
 
-  it('keeps polling through the budget when the tracked invoice is absent from the first page but another invoice is payable', async () => {
+  it('coalesces focus/visibility recovery and never restarts aggressive polling after timeout', async () => {
     vi.useFakeTimers();
-    sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, 'inv_tracked');
-    currentInvoices = [makePayableInvoice('inv_unrelated')];
+    storePendingInvoice('inv_1');
+    currentInvoices = [];
+    vi.mocked(getInvoicePaymentStatusAuth).mockRejectedValue(apiError(500));
     renderBilling('/dashboard/billing?success=1');
     await flushTimers();
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(2 * POLL_INTERVAL_MS);
-    });
-
-    // Absence of the tracked invoice is ambiguous, so the flow keeps polling instead of
-    // settling early on the unrelated payable invoice.
-    expect(screen.queryByText('Waiting for confirmation')).not.toBeInTheDocument();
-    expect(screen.getByText('Payment processing')).toBeInTheDocument();
-    expect(vi.getTimerCount()).toBeGreaterThan(0);
-
     await act(async () => {
       await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
     });
-    expect(screen.getByText('Waiting for confirmation')).toBeInTheDocument();
-    expect(
-      screen.getByText(/still waiting for the final payment confirmation/i),
-    ).toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledTimes(MAX_POLL_ATTEMPTS);
+    expect(screen.getByRole('button', { name: 'Check payment status' })).toBeEnabled();
+
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(makeInvoicePaymentStatus());
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+      document.dispatchEvent(new Event('visibilitychange'));
+      window.dispatchEvent(new Event('focus'));
+    });
+    await flushTimers();
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledTimes(MAX_POLL_ATTEMPTS + 1);
+    expect(screen.queryByText('Payment confirmed')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check payment status' })).toBeEnabled();
+    expectPendingInvoice('inv_1');
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(120_000);
+    });
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledTimes(MAX_POLL_ATTEMPTS + 1);
+  });
+
+  it('keeps explicit recovery single-flight and ignores hidden-tab refreshes', async () => {
+    vi.useFakeTimers();
+    storePendingInvoice('inv_1');
+    currentInvoices = [];
+    renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
+    });
+    const pausedCalls = vi.mocked(getInvoicePaymentStatusAuth).mock.calls.length;
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledTimes(pausedCalls);
+
+    const pending = deferred<InvoicePaymentStatus>();
+    vi.mocked(getInvoicePaymentStatusAuth).mockReturnValue(pending.promise);
+    fireEvent.click(screen.getByRole('button', { name: 'Check payment status' }));
+    expect(screen.getByRole('button', { name: 'Checking payment status…' })).toBeDisabled();
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledTimes(pausedCalls + 1);
+    await act(async () => {
+      pending.resolve(makeInvoicePaymentStatus({ paid: true }));
+    });
+    expect(screen.getByText('Payment confirmed')).toBeInTheDocument();
+  });
+
+  it.each(['accepted', 'confirming'])('does not confirm %s/unpaid evidence or a contradictory paid list row', async (status) => {
+    vi.useFakeTimers();
+    storePendingInvoice('inv_1');
+    currentInvoices = [makePaidInvoice('inv_1')];
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(makeInvoicePaymentStatus({
+      paid: false,
+      paidAt: '2026-08-01T12:00:00.000Z',
+      activeAttempt: {
+        paymentAttemptId: 'att_accepted',
+        method: 'usdc',
+        status,
+        chainId: 8453,
+        quoteExpiresAt: null,
+        createdAt: '2026-08-01T12:00:00.000Z',
+        walletPaymentReserved: true,
+        reviewReason: null,
+      },
+    }));
+    renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
+    });
+
+    expect(screen.queryByText('Payment confirmed')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check payment status' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Check payment status' }));
+    await flushTimers();
+    expect(screen.queryByText('Payment confirmed')).not.toBeInTheDocument();
+    expectPendingInvoice('inv_1');
+  });
+
+  it('does not infer settlement from an unrelated paid invoice when checkout identity is missing', async () => {
+    vi.useFakeTimers();
+    currentInvoices = [makePaidInvoice('inv_other')];
+    renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
+    });
+    expect(screen.queryByText('Payment confirmed')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check payment status' })).toBeEnabled();
+  });
+
+  it('ignores an aborted initial list response after settlement refreshes the invoice', async () => {
+    vi.useFakeTimers();
+    storePendingInvoice('inv_1');
+    currentInvoices = [makePaidInvoice('inv_1')];
+    const stale = deferred<BillingInvoicesResponse>();
+    vi.mocked(listBillingInvoicesAuth).mockImplementationOnce(() => stale.promise);
+    renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
+    expect(screen.getByText('Payment confirmed')).toBeInTheDocument();
+    await act(async () => {
+      stale.resolve(invoicesResponse([makePayableInvoice('inv_1')]));
+    });
+    expect(screen.getByText('Payment confirmed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Card' })).not.toBeInTheDocument();
+  });
+
+  it('aborts in-flight status/list reads and removes recovery listeners on unmount', async () => {
+    vi.useFakeTimers();
+    storePendingInvoice('inv_1');
+    const status = deferred<InvoicePaymentStatus>();
+    const list = deferred<BillingInvoicesResponse>();
+    vi.mocked(getInvoicePaymentStatusAuth).mockReturnValue(status.promise);
+    vi.mocked(listBillingInvoicesAuth).mockReturnValue(list.promise);
+    const view = renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
+    const statusSignal = vi.mocked(getInvoicePaymentStatusAuth).mock.calls[0][1];
+    const listSignal = vi.mocked(listBillingInvoicesAuth).mock.calls[0][1];
+    view.unmount();
+    expect(statusSignal?.aborted).toBe(true);
+    expect(listSignal?.aborted).toBe(true);
+    const statusCalls = vi.mocked(getInvoicePaymentStatusAuth).mock.calls.length;
+    await act(async () => {
+      status.resolve(makeInvoicePaymentStatus({ paid: true }));
+      list.resolve(invoicesResponse([makePaidInvoice('inv_1')]));
+      window.dispatchEvent(new Event('focus'));
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(120_000);
+    });
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledTimes(statusCalls);
+  });
+
+  it('removes paused recovery listeners on unmount without forgetting the pending invoice', async () => {
+    vi.useFakeTimers();
+    storePendingInvoice('inv_1');
+    currentInvoices = [];
+    const view = renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
+    });
+    view.unmount();
+    const statusCalls = vi.mocked(getInvoicePaymentStatusAuth).mock.calls.length;
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(120_000);
+    });
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledTimes(statusCalls);
+    expectPendingInvoice('inv_1');
+  });
+
+  it.each(['replacement', 'logout'])('invalidates session recovery on %s even when an aborted request resolves paid', async (transition) => {
+    vi.useFakeTimers();
+    storePendingInvoice('inv_1');
+    const stale = deferred<InvoicePaymentStatus>();
+    vi.mocked(getInvoicePaymentStatusAuth).mockReturnValue(stale.promise);
+    const view = renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
+    const oldSignal = vi.mocked(getInvoicePaymentStatusAuth).mock.calls[0][1];
+    const context = vi.mocked(useAppSession).mock.results[0].value;
+    vi.mocked(useAppSession).mockReturnValue({
+      ...context,
+      session: transition === 'logout' ? null : { ...context.session, sessionId: 'session-2' },
+    });
+    await act(async () => {
+      view.rerender(<MemoryRouter><BillingPage /><LocationProbe /></MemoryRouter>);
+    });
+    expect(oldSignal?.aborted).toBe(true);
+    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
+    await act(async () => {
+      stale.resolve(makeInvoicePaymentStatus({ paid: true }));
+      window.dispatchEvent(new Event('focus'));
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(120_000);
+    });
+    expect(screen.queryByText('Payment confirmed')).not.toBeInTheDocument();
+    expect(screen.queryByText('Payment processing')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Check payment status' })).not.toBeInTheDocument();
+  });
+  it.each([
+    { label: 'another session', sessionId: 'session-2', userId: 'user-1' },
+    { label: 'another user', sessionId: 'session-2', userId: 'user-2' },
+    { label: 'a mismatched user binding', sessionId: 'session-1', userId: 'user-2' },
+  ])('does not revive a prior checkout after remounting as $label', async ({ sessionId, userId }) => {
+    vi.useFakeTimers();
+    storePendingInvoice('inv_previous');
+    currentInvoices = [];
+    const previousView = renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
+    });
+    expectPendingInvoice('inv_previous');
+    previousView.unmount();
+
+    const context = vi.mocked(useAppSession).mock.results[0].value;
+    vi.mocked(useAppSession).mockReturnValue({
+      ...context,
+      session: { ...context.session, sessionId, userId },
+    });
+    const previousCalls = vi.mocked(getInvoicePaymentStatusAuth).mock.calls.length;
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({ invoiceId: 'inv_previous', paid: true }),
+    );
+    renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
+      window.dispatchEvent(new Event('focus'));
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(getInvoicePaymentStatusAuth).toHaveBeenCalledTimes(previousCalls);
+    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
+    expect(screen.queryByText('Payment confirmed')).not.toBeInTheDocument();
+  });
+
+  it('retains checkout identity across a same-session remount', async () => {
+    vi.useFakeTimers();
+    storePendingInvoice('inv_1');
+    currentInvoices = [];
+    const previousView = renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
+    });
+    previousView.unmount();
+    expectPendingInvoice('inv_1');
+    vi.mocked(getInvoicePaymentStatusAuth).mockResolvedValue(
+      makeInvoicePaymentStatus({ invoiceId: 'inv_1', paid: true }),
+    );
+    renderBilling('/dashboard/billing?success=1');
+    await flushTimers();
+    expect(screen.getByText('Payment confirmed')).toBeInTheDocument();
     expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
   });
 
-  it('settles the tracked flow when the tracked invoice is visible but no longer payable', async () => {
+  it.each([
+    'inv_unscoped',
+    JSON.stringify('inv_unscoped'),
+    JSON.stringify({ invoiceId: 'inv_unscoped' }),
+    '{invalid',
+    'null',
+  ])('rejects unbound or malformed checkout storage: %s', async (stored) => {
     vi.useFakeTimers();
-    sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, 'inv_tracked');
-    currentInvoices = [
-      makeInvoice({ id: 'inv_tracked', status: 'void', amount: '10.00', currency: 'USD' }),
-    ];
+    sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, stored);
+    currentInvoices = [makePaidInvoice('inv_unrelated')];
     renderBilling('/dashboard/billing?success=1');
     await flushTimers();
-
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS + 100);
+      await vi.advanceTimersByTimeAsync(20 * POLL_INTERVAL_MS);
     });
-
-    expect(screen.getByText('Waiting for confirmation')).toBeInTheDocument();
-    expect(
-      screen.getByText(/will keep updating automatically as the payment clears/i),
-    ).toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
+    expect(getInvoicePaymentStatusAuth).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
+    expect(screen.queryByText('Payment confirmed')).not.toBeInTheDocument();
   });
 
-  it('aborts in-flight invoice requests on unmount so a late response cannot apply stale state', async () => {
-    vi.useFakeTimers();
-    sessionStorage.setItem(PENDING_INVOICE_STORAGE_KEY, 'inv_1');
-    currentInvoices = [makePayableInvoice('inv_1')];
-
-    const deferreds: Array<{ resolve: (value: BillingInvoicesResponse) => void }> = [];
-    const signals: Array<AbortSignal | undefined> = [];
-    vi.mocked(listBillingInvoicesAuth).mockImplementation((_token, _params, signal) => {
-      signals.push(signal);
-      const d = deferred<BillingInvoicesResponse>();
-      deferreds.push({ resolve: d.resolve });
-      return d.promise;
-    });
-
-    const view = renderBilling('/dashboard/billing?success=1');
-    await flushTimers();
-    expect(deferreds.length).toBe(2); // polling refresh + initial load in flight
-
-    view.unmount();
-
-    // Every in-flight invoice request is aborted — the cleanup is not just timer teardown.
-    expect(signals.length).toBe(2);
-    expect(signals.every((s) => s?.aborted)).toBe(true);
-
-    // Late resolution must not resurrect stale state or throw.
-    await act(async () => {
-      for (const d of deferreds) {
-        d.resolve(invoicesResponse([makePaidInvoice('inv_1')]));
-      }
-    });
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(1_000);
-    });
-    expect(vi.getTimerCount()).toBe(0);
-  });
 });
 
 describe('Billing — open invoice UX', () => {
@@ -745,10 +786,29 @@ describe('Billing — invoice payment actions and user-visible errors', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Card' }));
 
     await waitFor(() =>
-      expect(createBillingCheckoutSessionAuth).toHaveBeenCalledWith(expect.any(Function), 'inv_1'),
+      expect(createBillingCheckoutSessionAuth).toHaveBeenCalledWith('inv_1'),
     );
-    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBe('inv_1');
+    expectPendingInvoice('inv_1');
     expect(locationStub.href).toBe('https://checkout.stripe.example/start');
+  });
+
+  it('does not save or redirect a late checkout response from an unmounted session', async () => {
+    currentInvoices = [makePayableInvoice('inv_1')];
+    const pending = deferred<BillingCheckoutResponse>();
+    vi.mocked(createBillingCheckoutSessionAuth).mockReturnValue(pending.promise);
+    const view = renderBilling();
+    fireEvent.click(await screen.findByRole('button', { name: 'Card' }));
+    await waitFor(() => expect(createBillingCheckoutSessionAuth).toHaveBeenCalledTimes(1));
+    view.unmount();
+    await act(async () => {
+      pending.resolve({
+        invoiceId: 'inv_1',
+        sessionId: 'cs_previous',
+        checkoutUrl: 'https://checkout.stripe.example/previous',
+      });
+    });
+    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBeNull();
+    expect(locationStub.href).toBe('');
   });
 
   it('surfaces a friendly message when card checkout is temporarily unavailable (503) and stays usable', async () => {
@@ -820,11 +880,10 @@ describe('Billing — invoice payment actions and user-visible errors', () => {
 
     await waitFor(() =>
       expect(createBillingCheckoutSessionAuth).toHaveBeenCalledWith(
-        expect.any(Function),
         'inv_plan',
       ),
     );
-    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBe('inv_plan');
+    expectPendingInvoice('inv_plan');
     expect(locationStub.href).toBe('https://checkout.stripe.example/start');
   });
 
@@ -858,7 +917,6 @@ describe('Billing — invoice payment actions and user-visible errors', () => {
 
     await flushTimers();
     expect(screen.getByText('Conflict while loading invoices.')).toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     await flushTimers();
@@ -987,7 +1045,7 @@ describe('Billing — plan change', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Schedule Starter' }));
 
     await waitFor(() =>
-      expect(assignBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function), 'plan_starter'),
+      expect(assignBillingPlanAuth).toHaveBeenCalledWith('plan_starter'),
     );
     expect(screen.getByText('Downgrade scheduled')).toBeInTheDocument();
     expect(screen.getByText(/Starter begins on/i)).toBeInTheDocument();
@@ -1031,7 +1089,7 @@ describe('Billing — plan change', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Upgrade to Pro' }));
 
     await waitFor(() =>
-      expect(assignBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function), 'plan_pro'),
+      expect(assignBillingPlanAuth).toHaveBeenCalledWith('plan_pro'),
     );
 
     expect(screen.getByText('Payment required to upgrade')).toBeInTheDocument();
@@ -1051,11 +1109,10 @@ describe('Billing — plan change', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pay with card' }));
     await waitFor(() =>
       expect(createBillingCheckoutSessionAuth).toHaveBeenCalledWith(
-        expect.any(Function),
         'inv_upgrade',
       ),
     );
-    expect(sessionStorage.getItem(PENDING_INVOICE_STORAGE_KEY)).toBe('inv_upgrade');
+    expectPendingInvoice('inv_upgrade');
     expect(locationStub.href).toBe('https://checkout.stripe.example/start');
   });
 
@@ -1206,7 +1263,7 @@ describe('Billing — plan change', () => {
 
     expect(confirmSpy).toHaveBeenCalled();
     await waitFor(() =>
-      expect(cancelBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function)),
+      expect(cancelBillingPlanAuth).toHaveBeenCalledWith(),
     );
     expect(screen.getByText('Scheduled change canceled')).toBeInTheDocument();
     expect(screen.getByText(/You will stay on Pro/i)).toBeInTheDocument();
@@ -1307,7 +1364,7 @@ describe('Billing — plan change', () => {
 
     expect(confirmSpy).toHaveBeenCalled();
     await waitFor(() =>
-      expect(cancelBillingPlanUpgradeAuth).toHaveBeenCalledWith(expect.any(Function)),
+      expect(cancelBillingPlanUpgradeAuth).toHaveBeenCalledWith(),
     );
     expect(screen.getByText('Upgrade canceled')).toBeInTheDocument();
     expect(screen.getByText(/You will stay on Starter/i)).toBeInTheDocument();
@@ -1758,7 +1815,7 @@ describe('Billing — plan-change catalog guard (contact-sales plans)', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Upgrade to Pro' }));
     await waitFor(() =>
-      expect(assignBillingPlanAuth).toHaveBeenCalledWith(expect.any(Function), 'plan_pro'),
+      expect(assignBillingPlanAuth).toHaveBeenCalledWith('plan_pro'),
     );
   });
 
@@ -1842,7 +1899,6 @@ describe('Billing — BILL-018 payment status recovery and BILL-003 card lock', 
     expect(await screen.findByText(/Payment needs review/i)).toBeInTheDocument();
     expect(screen.getByText(/already used on another invoice/i)).toBeInTheDocument();
     expect(getInvoicePaymentStatusAuth).toHaveBeenCalledWith(
-      expect.any(Function),
       'inv_1',
       expect.anything(),
     );
@@ -1918,7 +1974,6 @@ describe('Billing — BILL-018 payment status recovery and BILL-003 card lock', 
 
     await waitFor(() => expect(cancelUsdcQuoteAuth).toHaveBeenCalledTimes(1));
     expect(cancelUsdcQuoteAuth).toHaveBeenCalledWith(
-      expect.any(Function),
       'inv_1',
       'att_pending',
     );

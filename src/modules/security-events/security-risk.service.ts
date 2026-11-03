@@ -24,6 +24,7 @@ const EVENT_RISK_RULES: Array<{
   { eventType: 'eoa_execution_denied', riskLevel: 'critical' },
   { eventType: 'api_key_suspicious_use', riskLevel: 'high' },
   { eventType: 'transaction.policy_denied', riskLevel: 'high' },
+  { eventType: 'defi.policy_denied', riskLevel: 'high' },
   { eventType: 'transaction.simulation_denied', riskLevel: 'high' },
   { eventType: 'withdrawal.policy_denied', riskLevel: 'high' },
   { eventType: 'withdrawal.high_value_requested', riskLevel: 'high' },

@@ -985,9 +985,16 @@ describe('verifyTransactionAssetFlow', () => {
       });
 
       expect(verify(interactions, evidence, { chainId: 1 }).rule).toBe('chain_binding_mismatch');
-      expect(verify(interactions, evidence, { executionMode: 'eoa' }).rule).toBe(
-        'execution_mode_binding_mismatch',
+      // Deliberately pass a legacy mode through the typed boundary.
+      const legacyMode = 'eoa' as unknown as AssetFlowExecutionMode;
+      expect(verify(interactions, evidence, { executionMode: legacyMode }).rule).toBe(
+        'invalid_execution_mode',
       );
+      const wrongModeEvidence = {
+        ...evidence,
+        binding: { ...evidence.binding, executionMode: legacyMode },
+      };
+      expect(verify(interactions, wrongModeEvidence).rule).toBe('execution_mode_binding_mismatch');
     });
 
     it('accepts checksum and lowercase owner equivalently', () => {

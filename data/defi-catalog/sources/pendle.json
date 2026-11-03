@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "pendle-v3",
+      "familyVersion": "router-sy@87685c89",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x888888888889758F76e7103c6CbF23ABbF58F946",
+          "status": "inactive",
+          "contractName": "Pendle Router V3 (Ethereum Mainnet)",
+          "sourceRefs": ["pendle-core-deployment", "pendle-add-remove-liquidity-v3-interface", "pendle-misc-v3-interface"],
+          "abiFunctions": [
+            { "type": "function", "name": "addLiquidityDualSyAndPt", "stateMutability": "nonpayable", "inputs": [{ "name": "receiver", "type": "address" }, { "name": "market", "type": "address" }, { "name": "netSyDesired", "type": "uint256" }, { "name": "netPtDesired", "type": "uint256" }, { "name": "minLpOut", "type": "uint256" }], "outputs": [{ "name": "netLpOut", "type": "uint256" }, { "name": "netSyUsed", "type": "uint256" }, { "name": "netPtUsed", "type": "uint256" }] },
+            { "type": "function", "name": "removeLiquidityDualSyAndPt", "stateMutability": "nonpayable", "inputs": [{ "name": "receiver", "type": "address" }, { "name": "market", "type": "address" }, { "name": "netLpToRemove", "type": "uint256" }, { "name": "minSyOut", "type": "uint256" }, { "name": "minPtOut", "type": "uint256" }], "outputs": [{ "name": "netSyOut", "type": "uint256" }, { "name": "netPtOut", "type": "uint256" }] },
+            { "type": "function", "name": "mintPyFromSy", "stateMutability": "nonpayable", "inputs": [{ "name": "receiver", "type": "address" }, { "name": "YT", "type": "address" }, { "name": "netSyIn", "type": "uint256" }, { "name": "minPyOut", "type": "uint256" }], "outputs": [{ "name": "netPyOut", "type": "uint256" }] },
+            { "type": "function", "name": "redeemPyToSy", "stateMutability": "nonpayable", "inputs": [{ "name": "receiver", "type": "address" }, { "name": "YT", "type": "address" }, { "name": "netPyIn", "type": "uint256" }, { "name": "minSyOut", "type": "uint256" }], "outputs": [{ "name": "netSyOut", "type": "uint256" }] }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0xcad69479358c1ef3560f29f278966df772abf42f",
+          "status": "inactive",
+          "contractName": "Pendle Standardized Yield (SY), Ethereum market snapshot",
+          "sourceRefs": ["pendle-core-deployment", "pendle-standardized-yield-interface", "pendle-market-snapshot"],
+          "abiFunctions": [
+            { "type": "function", "name": "deposit", "stateMutability": "payable", "inputs": [{ "name": "receiver", "type": "address" }, { "name": "tokenIn", "type": "address" }, { "name": "amountTokenToDeposit", "type": "uint256" }, { "name": "minSharesOut", "type": "uint256" }], "outputs": [{ "name": "amountSharesOut", "type": "uint256" }] },
+            { "type": "function", "name": "redeem", "stateMutability": "nonpayable", "inputs": [{ "name": "receiver", "type": "address" }, { "name": "amountSharesToRedeem", "type": "uint256" }, { "name": "tokenOut", "type": "address" }, { "name": "minTokenOut", "type": "uint256" }, { "name": "burnFromInternalBalance", "type": "bool" }], "outputs": [{ "name": "amountTokenOut", "type": "uint256" }] }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    { "sourceId": "pendle-core-deployment", "url": "https://github.com/pendle-finance/pendle-core-v2-public/blob/87685c89d05087535e9b9647eeda0e3d297d1f06/deployments/1-core.json", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official Ethereum deployment records PendleRouterV3 and source-owned router facets ActionAddRemoveLiqV3/ActionMiscV3; facets establish source role correspondence, not live facet installation or implementation state." },
+    { "sourceId": "pendle-add-remove-liquidity-v3-interface", "url": "https://github.com/pendle-finance/pendle-core-v2-public/blob/87685c89d05087535e9b9647eeda0e3d297d1f06/contracts/interfaces/IPActionAddRemoveLiqV3.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official declarations of the two direct dual-SY/PT liquidity router methods and their named uint256 outputs." },
+    { "sourceId": "pendle-misc-v3-interface", "url": "https://github.com/pendle-finance/pendle-core-v2-public/blob/87685c89d05087535e9b9647eeda0e3d297d1f06/contracts/interfaces/IPActionMiscV3.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official declarations of mintPyFromSy and redeemPyToSy with named uint256 outputs." },
+    { "sourceId": "pendle-standardized-yield-interface", "url": "https://github.com/pendle-finance/pendle-core-v2-public/blob/87685c89d05087535e9b9647eeda0e3d297d1f06/contracts/interfaces/IStandardizedYield.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official SY interface declares payable deposit(address,address,uint256,uint256) and nonpayable redeem(address,uint256,address,uint256,bool), each returning one named uint256." },
+    { "sourceId": "pendle-market-snapshot", "url": "https://api-v2.pendle.finance/core/v1/1/markets/0x03005432d0f02c46d48ccd859d677d261640e5e1", "retrievedAtUtc": "2026-10-04", "evidence": "Official API returned active Ethereum market 0x03005432d0f02c46d48ccd859d677d261640e5e1, expiry 2026-12-10, PT 0x47f4d6505e39998bbabf325def4c4861695ac8f5, YT 0x7a3d12d8262b0246f4bbf8da354272e73a831a4b, and SY 0xcad69479358c1ef3560f29f278966df772abf42f. This is one market snapshot, not exhaustive population or liquidity evidence." }
+  ]
+}

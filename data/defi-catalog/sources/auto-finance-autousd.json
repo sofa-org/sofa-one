@@ -1,0 +1,6674 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Auto Finance",
+  "protocolId": "auto-finance-autousd",
+  "aliases": [
+    "AUTOfinance",
+    "Tokemak"
+  ],
+  "chainId": 1,
+  "address": "0xa7569a44f348d3d70d8ad5889e50f78e33d80d35",
+  "website": "https://auto.finance/",
+  "lifecycleEvidence": {
+    "sourceRef": "https://app.auto.finance/pools/autoUSD",
+    "verifiedAt": "2026-10-22",
+    "evidence": "Current official autoUSD page advertises automated USDC yield on Ethereum and identifies Auto Finance as formerly Tokemak; official deployment docs list this autoUSD address and rewarder. No retirement/wind-down notice encountered in reviewed sources. Token TOKE-to-AUTO migration is not a vault retirement notice."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.auto.finance/developer-docs/contracts-overview/contract-addresses.md",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0xa7569a44f348d3d70d8ad5889e50f78e33d80d35",
+    "explorerSourceRef": "https://etherscan.io/address/0xa7569a44f348d3d70d8ad5889e50f78e33d80d35#code",
+    "reportedExplorerVerification": "Exact Match",
+    "proxyType": "TransparentUpgradeableProxy",
+    "reportedImplementation": "0xfB2eBdeDc38a7d19080E44ab1D621bc9AfAD0695",
+    "initialImplementation": "0xa1f3511AD04FD3608951B6043f47D8a02fB50dc1",
+    "proxyAdminConstructorArgument": "0x84A317a45248d6d3f92F40102680fFEda2Ab95C0",
+    "sourceServiceProxyAttempt": {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xa7569a44f348d3d70d8ad5889e50f78e33d80d35?fields=abi,compilation,sources,deployment,proxyResolution",
+      "response": {
+        "match": null,
+        "creationMatch": null,
+        "runtimeMatch": null,
+        "chainId": "1",
+        "address": "0xa7569A44f348d3D70d8ad5889e50F78E33d80D35"
+      },
+      "evidence": "Sourcify returned match:null for exact proxy; do not treat as verified proxy source. Exact explorer supplies proxy ABI/source and applicable implementation binding."
+    },
+    "underlyingAsset": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "assetBinding": "Implementation explorer constructor _vaultAsset is USDC; verified AutopoolETH constructor stores immutable _baseAsset used by deposit/redeem, including through proxy delegatecall."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xfB2eBdeDc38a7d19080E44ab1D621bc9AfAD0695?fields=abi,compilation,sources,deployment,proxyResolution",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0xa7569a44f348d3d70d8ad5889e50f78e33d80d35",
+    "implementationAddress": "0xfB2eBdeDc38a7d19080E44ab1D621bc9AfAD0695",
+    "explorerImplementationSourceRef": "https://etherscan.io/address/0xfB2eBdeDc38a7d19080E44ab1D621bc9AfAD0695#code",
+    "reportedImplementationExplorerVerification": "Exact Match",
+    "reportedCreationMatch": "match",
+    "reportedRuntimeMatch": "match",
+    "reportedMatch": "match",
+    "sourceServiceVerifiedAt": "2025-04-29T17:32:59Z",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.24+commit.e11b9ed9",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {
+          "src/vault/libs/Autopool4626.sol": {
+            "Autopool4626": "0xf85b8eb4e7b2d26b7a72c172d0b7718f9ad4a8c8"
+          },
+          "src/vault/libs/AutopoolDebt.sol": {
+            "AutopoolDebt": "0xd7bd5bcfaf5f3f9c92c430225e81978ef41b59a8"
+          },
+          "src/vault/libs/AutopoolFees.sol": {
+            "AutopoolFees": "0xff10c647b55688fe5473d9f6c456c4d7550e4fc8"
+          },
+          "src/strategy/WithdrawalQueue.sol": {
+            "WithdrawalQueue": "0x1f11f08aa558f6313e3885a9a1ddb5365148b179"
+          },
+          "src/vault/libs/AutopoolToken.sol": {
+            "AutopoolToken": "0xae9077cd5e0824b24a66c4d240bcfa67a8973b38"
+          },
+          "src/strategy/StructuredLinkedList.sol": {
+            "StructuredLinkedList": "0x89ee0134df602fede54f273c34bbfc876cfaf093"
+          },
+          "src/vault/libs/AutopoolDestinations.sol": {
+            "AutopoolDestinations": "0xebc767937fdd6119268f565ef98b7fe8a67088ad"
+          },
+          "src/vault/libs/AutopoolStrategyHooks.sol": {
+            "AutopoolStrategyHooks": "0x319535b89fa9eb30554045245e6bfdbd486d96d7"
+          }
+        },
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "cancun",
+        "remappings": [
+          ":ERC4626/=lib/properties/lib/ERC4626/contracts/",
+          ":crytic/properties/=lib/properties/",
+          ":ds-test/=lib/forge-std/lib/ds-test/src/",
+          ":erc4626-tests/=lib/erc4626-tests/",
+          ":forge-std/=lib/forge-std/src/",
+          ":openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
+          ":prb-math/=lib/prb-math/",
+          ":properties/=lib/properties/contracts/",
+          ":redstone-evm-connector/=lib/redstone-evm-connector/",
+          ":redstone-finance/=lib/redstone-evm-connector/packages/evm-connector/contracts/",
+          ":solmate/=lib/properties/lib/solmate/src/",
+          ":src/=src/",
+          ":test/=test/",
+          ":usingtellor/=lib/usingtellor/contracts/"
+        ]
+      },
+      "name": "AutopoolETH",
+      "fullyQualifiedName": "src/vault/AutopoolETH.sol:AutopoolETH"
+    },
+    "deployment": {
+      "transactionHash": "0xb6d5aa9a023d1a433c904554985f25e69123fad8a4ae7927855f9bbacbcbc191",
+      "blockNumber": "22176299",
+      "transactionIndex": "106",
+      "deployer": "0x123cC4AFA59160C6328C0152cf333343F510e5A3"
+    },
+    "proxyAbiSourceRef": "https://etherscan.io/address/0xa7569a44f348d3d70d8ad5889e50f78e33d80d35#code",
+    "sourceSha256": {
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": "d03c1257f2094da6c86efa7aa09c1c07ebd33dd31046480c5097bc2542140e45",
+      "lib/openzeppelin-contracts/contracts/access/IAccessControlEnumerable.sol": "655ab8dc2a9617376734d04ca293e099cc24f8ce893997e68c29cfebc4a61d39",
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC3156FlashBorrower.sol": "ec9bf12a5e068fed0735e78ac8beb840ff499c9a48e460b5c3c000645dab8886",
+      "lib/openzeppelin-contracts/contracts/proxy/utils/Initializable.sol": "493ad76e926f92dbd2500548cf3ce783e2965993ae67fec229ee21a87bf6b972",
+      "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": "94f23e4af51a18c2269b355b8c7cf4db8003d075c9c541019eb8dcf4122864d5",
+      "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol": "af5c8a77965cc82c33b7ff844deb9826166689e55dc037a7f2f790d057811990",
+      "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/draft-IERC20Permit.sol": "3e7aa0e0f69eec8f097ad664d525e7b3f0a3fda8dcdd97de5433ddb131db86ef",
+      "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol": "0c8a43f12ac2081c6194d54da96f02ebc457760d6514f6b940689719fcef8c0a",
+      "lib/openzeppelin-contracts/contracts/utils/Address.sol": "8160a4242e8a7d487d940814e5279d934e81f0436689132a4e73394bab084a6d",
+      "lib/openzeppelin-contracts/contracts/utils/Strings.sol": "f81f11dca62dcd3e0895e680559676f4ba4f2e12a36bb0291d7ecbb6b983141f",
+      "lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol": "d18195404f37ee86b44cfb01858b76ac0d4d17b77328fa82895ee893718cb0c2",
+      "lib/openzeppelin-contracts/contracts/utils/math/Math.sol": "8059d642ec219d0b9b62fbc76912079529cf494cac988abe5e371f1168b29b0f",
+      "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": "d8508ddcfb255875b542cef61ad9bcc9a2d74453bf92c914ee6a546b876ba42b",
+      "src/external/solady/LibBytes.sol": "c9a42c5ebe41c1f1d235d44361d5bb43f93e3626cd1fe722c09fd1ba29450459",
+      "src/external/solady/SSTORE2.sol": "d04ba0cdf068e722e0209cc9c53efcdd41a65ac2e2494c6f575054c28bde017f",
+      "src/interfaces/ISystemComponent.sol": "647348c09253b9576d50de92b9ad206acc2e31bf725960801980dd91c6a31cfa",
+      "src/interfaces/ISystemRegistry.sol": "720755b122e38ce3b68f2a77dab183d89df552e7d36c329078535635b38af390",
+      "src/interfaces/destinations/IDestinationAdapter.sol": "8b8dc98863fb64e8d78ea5381ffbebd63b3bf722c87c8be2ef69834f4c6a2cc8",
+      "src/interfaces/destinations/IDestinationRegistry.sol": "dccc3d9ea194663b7620aaf92885435078134e97421f5ef3407bbec67888a9b5",
+      "src/interfaces/liquidation/IAsyncSwapper.sol": "490c024eba613c83828231320bf27bab9ada0226f291ab94ab2dbc29535b070c",
+      "src/interfaces/liquidation/IAsyncSwapperRegistry.sol": "dc9565ef2ad3734cdf2280aaaf7f21ef93bee7aec98aa8cae865feebb154ca6c",
+      "src/interfaces/messageProxy/IMessageProxy.sol": "7e889a66f74f8492960bf7bd60c1e77d5b09ec88b1f7659aaa20ce1a1627d4db",
+      "src/interfaces/oracles/IRootPriceOracle.sol": "7acbc4dd07639fe68c196960e574fd6c1e9572b82453e290038a07fa7ceb87c4",
+      "src/interfaces/rewarders/IBaseRewarder.sol": "121b4dd754fe9018e103a75ed17e7c31266913a6eb812c6426910cac39610a1f",
+      "src/interfaces/rewarders/IExtraRewarder.sol": "091ff60b57e08309d2de63244c056b364c62ae4680a3e0d62d337f0c8f20b1b7",
+      "src/interfaces/rewarders/IMainRewarder.sol": "5ff326ef783edbe275f4fe3db42913fb628321bcc3e30b59a2b64387124d5c2f",
+      "src/interfaces/rewarders/IRewards.sol": "ea2f840dd4ffc740cab953ad127b9524bfeca4e633177e300e1cbf89a7e6afd3",
+      "src/interfaces/security/IAccessController.sol": "35553682b368b860855894fa01bf20051da0b3220fc27ed844a115cc03226546",
+      "src/interfaces/security/ISystemSecurity.sol": "d635bc463801b0a0e8ad95f7543814bd5457006e6aeb6e5602a027a455270b9d",
+      "src/interfaces/staking/IAccToke.sol": "f11c3dcaff1f118f3035441b28be588d631dcec5bbed6b70e89b2c276d6a0040",
+      "src/interfaces/stats/IDexLSTStats.sol": "1b1283aed106450f810105c4193e03e3b8bc6c6fe3678d5ef109a57bd2baaa7c",
+      "src/interfaces/stats/IIncentivesPricingStats.sol": "3528eb16f233de230039fdccdfa27590aa6a42c927846af6b68ec836b076c95e",
+      "src/interfaces/stats/ILSTStats.sol": "b009b8e5ea636ff861c1cd3092de31ac9ecfa38316fd3f3e9dbbf9f483ab7ddb",
+      "src/interfaces/stats/IStatsCalculator.sol": "bba03e8ac6307513d48b5dda3819b9dd48cd5a7ffe579ec3bd51a676535b3612",
+      "src/interfaces/stats/IStatsCalculatorRegistry.sol": "798ac8cb762ebb2da90a19664b9fa3d20e1799805ddf705aa1c75d6e05cd79ee",
+      "src/interfaces/strategy/IAutopoolStrategy.sol": "55a669bce836977b9aee23e7b606c77ea18113203d98517fcc7c229207e8af47",
+      "src/interfaces/strategy/IStrategy.sol": "8cd2c9a38a2196ce79ffb71918250cfd3461905f2b903f8489201ff45fe6aee3",
+      "src/interfaces/strategy/IStrategyHook.sol": "10adebfb05efb0cc88cba3c34af45f078653aef2be53101344c7d25daca06830",
+      "src/interfaces/swapper/ISwapRouter.sol": "c15581334e9be92cb70374cf33eb0786f0c6ec02c79af847b39dcbf5b477a1f4",
+      "src/interfaces/swapper/ISwapRouterV2.sol": "16275fc332133043786e1657439ef227596357dcae6435a3260ae6bd117f530e",
+      "src/interfaces/swapper/ISyncSwapper.sol": "ff91e4cf17059d6ef8fc7927e8a791a7024ee0e99c1ee244fb7b08ec7b62622c",
+      "src/interfaces/utils/ICurveResolver.sol": "01b38604ece5b889d8231405029059b86f4d1a3bba2ebacd5c90e7704424e29b",
+      "src/interfaces/utils/IWETH9.sol": "e5db6ee8e7c29aa0b91b0a82799333cc39de8f69212ca17c448faca65b73ce67",
+      "src/interfaces/vault/IAutopilotRouter.sol": "2e545b88e4ffc2845ab8fe4809520a9ad3d0d9730746d5b56a1aa095205f930f",
+      "src/interfaces/vault/IAutopilotRouterBase.sol": "ec2a2cb897cf98ff03c592d6ce5f7e9b4feebc7cee1b1b7575f75554ed581f66",
+      "src/interfaces/vault/IAutopool.sol": "2979b51466e5c063400ec04c1fd98235a2bc565959e34e6d01dc2aaf8b511824",
+      "src/interfaces/vault/IAutopoolFactory.sol": "912687d3ed2504d1019dc88a03ca96583c9d94da665b1d09b9ddc36042caa203",
+      "src/interfaces/vault/IAutopoolRegistry.sol": "99039a1ca55cf01d5cf3ecc9844575fc7a68923a2ec113da9ebe776ae745b94e",
+      "src/interfaces/vault/IBaseAssetVault.sol": "6056cbea2f48fa3ed53747029cf00af7be74b60918f9d2417e021b5d9ac9f3f4",
+      "src/interfaces/vault/IDestinationVault.sol": "c90d900d2451978f93f1259d7de66bf008ed080d9cb32a2a08d705d3138a1516",
+      "src/interfaces/vault/IDestinationVaultFactory.sol": "d09d4f176fbae60f77065a6224e329b2f8c3dfc6c861b5a38bda8a29b4088a16",
+      "src/interfaces/vault/IDestinationVaultRegistry.sol": "3f6d9df7ef5c21b7552041fbb10f58020485719302d81b6ce7198be870931063",
+      "src/interfaces/vault/IERC4626.sol": "b5bd034342ae5250045740eba6ff70bd21f28f548c877d6de5ec17a8d2e19754",
+      "src/libs/LibAdapter.sol": "78587e68b24b231ed273c792aa37514f9b05daee8ad04a98d29542ac5f11999d",
+      "src/libs/Roles.sol": "22130fb6bb731c128b0c57e03ed6e4ff715f903865f33c9ae15541437a868ce7",
+      "src/security/Pausable.sol": "005880602ba64cd823d9f682b2264f8f5e3b838da47b782b6ba86425e2ddffd9",
+      "src/security/SecurityBase.sol": "7a5a7e8795114ceacdab299de0abd1cf3d706a0e8bdde24fc7a1fe2332e06105",
+      "src/strategy/StructuredLinkedList.sol": "3226cbf32e1d4fd35693df7d5939d1c2ecccbb8d2efb8b6077bf98659e65f772",
+      "src/strategy/WithdrawalQueue.sol": "67f04fbd1eaba9f717a9d09de9307d5087478a4059863e266db7193cbc858235",
+      "src/utils/Errors.sol": "7739c0b29f4178002fa6f9e59e4b6dfef035e41c613a101e3bfc55a2340f9361",
+      "src/utils/NonReentrantUpgradeable.sol": "323a40568e103fbe8aae930fab6bc95b46b35850770e321b6d42f03967b68593",
+      "src/vault/AutopoolETH.sol": "e4522cc12ec1f27291971f991b872282b3ce54a87c63c8e6dddfcfd42ca32643",
+      "src/vault/VaultTypes.sol": "d246c9631e65bcce3a47f75c1ccd6716ead8f49cb1f980028cb25cd4b61bedcd",
+      "src/vault/libs/Autopool4626.sol": "cccfb08376c98040a185ac8c6eda8c2bc6d46a66c74fcf6dae3b75cd53cac906",
+      "src/vault/libs/AutopoolDebt.sol": "e152a577fd6624f0310618a769f19ee7442fe05a65452c03a8e8472c58ad93ed",
+      "src/vault/libs/AutopoolDestinations.sol": "9efefe2f1858e8dced7ff17feb9d1c203b9d1b243f1e3ed3ca414ebbb7f6fcad",
+      "src/vault/libs/AutopoolFees.sol": "612763b94b48ce1dd29f6198a01bf9688fa29f82517008123a83c52ac00a074d",
+      "src/vault/libs/AutopoolState.sol": "4734ec4ea9fa0e51040abe01e94659b183cb98c34edc92ea8664928021dbf91e",
+      "src/vault/libs/AutopoolStrategyHooks.sol": "abebc6a89fe9da13536d2166d5b8b92735fccd65b12a646983c41335de83906a",
+      "src/vault/libs/AutopoolToken.sol": "ef953f39abe68bcf44c1b5151437c99d13f2fe7b7fe9ec67854c9498b3907f1d"
+    },
+    "abiComposition": "abi preserves implementation complete ABI plus all non-constructor proxy entries; implementationAbi and proxyAbi separately preserve both full original ABI arrays. Proxy admin dispatchers are all excluded."
+  },
+  "sourceReview": {
+    "reviewedSources": [
+      "src/vault/AutopoolETH.sol",
+      "src/vault/libs/Autopool4626.sol",
+      "src/vault/libs/AutopoolDebt.sol",
+      "src/vault/libs/AutopoolToken.sol",
+      "src/security/Pausable.sol"
+    ],
+    "semantics": [
+      "deposit transfers caller USDC and mints receiver shares via library transferAndMint. maxDeposit checks pause/shutdown, valid total assets and uint112 share cap. noNavPerShareDecrease and ensureNoNavOps guard the transaction.",
+      "redeem calculates owner share maximum, values at withdrawal-purpose pricing, invokes protocol-configured destination unwind, then completes allowance spending, share burn and USDC transfer. Caller supplies no arbitrary bytes or external targets.",
+      "This deployed implementation still implements mint/withdraw logic; exclusion is based on explicit official integration instruction, not a fabricated always-revert claim.",
+      "preview/max/paused retain actual nonpayable mutability; simulations and accessors are excluded rather than relabeled view. Source-provided external library addresses are preserved in compilation.compilerSettings.libraries.",
+      "Administrative methods have explicit role checks. Flash rebalance requires SOLVER and callback bytes, never activated. Proxy admin methods also never activated."
+    ]
+  },
+  "activityEvidence": {
+    "sourceRef": "https://etherscan.io/address/0xa7569a44f348d3d70d8ad5889e50f78e33d80d35#code",
+    "verifiedAt": "2026-10-22",
+    "evidence": "Explorer indexed deposit Oct 16, redemption Oct 8 and debt reporting Oct 22, 2026. Reporting is operator maintenance, not DAU. Official autoUSD page metadata advertises $7.48M TVL/6.02% APY; page body is loading placeholders, so those figures are not independently verified current vault TVL or execution proof.",
+    "dauMau": "unverified",
+    "vaultTvl": "not independently verified"
+  },
+  "replacementCandidateEvidence": {
+    "protocol": "Abracadabra",
+    "decision": "excluded-wind-down",
+    "officialGovernanceSourceRef": "https://snapshot.box/#/s:abracadabrabymerlinthemagician.eth/proposal/0x917c7a04fc4665028cb2701ab140462096362d22ea91137518f0ab23385776fd",
+    "apiSourceRef": "https://hub.snapshot.org/graphql",
+    "retrievedVia": "POST query proposals(first:5,space_in:[abracadabrabymerlinthemagician.eth]), newest first",
+    "proposal": {
+      "id": "0x917c7a04fc4665028cb2701ab140462096362d22ea91137518f0ab23385776fd",
+      "title": "Refined proposal for an orderly wind down of MIM and Abracadabra",
+      "body": "## Quorum adjustment disclosure\nThe Quorum threshold for this snapshot space, instead of being set at a percentage of the vote supply like any normal quorum, is hardcoded at 3 billion votes. However the total supply of votes is 1,030,156,193.663 votes at the time of publishing this proposal. The current quorum is therefore totally irrelevant and needs to be adjusted (a quorum of 3x the vote supply does not make any sense, and would just lead to paralysing the protocol).\nThe admin keys to this Snapshot space are held by former members of the Abracadabra team who have left for a long time and are not reachable, therefore, the hardcoded quorum cannot be fixed.\n\nFor the purpose of simplicity, to avoid creating a new Spell Snapshot Space, and to be able to serve users in their best interest, the quorum will be evaluated as a percentage of the vote supply, in line with market standards: 30% vote participation.\n\nThe total supply of votes at the time of publishing this proposal being 1,030,156,193.663, **the proposal will be considered as passed if the total amount of votes exceeds 309,046,858.1 votes**\n     \n\n## Summary\n\nAfter a series of hacks, MIM is severely under-backed with no viable path back to parity. Furthermore, some of the collateral types in Cauldrons are currently at risk of being deprecated. Given the lack of a path forward, and the risk of further loss of collateral for Abracadabra users, the only way forward is to organise an orderly wind down of the protocol, with the primary objective of protecting users and serving MIM holders. To accomplish this, collateral currently in Cauldrons will be reclaimed by the protocol and a plan has been outlined below to distribute funds fairly to users and MIM holders. The immutable positions will remain untouched, as well as those on chains for which the admin multisig keys have not been transferred since the transition of stewardship. UI will be maintained for at least the duration of the wind down.\n\n## Background\n\nAfter the strategic transition of stewardship in June, the current team has worked effortlessly to understand the full extent of the Abracadabra situation and to build a plan to find a path towards parity for MIM and future growth for the protocol.\n\nHowever, after analysis, the situation was far worse than initially expected, as not all the collateral present represents valid MIM backing. Many users hold collateral without debt on the platform, and as such, collateral cannot be accounted for in the MIM backing. Additionally, a significant amount of collateral is unrecoverable as it stands in front of a small amount of debt in immutable cauldrons, like the Arbitrum WETH cauldron. As the interest rate cannot be changed; this collateral would only be recoverable over a multi-year timeframe.\n\nAs of today, the total collateral backing MIM debt sits around $1.2m, with around $300k in the Arbitrum WETH cauldron. Therefore, the actionable backing of MIM sits around $900k.\n\nOn the other hand, the total supply of MIM not held by protocol addresses amounts to nearly $22m. In other words, the protocol sits on approximately $21m of bad debt, and MIM\u2019s effective backing is worth $0.04 (>95% unbacked).\n\nThe team has studied the initial plan to raise rates to perform liquidations on this collateral, creating buy pressure for MIM, and allowing MIM to repeg. However, after thorough analysis of the MIM distribution, activity, and ability to perform those liquidations, it is clear that bleeding value to liquidators through MIM discount and liquidation fees simply to temporarily increase buying pressure on MIM (while reducing its fair value) is a suboptimal outcome that would lead to a small, short term (minutes-long) price increase in MIM, that would benefit only the fastest sellers.\n\nWith no way to repeg MIM, the protocol cannot function, as there is no point in borrowing MIM below peg. With the current fair value of MIM, there is no perspective of ever getting the protocol to function again or see any growth without a massive external injection of cash. Meanwhile, work done around the neobank is unfortunately necessarily tied to MIM and therefore does not bring any additional value to the project, especially given the rising competitive landscape and regulatory environment around crypto-related FinTechs.\n\nFurthermore, the recently announced deprecation of the LayerZero Labs V1 relayer and requirement to withdraw funds before December 15 puts collateral in both Stargate USDC and Stargate USDT cauldrons (roughly $1m) at risk.\n\nAfter engaging legal counsel, several points became clear on the path to follow:\n\n-   With $21m of bad debt and no path towards recovery, the protocol should be unwound and liquidated, or become at risk of facing users enforcing a liquidation via legal actions, which is more costly to all stakeholders.\n    \n-   User interests should be protected, and not acting to rescue funds at risk could constitute legal liability.\n    \n-   MIM, as a CDP stablecoin, is a liability to the protocol, and therefore senior to SPELL, the governance token. Until this liability can be served fully, SPELL token does not retain any accounting value.\n    \n-   MIM holders should be treated equally. The liquidation of the protocol cannot be done through a rise in interest rates leading to user liquidations, since it would lead to unfair / unequal treatment of MIM holders, as the first users to sell would be able to receive up to $1 per MIM, while those selling last would receive close to nothing.\n    \n-   Borrowers should be afforded a better or identical outcome to an equivalent onchain liquidation.\n    \n-   The liquidation process should follow the highest ethical and legal market standards.\n    \n\n## Proposed Resolution\n\nGiven the variety of collaterals and user position, simplicity is key to a successful and transparent wind down of the protocol.\n\nIn all cases possible, the collateral in cauldrons will be emptied and swapped to a single token, in this case, WETH. It will be airdropped to users and MIM holders pro-rata through a merkl contract, using the following logic:\n\n-   **Borrowers:** receive the value corresponding to their deposited collateral minus their MIM debt ($1 per MIM as per the normal functionning of the protocol)\n    \n-   **MIM Holders:** receive pro-rata share of the remaining amount used to serve the debt, based on their current MIM balance ($0.04 per MIM).\n    \n\nShould some addresses not claim their airdrop, after six months, what is not claimed will be dispersed to MIM holders who have claimed up to a value of $1 per MIM, pro-rata of their share, to ensure that all funds are distributed and that MIM holders are all fairly treated. Beyond that, any remaining amount will be dispersed to borrowers proportionally to their MIM debt at the time of snapshot.\n\nOnce the liquidation is fully effective, the protocol will be shut down. Immutable positions will still be withdrawable by users on chain. The team will not bear any legal or technical responsibility to maintain the protocol. The UI will not be shut down, but will not be subject to active maintenance.\n\n## Technical Implementation\n\nCollateral tokens need to be swapped at least for the collateral currently at risk, but since there is a large number of different collaterals, some of them potentially at risk of being similarly wound down in the future, we propose to unify all collateral under one asset rather than have several claimable tokens, with the corresponding risk, complexity, cost, etc.\n\nAs most of the collateral is comprised of volatile assets (ETH or BTC related notably), the collateral will be swapped into ETH.\n\nFor eligible cauldrons, the functions deployStrategy and setStrategy will be used twice, which should allow the team to rescue ~99.75% of the collateral. This collateral will then be swapped to ETH, keeping a clear accounting of the ETH value attributable to each share of cauldron.\n\nAfter all collateral is swapped, and not before October 20th, 2026, a snapshot will be taken of MIM balances and cauldron/degenbox positions (collateral and debt).\n\nOnce this is done, a merkl contract will be deployed and the list of addresses and amounts claimable will be published on Discord.\n\nA redemption UI will be shared in Discord and linked on the main user interface. This interface will also allow users to withdraw their position from immutable cauldrons in a more user-friendly manner.\n\nBefore the redemption is open, users will have the opportunity to set a claim address different from the eligible address. This will also be done on the redemption UI.\n\nAfter six months, whatever is left in the merkl will be withdrawn, and dispersed to MIM holders who claimed proportionally to their MIM balance at the snapshot, up to a value of $1 per MIM. Beyond that, the remaining amount will be dispersed to borrowers proportionally to their MIM debt at the time of snapshot.\n\n**Voting Options**\n\n**For \u2014 Approve**\n\nApprove the proposed redemption plan.\n\n**Against \u2014 Reject**\n\nReject the proposed wind down plan and work on another solution\n\n**Quorum: 309,046,858.1 votes**",
+      "state": "closed",
+      "start": 1791929344,
+      "end": 1792058944,
+      "scores_total": 396163281.34979916,
+      "scores": [
+        396163281.3497992,
+        0,
+        0
+      ],
+      "choices": [
+        "For",
+        "Against",
+        "Abstain"
+      ],
+      "author": "0xE843FaEa0E6100900e591E89Be04b07285A59A58"
+    },
+    "evidence": "Refined official proposal explicitly winds down entire protocol, ends active UI maintenance, and disclaims continued technical responsibility. Total For votes exceed proposal-body replacement quorum (309046858.1), although legacy hardcoded Snapshot quorum differs. A shutdown plan cannot be overridden by stale sSPELL documentation or remaining onchain withdrawal ability.",
+    "corroboration": "https://www.kucoin.com/news/flash/abracadabra-dao-approves-protocol-shutdown-with-reduced-quorum-of-300m-spell",
+    "reviewedOldStakingSources": [
+      "https://docs.abracadabra.money/learn/intro/stake/sspell",
+      "https://docs.abracadabra.money/learn/tokens/tokenomics",
+      "https://etherscan.io/address/0x26fa3fffb6efe8c1e69103acb4044c26b9a106a9#code"
+    ],
+    "verifiedAt": "2026-10-22"
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "systemRegistry",
+          "type": "address",
+          "internalType": "contract ISystemRegistry"
+        },
+        {
+          "name": "_vaultAsset",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "AccessDenied",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AlreadySet",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AmountExceedsAllowance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "allowed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "BaseAssetMismatch",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "destinationVault",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "DebtReportingStale",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ERC20InsufficientAllowance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "allowance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InsufficientBalance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "balance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidApprover",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "approver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidReceiver",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSpender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC2612ExpiredSignature",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC2612InvalidSigner",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "signer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626DepositExceedsMax",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxDeposit",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxRedeem",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxWithdraw",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626MintExceedsMax",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxMint",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "FunctionNotSet",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "hook",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "fn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "HookAlreadySet",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "hook",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "fn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "HookExecutionFailed",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "hook",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "underlyingError",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "HookNotSet",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "hook",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "InsufficientAssets",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "asset",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "InvalidAccountNonce",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "currentNonce",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "InvalidDecimals",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidDestination",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "InvalidFee",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "newFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "InvalidParam",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "paramName",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "name": "InvalidPrices",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidShutdownStatus",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "status",
+          "type": "uint8",
+          "internalType": "enum IAutopool.VaultShutdownStatus"
+        }
+      ]
+    },
+    {
+      "name": "InvalidTotalAssetPurpose",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "IsNotPaused",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "IsPaused",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "MaxHooksSet",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "NavDecreased",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "oldNav",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "newNav",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "NavOpsInProgress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyRebalanceToIdleAvailable",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "PositivePriceRecoupNotCovered",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "remaining",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "RebalanceDestinationUnderlyerMismatch",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "trueUnderlyer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "providedUnderlyer",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "RebalanceDestinationsMatch",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RecoveryFailed",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ReentrancyGuardReentrantCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RegistryItemMissing",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "item",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "name": "SharesAndAssetsReceived",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "TooFewAssets",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "requested",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "actual",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "UndefinedAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "UnregisteredDestination",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "dest",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ValueSharesMismatch",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "VaultShutdown",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "WithdrawShareCalcInvalid",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "currentShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "cachedShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ZeroAddress",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "paramName",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "name": "AddedToRemovalQueue",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DestinationDebtReporting",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "debtInfo",
+          "type": "tuple",
+          "indexed": false,
+          "components": [
+            {
+              "name": "pricesWereSafe",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "totalIdleDecrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalIdleIncrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalDebtIncrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalDebtDecrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalMinDebtIncrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalMinDebtDecrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalMaxDebtIncrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalMaxDebtDecrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct AutopoolDebt.IdleDebtUpdates"
+        },
+        {
+          "name": "claimed",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "claimGasUsed",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DestinationVaultAdded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DestinationVaultRemoved",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "FeeCollected",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "fees",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeSink",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "mintedShares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "profit",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalAssets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "FeeSinkSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newFeeSink",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Initialized",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "uint8"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "LastPeriodicFeeTakeSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "lastPeriodicFeeTake",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Nav",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "idle",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "debt",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalSupply",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "NewNavShareFeeMark",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "navPerShare",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "NewProfitUnlockTime",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "timeSeconds",
+          "type": "uint48",
+          "indexed": false,
+          "internalType": "uint48"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "NewTotalAssetsHighWatermark",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Paused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PeriodicFeeCollected",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "fees",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeSink",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "mintedShares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PeriodicFeeSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PeriodicFeeSinkSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newPeriodicFeeSink",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RebalanceCompleted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "updatedAssets",
+          "type": "tuple",
+          "indexed": false,
+          "components": [
+            {
+              "name": "startingIdle",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "startingDebt",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "startingTotalSupply",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "newIdle",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "newDebt",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "endingTotalSupply",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct AutopoolDebt.AssetChanges"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RebalanceFeeHighWaterMarkEnabledSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RebalanceStarted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "rebalanceParams",
+          "type": "tuple",
+          "indexed": false,
+          "components": [
+            {
+              "name": "destinationIn",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenIn",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "destinationOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct IStrategy.RebalanceParams"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RemovedFromRemovalQueue",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RewarderSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newRewarder",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "oldRewarder",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Shutdown",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "reason",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "enum IAutopool.VaultShutdownStatus"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "StreamingFeeSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SymbolAndDescSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "symbol",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "desc",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TokensRecovered",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "tokens",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        },
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "indexed": false,
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "destinations",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Unpaused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "WithdrawalQueueSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destinations",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BASE_ASSET_INIT_DEPOSIT",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "DOMAIN_SEPARATOR",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ONE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "accessController",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IAccessController"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "addDestinations",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "destinations",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addHooks",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newHooks",
+          "type": "address[]",
+          "internalType": "contract IStrategyHook[]"
+        },
+        {
+          "name": "data",
+          "type": "bytes[]",
+          "internalType": "bytes[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "asset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "autoPoolStrategy",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IAutopoolStrategy"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOfActual",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalAssetsForPurpose",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "supply",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "rounding",
+          "type": "uint8",
+          "internalType": "enum Math.Rounding"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalAssetsForPurpose",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "supply",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "rounding",
+          "type": "uint8",
+          "internalType": "enum Math.Rounding"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimalPad",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "flashRebalance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "contract IERC3156FlashBorrower"
+        },
+        {
+          "name": "rebalanceParams",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "destinationIn",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenIn",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "destinationOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct IStrategy.RebalanceParams"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "getAssetBreakdown",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "totalIdle",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalDebt",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalDebtMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalDebtMax",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct IAutopool.AssetBreakdown"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDebtReportingQueue",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDestinationInfo",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "destVault",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "cachedDebtValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "cachedMinDebtValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "cachedMaxDebtValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "lastReport",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "ownedShares",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct AutopoolDebt.DestinationInfo"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDestinations",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getFeeSettings",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "feeSink",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "totalAssetsHighMark",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalAssetsHighMarkTimestamp",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "lastPeriodicFeeTake",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "periodicFeeSink",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "periodicFeeBps",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "streamingFeeBps",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "navPerShareLastFeeMark",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "navPerShareLastFeeMarkTimestamp",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "rebalanceFeeHighWaterMarkEnabled",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct IAutopool.AutopoolFeeSettings"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getHooks",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "onRebalanceStart",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onRebalanceOutAssetsReady",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onRebalanceInAssetsReturned",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onRebalanceDestinationVaultUpdated",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onRebalanceFeeProfitHandlingComplete",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onRebalanceComplete",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onDestinationDebtReport",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onNavUpdate",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            }
+          ],
+          "internalType": "struct AutopoolStrategyHooks.HookConfiguration"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getProfitUnlockSettings",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "unlockPeriodInSeconds",
+              "type": "uint48",
+              "internalType": "uint48"
+            },
+            {
+              "name": "fullProfitUnlockTime",
+              "type": "uint48",
+              "internalType": "uint48"
+            },
+            {
+              "name": "lastProfitUnlockTime",
+              "type": "uint48",
+              "internalType": "uint48"
+            },
+            {
+              "name": "profitUnlockRate",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct IAutopool.ProfitUnlockSettings"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getRemovalQueue",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getSystemRegistry",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getWithdrawalQueue",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "symbolSuffix",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "descPrefix",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "isDestinationQueuedForRemoval",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "dest",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isDestinationRegistered",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isPastRewarder",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_pastRewarder",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isShutdown",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "wallet",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "maxMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "wallet",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "maxRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "maxWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "nonces",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "oldestDebtReporting",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "paused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "permit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "recover",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokens",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "destinations",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeDestinations",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "destinations",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeHook",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "hookToRemove",
+          "type": "address",
+          "internalType": "contract IStrategyHook"
+        },
+        {
+          "name": "cleanupData",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "rewarder",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IMainRewarder"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "setFeeSink",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newFeeSink",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setPeriodicFeeBps",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setPeriodicFeeSink",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newPeriodicFeeSink",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setProfitUnlockPeriod",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newUnlockPeriodSeconds",
+          "type": "uint48",
+          "internalType": "uint48"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setRebalanceFeeHighWaterMarkEnabled",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setRewarder",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newRewarder",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setStreamingFeeBps",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setSymbolAndDescAfterShutdown",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newSymbol",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "newName",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "shutdown",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "reason",
+          "type": "uint8",
+          "internalType": "enum IAutopool.VaultShutdownStatus"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "shutdownStatus",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "enum IAutopool.VaultShutdownStatus"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "purpose",
+          "type": "uint8",
+          "internalType": "enum IAutopool.TotalAssetPurpose"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unpause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateDebtReporting",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "numToProcess",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "vaultType",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "previousAdmin",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "newAdmin",
+          "type": "address"
+        }
+      ],
+      "name": "AdminChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "beacon",
+          "type": "address"
+        }
+      ],
+      "name": "BeaconUpgraded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "implementation",
+          "type": "address"
+        }
+      ],
+      "name": "Upgraded",
+      "type": "event"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "fallback"
+    },
+    {
+      "inputs": [],
+      "name": "admin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "admin_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAdmin",
+          "type": "address"
+        }
+      ],
+      "name": "changeAdmin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "implementation",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "implementation_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newImplementation",
+          "type": "address"
+        }
+      ],
+      "name": "upgradeTo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newImplementation",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "upgradeToAndCall",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ],
+  "implementationAbi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "systemRegistry",
+          "type": "address",
+          "internalType": "contract ISystemRegistry"
+        },
+        {
+          "name": "_vaultAsset",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "AccessDenied",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AlreadySet",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AmountExceedsAllowance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "allowed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "BaseAssetMismatch",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "destinationVault",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "DebtReportingStale",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ERC20InsufficientAllowance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "allowance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InsufficientBalance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "balance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidApprover",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "approver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidReceiver",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSpender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC2612ExpiredSignature",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC2612InvalidSigner",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "signer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626DepositExceedsMax",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxDeposit",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxRedeem",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxWithdraw",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626MintExceedsMax",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxMint",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "FunctionNotSet",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "hook",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "fn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "HookAlreadySet",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "hook",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "fn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "HookExecutionFailed",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "hook",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "underlyingError",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "HookNotSet",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "hook",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "InsufficientAssets",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "asset",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "InvalidAccountNonce",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "currentNonce",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "InvalidDecimals",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidDestination",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "InvalidFee",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "newFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "InvalidParam",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "paramName",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "name": "InvalidPrices",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidShutdownStatus",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "status",
+          "type": "uint8",
+          "internalType": "enum IAutopool.VaultShutdownStatus"
+        }
+      ]
+    },
+    {
+      "name": "InvalidTotalAssetPurpose",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "IsNotPaused",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "IsPaused",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "MaxHooksSet",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "NavDecreased",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "oldNav",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "newNav",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "NavOpsInProgress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyRebalanceToIdleAvailable",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "PositivePriceRecoupNotCovered",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "remaining",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "RebalanceDestinationUnderlyerMismatch",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "trueUnderlyer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "providedUnderlyer",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "RebalanceDestinationsMatch",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RecoveryFailed",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ReentrancyGuardReentrantCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RegistryItemMissing",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "item",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "name": "SharesAndAssetsReceived",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "TooFewAssets",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "requested",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "actual",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "UndefinedAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "UnregisteredDestination",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "dest",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ValueSharesMismatch",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "VaultShutdown",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "WithdrawShareCalcInvalid",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "currentShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "cachedShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ZeroAddress",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "paramName",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "name": "AddedToRemovalQueue",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DestinationDebtReporting",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "debtInfo",
+          "type": "tuple",
+          "indexed": false,
+          "components": [
+            {
+              "name": "pricesWereSafe",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "totalIdleDecrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalIdleIncrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalDebtIncrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalDebtDecrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalMinDebtIncrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalMinDebtDecrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalMaxDebtIncrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalMaxDebtDecrease",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct AutopoolDebt.IdleDebtUpdates"
+        },
+        {
+          "name": "claimed",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "claimGasUsed",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DestinationVaultAdded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DestinationVaultRemoved",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "FeeCollected",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "fees",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeSink",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "mintedShares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "profit",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalAssets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "FeeSinkSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newFeeSink",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Initialized",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "uint8"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "LastPeriodicFeeTakeSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "lastPeriodicFeeTake",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Nav",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "idle",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "debt",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalSupply",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "NewNavShareFeeMark",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "navPerShare",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "NewProfitUnlockTime",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "timeSeconds",
+          "type": "uint48",
+          "indexed": false,
+          "internalType": "uint48"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "NewTotalAssetsHighWatermark",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Paused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PeriodicFeeCollected",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "fees",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeSink",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "mintedShares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PeriodicFeeSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PeriodicFeeSinkSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newPeriodicFeeSink",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RebalanceCompleted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "updatedAssets",
+          "type": "tuple",
+          "indexed": false,
+          "components": [
+            {
+              "name": "startingIdle",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "startingDebt",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "startingTotalSupply",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "newIdle",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "newDebt",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "endingTotalSupply",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct AutopoolDebt.AssetChanges"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RebalanceFeeHighWaterMarkEnabledSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RebalanceStarted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "rebalanceParams",
+          "type": "tuple",
+          "indexed": false,
+          "components": [
+            {
+              "name": "destinationIn",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenIn",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "destinationOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct IStrategy.RebalanceParams"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RemovedFromRemovalQueue",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RewarderSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newRewarder",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "oldRewarder",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Shutdown",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "reason",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "enum IAutopool.VaultShutdownStatus"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "StreamingFeeSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SymbolAndDescSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "symbol",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "desc",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TokensRecovered",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "tokens",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        },
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "indexed": false,
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "destinations",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Unpaused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "WithdrawalQueueSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "destinations",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BASE_ASSET_INIT_DEPOSIT",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "DOMAIN_SEPARATOR",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ONE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "accessController",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IAccessController"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "addDestinations",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "destinations",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addHooks",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newHooks",
+          "type": "address[]",
+          "internalType": "contract IStrategyHook[]"
+        },
+        {
+          "name": "data",
+          "type": "bytes[]",
+          "internalType": "bytes[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "asset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "autoPoolStrategy",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IAutopoolStrategy"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOfActual",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalAssetsForPurpose",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "supply",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "rounding",
+          "type": "uint8",
+          "internalType": "enum Math.Rounding"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalAssetsForPurpose",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "supply",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "rounding",
+          "type": "uint8",
+          "internalType": "enum Math.Rounding"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimalPad",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "flashRebalance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "contract IERC3156FlashBorrower"
+        },
+        {
+          "name": "rebalanceParams",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "destinationIn",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenIn",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "destinationOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct IStrategy.RebalanceParams"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "getAssetBreakdown",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "totalIdle",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalDebt",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalDebtMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalDebtMax",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct IAutopool.AssetBreakdown"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDebtReportingQueue",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDestinationInfo",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "destVault",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "cachedDebtValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "cachedMinDebtValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "cachedMaxDebtValue",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "lastReport",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "ownedShares",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct AutopoolDebt.DestinationInfo"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDestinations",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getFeeSettings",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "feeSink",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "totalAssetsHighMark",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalAssetsHighMarkTimestamp",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "lastPeriodicFeeTake",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "periodicFeeSink",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "periodicFeeBps",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "streamingFeeBps",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "navPerShareLastFeeMark",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "navPerShareLastFeeMarkTimestamp",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "rebalanceFeeHighWaterMarkEnabled",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct IAutopool.AutopoolFeeSettings"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getHooks",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "onRebalanceStart",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onRebalanceOutAssetsReady",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onRebalanceInAssetsReturned",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onRebalanceDestinationVaultUpdated",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onRebalanceFeeProfitHandlingComplete",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onRebalanceComplete",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onDestinationDebtReport",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            },
+            {
+              "name": "onNavUpdate",
+              "type": "address[10]",
+              "internalType": "address[10]"
+            }
+          ],
+          "internalType": "struct AutopoolStrategyHooks.HookConfiguration"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getProfitUnlockSettings",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "unlockPeriodInSeconds",
+              "type": "uint48",
+              "internalType": "uint48"
+            },
+            {
+              "name": "fullProfitUnlockTime",
+              "type": "uint48",
+              "internalType": "uint48"
+            },
+            {
+              "name": "lastProfitUnlockTime",
+              "type": "uint48",
+              "internalType": "uint48"
+            },
+            {
+              "name": "profitUnlockRate",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct IAutopool.ProfitUnlockSettings"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getRemovalQueue",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getSystemRegistry",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getWithdrawalQueue",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "initialize",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "symbolSuffix",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "descPrefix",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "isDestinationQueuedForRemoval",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "dest",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isDestinationRegistered",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isPastRewarder",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_pastRewarder",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isShutdown",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "wallet",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "maxMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "wallet",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "maxRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxShares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "maxWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxAssets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "nonces",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "oldestDebtReporting",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "paused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "permit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "recover",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokens",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "destinations",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeDestinations",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "destinations",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeHook",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "hookToRemove",
+          "type": "address",
+          "internalType": "contract IStrategyHook"
+        },
+        {
+          "name": "cleanupData",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "rewarder",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IMainRewarder"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "setFeeSink",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newFeeSink",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setPeriodicFeeBps",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setPeriodicFeeSink",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newPeriodicFeeSink",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setProfitUnlockPeriod",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newUnlockPeriodSeconds",
+          "type": "uint48",
+          "internalType": "uint48"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setRebalanceFeeHighWaterMarkEnabled",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setRewarder",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newRewarder",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setStreamingFeeBps",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setSymbolAndDescAfterShutdown",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newSymbol",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "newName",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "shutdown",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "reason",
+          "type": "uint8",
+          "internalType": "enum IAutopool.VaultShutdownStatus"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "shutdownStatus",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "enum IAutopool.VaultShutdownStatus"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "purpose",
+          "type": "uint8",
+          "internalType": "enum IAutopool.TotalAssetPurpose"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unpause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateDebtReporting",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "numToProcess",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "vaultType",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "proxyAbi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_logic",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "admin_",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_data",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "previousAdmin",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "newAdmin",
+          "type": "address"
+        }
+      ],
+      "name": "AdminChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "beacon",
+          "type": "address"
+        }
+      ],
+      "name": "BeaconUpgraded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "implementation",
+          "type": "address"
+        }
+      ],
+      "name": "Upgraded",
+      "type": "event"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "fallback"
+    },
+    {
+      "inputs": [],
+      "name": "admin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "admin_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAdmin",
+          "type": "address"
+        }
+      ],
+      "name": "changeAdmin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "implementation",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "implementation_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newImplementation",
+          "type": "address"
+        }
+      ],
+      "name": "upgradeTo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newImplementation",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "upgradeToAndCall",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ],
+  "functionDecisions": [
+    {
+      "signature": "BASE_ASSET_INIT_DEPOSIT()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only BASE_ASSET_INIT_DEPOSIT() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "DOMAIN_SEPARATOR()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only DOMAIN_SEPARATOR() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "ONE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only ONE() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "accessController()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only accessController() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "addDestinations(address[])",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires AUTO_POOL_DESTINATION_UPDATER; modifies destination investment universe, administrative surface excluded."
+    },
+    {
+      "signature": "addHooks(address[],bytes[])",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires STRATEGY_HOOK_CONFIGURATION; configures arbitrary strategy hooks/bytes payloads, privileged executor configuration excluded."
+    },
+    {
+      "signature": "allowance(address,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only allowance(address,address) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "approve(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Sets receipt-token allowance; generic token authorization is outside selected vault deposit/exit slice."
+    },
+    {
+      "signature": "asset()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only asset() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "autoPoolStrategy()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only autoPoolStrategy() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "balanceOf(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only balanceOf(address) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "balanceOfActual(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only balanceOfActual(address) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "convertToAssets(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToAssets(uint256) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "convertToAssets(uint256,uint256,uint256,uint8)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToAssets(uint256,uint256,uint256,uint8) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "convertToShares(uint256,uint256,uint256,uint8)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToShares(uint256,uint256,uint256,uint8) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "convertToShares(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToShares(uint256) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "decimalPad()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only decimalPad() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "decimals()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only decimals() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "deposit(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary caller-funded USDC deposit: Autopool4626 checks nonzero assets/shares, pause/shutdown, current asset pricing and share cap; transfers USDC and mints receiver shares, subject to NAV guards."
+    },
+    {
+      "signature": "factory()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only factory() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "flashRebalance(address,(address,address,uint256,address,address,uint256),bytes)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires SOLVER; invokes a caller-specified flash-loan receiver and bytes payload under rebalance parameters. Privileged callback/executor, never ordinary user staking."
+    },
+    {
+      "signature": "getAssetBreakdown()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getAssetBreakdown() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "getDebtReportingQueue()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getDebtReportingQueue() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "getDestinationInfo(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getDestinationInfo(address) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "getDestinations()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getDestinations() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "getFeeSettings()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getFeeSettings() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "getHooks()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getHooks() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "getProfitUnlockSettings()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getProfitUnlockSettings() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "getRemovalQueue()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getRemovalQueue() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "getSystemRegistry()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getSystemRegistry() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "getWithdrawalQueue()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getWithdrawalQueue() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "initialize(string,string,bytes)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "One-time initializer writes metadata/factory, initializes fees and dead-address seed shares; deployment/setup surface, not an ordinary existing-vault user operation."
+    },
+    {
+      "signature": "isDestinationQueuedForRemoval(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only isDestinationQueuedForRemoval(address) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "isDestinationRegistered(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only isDestinationRegistered(address) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "isPastRewarder(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only isPastRewarder(address) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "isShutdown()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only isShutdown() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "maxDeposit(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Nonpayable maxDeposit pricing/limit simulation accessor; official 4626 docs explain non-view/read-through-revert behavior. Information-only estimate, not a user investment action or proof a state-changing call will succeed; excluded from transaction admission."
+    },
+    {
+      "signature": "maxMint(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Nonpayable maxMint pricing/limit simulation accessor; official 4626 docs explain non-view/read-through-revert behavior. Information-only estimate, not a user investment action or proof a state-changing call will succeed; excluded from transaction admission."
+    },
+    {
+      "signature": "maxRedeem(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Nonpayable maxRedeem pricing/limit simulation accessor; official 4626 docs explain non-view/read-through-revert behavior. Information-only estimate, not a user investment action or proof a state-changing call will succeed; excluded from transaction admission."
+    },
+    {
+      "signature": "maxWithdraw(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Nonpayable maxWithdraw pricing/limit simulation accessor; official 4626 docs explain non-view/read-through-revert behavior. Information-only estimate, not a user investment action or proof a state-changing call will succeed; excluded from transaction admission."
+    },
+    {
+      "signature": "mint(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Explicitly discouraged by current official 4626 integration documentation: do not use mint; poorer slippage/gas and planned reversion. Retained as working ABI/source logic, not admitted."
+    },
+    {
+      "signature": "name()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only name() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "nonces(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only nonces(address) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "oldestDebtReporting()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only oldestDebtReporting() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "pause()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires EMERGENCY_PAUSER; emergency administrative state change excluded."
+    },
+    {
+      "signature": "paused()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Nonpayable informational local/system pause accessor, despite not being marked view; no user investment action or transaction capability admitted."
+    },
+    {
+      "signature": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "ERC2612 signed allowance authorization; permit/signing expressly outside this admission."
+    },
+    {
+      "signature": "previewDeposit(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Nonpayable previewDeposit pricing/limit simulation accessor; official 4626 docs explain non-view/read-through-revert behavior. Information-only estimate, not a user investment action or proof a state-changing call will succeed; excluded from transaction admission."
+    },
+    {
+      "signature": "previewMint(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Nonpayable previewMint pricing/limit simulation accessor; official 4626 docs explain non-view/read-through-revert behavior. Information-only estimate, not a user investment action or proof a state-changing call will succeed; excluded from transaction admission."
+    },
+    {
+      "signature": "previewRedeem(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Nonpayable previewRedeem pricing/limit simulation accessor; official 4626 docs explain non-view/read-through-revert behavior. Information-only estimate, not a user investment action or proof a state-changing call will succeed; excluded from transaction admission."
+    },
+    {
+      "signature": "previewWithdraw(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Nonpayable previewWithdraw pricing/limit simulation accessor; official 4626 docs explain non-view/read-through-revert behavior. Information-only estimate, not a user investment action or proof a state-changing call will succeed; excluded from transaction admission."
+    },
+    {
+      "signature": "recover(address[],uint256[],address[])",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires TOKEN_RECOVERY_MANAGER; transfers selected tokens to administrative destinations, excluded."
+    },
+    {
+      "signature": "redeem(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary owner/approved-spender share redemption: validates shares, liquidity/current debt reporting and NAV guards, unwinds fixed configured destinations, burns shares and transfers USDC to receiver."
+    },
+    {
+      "signature": "removeDestinations(address[])",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires AUTO_POOL_DESTINATION_UPDATER; modifies destination universe/removal queue, administrative surface excluded."
+    },
+    {
+      "signature": "removeHook(address,bytes)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires STRATEGY_HOOK_CONFIGURATION; removes a hook with cleanup bytes, privileged executor configuration excluded."
+    },
+    {
+      "signature": "rewarder()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only rewarder() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "setFeeSink(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires AUTO_POOL_FEE_UPDATER; modifies fee recipient, administrative surface excluded."
+    },
+    {
+      "signature": "setPeriodicFeeBps(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires AUTO_POOL_PERIODIC_FEE_UPDATER; changes periodic fee rate, administrative surface excluded."
+    },
+    {
+      "signature": "setPeriodicFeeSink(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires AUTO_POOL_PERIODIC_FEE_UPDATER; changes periodic fee recipient, administrative surface excluded."
+    },
+    {
+      "signature": "setProfitUnlockPeriod(uint48)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires AUTO_POOL_MANAGER; changes profit vesting schedule, administrative surface excluded."
+    },
+    {
+      "signature": "setRebalanceFeeHighWaterMarkEnabled(bool)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires AUTO_POOL_FEE_UPDATER; modifies fee watermark behavior, administrative surface excluded."
+    },
+    {
+      "signature": "setRewarder(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires factory or AUTO_POOL_REWARD_MANAGER; replaces rewards contract, administrative surface excluded."
+    },
+    {
+      "signature": "setStreamingFeeBps(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires AUTO_POOL_FEE_UPDATER; modifies profit/streaming fees, administrative surface excluded."
+    },
+    {
+      "signature": "setSymbolAndDescAfterShutdown(string,string)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires AUTO_POOL_MANAGER and shutdown state; post-shutdown metadata mutation, not a user action."
+    },
+    {
+      "signature": "shutdown(uint8)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires AUTO_POOL_MANAGER; sets vault shutdown reason, administrative lifecycle action excluded."
+    },
+    {
+      "signature": "shutdownStatus()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only shutdownStatus() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "symbol()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only symbol() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "totalAssets()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalAssets() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "totalAssets(uint8)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalAssets(uint8) returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "totalSupply()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalSupply() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "transfer(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Generic autoUSD share transfer, not USDC vault entry/exit; excluded."
+    },
+    {
+      "signature": "transferFrom(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Generic allowance-based autoUSD share transfer, not USDC vault entry/exit; excluded."
+    },
+    {
+      "signature": "unpause()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires EMERGENCY_PAUSER; emergency administrative state change excluded."
+    },
+    {
+      "signature": "updateDebtReporting(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires AUTO_POOL_REPORTING_EXECUTOR; keeper updates destination debt accounting and fee/profit handling, not ordinary user action."
+    },
+    {
+      "signature": "vaultType()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only vaultType() returns token, vault, strategy, queue, fee, profit or accounting information; full actual fragment retained, but no read/transaction capability activated by this deposit/redeem slice."
+    },
+    {
+      "signature": "withdraw(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Explicitly discouraged by current official 4626 integration documentation: do not use withdraw; greater share burn/slippage/gas and planned reversion. Retained as working ABI/source logic, not admitted."
+    },
+    {
+      "signature": "admin()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Transparent proxy admin-only introspection dispatcher; non-admin calls delegate instead. Not ordinary user vault operation."
+    },
+    {
+      "signature": "changeAdmin(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Transparent proxy administrator-only control transfer; excluded privileged function."
+    },
+    {
+      "signature": "implementation()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Transparent proxy admin-only implementation introspection dispatcher; non-admin calls delegate instead. Not ordinary user vault operation."
+    },
+    {
+      "signature": "upgradeTo(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Transparent proxy administrator-only implementation replacement; excluded privileged function."
+    },
+    {
+      "signature": "upgradeToAndCall(address,bytes)",
+      "stateMutability": "payable",
+      "selected": false,
+      "reason": "Transparent proxy administrator-only upgrade plus opaque initialization delegatecall bytes; excluded privileged executor."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "auto-finance-autousd:v1:1:0xa7569a44f348d3d70d8ad5889e50f78e33d80d35:deposit",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xa7569a44f348d3d70d8ad5889e50f78e33d80d35",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.auto.finance/developer-docs/contracts-overview/contract-addresses.md ; https://etherscan.io/address/0xa7569a44f348d3d70d8ad5889e50f78e33d80d35#code ; https://sourcify.dev/server/v2/contract/1/0xfB2eBdeDc38a7d19080E44ab1D621bc9AfAD0695?fields=abi,compilation,sources,deployment,proxyResolution ; https://etherscan.io/address/0xfB2eBdeDc38a7d19080E44ab1D621bc9AfAD0695#code ; https://docs.auto.finance/developer-docs/integrating/4626-compliance.md ; https://app.auto.finance/pools/autoUSD",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Auto Finance",
+      "operation": "deposit",
+      "label": "Auto Finance autoUSD deposit",
+      "warnings": [
+        "Ethereum autoUSD USDC vault only (Auto Finance, formerly Tokemak). Upgradeable TransparentUpgradeableProxy; exact-address explorer reports implementation 0xfB2eBdeDc38a7d19080E44ab1D621bc9AfAD0695. Initial constructor logic differs. Explorer Exact Match and Sourcify match labels are independent source-service claims, not fresh runtime/storage attestation.",
+        "Base asset is Ethereum USDC 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 (6 decimals), bound through implementation constructor immutable _vaultAsset. deposit consumes caller USDC allowance and issues 18-decimal vault shares to receiver. redeem consumes owner shares/allowance and returns USDC to receiver.",
+        "No caller-set minimum shares/USDC output, maximum input or deadline. Deposit and withdrawal pricing differ; underlying destinations and configured swap routes can cause slippage and losses. NAV/share non-decrease protects remaining pool accounting, not a user-selected minimum return. No cooldown, but liquidity, available routes, gas, debt-report freshness, system NAV operations and pause/shutdown checks can prevent execution.",
+        "Only deposit(uint256,address) and redeem(uint256,address,address) admitted. Official integration docs explicitly say do not use mint and withdraw and warn they may revert in future; they are not selected even though this implementation contains working logic. Nonpayable preview/max/paused functions are information or simulation surfaces, not additional user deposit/exit actions.",
+        "No router multicall, dynamic swap-route payload, flashRebalance, administrative hook, recovery, rewarder, bridge or permit surface admitted. Ordinary redeem uses fixed protocol-configured routes internally; custom external swap-route execution remains outside runtime scope.",
+        "All admitted calls are nonpayable and require zero native value. Independent authorization, balances, allowances, pause, final rechecks and signing controls remain required. No DAU/MAU or fresh RPC execution proof; frontend metadata TVL is not independently verified and yield is not guaranteed."
+      ]
+    },
+    {
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "auto-finance-autousd:v1:1:0xa7569a44f348d3d70d8ad5889e50f78e33d80d35:redeem",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xa7569a44f348d3d70d8ad5889e50f78e33d80d35",
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.auto.finance/developer-docs/contracts-overview/contract-addresses.md ; https://etherscan.io/address/0xa7569a44f348d3d70d8ad5889e50f78e33d80d35#code ; https://sourcify.dev/server/v2/contract/1/0xfB2eBdeDc38a7d19080E44ab1D621bc9AfAD0695?fields=abi,compilation,sources,deployment,proxyResolution ; https://etherscan.io/address/0xfB2eBdeDc38a7d19080E44ab1D621bc9AfAD0695#code ; https://docs.auto.finance/developer-docs/integrating/4626-compliance.md ; https://app.auto.finance/pools/autoUSD",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Auto Finance",
+      "operation": "redeem",
+      "label": "Auto Finance autoUSD redeem",
+      "warnings": [
+        "Ethereum autoUSD USDC vault only (Auto Finance, formerly Tokemak). Upgradeable TransparentUpgradeableProxy; exact-address explorer reports implementation 0xfB2eBdeDc38a7d19080E44ab1D621bc9AfAD0695. Initial constructor logic differs. Explorer Exact Match and Sourcify match labels are independent source-service claims, not fresh runtime/storage attestation.",
+        "Base asset is Ethereum USDC 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 (6 decimals), bound through implementation constructor immutable _vaultAsset. deposit consumes caller USDC allowance and issues 18-decimal vault shares to receiver. redeem consumes owner shares/allowance and returns USDC to receiver.",
+        "No caller-set minimum shares/USDC output, maximum input or deadline. Deposit and withdrawal pricing differ; underlying destinations and configured swap routes can cause slippage and losses. NAV/share non-decrease protects remaining pool accounting, not a user-selected minimum return. No cooldown, but liquidity, available routes, gas, debt-report freshness, system NAV operations and pause/shutdown checks can prevent execution.",
+        "Only deposit(uint256,address) and redeem(uint256,address,address) admitted. Official integration docs explicitly say do not use mint and withdraw and warn they may revert in future; they are not selected even though this implementation contains working logic. Nonpayable preview/max/paused functions are information or simulation surfaces, not additional user deposit/exit actions.",
+        "No router multicall, dynamic swap-route payload, flashRebalance, administrative hook, recovery, rewarder, bridge or permit surface admitted. Ordinary redeem uses fixed protocol-configured routes internally; custom external swap-route execution remains outside runtime scope.",
+        "All admitted calls are nonpayable and require zero native value. Independent authorization, balances, allowances, pause, final rechecks and signing controls remain required. No DAU/MAU or fresh RPC execution proof; frontend metadata TVL is not independently verified and yield is not guaranteed."
+      ]
+    }
+  ],
+  "limitations": [
+    "Ethereum autoUSD USDC vault only (Auto Finance, formerly Tokemak). Upgradeable TransparentUpgradeableProxy; exact-address explorer reports implementation 0xfB2eBdeDc38a7d19080E44ab1D621bc9AfAD0695. Initial constructor logic differs. Explorer Exact Match and Sourcify match labels are independent source-service claims, not fresh runtime/storage attestation.",
+    "Base asset is Ethereum USDC 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 (6 decimals), bound through implementation constructor immutable _vaultAsset. deposit consumes caller USDC allowance and issues 18-decimal vault shares to receiver. redeem consumes owner shares/allowance and returns USDC to receiver.",
+    "No caller-set minimum shares/USDC output, maximum input or deadline. Deposit and withdrawal pricing differ; underlying destinations and configured swap routes can cause slippage and losses. NAV/share non-decrease protects remaining pool accounting, not a user-selected minimum return. No cooldown, but liquidity, available routes, gas, debt-report freshness, system NAV operations and pause/shutdown checks can prevent execution.",
+    "Only deposit(uint256,address) and redeem(uint256,address,address) admitted. Official integration docs explicitly say do not use mint and withdraw and warn they may revert in future; they are not selected even though this implementation contains working logic. Nonpayable preview/max/paused functions are information or simulation surfaces, not additional user deposit/exit actions.",
+    "No router multicall, dynamic swap-route payload, flashRebalance, administrative hook, recovery, rewarder, bridge or permit surface admitted. Ordinary redeem uses fixed protocol-configured routes internally; custom external swap-route execution remains outside runtime scope.",
+    "All admitted calls are nonpayable and require zero native value. Independent authorization, balances, allowances, pause, final rechecks and signing controls remain required. No DAU/MAU or fresh RPC execution proof; frontend metadata TVL is not independently verified and yield is not guaranteed."
+  ]
+}

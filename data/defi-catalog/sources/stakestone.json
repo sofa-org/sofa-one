@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "stakestone",
+      "familyVersion": "stone-vault-v1@5315569",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xA62F9C5af106FeEE069F38dE51098D9d81B90572",
+          "status": "inactive",
+          "contractName": "StakeStone Ethereum StoneVault",
+          "sourceRefs": [
+            "stakestone-official-stonevault-address",
+            "stakestone-official-api-reference",
+            "stakestone-stonevault-sourcify-abi"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "payable",
+              "inputs": [],
+              "outputs": [
+                { "name": "mintAmount", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "stakestone-stonevault-sourcify-abi"
+            },
+            {
+              "type": "function",
+              "name": "requestWithdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "_shares", "type": "uint256", "internalType": "uint256" }
+              ],
+              "outputs": [],
+              "sourceId": "stakestone-stonevault-sourcify-abi"
+            },
+            {
+              "type": "function",
+              "name": "cancelWithdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "_shares", "type": "uint256", "internalType": "uint256" }
+              ],
+              "outputs": [],
+              "sourceId": "stakestone-stonevault-sourcify-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "stakestone-official-stonevault-address",
+      "url": "https://docs.stakestone.io/stakestone/developers/smart-contracts-address_stone.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official StakeStone address documentation identifies the Ethereum StoneVault user deployment as 0xA62F9C5af106FeEE069F38dE51098D9d81B90572. Role was carried from the research handoff; direct documentation retrieval during fixture implementation returned HTTP 403, so this records a dated official role claim, not independently fetched or current runtime identity."
+    },
+    {
+      "sourceId": "stakestone-official-api-reference",
+      "url": "https://docs.stakestone.io/stakestone/developers/stakestone-api-references.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official API reference is the documented ABI carrier for StoneVault operations. Direct retrieval during fixture implementation returned HTTP 403; selected exact declarations were mechanically confirmed against the target-specific Sourcify ABI below."
+    },
+    {
+      "sourceId": "stakestone-stonevault-sourcify-abi",
+      "url": "https://sourcify.dev/server/v2/contract/1/0xA62F9C5af106FeEE069F38dE51098D9d81B90572?fields=all",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Sourcify match 5315569, verified 2024-09-08, target-specific StoneVault ABI confirms deposit() payable returns uint256 mintAmount; requestWithdraw(uint256 _shares) and cancelWithdraw(uint256 _shares) are nonpayable and void. These three exact user declarations are selected; this does not certify present deployment/runtime state or a complete asynchronous exit."
+    }
+  ]
+}

@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "lfj-liquidity-book",
+      "familyVersion": "v2.2",
+      "contracts": [
+        {
+          "chainId": 42161,
+          "address": "0x18556DA13313f3532c54711497A8FedAC273220E",
+          "status": "inactive",
+          "contractName": "LFJ Liquidity Book V2.2 Arbitrum One router",
+          "sourceRefs": [
+            "lfj-official-deployment",
+            "lfj-address-verified-abi",
+            "lfj-v2.2-guide"
+          ],
+          "abiFunctions": [
+            {
+              "name": "addLiquidity",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "liquidityParameters",
+                  "type": "tuple",
+                  "components": [
+                    {
+                      "name": "tokenX",
+                      "type": "address",
+                      "internalType": "contract IERC20"
+                    },
+                    {
+                      "name": "tokenY",
+                      "type": "address",
+                      "internalType": "contract IERC20"
+                    },
+                    {
+                      "name": "binStep",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "amountX",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "amountY",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "amountXMin",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "amountYMin",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "activeIdDesired",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "idSlippage",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "deltaIds",
+                      "type": "int256[]",
+                      "internalType": "int256[]"
+                    },
+                    {
+                      "name": "distributionX",
+                      "type": "uint256[]",
+                      "internalType": "uint256[]"
+                    },
+                    {
+                      "name": "distributionY",
+                      "type": "uint256[]",
+                      "internalType": "uint256[]"
+                    },
+                    {
+                      "name": "to",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "refundTo",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "deadline",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ILBRouter.LiquidityParameters"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "amountXAdded",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountYAdded",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountXLeft",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountYLeft",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "depositIds",
+                  "type": "uint256[]",
+                  "internalType": "uint256[]"
+                },
+                {
+                  "name": "liquidityMinted",
+                  "type": "uint256[]",
+                  "internalType": "uint256[]"
+                }
+              ],
+              "stateMutability": "nonpayable"
+            },
+            {
+              "name": "removeLiquidity",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "tokenX",
+                  "type": "address",
+                  "internalType": "contract IERC20"
+                },
+                {
+                  "name": "tokenY",
+                  "type": "address",
+                  "internalType": "contract IERC20"
+                },
+                {
+                  "name": "binStep",
+                  "type": "uint16",
+                  "internalType": "uint16"
+                },
+                {
+                  "name": "amountXMin",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountYMin",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "ids",
+                  "type": "uint256[]",
+                  "internalType": "uint256[]"
+                },
+                {
+                  "name": "amounts",
+                  "type": "uint256[]",
+                  "internalType": "uint256[]"
+                },
+                {
+                  "name": "to",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "deadline",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "amountX",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountY",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable"
+            },
+            {
+              "name": "swapExactTokensForTokens",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "amountIn",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountOutMin",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "path",
+                  "type": "tuple",
+                  "components": [
+                    {
+                      "name": "pairBinSteps",
+                      "type": "uint256[]",
+                      "internalType": "uint256[]"
+                    },
+                    {
+                      "name": "versions",
+                      "type": "uint8[]",
+                      "internalType": "enum ILBRouter.Version[]"
+                    },
+                    {
+                      "name": "tokenPath",
+                      "type": "address[]",
+                      "internalType": "contract IERC20[]"
+                    }
+                  ],
+                  "internalType": "struct ILBRouter.Path"
+                },
+                {
+                  "name": "to",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "deadline",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "amountOut",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    {
+      "sourceId": "lfj-official-deployment",
+      "url": "https://developers.lfj.gg/deployment-addresses/arbitrum.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official documentation identifies Arbitrum One LFJ Liquidity Book V2.2 deployment 0x18556DA13313f3532c54711497A8FedAC273220E."
+    },
+    {
+      "sourceId": "lfj-address-verified-abi",
+      "url": "https://sourcify.dev/server/v2/contract/42161/0x18556DA13313f3532c54711497A8FedAC273220E?fields=abi,sources,metadata",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Address-specific Sourcify record: verifiedAt 2024-08-08T15:03:35Z, match=exact_match, chainId=42161, address=0x18556DA13313f3532c54711497A8FedAC273220E; methods are the exact three ordinary functions recorded in this candidate."
+    },
+    {
+      "sourceId": "lfj-v2.2-guide",
+      "url": "https://developers.lfj.gg/guides/add-remove-liquidity.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official guide states V2.2 is not backwards-compatible with V2.1 pairs; no market or pair population is asserted."
+    }
+  ]
+}

@@ -1,16 +1,17 @@
-import { useOpenfort } from '@openfort/react';
+import { Fragment } from 'react';
+import { useAppSession } from './AppSessionProvider';
 import { Navigate, useLocation } from 'react-router-dom';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isLoading, user } = useOpenfort();
+  const { session, loading, error, refresh } = useAppSession();
   const location = useLocation();
-  const reloadPage = () => window.location.reload();
+  const retry = () => { void refresh().catch(() => undefined); };
 
-  if (user) {
-    return <>{children}</>;
+  if (session) {
+    return <Fragment key={session.sessionId}>{children}</Fragment>;
   }
 
-  if (isLoading) {
+  if (loading || error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-brand-bg px-6 text-brand-text">
         <div className="w-full max-w-sm rounded-3xl border border-brand-border bg-white p-8 text-center shadow-xl">
@@ -21,17 +22,17 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
             Secure session
           </p>
           <h1 className="mt-2 font-serif text-2xl font-bold text-brand-text">
-            Checking your Openfort session
+            {error ? 'Session check unavailable' : 'Checking your SOFA session'}
           </h1>
           <p className="mt-3 text-sm leading-6 text-brand-muted">
-            Verifying access before opening your wallet dashboard.
+            {error ?? 'Verifying access before opening your dashboard.'}
           </p>
           <button
             type="button"
-            onClick={reloadPage}
+            onClick={retry}
             className="mt-5 rounded-full border border-brand-border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-muted transition-colors hover:border-brand-accent hover:text-brand-accent"
           >
-            Reload page
+            Retry session check
           </button>
         </div>
       </div>

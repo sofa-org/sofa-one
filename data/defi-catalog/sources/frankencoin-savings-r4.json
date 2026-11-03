@@ -1,0 +1,2516 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Frankencoin",
+  "slug": "frankencoin-savings",
+  "observedAt": "2026-10-23",
+  "chainId": 1,
+  "address": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+  "contractName": "Savings",
+  "status": "active",
+  "scope": "Referral-enabled direct Ethereum user savings, not legacy SavingsV2, privileged minters, loans, governance, bridges or executors.",
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.frankencoin.com/savings",
+    "verifiedAt": "2026-10-23",
+    "chainId": 1,
+    "address": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+    "excerpt": "Referral-enabled Savings: 0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38. Published source and ABI checked on 18 September 2026. Inherits AbstractSavings: interest delay, no equivalent ticks-based withdrawal lock, referral support.",
+    "currentApplicationEvidence": {
+      "sourceRef": "https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js",
+      "sha256": "ed642af710cd21021260d8d4c49ceb8a20e0bb8fa70146d62b4f139ffb6e058c",
+      "excerpt": "e445ff4ddDf0ff8aE7458c9746eD80bD664F6C1\",chfauToken:\"0xBD4DfC058eb95b8De5ceAF39966A1a70F5556F78\",transferReference:\"0xf98c221661F51578f5E5236B189a493E2a8a1916\",savingsReferral:\"0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38\",ccipAdmin:\"0x2527ec458c863073a303CF0a362Bf78aDD5dFEf8\",ccipTokenPool:\"0x9359cd7"
+    }
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+    "observedAt": "2026-10-23",
+    "chainId": 1,
+    "address": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+    "responseSha256": "2e8124ff710636f61f0e09a4592f15488c7793dfb075beb25bf2bfa37c456c1f",
+    "responseHashEncoding": "SHA256 of retrieved JSON reserialized compact with ensure_ascii=false; field order retained",
+    "serviceVerifiedAt": "2025-06-10T16:01:41Z",
+    "match": "exact_match",
+    "creationMatch": "exact_match",
+    "runtimeMatch": "exact_match",
+    "deployment": {
+      "transactionHash": "0xb227f904a26ff3b3e7259b2fa1ec8b95f1738885417dc731b3eac6f1d26cbfd8",
+      "blockNumber": "22536327",
+      "transactionIndex": "341",
+      "deployer": "0x0170F42f224b99CcbbeE673093589c5f9691dd06"
+    },
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.24+commit.e11b9ed9",
+      "compilerSettings": {
+        "metadata": {
+          "useLiteralContent": true
+        },
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "paris"
+      },
+      "name": "Savings",
+      "fullyQualifiedName": "contracts/savings/Savings.sol:Savings"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "constructorArguments": "0x000000000000000000000000b58e61c3098d85632df34eecfb899a1ed80921cb0000000000000000000000000000000000000000000000000000000000007530",
+    "runtimeImmutableReferences": {
+      "399": [
+        {
+          "start": 873,
+          "length": 32
+        },
+        {
+          "start": 1517,
+          "length": 32
+        }
+      ],
+      "529": [
+        {
+          "start": 694,
+          "length": 32
+        },
+        {
+          "start": 2811,
+          "length": 32
+        }
+      ],
+      "532": [
+        {
+          "start": 427,
+          "length": 32
+        },
+        {
+          "start": 1303,
+          "length": 32
+        },
+        {
+          "start": 2602,
+          "length": 32
+        },
+        {
+          "start": 3410,
+          "length": 32
+        },
+        {
+          "start": 4276,
+          "length": 32
+        }
+      ]
+    },
+    "runtimeTransformationValues": {
+      "immutables": {
+        "399": "0x0000000000000000000000001ba26788dfde592fec8bcb0eaff472a42be341b2",
+        "529": "0x000000000000000000000000000000000000000000000000000000000003f480",
+        "532": "0x000000000000000000000000b58e61c3098d85632df34eecfb899a1ed80921cb"
+      }
+    },
+    "fullOriginalAbi": [
+      {
+        "type": "constructor",
+        "inputs": [
+          {
+            "name": "zchf_",
+            "type": "address",
+            "internalType": "contract IFrankencoin"
+          },
+          {
+            "name": "initialRatePPM",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "ChangeNotReady",
+        "type": "error",
+        "inputs": []
+      },
+      {
+        "name": "FundsLocked",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "remainingSeconds",
+            "type": "uint40",
+            "internalType": "uint40"
+          }
+        ]
+      },
+      {
+        "name": "ModuleDisabled",
+        "type": "error",
+        "inputs": []
+      },
+      {
+        "name": "NoPendingChange",
+        "type": "error",
+        "inputs": []
+      },
+      {
+        "name": "ReferralFeeTooHigh",
+        "type": "error",
+        "inputs": [
+          {
+            "name": "fee",
+            "type": "uint32",
+            "internalType": "uint32"
+          }
+        ]
+      },
+      {
+        "name": "InterestCollected",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "interest",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          },
+          {
+            "name": "referrerFee",
+            "type": "uint256",
+            "indexed": false,
+            "internalType": "uint256"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "RateChanged",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "newRate",
+            "type": "uint24",
+            "indexed": false,
+            "internalType": "uint24"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "RateProposed",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "who",
+            "type": "address",
+            "indexed": false,
+            "internalType": "address"
+          },
+          {
+            "name": "nextRate",
+            "type": "uint24",
+            "indexed": false,
+            "internalType": "uint24"
+          },
+          {
+            "name": "nextChange",
+            "type": "uint40",
+            "indexed": false,
+            "internalType": "uint40"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Saved",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint192",
+            "indexed": false,
+            "internalType": "uint192"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "Withdrawn",
+        "type": "event",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "address",
+            "indexed": true,
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint192",
+            "indexed": false,
+            "internalType": "uint192"
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "INTEREST_DELAY",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "ZCHF",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "contract IFrankencoin"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "accruedInterest",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "accountOwner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "accruedInterest",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "accountOwner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "timestamp",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "adjust",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "targetAmount",
+            "type": "uint192",
+            "internalType": "uint192"
+          },
+          {
+            "name": "referrer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralFeePPM",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "adjust",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "targetAmount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "applyChange",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "calculateInterest",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "saved",
+                "type": "uint192",
+                "internalType": "uint192"
+              },
+              {
+                "name": "ticks",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "referrer",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "referralFeePPM",
+                "type": "uint32",
+                "internalType": "uint32"
+              }
+            ],
+            "internalType": "struct AbstractSavings.Account"
+          },
+          {
+            "name": "ticks",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "pure"
+      },
+      {
+        "name": "currentRatePPM",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "currentTicks",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "dropReferrer",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "equity",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "contract IGovernance"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "nextChange",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint40",
+            "internalType": "uint40"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "nextRatePPM",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "proposeChange",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "newRatePPM_",
+            "type": "uint24",
+            "internalType": "uint24"
+          },
+          {
+            "name": "helpers",
+            "type": "address[]",
+            "internalType": "address[]"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "refreshBalance",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "refreshMyBalance",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "save",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "save",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "save",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          },
+          {
+            "name": "referrer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralFeePPM",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "savings",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "saved",
+            "type": "uint192",
+            "internalType": "uint192"
+          },
+          {
+            "name": "ticks",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "referrer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralFeePPM",
+            "type": "uint32",
+            "internalType": "uint32"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "ticks",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "timestamp",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "target",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          },
+          {
+            "name": "referrer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralFeePPM",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      }
+    ],
+    "verifiedSources": {
+      "contracts/equity/IGovernance.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\ninterface IGovernance {\n   function checkQualified(address sender, address[] calldata helpers) external view;\n}\n\nstruct SyncVote {\n    address voter;\n    uint256 votes;\n    address delegatee;\n}\n\nstruct SyncMessage {\n    SyncVote[] votes;\n    uint256 totalVotes;\n}\n",
+        "sha256": "f2b165c9ba7e05b3cb82d47eeca6c3f6e8d96b9338848355914ea3e0cce57ddf"
+      },
+      "contracts/erc20/IERC20.sol": {
+        "content": "/**\n * SPDX-License-Identifier: MIT\n *\n * Copyright (c) 2016-2019 zOS Global Limited\n *\n */\npragma solidity ^0.8.0;\n\n/**\n * @dev Interface of the ERC20 standard as defined in the EIP. Does not include\n * the optional functions; to access them see `ERC20Detailed`.\n */\n\ninterface IERC20 {\n    function name() external view returns (string memory);\n\n    function symbol() external view returns (string memory);\n\n    function decimals() external view returns (uint8);\n\n    /**\n     * @dev Returns the amount of tokens in existence.\n     */\n    function totalSupply() external view returns (uint256);\n\n    /**\n     * @dev Returns the amount of tokens owned by `account`.\n     */\n    function balanceOf(address account) external view returns (uint256);\n\n    /**\n     * @dev Moves `amount` tokens from the caller's account to `recipient`.\n     *\n     * Returns always true. Throws error on failure.\n     *\n     * Emits a `Transfer` event.\n     */\n    function transfer(address recipient, uint256 amount) external returns (bool);\n\n    /**\n     * @dev Returns the remaining number of tokens that `spender` will be\n     * allowed to spend on behalf of `owner` through `transferFrom`. This is\n     * zero by default.\n     *\n     * This value can change when `approve` or `transferFrom` are called.\n     */\n    function allowance(address owner, address spender) external view returns (uint256);\n\n    /**\n     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.\n     *\n     * Returns a boolean value indicating whether the operation succeeded.\n     *\n     * > Beware that changing an allowance with this method brings the risk\n     * that someone may use both the old and the new allowance by unfortunate\n     * transaction ordering. One possible solution to mitigate this race\n     * condition is to first reduce the spender's allowance to 0 and set the\n     * desired value afterwards:\n     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\n     *\n     * Emits an `Approval` event.\n     */\n    function approve(address spender, uint256 amount) external returns (bool);\n\n    /**\n     * @dev Moves `amount` tokens from `sender` to `recipient` using the\n     * allowance mechanism. `amount` is then deducted from the caller's\n     * allowance.\n     *\n     * Returns always true. Throws error on failure.\n     *\n     * Emits a `Transfer` event.\n     */\n    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);\n\n    /**\n     * @dev Emitted when `value` tokens are moved from one account (`from`) to\n     * another (`to`).\n     *\n     * Note that `value` may be zero.\n     */\n    event Transfer(address indexed from, address indexed to, uint256 value);\n\n    /**\n     * @dev Emitted when the allowance of a `spender` for an `owner` is set by\n     * a call to `approve`. `value` is the new allowance.\n     */\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n}\n",
+        "sha256": "4d42a1057dd3d95664bd52c4ba8fabb77dd7e52735e0ba0a334bcf1b85b5d100"
+      },
+      "contracts/minting/IPosition.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport \"../erc20/IERC20.sol\";\nimport \"../stablecoin/IFrankencoin.sol\";\n\ninterface IPosition {\n\n    function initialize(address parent, uint40 _expiration) external;\n\n    function hub() external view returns(address);\n\n    function original() external view returns (address);\n\n    function collateral() external view returns (IERC20);\n\n    function minimumCollateral() external view returns (uint256);\n\n    function challengePeriod() external view returns (uint40);\n\n    function expiration() external view returns (uint40);\n\n    function price() external view returns (uint256);\n\n    function deny(address[] calldata helpers, string calldata message) external;\n\n    function mint(address target, uint256 amount) external;\n\n    function repay(uint256 amount) external returns (uint256);\n\n    function adjust(uint256 newMinted, uint256 newCollateral, uint256 newPrice) external;\n\n    function minted() external view returns (uint256);\n\n    function availableForMinting() external view returns (uint256);\n\n    function reserveContribution() external view returns (uint24);\n\n    function withdrawCollateral(address target, uint256 amount) external;\n\n    function getUsableMint(uint256 totalMint, bool beforeFees) external view returns (uint256);\n\n    function getMintAmount(uint256 usableMint) external view returns (uint256);\n\n    function challengeData() external view returns (uint256 liqPrice, uint40 phase);\n\n    function notifyChallengeStarted(uint256 size) external;\n\n    function notifyChallengeAverted(uint256 size) external;\n\n    function notifyChallengeSucceeded(address _bidder, uint256 _size) external returns (address, uint256, uint256, uint32);\n\n    function forceSale(address buyer, uint256 collAmount, uint256 proceeds) external;\n\n}",
+        "sha256": "5252be935fa96fe82c72c8b24306af3fc38c23aced5337f74f438ab1af2765a7"
+      },
+      "contracts/rate/AbstractLeadrate.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport \"../erc20/IERC20.sol\";\nimport \"../stablecoin/IFrankencoin.sol\";\nimport \"../minting/IPosition.sol\";\n\n/**\n * @title Leadrate (attempt at translating the nicely concise German term 'Leitzins')\n *\n * A module that can provide other modules with the lead interest rate for the system.\n * \n * This is an abstract module that is agnostic about the way the lead rate is updated.\n *\n **/\nabstract contract AbstractLeadrate {\n\n    // the following five variables are less than 256 bit so they should be stored\n    // in the same slot, making them cheap to access together, right?\n\n    uint24 public currentRatePPM; // 24 bit allows rates of up to 1670% per year\n\n    uint40 private anchorTime; // 40 bits for time in seconds spans up to 1000 human generations\n    uint64 private ticksAnchor; // in bips * seconds, uint88 allows up to\n\n    event RateChanged(uint24 newRate);\n\n    constructor(uint24 initialRatePPM) {\n        currentRatePPM = initialRatePPM;\n        anchorTime = uint40(block.timestamp);\n        ticksAnchor = 0;\n        emit RateChanged(initialRatePPM); // emit for init indexing, if wanted\n    }\n\n    /**\n     * Setting a previously proposed interest rate change into force.\n     */\n    function updateRate(uint24 rate) internal {\n        uint40 timeNow = uint40(block.timestamp);\n        ticksAnchor += (timeNow - anchorTime) * currentRatePPM;\n        anchorTime = timeNow;\n        currentRatePPM = rate;\n        emit RateChanged(rate);\n    }\n\n    /**\n     * Total accumulated 'interest ticks' since this contract was deployed.\n     * One 'tick' is a ppm-second, so one months of 12% annual interest is\n     *   120000*30*24*3600 = 311040000000 ticks.\n     * Two months of 6% annual interest would result in the same number of\n     * ticks. For simplicity, this is linear, so there is no \"interest on interest\".\n     */\n    function currentTicks() public view returns (uint64) {\n        return ticks(block.timestamp);\n    }\n\n    function ticks(uint256 timestamp) public view returns (uint64) {\n        return ticksAnchor + (uint64(timestamp) - anchorTime) * currentRatePPM;\n    }\n\n}\n",
+        "sha256": "65f24f18eaded55d02d7bc46d5aed1d97937e1e440b5b335623eeae163e16dc5"
+      },
+      "contracts/rate/Leadrate.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport \"../erc20/IERC20.sol\";\nimport \"../stablecoin/IFrankencoin.sol\";\nimport \"../minting/IPosition.sol\";\nimport \"../equity/IGovernance.sol\";\nimport \"./AbstractLeadrate.sol\";\n\n/**\n * @title Leadrate (attempt at translating the nicely concise German term 'Leitzins')\n *\n * A module that can provide other modules with the lead interest rate for the system.\n *\n **/\ncontract Leadrate is AbstractLeadrate {\n\n    IGovernance public immutable equity;\n\n    // the following five variables are less than 256 bit so they should be stored\n    // in the same slot, making them cheap to access together, right?\n\n    uint24 public nextRatePPM;\n    uint40 public nextChange;\n\n    event RateProposed(address who, uint24 nextRate, uint40 nextChange);\n    error NoPendingChange();\n    error ChangeNotReady();\n\n    constructor(IGovernance equity_, uint24 initialRatePPM) AbstractLeadrate(initialRatePPM) {\n        equity = equity_;\n        nextRatePPM = initialRatePPM;\n        nextChange = uint40(block.timestamp);\n    }\n\n    /**\n     * Proposes a new interest rate that will automatically be applied after seven days.\n     * To cancel a proposal, just overwrite it with a new one proposing the current rate.\n     */\n    function proposeChange(uint24 newRatePPM_, address[] calldata helpers) external {\n        equity.checkQualified(msg.sender, helpers);\n        nextRatePPM = newRatePPM_;\n        nextChange = uint40(block.timestamp + 7 days);\n        emit RateProposed(msg.sender, nextRatePPM, nextChange);\n    }\n\n    /**\n     * Setting a previously proposed interest rate change into force.\n     */\n    function applyChange() external {\n        if (currentRatePPM == nextRatePPM) revert NoPendingChange();\n        uint40 timeNow = uint40(block.timestamp);\n        if (timeNow < nextChange) revert ChangeNotReady();\n        super.updateRate(nextRatePPM);\n    }\n\n}\n",
+        "sha256": "87c6396139f6897e2c517a4a6bcf12b6c24bcd90785302eea009f86613917190"
+      },
+      "contracts/savings/AbstractSavings.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport \"../stablecoin/IFrankencoin.sol\";\nimport \"../rate/AbstractLeadrate.sol\";\n\n/**\n * @title Savings\n *\n * Module to enable savings based on a Leadrate (\"Leitzins\") module.\n *\n * As the interest rate changes, the speed at which 'ticks' are accumulated is\n * adjusted. The ticks counter serves as the basis for calculating the interest\n * due for the individual accoutns.\n *\n * The saved ZCHF are subject to a lockup of up to 3 days and only start to yield\n * an interest after the lockup ended. The purpose of this lockup is to discourage\n * short-term holdings and to avoid paying interest to transactional accounts.\n * Transactional accounts typically do not need an incentive to hold Frankencoins.\n */\nabstract contract AbstractSavings is AbstractLeadrate {\n    \n    uint64 public immutable INTEREST_DELAY = uint64(3 days);\n\n    IFrankencoin public immutable ZCHF;\n\n    mapping(address => Account) public savings;\n\n    struct Account {\n        uint192 saved;\n        uint64 ticks;\n        address referrer;\n        uint32 referralFeePPM;\n    }\n\n    event Saved(address indexed account , uint192 amount);\n    event InterestCollected(address indexed account, uint256 interest, uint256 referrerFee);\n    event Withdrawn(address indexed account, uint192 amount);\n\n    error FundsLocked(uint40 remainingSeconds);\n\n    // The module is considered disabled if the interest is zero or about to become zero within three days.\n    error ModuleDisabled();\n\n    error ReferralFeeTooHigh(uint32 fee);\n\n    constructor(IFrankencoin zchf){\n        ZCHF = zchf;\n    }\n\n    /**\n     * Shortcut for refreshBalance(msg.sender)\n     */\n    function refreshMyBalance() public returns (uint192) {\n        return refreshBalance(msg.sender);\n    }\n\n    /**\n     * Collects the accrued interest and adds it to the account.\n     *\n     * It can be beneficial to do so every now and then in order to start collecting\n     * interest on the accrued interest.\n     */\n    function refreshBalance(address owner) public returns (uint192) {\n        return refresh(owner).saved;\n    }\n\n    function refresh(address accountOwner) internal returns (Account storage) {\n        Account storage account = savings[accountOwner];\n        uint64 ticks = currentTicks();\n        if (ticks > account.ticks) {\n            uint192 earnedInterest = calculateInterest(account, ticks);\n            if (earnedInterest > 0) {\n                // collect interest as you go and trigger accounting event\n                ZCHF.coverLoss(address(this), earnedInterest);\n                uint192 referralFee = deductTransferReferralFee(account, earnedInterest);\n                account.saved += (earnedInterest - referralFee);\n                emit InterestCollected(accountOwner, earnedInterest, referralFee);\n            }\n            account.ticks = ticks;\n        }\n        return account;\n    }\n\n    function accruedInterest(address accountOwner) public view returns (uint192) {\n        return accruedInterest(accountOwner, block.timestamp);\n    }\n\n    function accruedInterest(address accountOwner, uint256 timestamp) public view returns (uint192) {\n        Account memory account = savings[accountOwner];\n        return calculateInterest(account, ticks(timestamp));\n    }\n\n    function calculateInterest(Account memory account, uint64 ticks) public pure returns (uint192) {\n        if (ticks <= account.ticks || account.ticks == 0) {\n            return 0;\n        } else {\n            return uint192((uint256(ticks - account.ticks) * account.saved) / 1000000 / 365 days);\n        }\n    }\n    \n    /**\n     * Save 'amount'.\n     */\n    function save(uint192 amount) public {\n        save(msg.sender, amount);\n    }\n\n    function adjust(uint192 targetAmount) public {\n        Account storage balance = refresh(msg.sender);\n        if (balance.saved < targetAmount) {\n            save(targetAmount - balance.saved);\n        } else if (balance.saved > targetAmount) {\n            withdraw(msg.sender, balance.saved - targetAmount);\n        }\n    }\n\n    /**\n     * Send 'amount' to the account of the provided owner.\n     * The funds sent to the account are locked for a while, depending on how much already is in there.\n     */\n    function save(address owner, uint192 amount) public {\n        if (currentRatePPM == 0) revert ModuleDisabled();\n       // if (nextRatePPM == 0 && (nextChange <= block.timestamp + INTEREST_DELAY)) revert ModuleDisabled(); TODO: figure out why this was in there\n        Account storage balance = refresh(owner);\n        ZCHF.transferFrom(msg.sender, address(this), amount);\n        uint64 ticks = currentTicks();\n        assert(balance.ticks >= ticks);\n        uint256 saved = balance.saved;\n        uint64 weightedAverage = uint64(\n            (saved * (balance.ticks - ticks) + uint256(amount) * currentRatePPM * INTEREST_DELAY) / (saved + amount)\n        );\n        balance.saved += amount;\n        balance.ticks = ticks + weightedAverage;\n        emit Saved(owner, amount);\n    }\n\n    /**\n     * Withdraw up to 'amount' to the target address.\n     * When trying to withdraw more than available, all that is available is withdrawn.\n     * Returns the acutally transferred amount.\n     */\n    function withdraw(address target, uint192 amount) public returns (uint256) {\n        Account storage account = refresh(msg.sender);\n        if (amount >= account.saved) {\n            amount = account.saved;\n            delete savings[msg.sender];\n        } else {\n            account.saved -= amount;\n        }\n        ZCHF.transfer(target, amount);\n        emit Withdrawn(msg.sender, amount);\n        return amount;\n    }\n\n    /**\n     * REFERRAL LOGIC\n     * \n     * The following functions can be used by a frontend or wallet contains functions to\n     * access the savings features of the Frankencoin system. It allows the frontend or\n     * wallet to set a referrer and a referral fee when calling save or adjust, but not\n     * when withdrawing. The referral fee can be up to 25% (250'000 ppm). It is deducted\n     * from the collected interest.\n     * \n     * The user can drop or change the referrer at any time, so the fee is not very sticky.\n     * The magnitude of the fee that can be charged mainly depends on how convenient the\n     * frontend or wallet is in comparison to the user directly interfering with the system\n     * himself. So economically, it really is a frontend fee that can only be charged to\n     * the extent that the frontend provides a more convenient way of interaction with the\n     * protocol and the users are willing to pay for that convenience.\n     */\n\n    /**\n     * Save the given amount and set the referrer to earn a fee on the collected interest.\n     * \n     * Referral fee is given in parts per million and can be at most 250'000, which is 25%.\n     */\n    function save(uint192 amount, address referrer, uint24 referralFeePPM) public {\n        save(msg.sender, amount);\n        setReferrer(referrer, referralFeePPM);\n    }\n\n    /**\n     * Withdraw the given amount and set the referrer to earn a fee on the collected interest.\n     * \n     * Referral fee is given in parts per million and can be at most 250'000, which is 25%.\n     */\n    function withdraw(uint192 amount, address referrer, uint24 referralFeePPM) public {\n        withdraw(msg.sender, amount);\n        setReferrer(referrer, referralFeePPM);\n    }\n\n    /**\n     * Adjust to the given amount and set the referrer to earn a fee on the collected interest.\n     * \n     * Referral fee is given in parts per million and can be at most 250'000, which is 25%.\n     */\n    function adjust(uint192 targetAmount, address referrer, uint24 referralFeePPM) public {\n        adjust(targetAmount);\n        setReferrer(referrer, referralFeePPM);\n    }\n\n    /**\n     * Remove the referrer.\n     */\n    function dropReferrer() public {\n        refresh(msg.sender); // pay accrued referral fee before dropping referrer\n        setReferrer(address(0x0), 0);\n    }\n\n    function setReferrer(address referrer, uint32 referralFeePPM) internal {\n        if (referralFeePPM > 250_000) revert ReferralFeeTooHigh(referralFeePPM); // don't allow more than 25%\n        savings[msg.sender].referrer = referrer;\n        savings[msg.sender].referralFeePPM = referralFeePPM;\n    }\n\n    function deductTransferReferralFee(Account memory balance, uint192 earnedInterest) internal returns (uint192) {\n        if (balance.referrer != address(0x0)){\n            uint256 referralFee = uint256(earnedInterest) * balance.referralFeePPM / 1000000;\n            ZCHF.transfer(balance.referrer, referralFee);\n            return uint192(referralFee);\n        } else {\n            return 0;\n        }\n    }\n\n}\n\ninterface IInterestSource {\n    function coverLoss(address source, uint256 amount) external;\n}\n",
+        "sha256": "146a5d46bc54f7a33adee9f5ac59d3bb93ee5e339a1aacd7ef0fc402d18620b9"
+      },
+      "contracts/savings/Savings.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport \"../stablecoin/IFrankencoin.sol\";\nimport \"../rate/Leadrate.sol\";\nimport \"./AbstractSavings.sol\";\n\n/**\n * @title Savings\n *\n * Module to enable savings based on a Leadrate (\"Leitzins\") module on mainnet.\n */\ncontract Savings is Leadrate, AbstractSavings {\n\n    constructor(IFrankencoin zchf_, uint24 initialRatePPM) AbstractSavings(zchf_) Leadrate(zchf_.reserve(), initialRatePPM) {\n    }\n\n}\n",
+        "sha256": "9e070e4f6f5a26f5db05e00e724b4ce29d33ca0af79803f9669a1dddb056c4a4"
+      },
+      "contracts/stablecoin/IBasicFrankencoin.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport \"../erc20/IERC20.sol\";\nimport \"../equity/IGovernance.sol\";\n\ninterface IBasicFrankencoin is IERC20 {\n    function MIN_FEE() external view returns (uint256);\n\n    function MIN_APPLICATION_PERIOD() external view returns (uint256);\n\n    function suggestMinter(\n        address _minter,\n        uint256 _applicationPeriod,\n        uint256 _applicationFee,\n        string calldata _message\n    ) external;\n\n    function registerPosition(address position) external;\n\n    function denyMinter(address minter, address[] calldata helpers, string calldata message) external;\n\n    function reserve() external view returns (IGovernance);\n\n    function isMinter(address minter) external view returns (bool);\n\n    function getPositionParent(address position) external view returns (address);\n\n    function mint(address target, uint256 amount) external;\n\n    function burnFrom(address target, uint256 amount) external;\n\n    function burn(uint256 amount) external;\n\n    function coverLoss(address source, uint256 amount) external;\n\n    function collectProfits(address source, uint256 _amount) external;\n}\n",
+        "sha256": "d06e7c1ad994392b84b5c27b564c82fbb6b42456c019bcd975dda378ef0a7f9e"
+      },
+      "contracts/stablecoin/IFrankencoin.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport \"../equity/IGovernance.sol\";\nimport \"./IBasicFrankencoin.sol\";\n\ninterface IFrankencoin is IBasicFrankencoin {\n\n    function minterReserve() external view returns (uint256);\n\n    function calculateAssignedReserve(uint256 mintedAmount, uint32 _reservePPM) external view returns (uint256);\n\n    function calculateFreedAmount(uint256 amountExcludingReserve, uint32 reservePPM) external view returns (uint256);\n\n    function equity() external view returns (uint256);\n\n    function mintWithReserve(address target, uint256 amount, uint32 reservePPM, uint32 feePPM) external;\n\n    function burnWithoutReserve(uint256 amountIncludingReserve, uint32 reservePPM) external;\n\n    function burnFromWithReserve(address payer, uint256 targetTotalBurnAmount, uint32 _reservePPM) external returns (uint256);\n\n    function burnWithReserve(uint256 amountExcludingReserve, uint32 reservePPM) external returns (uint256);\n\n}\n",
+        "sha256": "5717f1cd175d5f5791dc3746e9d9a208d7ae73ec49c74ea129097536088f78db"
+      }
+    },
+    "limitation": "Source-service exact_match labels retained as reported, not a fresh runtime identity or execution attestation. No generic ABI substitution."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "zchf_",
+          "type": "address",
+          "internalType": "contract IFrankencoin"
+        },
+        {
+          "name": "initialRatePPM",
+          "type": "uint24",
+          "internalType": "uint24"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "ChangeNotReady",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "FundsLocked",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "remainingSeconds",
+          "type": "uint40",
+          "internalType": "uint40"
+        }
+      ]
+    },
+    {
+      "name": "ModuleDisabled",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "NoPendingChange",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ReferralFeeTooHigh",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "InterestCollected",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "interest",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "referrerFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RateChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newRate",
+          "type": "uint24",
+          "indexed": false,
+          "internalType": "uint24"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RateProposed",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "who",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "nextRate",
+          "type": "uint24",
+          "indexed": false,
+          "internalType": "uint24"
+        },
+        {
+          "name": "nextChange",
+          "type": "uint40",
+          "indexed": false,
+          "internalType": "uint40"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Saved",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint192",
+          "indexed": false,
+          "internalType": "uint192"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdrawn",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint192",
+          "indexed": false,
+          "internalType": "uint192"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "INTEREST_DELAY",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ZCHF",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IFrankencoin"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "accruedInterest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "accountOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "accruedInterest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "accountOwner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "adjust",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "targetAmount",
+          "type": "uint192",
+          "internalType": "uint192"
+        },
+        {
+          "name": "referrer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "referralFeePPM",
+          "type": "uint24",
+          "internalType": "uint24"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "adjust",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "targetAmount",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "applyChange",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "calculateInterest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "saved",
+              "type": "uint192",
+              "internalType": "uint192"
+            },
+            {
+              "name": "ticks",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "referrer",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "referralFeePPM",
+              "type": "uint32",
+              "internalType": "uint32"
+            }
+          ],
+          "internalType": "struct AbstractSavings.Account"
+        },
+        {
+          "name": "ticks",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "currentRatePPM",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint24",
+          "internalType": "uint24"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "currentTicks",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "dropReferrer",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "equity",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IGovernance"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "nextChange",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint40",
+          "internalType": "uint40"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "nextRatePPM",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint24",
+          "internalType": "uint24"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "proposeChange",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newRatePPM_",
+          "type": "uint24",
+          "internalType": "uint24"
+        },
+        {
+          "name": "helpers",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "refreshBalance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "refreshMyBalance",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "save",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "save",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "save",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint192",
+          "internalType": "uint192"
+        },
+        {
+          "name": "referrer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "referralFeePPM",
+          "type": "uint24",
+          "internalType": "uint24"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "savings",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "saved",
+          "type": "uint192",
+          "internalType": "uint192"
+        },
+        {
+          "name": "ticks",
+          "type": "uint64",
+          "internalType": "uint64"
+        },
+        {
+          "name": "referrer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "referralFeePPM",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ticks",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint192",
+          "internalType": "uint192"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint192",
+          "internalType": "uint192"
+        },
+        {
+          "name": "referrer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "referralFeePPM",
+          "type": "uint24",
+          "internalType": "uint24"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "abiNormalization": {
+    "legacyFieldsPresent": false,
+    "description": "No top-level constant/payable legacy keys occur in retrieved function ABI; catalog retains exact stateMutability, input/output ABI and tuple components. Full original ABI preserved."
+  },
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://docs.frankencoin.com/savings",
+      "observedAt": "2026-10-23",
+      "snapshot": "> For the complete documentation index, see [llms.txt](https://docs.frankencoin.com/llms.txt). Markdown versions of documentation pages are available by appending `.md` to page URLs; this page is available as [Markdown](https://docs.frankencoin.com/savings.md).\n\n# Savings\n\nVersion-specific savings, interest collection and referral terms.\n\nThe [savings application](https://app.frankencoin.com/savings) lets users deposit ZCHF and earn a rate set through [FCS governance](/governance.md). Interest comes from the system's equity, reducing the net income available to [FCS holders](/pool-shares.md#economics); borrowing and savings rates are separate parameters. Depositing ZCHF in savings does not acquire FCS or voting power. Deposited ZCHF remains attributed to the savings account rather than being lent out to borrowers.\n\n## Contract versions\n\nEtherscan's published source and ABI for these Ethereum addresses were checked on 18 September 2026. They confirm the withdrawal-lock distinction and public methods below. Repository references are pinned to `8b4c4ab67bb361b91d58c474b87f4608fc4c0566`; the application may select a different module. The first explorer labels its contract `Savings`, despite the repository's later `SavingsV2.sol` naming.\n\n| Version                  | Existing address reference                                                                                                 | Source behaviour                                                                                                                                                                                                                                                                                                                                                                                   |\n| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| Legacy SavingsV2         | [0x3bf301b0e2003e75a3e86ab82bd1eff6a9dfb2ae](https://etherscan.io/address/0x3bf301b0e2003e75a3e86ab82bd1eff6a9dfb2ae#code) | [SavingsV2.sol](https://github.com/Frankencoin-ZCHF/FrankenCoin/blob/8b4c4ab67bb361b91d58c474b87f4608fc4c0566/contracts/minting/v2/SavingsV2.sol) applies an interest delay and a `FundsLocked` withdrawal check                                                                                                                                                                                   |\n| Referral-enabled Savings | [0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38](https://etherscan.io/address/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38#code) | [Savings.sol](https://github.com/Frankencoin-ZCHF/FrankenCoin/blob/8b4c4ab67bb361b91d58c474b87f4608fc4c0566/contracts/savings/Savings.sol) inherits [AbstractSavings.sol](https://github.com/Frankencoin-ZCHF/FrankenCoin/blob/8b4c4ab67bb361b91d58c474b87f4608fc4c0566/contracts/savings/AbstractSavings.sol): an interest delay, no equivalent ticks-based withdrawal lock, and referral support |\n\n### Saving\n\nA savings deposit transfers ZCHF to the selected module and credits the account. An old deposit remains in its original contract. Moving to a different module requires withdrawing under the old module's rules and depositing into the new one; it is not an automatic upgrade. The new deposit uses the new module's delay and referral terms.\n\nTo start saving:\n\n1. **Select the account and module.** Connect the wallet holding your ZCHF and choose the intended network in the savings application. Identify the module address and its version; the table above covers the two checked Ethereum contracts. If you already have savings, locate the module holding that balance rather than assuming the application's selected module is the same one.\n2. **Read the terms.** Check the annual rate, interest delay, withdrawal conditions and any referrer and referral fee. The quoted rate is an annual simple rate, not an automatically compounded APY. A referral fee reduces the interest you receive, not your deposited principal.\n3. **Choose the amount.** Decide how much ZCHF to add and keep native currency for gas. A `save(amount)` transaction adds that amount; `adjust(targetAmount)` sets a target saved balance after collecting interest. They are not interchangeable inputs.\n4. **Approve and deposit.** If needed, approve the chosen savings module to transfer the ZCHF, then submit the deposit transaction. Approval alone leaves the funds in your wallet; it does not start earning interest.\n5. **Confirm the account credit.** After confirmation, read the saved balance, delay and referral terms on that same module. Check the wallet debit as well. A read-only API response or an unconfirmed transaction is not a completed deposit.\n\n### Delay\n\nBoth source versions use a three-day delay before a fresh deposit earns interest. Adding funds to an existing account produces a weighted delay rather than restarting the full delay on the entire balance.\n\nIn **SavingsV2**, `withdraw` reverts with `FundsLocked` while the account's stored ticks exceed current ticks. The delay therefore also restricts withdrawals. In the **referral-enabled source**, `withdraw` has no equivalent ticks-based lock, so the interest delay does not itself prevent withdrawing principal. The contract version, not the page title, determines which behaviour applies.\n\n### Interest\n\nThe rate can change through [governance](/governance.md#proposal-submission). Interest accrues on the stored principal. Uncollected interest does not compound; collection adds the user's interest to principal, after which it can earn interest too. Deposits and withdrawals refresh accrued interest as part of their operation.\n\n### Collecting interest\n\nRead `accruedInterest(account)` on your savings module to see gross pending interest. If a referrer is set, subtract its fee to find the net amount added to your savings. The API's historical collected-interest field is not this pending amount.\n\nYou can wait until your next deposit or withdrawal to collect, or submit `refreshMyBalance()` as a separate transaction. Collection adds net interest to the saved balance, not to the spending balance in your wallet. Afterwards, check the increased savings balance and any referral payment. Merely reading or simulating the method does not collect interest.\n\n### Withdrawing savings\n\nReturn to the module that holds your savings and choose the ZCHF amount and recipient. The public `withdraw(target, amount)` operation collects interest and transfers funds to that recipient. Check the refreshed available balance and the version's withdrawal conditions before submitting. In SavingsV2, a remaining ticks-based delay can block the withdrawal; in the referral-enabled version, the interest delay alone does not lock principal.\n\nAfter confirmation, check both the reduced saved balance and the recipient's ZCHF balance. To move to a different savings module, confirm this receipt before approving and depositing into the new one. That new deposit starts under the destination module's interest-delay and referral rules.\n\n## Referral Module\n\nA referral fee allocates a share of **earned interest**, not a share of deposited principal, to a referrer. The maximum is 250,000 parts per million (ppm), or 25%. At 200,000 ppm, 100 ZCHF of gross interest becomes 80 ZCHF for the user and 20 ZCHF for the referrer.\n\n### How It Works\n\nThe referral-enabled source exposes these signatures:\n\n```\nsave(uint192 amount, address referrer, uint24 referralFeePPM)\nadjust(uint192 targetAmount, address referrer, uint24 referralFeePPM)\n```\n\nAmounts use ZCHF's 18-decimal base units. The fee uses a denominator of 1,000,000; for example, `200_000` means 20%, not 20 basis points. The transaction interface should show the referrer, fee percentage and resulting net interest before the user signs.\n\n### Using the Frankencoin App to Refer Users\n\nA referral link is an application feature, not a contract method. Its query parameters must match the selected application's implementation. The signed transaction's referrer and `referralFeePPM` determine the on-chain setting; an abbreviated address is not a valid transaction argument.\n\n### Claiming Accrued Referral Fees\n\nCollection pays the referrer when the user's interest is refreshed. A separate collection transaction is optional because deposits and withdrawals also refresh interest. The public methods in both pinned source versions are:\n\n```\nrefreshMyBalance()\nrefreshBalance(address owner)\n```\n\nThe account holder can use `refreshMyBalance()`. A referrer or another caller can use `refreshBalance(userAddress)`. The internal `refresh(address)` function is not an externally callable method. Refreshing another account does not change its owner or redirect the user's principal.\n\n### Wallet Implementation Guide\n\nAn integration supplies the amount, referrer and fee to a supported method of the selected contract. It displays the gross rate, referral share and net rate separately. The maximum fee is a protocol limit, not a default fee.\n\nThe account holder can remove the referral by calling **`dropReferrer()`** on the referral-enabled contract through an interface exposing its verified ABI. This first collects accrued interest and settles the accrued referral fee, then clears the referrer and sets the fee to zero. Future interest has no referral deduction unless a later transaction sets a referrer again. Removal does not reverse fees already earned.\n\nTo remove it, select the module holding your account, read the current referrer and fee, then submit `dropReferrer()` from the account-owning wallet. After confirmation, read the account again: the referrer must be the zero address and the fee zero. Check later deposit or adjustment transactions as well, since a referral-enabled interface can supply referral terms again. These are contract operations, not a claim that every wallet exposes a removal button.\n\n### Integration Details\n\n[The savings API reference](/api-docs/savings.md) describes indexed balances and rates. API reads do not create deposits, collect interest or remove a referrer; those are on-chain transactions.\n",
+      "sha256": "9973961e9db807b439aa89fad55cd5d8d434346db7b0b609e87b894ed6a50fa9",
+      "assessment": "Current version-specific savings product guide explicitly supports deposits, collection, withdrawals and referral removal on reviewed referral-enabled Ethereum target. Separately labels older SavingsV2 as legacy; no exit-only inference applied to referral module."
+    },
+    {
+      "sourceRef": "https://www.frankencoin.com/",
+      "observedAt": "2026-10-23",
+      "excerpt": "Pay. Borrow. Earn. Build. Earn market-based yield on your ZCHF holdings through DeFi applications. Earn yield on ZCHF links to https://app.frankencoin.com/savings.",
+      "assessment": "Current primary product site links new-user savings; no financial metrics or backing assertions adopted."
+    }
+  ],
+  "sourceSemantics": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+    "implementationFiles": [
+      "contracts/savings/Savings.sol",
+      "contracts/savings/AbstractSavings.sol",
+      "contracts/rate/Leadrate.sol",
+      "contracts/rate/AbstractLeadrate.sol"
+    ],
+    "functions": [
+      {
+        "signature": "save(uint192)",
+        "interpretation": "Delegates to save(msg.sender, amount)."
+      },
+      {
+        "signature": "save(address,uint192)",
+        "interpretation": "Requires nonzero currentRatePPM; refreshes owner, transferFrom caller ZCHF, computes floor weighted delay with saved+amount denominator, credits owner. Zero amount/zero saved divides by zero."
+      },
+      {
+        "signature": "save(uint192,address,uint24)",
+        "interpretation": "Saves for caller then updates caller referrer/fee under 250000 ppm bound."
+      },
+      {
+        "signature": "adjust(uint192)",
+        "interpretation": "Refresh caller; if below target pulls difference using save, if above target withdraws difference to caller; equal target only refreshes."
+      },
+      {
+        "signature": "adjust(uint192,address,uint24)",
+        "interpretation": "Performs adjust then updates caller referrer/fee."
+      },
+      {
+        "signature": "withdraw(address,uint192)",
+        "interpretation": "Refresh caller; cap to savings balance. Full requested exit deletes caller savings including referral terms; otherwise subtract. Transfer ZCHF to target. No FundsLocked enforcement in this deployed body."
+      },
+      {
+        "signature": "withdraw(uint192,address,uint24)",
+        "interpretation": "Withdraw to caller then set caller referrer/fee. Returns no amount in this overload."
+      },
+      {
+        "signature": "refreshMyBalance()",
+        "interpretation": "Delegates to refreshBalance(msg.sender), returning new saved principal."
+      },
+      {
+        "signature": "refreshBalance(address)",
+        "interpretation": "Refresh account. Interest floor (tick delta * saved)/1000000/365 days; calls ZCHF.coverLoss for gross interest, transfers referral fraction, adds net to saved balance. No principal redirection."
+      },
+      {
+        "signature": "dropReferrer()",
+        "interpretation": "Refresh caller paying previously accrued referral share before setting zero address/zero fee."
+      }
+    ],
+    "restrictions": [
+      "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+      "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+      "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+      "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+      "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+      "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+      "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+    ],
+    "currentVersusInitial": "Direct constructor ZCHF and initialRatePPM=30000 bound by creation args; no proxy. Governance-mutated current rate and current token authorization not observed. Production app config identifies this referral deployment; no assertion that it holds any user balance."
+  },
+  "functionDecisions": [
+    {
+      "signature": "INTEREST_DELAY()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "INTEREST_DELAY",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "signature": "ZCHF()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "ZCHF",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "contract IFrankencoin"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "signature": "accruedInterest(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "accruedInterest",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "accountOwner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "signature": "accruedInterest(address,uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "accruedInterest",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "accountOwner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "timestamp",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "signature": "adjust(uint192,address,uint24)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Ordinary direct user adjust savings with referral terms; exact deployed source interpretation and restrictions retained in sourceSemantics and warnings.",
+      "abi": {
+        "name": "adjust",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "targetAmount",
+            "type": "uint192",
+            "internalType": "uint192"
+          },
+          {
+            "name": "referrer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralFeePPM",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "signature": "adjust(uint192)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Ordinary direct user adjust caller zchf saved balance; exact deployed source interpretation and restrictions retained in sourceSemantics and warnings.",
+      "abi": {
+        "name": "adjust",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "targetAmount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "signature": "applyChange()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Permissionless governance rate activation/maintenance, not ordinary savings entry/exit/claim.",
+      "abi": {
+        "name": "applyChange",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "signature": "calculateInterest((uint192,uint64,address,uint32),uint64)",
+      "stateMutability": "pure",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "calculateInterest",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "saved",
+                "type": "uint192",
+                "internalType": "uint192"
+              },
+              {
+                "name": "ticks",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "referrer",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "referralFeePPM",
+                "type": "uint32",
+                "internalType": "uint32"
+              }
+            ],
+            "internalType": "struct AbstractSavings.Account"
+          },
+          {
+            "name": "ticks",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "pure"
+      }
+    },
+    {
+      "signature": "currentRatePPM()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "currentRatePPM",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "signature": "currentTicks()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "currentTicks",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "signature": "dropReferrer()",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Ordinary direct user settle and remove caller savings referrer; exact deployed source interpretation and restrictions retained in sourceSemantics and warnings.",
+      "abi": {
+        "name": "dropReferrer",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "signature": "equity()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "equity",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "contract IGovernance"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "signature": "nextChange()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "nextChange",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint40",
+            "internalType": "uint40"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "signature": "nextRatePPM()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "nextRatePPM",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "signature": "proposeChange(uint24,address[])",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Governance-qualified rate proposal, not an ordinary user savings action.",
+      "abi": {
+        "name": "proposeChange",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "newRatePPM_",
+            "type": "uint24",
+            "internalType": "uint24"
+          },
+          {
+            "name": "helpers",
+            "type": "address[]",
+            "internalType": "address[]"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "signature": "refreshBalance(address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Ordinary direct user collect account interest into its savings; exact deployed source interpretation and restrictions retained in sourceSemantics and warnings.",
+      "abi": {
+        "name": "refreshBalance",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "signature": "refreshMyBalance()",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Ordinary direct user collect caller interest into savings; exact deployed source interpretation and restrictions retained in sourceSemantics and warnings.",
+      "abi": {
+        "name": "refreshMyBalance",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "signature": "save(address,uint192)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Ordinary direct user save caller zchf for a specified account; exact deployed source interpretation and restrictions retained in sourceSemantics and warnings.",
+      "abi": {
+        "name": "save",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "signature": "save(uint192)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Ordinary direct user save zchf for caller; exact deployed source interpretation and restrictions retained in sourceSemantics and warnings.",
+      "abi": {
+        "name": "save",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "signature": "save(uint192,address,uint24)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Ordinary direct user save zchf with referral terms; exact deployed source interpretation and restrictions retained in sourceSemantics and warnings.",
+      "abi": {
+        "name": "save",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          },
+          {
+            "name": "referrer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralFeePPM",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "signature": "savings(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "savings",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "saved",
+            "type": "uint192",
+            "internalType": "uint192"
+          },
+          {
+            "name": "ticks",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "referrer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralFeePPM",
+            "type": "uint32",
+            "internalType": "uint32"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "signature": "ticks(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ABI getter/calculation; no transaction capability or read API admitted.",
+      "abi": {
+        "name": "ticks",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "timestamp",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "signature": "withdraw(address,uint192)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Ordinary direct user withdraw caller zchf savings to recipient; exact deployed source interpretation and restrictions retained in sourceSemantics and warnings.",
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "target",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "signature": "withdraw(uint192,address,uint24)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Ordinary direct user withdraw zchf to caller and set referral terms; exact deployed source interpretation and restrictions retained in sourceSemantics and warnings.",
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          },
+          {
+            "name": "referrer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralFeePPM",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      }
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "type": "function",
+        "name": "adjust",
+        "inputs": [
+          {
+            "name": "targetAmount",
+            "type": "uint192",
+            "internalType": "uint192"
+          },
+          {
+            "name": "referrer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralFeePPM",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "frankencoin-savings:v1:1:0x27d9ad987bde08a0d083ef7e0e4043c857a17b38:adjust-referral",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+      "functionName": "adjust",
+      "signature": "adjust(uint192,address,uint24)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.frankencoin.com/savings ; https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js ; https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-23"
+      },
+      "protocol": "Frankencoin",
+      "operation": "adjust-referral",
+      "label": "Frankencoin Adjust savings with referral terms",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+        "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+        "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+        "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+        "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+        "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+        "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "adjust",
+        "inputs": [
+          {
+            "name": "targetAmount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "frankencoin-savings:v1:1:0x27d9ad987bde08a0d083ef7e0e4043c857a17b38:adjust",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+      "functionName": "adjust",
+      "signature": "adjust(uint192)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.frankencoin.com/savings ; https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js ; https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-23"
+      },
+      "protocol": "Frankencoin",
+      "operation": "adjust",
+      "label": "Frankencoin Adjust caller ZCHF saved balance",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+        "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+        "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+        "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+        "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+        "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+        "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "dropReferrer",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "frankencoin-savings:v1:1:0x27d9ad987bde08a0d083ef7e0e4043c857a17b38:drop-referrer",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+      "functionName": "dropReferrer",
+      "signature": "dropReferrer()",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.frankencoin.com/savings ; https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js ; https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-23"
+      },
+      "protocol": "Frankencoin",
+      "operation": "drop-referrer",
+      "label": "Frankencoin Settle and remove caller savings referrer",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+        "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+        "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+        "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+        "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+        "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+        "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "refreshBalance",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "frankencoin-savings:v1:1:0x27d9ad987bde08a0d083ef7e0e4043c857a17b38:collect-interest-for-owner",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+      "functionName": "refreshBalance",
+      "signature": "refreshBalance(address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.frankencoin.com/savings ; https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js ; https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-23"
+      },
+      "protocol": "Frankencoin",
+      "operation": "collect-interest-for-owner",
+      "label": "Frankencoin Collect account interest into its savings",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+        "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+        "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+        "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+        "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+        "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+        "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "refreshMyBalance",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "frankencoin-savings:v1:1:0x27d9ad987bde08a0d083ef7e0e4043c857a17b38:collect-interest",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+      "functionName": "refreshMyBalance",
+      "signature": "refreshMyBalance()",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.frankencoin.com/savings ; https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js ; https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-23"
+      },
+      "protocol": "Frankencoin",
+      "operation": "collect-interest",
+      "label": "Frankencoin Collect caller interest into savings",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+        "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+        "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+        "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+        "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+        "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+        "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "save",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "frankencoin-savings:v1:1:0x27d9ad987bde08a0d083ef7e0e4043c857a17b38:save-for-owner",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+      "functionName": "save",
+      "signature": "save(address,uint192)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.frankencoin.com/savings ; https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js ; https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-23"
+      },
+      "protocol": "Frankencoin",
+      "operation": "save-for-owner",
+      "label": "Frankencoin Save caller ZCHF for a specified account",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+        "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+        "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+        "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+        "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+        "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+        "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "save",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "frankencoin-savings:v1:1:0x27d9ad987bde08a0d083ef7e0e4043c857a17b38:save",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+      "functionName": "save",
+      "signature": "save(uint192)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.frankencoin.com/savings ; https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js ; https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-23"
+      },
+      "protocol": "Frankencoin",
+      "operation": "save",
+      "label": "Frankencoin Save ZCHF for caller",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+        "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+        "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+        "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+        "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+        "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+        "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "save",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          },
+          {
+            "name": "referrer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralFeePPM",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "frankencoin-savings:v1:1:0x27d9ad987bde08a0d083ef7e0e4043c857a17b38:save-referral",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+      "functionName": "save",
+      "signature": "save(uint192,address,uint24)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.frankencoin.com/savings ; https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js ; https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-23"
+      },
+      "protocol": "Frankencoin",
+      "operation": "save-referral",
+      "label": "Frankencoin Save ZCHF with referral terms",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+        "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+        "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+        "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+        "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+        "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+        "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "withdraw",
+        "inputs": [
+          {
+            "name": "target",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "frankencoin-savings:v1:1:0x27d9ad987bde08a0d083ef7e0e4043c857a17b38:withdraw",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+      "functionName": "withdraw",
+      "signature": "withdraw(address,uint192)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.frankencoin.com/savings ; https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js ; https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-23"
+      },
+      "protocol": "Frankencoin",
+      "operation": "withdraw",
+      "label": "Frankencoin Withdraw caller ZCHF savings to recipient",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+        "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+        "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+        "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+        "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+        "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+        "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "withdraw",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint192",
+            "internalType": "uint192"
+          },
+          {
+            "name": "referrer",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralFeePPM",
+            "type": "uint24",
+            "internalType": "uint24"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "frankencoin-savings:v1:1:0x27d9ad987bde08a0d083ef7e0e4043c857a17b38:withdraw-referral",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint192,address,uint24)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.frankencoin.com/savings ; https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js ; https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-23"
+      },
+      "protocol": "Frankencoin",
+      "operation": "withdraw-referral",
+      "label": "Frankencoin Withdraw ZCHF to caller and set referral terms",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+        "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+        "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+        "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+        "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+        "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+        "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+      ]
+    }
+  ],
+  "limitations": [
+    "Static deployment-bound source/ABI inventory only. No current runtime identity, balances, funding, backing, liquidity, execution, complete-workflow or financial-safety guarantee. Calls require zero native value and independent exact-function grants, pause and canonical-calldata controls.",
+    "Amounts are ZCHF 18-decimal base units, underlying 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB. save adds an amount, whereas adjust targets the caller saved balance after collecting interest. Deposits pull ZCHF from caller using allowance to this exact module; save(address,uint192) credits the named owner, not necessarily the payer.",
+    "This is referral-enabled Ethereum Savings, not legacy SavingsV2 0x3BF301B0e2003E75A3e86AB82bD1EFF6A9dFB2aE. New deposits have a weighted three-day interest delay; deployed withdraw has no ticks-based FundsLocked check despite a stale introductory source comment/error declaration. Interest delay is not a principal withdrawal lock here.",
+    "withdraw(address,uint192) spends only caller savings, pays the specified target and caps requested amount to refreshed available savings; requesting the full balance deletes the account including referral settings. Referral withdraw(uint192,address,uint24) pays caller then sets the supplied referral terms. No owner delegation or share allowance is used for savings withdrawal.",
+    "save/adjust/withdraw referral overloads first settle accrued interest under the previous referral terms, then set the new referrer/fee. Fee is parts per million of interest, at most 250000 (25%), not a principal fee. Non-referral overloads preserve existing terms unless a full withdrawal deletes the account; dropReferrer settles prior fees then clears future referral deductions.",
+    "Interest uses integer floor division by 1000000 and 365 days, accrues simply until refreshed into saved principal, and depends on governance-mutable rate plus ZCHF.coverLoss and reserve behavior. refreshBalance(address) can be called by others but credits the named savings owner and its stored referrer; it does not redirect principal. No caller deadline, minimum interest or minimum withdrawal-output guard.",
+    "Deposits revert when currentRatePPM is zero; the reviewed implementation does not enforce the commented proposed-future-zero-rate condition. A zero deposit into an empty account divides by zero. Rate, minter authorization, dependencies, available funds and current disabled state are not attested. Savings source has no onchain KYC/allowlist gate; token possession and legal/site eligibility remain separate responsibilities."
+  ],
+  "sourceRefs": [
+    "https://docs.frankencoin.com/savings",
+    "https://app.frankencoin.com/_next/static/chunks/pages/_app-fae369060c50c8ee.js",
+    "https://sourcify.dev/server/v2/contract/1/0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38?fields=all"
+  ],
+  "nonFunctionEntries": [
+    {
+      "type": "constructor",
+      "decision": "not-capability"
+    },
+    {
+      "type": "error",
+      "decision": "not-capability"
+    },
+    {
+      "type": "error",
+      "decision": "not-capability"
+    },
+    {
+      "type": "error",
+      "decision": "not-capability"
+    },
+    {
+      "type": "error",
+      "decision": "not-capability"
+    },
+    {
+      "type": "error",
+      "decision": "not-capability"
+    },
+    {
+      "type": "event",
+      "decision": "not-capability"
+    },
+    {
+      "type": "event",
+      "decision": "not-capability"
+    },
+    {
+      "type": "event",
+      "decision": "not-capability"
+    },
+    {
+      "type": "event",
+      "decision": "not-capability"
+    },
+    {
+      "type": "event",
+      "decision": "not-capability"
+    }
+  ]
+}

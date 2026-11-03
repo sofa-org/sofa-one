@@ -1,4 +1,5 @@
 import { AuthService } from './auth.service';
+import type { ConfigService } from '@nestjs/config';
 
 jest.mock('../../core/openfort/openfort.service', () => ({ OpenfortService: class {} }));
 
@@ -6,7 +7,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   const futureAgentExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   const wallet = { id: 'w1', userId: 'u1', status: 'pending_embedded_wallet', isDefault: false,
     openfortAccountId: 'embedded-1', walletAddress: '0x0000000000000000000000000000000000000001',
-    agentOpenfortAccountId: null, agentWalletAddress: null, agentKeyHash: null, frozenAt: null,
+    agentOpenfortAccountId: null, signerAddress: null, agentKeyHash: null, frozenAt: null,
     chainAuthorizations: [], provisioningIntent: null };
   let service: AuthService;
   let prisma: any;
@@ -47,7 +48,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
       withWalletAccountLock: jest.fn(async (_user: string, work: (tx: any, accountId: string, now: Date) => unknown) => work(tx, 'ba1', new Date())),
       assertWalletReservationAllowed: jest.fn(), recordWalletActivation: jest.fn(), initializeWalletCount: jest.fn(),
     };
-    service = new AuthService(prisma, openfort, {} as any, {} as any, {} as any, lifecycle, undefined, undefined);
+    service = new AuthService(prisma, openfort, {} as ConfigService, lifecycle, undefined, undefined);
     prisma.__intent = intent;
     prisma.__tx.walletProvisioningIntent.updateMany.mockImplementation(async ({ data }: any) => {
       Object.assign(intent, data); return { count: 1 };
@@ -95,6 +96,25 @@ describe('AuthService durable embedded-wallet provisioning', () => {
     expect(result.wallets[1]).toMatchObject({ id: 'w1', isDefault: false });
   });
 
+  it.each(['session', 'me'] as const)('projects distinct user and signer addresses for %s without the old API field', async (endpoint) => {
+    const signerAddress = '0x0000000000000000000000000000000000000002';
+    const owned = { ...wallet, isDefault: true, status: 'active', signerAddress: signerAddress,
+      agentOpenfortAccountId: 'agent-1', agentKeyHash: `0x${'a'.repeat(64)}`,
+      chainAuthorizations: [{ chainId: 84532n, status: 'registered', registrationTxHash: '0xregistered', expiresAt: null }] };
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', wallets: [owned, { ...wallet, id: 'w2' }] });
+    prisma.__tx.userWallet.findMany.mockResolvedValue([owned, { ...wallet, id: 'w2' }]);
+
+    const result = endpoint === 'session'
+      ? await service.syncOpenfortSession('of1')
+      : await service.getMe('of1');
+
+    expect(result.wallet).toMatchObject({ walletAddress: wallet.walletAddress, signerAddress,
+      chainAuthorizations: [{ chainId: 84532, status: 'registered', registrationTxHash: '0xregistered', expiresAt: null }] });
+    expect(result.wallets[0]).toEqual(result.wallet);
+    expect(result.wallets[1]).toMatchObject({ id: 'w2', walletAddress: wallet.walletAddress, signerAddress: null });
+    expect(JSON.stringify(result)).not.toContain('agentWalletAddress');
+  });
+
   it('rejects claimed identities owned by another user', async () => {
     prisma.userWallet.findMany.mockResolvedValue([{ userId: 'other-user' }]);
     await expect(authorize()).rejects.toThrow('already bound');
@@ -116,7 +136,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
 
   it('does not overwrite registration state when receipt tx hash is stale', async () => {
     prisma.user.findUnique.mockResolvedValue({ id: 'u1' });
-    prisma.userWallet.findFirst.mockResolvedValue({ ...wallet, status: 'active', agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status: 'pending_registration', registrationTxHash: '0xnew' }] });
+    prisma.userWallet.findFirst.mockResolvedValue({ ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status: 'pending_registration', registrationTxHash: '0xnew' }] });
     await expect(service.markAgentRegistrationResult('of1', 84532, 'registration_failed', '0xold', 'w1')).rejects.toThrow('not pending');
     expect(prisma.walletChainAuthorization.updateMany).not.toHaveBeenCalled();
   });
@@ -131,7 +151,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it('activates a complete legacy agent binding without creating another agent', async () => {
-    const legacy = { ...wallet, agentOpenfortAccountId: 'old-agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'b'.repeat(64)}` };
+    const legacy = { ...wallet, agentOpenfortAccountId: 'old-agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'b'.repeat(64)}` };
     prisma.__tx.userWallet.findMany.mockResolvedValue([legacy]);
     prisma.__tx.userWallet.findUniqueOrThrow.mockResolvedValue(legacy);
     await expect(authorize()).resolves.toBeDefined();
@@ -149,7 +169,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it('retries failed registration by CAS and rejects concurrent stale submission', async () => {
-    const owned = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status: 'registration_failed', registrationTxHash: '0xold' }] };
+    const owned = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status: 'registration_failed', registrationTxHash: '0xold' }] };
     prisma.user.findUnique.mockResolvedValue({ id: 'u1', frozenAt: null });
     prisma.userWallet.findFirst.mockResolvedValue(owned);
     await service.markAgentRegistrationTransaction('of1', 84532, '0xnew', 'w1');
@@ -159,7 +179,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it.each(['registered', 'expired'])('explicitly renews a %s registration with CAS', async (status) => {
-    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
+    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
     prisma.__tx.userWallet.findMany.mockResolvedValue([active]);
     prisma.userWallet.findFirstOrThrow.mockResolvedValue({ ...active, chainAuthorizations: [{ chainId: 84532n, status, registrationTxHash: '0xold' }] });
     await service.authorizeEmbeddedWallet('of1', 'token', { embeddedWalletAddress: wallet.walletAddress, chainId: 84532, agentExpiresAt: futureAgentExpiresAt } as any);
@@ -168,7 +188,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it('does not reset a registered authorization during ordinary sign-in', async () => {
-    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
+    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
     prisma.__tx.userWallet.findMany.mockResolvedValue([active]);
     prisma.userWallet.findFirstOrThrow.mockResolvedValue({ ...active, chainAuthorizations: [{ chainId: 84532n, status: 'registered', registrationTxHash: '0xold' }] });
     await service.authorizeEmbeddedWallet('of1', 'token', { embeddedWalletAddress: wallet.walletAddress, chainId: 84532 } as any);
@@ -176,7 +196,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it('renews an expired failed registration with CAS and clears its old transaction hash', async () => {
-    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
+    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
     prisma.__tx.userWallet.findMany.mockResolvedValue([active]);
     prisma.userWallet.findFirstOrThrow.mockResolvedValue({ ...active, chainAuthorizations: [{ chainId: 84532n, status: 'registration_failed', registrationTxHash: '0xold', expiresAt: new Date('2026-01-01T00:00:00.000Z') }] });
     await service.authorizeEmbeddedWallet('of1', 'token', { embeddedWalletAddress: wallet.walletAddress, chainId: 84532, agentExpiresAt: futureAgentExpiresAt } as any);
@@ -184,7 +204,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it('preserves a concurrent pending registration hash during explicit authorization', async () => {
-    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
+    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
     prisma.__tx.userWallet.findMany.mockResolvedValue([active]);
     prisma.userWallet.findFirstOrThrow.mockResolvedValue({ ...active, chainAuthorizations: [{ chainId: 84532n, status: 'pending_registration', registrationTxHash: '0xinflight' }] });
     await service.authorizeEmbeddedWallet('of1', 'token', { embeddedWalletAddress: wallet.walletAddress, chainId: 84532, agentExpiresAt: futureAgentExpiresAt } as any);
@@ -192,7 +212,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it('initializes legacy wallet count while reauthorizing an already-active wallet', async () => {
-    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
+    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
     prisma.__tx.userWallet.findMany.mockResolvedValue([active]);
     await authorize();
     expect(lifecycle.initializeWalletCount).toHaveBeenCalledWith(prisma.__tx, 'ba1', 'u1', expect.any(Date));
@@ -200,7 +220,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it('records the active eligibility transition when verified authorization fills a legacy address', async () => {
-    const legacy = { ...wallet, status: 'active', walletAddress: null, agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
+    const legacy = { ...wallet, status: 'active', walletAddress: null, agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
     const repaired = { ...legacy, walletAddress: wallet.walletAddress };
     prisma.__tx.userWallet.findMany.mockResolvedValueOnce([legacy]).mockResolvedValue([repaired]);
     await service.authorizeEmbeddedWallet('of1', 'token', { embeddedWalletAddress: wallet.walletAddress } as any);
@@ -209,7 +229,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it('fails the address repair closed at quota without creating an agent', async () => {
-    const legacy = { ...wallet, status: 'active', walletAddress: null, agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
+    const legacy = { ...wallet, status: 'active', walletAddress: null, agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
     prisma.__tx.userWallet.findMany.mockResolvedValue([legacy]);
     lifecycle.recordWalletActivation.mockRejectedValue(new Error('quota cap'));
     await expect(service.authorizeEmbeddedWallet('of1', 'token', { embeddedWalletAddress: wallet.walletAddress } as any)).rejects.toThrow('quota cap');
@@ -218,7 +238,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it.each(['user', 'wallet'])('fails closed when a %s is frozen before renewal CAS', async (which) => {
-    const active = { ...wallet, status: 'active', frozenAt: null, agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
+    const active = { ...wallet, status: 'active', frozenAt: null, agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
     prisma.__tx.userWallet.findMany.mockResolvedValue([active]);
     prisma.userWallet.findFirstOrThrow.mockResolvedValue({ ...active, chainAuthorizations: [{ chainId: 84532n, status: 'registered', registrationTxHash: '0xold' }] });
     if (which === 'user') prisma.user.findUnique.mockResolvedValue({ id: 'u1', frozenAt: new Date() });
@@ -231,7 +251,7 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it('does not clobber a registration renewed concurrently with a submission', async () => {
-    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
+    const active = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}` };
     prisma.__tx.userWallet.findMany.mockResolvedValue([active]);
     prisma.userWallet.findFirstOrThrow.mockResolvedValue({ ...active, chainAuthorizations: [{ chainId: 84532n, status: 'registered', registrationTxHash: '0xold' }] });
     prisma.walletChainAuthorization.updateMany.mockResolvedValueOnce({ count: 0 });
@@ -240,10 +260,45 @@ describe('AuthService durable embedded-wallet provisioning', () => {
   });
 
   it.each(['user', 'wallet'])('rejects registration writes for frozen %s', async (which) => {
-    const owned = { ...wallet, status: 'active', frozenAt: which === 'wallet' ? new Date() : null, agentOpenfortAccountId: 'agent', agentWalletAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status: 'registration_required', registrationTxHash: null }] };
+    const owned = { ...wallet, status: 'active', frozenAt: which === 'wallet' ? new Date() : null, agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status: 'registration_required', registrationTxHash: null }] };
     prisma.user.findUnique.mockResolvedValue({ id: 'u1', frozenAt: which === 'user' ? new Date() : null });
     prisma.userWallet.findFirst.mockResolvedValue(owned);
     await expect(service.markAgentRegistrationTransaction('of1', 84532, '0xnew', 'w1')).rejects.toThrow('frozen');
+    expect(prisma.walletChainAuthorization.updateMany).not.toHaveBeenCalled();
+  });
+
+  it.each(['pending_registration', 'registered', 'registration_failed'])('replays the same %s checkpoint without resetting its persisted state', async (status) => {
+    const saved = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status, registrationTxHash: '0xaccepted', expiresAt: new Date(futureAgentExpiresAt) }] };
+    prisma.userWallet.findFirst.mockResolvedValue(saved);
+
+    const result = await service.markAgentRegistrationTransaction('of1', 84532, '0xaccepted', 'w1');
+
+    expect(result.wallet.chainAuthorizations).toEqual([expect.objectContaining({ status, registrationTxHash: '0xaccepted' })]);
+    expect(prisma.walletChainAuthorization.updateMany).not.toHaveBeenCalled();
+  });
+
+  it.each(['registered', 'registration_failed'] as const)('replays a persisted %s result but rejects a contradictory or stale result', async (status) => {
+    const saved = { ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status, registrationTxHash: '0xaccepted', expiresAt: new Date(futureAgentExpiresAt) }] };
+    prisma.userWallet.findFirst.mockResolvedValue(saved);
+
+    const result = await service.markAgentRegistrationResult('of1', 84532, status, '0xaccepted', 'w1');
+    expect(result.wallet.chainAuthorizations).toEqual([expect.objectContaining({ status, registrationTxHash: '0xaccepted' })]);
+    await expect(service.markAgentRegistrationResult('of1', 84532, status, '0xstale', 'w1')).rejects.toThrow();
+    await expect(service.markAgentRegistrationResult('of1', 84532, status === 'registered' ? 'registration_failed' : 'registered', '0xaccepted', 'w1')).rejects.toThrow();
+    expect(prisma.walletChainAuthorization.updateMany).not.toHaveBeenCalled();
+  });
+
+  it.each(['pending_registration', 'registered'])('rejects another transaction hash while %s', async (status) => {
+    prisma.userWallet.findFirst.mockResolvedValue({ ...wallet, status: 'active', agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status, registrationTxHash: '0xaccepted' }] });
+    await expect(service.markAgentRegistrationTransaction('of1', 84532, '0xother', 'w1')).rejects.toThrow();
+    expect(prisma.walletChainAuthorization.updateMany).not.toHaveBeenCalled();
+  });
+
+  it.each(['user', 'wallet'])('does not let idempotent checkpoint/result replay bypass a frozen %s', async (which) => {
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', frozenAt: which === 'user' ? new Date() : null });
+    prisma.userWallet.findFirst.mockResolvedValue({ ...wallet, status: 'active', frozenAt: which === 'wallet' ? new Date() : null, agentOpenfortAccountId: 'agent', signerAddress: '0x0000000000000000000000000000000000000002', agentKeyHash: `0x${'a'.repeat(64)}`, chainAuthorizations: [{ chainId: 84532n, status: 'registered', registrationTxHash: '0xaccepted' }] });
+    await expect(service.markAgentRegistrationTransaction('of1', 84532, '0xaccepted', 'w1')).rejects.toThrow();
+    await expect(service.markAgentRegistrationResult('of1', 84532, 'registered', '0xaccepted', 'w1')).rejects.toThrow();
     expect(prisma.walletChainAuthorization.updateMany).not.toHaveBeenCalled();
   });
 });

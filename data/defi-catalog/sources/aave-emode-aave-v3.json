@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "aave-v3",
+      "familyVersion": "v3-origin@8305565a",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2",
+          "status": "inactive",
+          "contractName": "Aave V3 Ethereum Pool",
+          "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-ethereum", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "setUserEMode",
+              "stateMutability": "nonpayable",
+              "inputs": [{ "name": "categoryId", "type": "uint8", "internalType": "uint8" }],
+              "outputs": [],
+              "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-ethereum", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"]
+            }
+          ]
+        },
+        {
+          "chainId": 10,
+          "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+          "status": "inactive",
+          "contractName": "Aave V3 Optimism Pool",
+          "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-implementation", "aave-v3-pool-optimism", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "setUserEMode",
+              "stateMutability": "nonpayable",
+              "inputs": [{ "name": "categoryId", "type": "uint8", "internalType": "uint8" }],
+              "outputs": [],
+              "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-implementation", "aave-v3-pool-optimism", "aave-v3-supply-logic", "aave-v3-validation-logic"]
+            }
+          ]
+        },
+        {
+          "chainId": 137,
+          "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+          "status": "inactive",
+          "contractName": "Aave V3 Polygon Pool",
+          "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-implementation", "aave-v3-pool-polygon", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "setUserEMode",
+              "stateMutability": "nonpayable",
+              "inputs": [{ "name": "categoryId", "type": "uint8", "internalType": "uint8" }],
+              "outputs": [],
+              "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-implementation", "aave-v3-pool-polygon", "aave-v3-supply-logic", "aave-v3-validation-logic"]
+            }
+          ]
+        },
+        {
+          "chainId": 8453,
+          "address": "0xa238dd80c259a72e81d7e4664a9801593f98d1c5",
+          "status": "inactive",
+          "contractName": "Aave V3 Base Pool",
+          "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-base", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "setUserEMode",
+              "stateMutability": "nonpayable",
+              "inputs": [{ "name": "categoryId", "type": "uint8", "internalType": "uint8" }],
+              "outputs": [],
+              "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-base", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"]
+            }
+          ]
+        },
+        {
+          "chainId": 42161,
+          "address": "0x794a61358d6845594f94dc1db02a252b5b4814ad",
+          "status": "inactive",
+          "contractName": "Aave V3 Arbitrum Pool",
+          "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-arbitrum", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "setUserEMode",
+              "stateMutability": "nonpayable",
+              "inputs": [{ "name": "categoryId", "type": "uint8", "internalType": "uint8" }],
+              "outputs": [],
+              "sourceRefs": ["aave-v3-ipool-interface", "aave-v3-pool-arbitrum", "aave-v3-pool-implementation", "aave-v3-supply-logic", "aave-v3-validation-logic"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "aave-v3-ipool-interface",
+      "url": "https://github.com/aave-dao/aave-v3-origin/blob/8305565ae342f1773c42cd2e4593f175fe5968a0/src/contracts/interfaces/IPool.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned Aave V3 Origin IPool.sol declaration at line 675: setUserEMode(uint8 categoryId) external. The modeled ABI has one named uint8 input, nonpayable mutability, and no outputs. This is a declaration model, not compiler output."
+    },
+    {
+      "sourceId": "aave-v3-pool-implementation",
+      "url": "https://github.com/aave-dao/aave-v3-origin/blob/8305565ae342f1773c42cd2e4593f175fe5968a0/src/contracts/protocol/pool/Pool.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned Pool.sol lines 754–765 route msg.sender and categoryId to fixed SupplyLogic.executeSetUserEMode. The method changes caller-associated EMode state and exposes no caller-selected callee, recipient, callback, or calldata path. Dated pinned source does not prove present proxy or implementation identity."
+    },
+    {
+      "sourceId": "aave-v3-supply-logic",
+      "url": "https://github.com/aave-dao/aave-v3-origin/blob/8305565ae342f1773c42cd2e4593f175fe5968a0/src/contracts/protocol/libraries/logic/SupplyLogic.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned SupplyLogic.sol lines 304–336 return for an unchanged category; otherwise validate and update the caller's EMode category, validate health factor through fixed protocol logic, and emit UserEModeSet. These are protocol execution checks, not platform policy limits or success guarantees."
+    },
+    {
+      "sourceId": "aave-v3-validation-logic",
+      "url": "https://github.com/aave-dao/aave-v3-origin/blob/8305565ae342f1773c42cd2e4593f175fe5968a0/src/contracts/protocol/libraries/logic/ValidationLogic.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned ValidationLogic.sol lines 448–498 validate category zero or configured nonzero category liquidation-threshold conditions and compatibility of the caller's borrowed/collateral assets. Category availability, oracle inputs, caller state, and protocol checks can reject execution; this does not provide a platform category whitelist, asset/debt/balance/health-factor gate, current-state proof, or financial-safety guarantee."
+    },
+    {
+      "sourceId": "aave-v3-pool-ethereum",
+      "url": "https://github.com/aave-dao/aave-address-book/blob/17567521ae51088c85e01a6d8240f18b383bac2f/src/ts/AaveV3Ethereum.ts",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned address-book AaveV3Ethereum.POOL role identifies Ethereum main Pool 0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2. Dated role evidence is not proof of current deployment identity."
+    },
+    {
+      "sourceId": "aave-v3-pool-optimism",
+      "url": "https://github.com/aave-dao/aave-address-book/blob/17567521ae51088c85e01a6d8240f18b383bac2f/src/ts/AaveV3Optimism.ts",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned address-book AaveV3Optimism.POOL role identifies Optimism main Pool 0x794a61358d6845594f94dc1db02a252b5b4814ad. Dated role evidence is not proof of current deployment identity."
+    },
+    {
+      "sourceId": "aave-v3-pool-polygon",
+      "url": "https://github.com/aave-dao/aave-address-book/blob/17567521ae51088c85e01a6d8240f18b383bac2f/src/ts/AaveV3Polygon.ts",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned address-book AaveV3Polygon.POOL role identifies Polygon main Pool 0x794a61358d6845594f94dc1db02a252b5b4814ad. Dated role evidence is not proof of current deployment identity."
+    },
+    {
+      "sourceId": "aave-v3-pool-base",
+      "url": "https://github.com/aave-dao/aave-address-book/blob/17567521ae51088c85e01a6d8240f18b383bac2f/src/ts/AaveV3Base.ts",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned address-book AaveV3Base.POOL role identifies Base main Pool 0xa238dd80c259a72e81d7e4664a9801593f98d1c5. Dated role evidence is not proof of current deployment identity."
+    },
+    {
+      "sourceId": "aave-v3-pool-arbitrum",
+      "url": "https://github.com/aave-dao/aave-address-book/blob/17567521ae51088c85e01a6d8240f18b383bac2f/src/ts/AaveV3Arbitrum.ts",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned address-book AaveV3Arbitrum.POOL role identifies Arbitrum main Pool 0x794a61358d6845594f94dc1db02a252b5b4814ad. Dated role evidence is not proof of current deployment identity."
+    }
+  ],
+  "unresolved": []
+}

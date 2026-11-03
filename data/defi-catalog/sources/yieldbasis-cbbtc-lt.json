@@ -1,0 +1,1897 @@
+{
+  "schemaVersion": 1,
+  "protocol": "yieldbasis-cbbtc-lt",
+  "protocolName": "YieldBasis",
+  "website": "https://yieldbasis.com",
+  "chainId": 1,
+  "address": "0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9",
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.yieldbasis.com/user/reference/contract-addresses",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9",
+    "description": "Official Active Markets > cbBTC table explicitly maps yb-cbBTC to this LT. Core factory and LEVAMM/pool/gauge are separately listed. Blueprint deployment materializes constructor-bound direct LT runtime; it is not ERC4626 or an upgradeable proxy.",
+    "explorerSourceRef": "https://etherscan.io/address/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9#code",
+    "explorerObservedName": "LT",
+    "explorerObservedVerification": "Similar Match: 0x0b0d8BccF062555Ec18D5e4D8fe895E64E3f1EB4; Sourcify independently binds exact target source/ABI",
+    "deployment": {
+      "transactionHash": "0xde5ca4bd4f289e806409c32ea5d7a86e9b0894478e1e0c4e3796148db16f0c66",
+      "blockNumber": "25170801",
+      "transactionIndex": "187",
+      "deployer": "0xa39E4d6bb25A8E55552D6D9ab1f5f8889DDdC80d"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "immutableTransformationValues": {
+      "immutables": {
+        "0": "0x000000000000000000000000862cb4e988fb66e72f128d1183829f8c05b6c6a0000000000000000000000000f939e0a03fb07f59a73314e73794be0e57ac1b4e000000000000000000000000cbb7c0000ab88b473b1f5afd9ef808440eed33bf"
+      }
+    },
+    "immutableInterpretation": {
+      "CRYPTOPOOL": "0x862CB4E988FB66E72f128d1183829f8c05B6c6A0",
+      "STABLECOIN": "0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E",
+      "ASSET_TOKEN": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+      "orderEvidence": "Exact LT source immutable declarations: CRYPTOPOOL, STABLECOIN, ASSET_TOKEN. Sourcify 96-byte immutable segment matches this order."
+    }
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9?fields=all",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9",
+    "reportedMatch": "exact_match",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "match",
+    "sourceServiceVerifiedAt": "2026-05-25T08:13:20Z",
+    "compilation": {
+      "language": "Vyper",
+      "compiler": "vyper",
+      "compilerVersion": "0.4.3+commit.bff19ea2",
+      "compilerSettings": {
+        "search_paths": [
+          ".venv/lib/pypy3.11/site-packages",
+          "."
+        ]
+      },
+      "name": "LT",
+      "fullyQualifiedName": "contracts/LT.vy:LT"
+    },
+    "deployment": {
+      "transactionHash": "0xde5ca4bd4f289e806409c32ea5d7a86e9b0894478e1e0c4e3796148db16f0c66",
+      "blockNumber": "25170801",
+      "transactionIndex": "187",
+      "deployer": "0xa39E4d6bb25A8E55552D6D9ab1f5f8889DDdC80d"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "abiSha256": "b86e227ffec968d2383efe6160e49b82255e4b5400f7c0907d64e8903969a776"
+  },
+  "abi": [
+    {
+      "name": "SetStaker",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "staker",
+          "type": "address",
+          "indexed": true
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "WithdrawAdminFees",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": false
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "AllocateStablecoins",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "allocator",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "stablecoin_allocation",
+          "type": "uint256",
+          "indexed": false
+        },
+        {
+          "name": "stablecoin_allocated",
+          "type": "uint256",
+          "indexed": false
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DistributeBorrowerFees",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false
+        },
+        {
+          "name": "min_amount",
+          "type": "uint256",
+          "indexed": false
+        },
+        {
+          "name": "discount",
+          "type": "uint256",
+          "indexed": false
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SetAdmin",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "admin",
+          "type": "address",
+          "indexed": false
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "min_admin_fee",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "preview_deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256"
+        },
+        {
+          "name": "debt",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "preview_deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256"
+        },
+        {
+          "name": "debt",
+          "type": "uint256"
+        },
+        {
+          "name": "raise_overflow",
+          "type": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "preview_withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokens",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256"
+        },
+        {
+          "name": "debt",
+          "type": "uint256"
+        },
+        {
+          "name": "min_shares",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256"
+        },
+        {
+          "name": "debt",
+          "type": "uint256"
+        },
+        {
+          "name": "min_shares",
+          "type": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256"
+        },
+        {
+          "name": "min_assets",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256"
+        },
+        {
+          "name": "min_assets",
+          "type": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "preview_emergency_withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "emergency_withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "emergency_withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "emergency_withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "checkpoint_staker_rebase",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updated_balances",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pricePerShare",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "set_amm",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amm",
+          "type": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "set_admin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "new_admin",
+          "type": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "set_rate",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "rate",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "set_amm_fee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "fee",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "allocate_stablecoins",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "allocate_stablecoins",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "limit",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "distribute_borrower_fees",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "distribute_borrower_fees",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "discount",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw_admin_fees",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "set_staker",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "staker",
+          "type": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "set_killed",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "is_killed",
+          "type": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_from",
+          "type": "address"
+        },
+        {
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_spender",
+          "type": "address"
+        },
+        {
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "is_killed",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "CRYPTOPOOL",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "STABLECOIN",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ASSET_TOKEN",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "admin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "amm",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "agg",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "staker",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "liquidity",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "admin",
+              "type": "int256"
+            },
+            {
+              "name": "total",
+              "type": "uint256"
+            },
+            {
+              "name": "ideal_staked",
+              "type": "uint256"
+            },
+            {
+              "name": "staked",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "arg0",
+          "type": "address"
+        },
+        {
+          "name": "arg1",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "arg0",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "stablecoin_allocation",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "stablecoin_allocated",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "asset_token",
+          "type": "address"
+        },
+        {
+          "name": "stablecoin",
+          "type": "address"
+        },
+        {
+          "name": "cryptopool",
+          "type": "address"
+        },
+        {
+          "name": "admin",
+          "type": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "verifiedSources": [
+    {
+      "path": ".venv/lib/pypy3.11/site-packages/snekmate/utils/math.vy",
+      "sha256": "46ce337330755a5524fceddc58ee0aded127288a92cb3fd064fd09dedf9c6c97",
+      "content": "# pragma version ~=0.4.3\n# pragma nonreentrancy off\n\"\"\"\n@title Standard Mathematical Utility Functions\n@custom:contract-name math\n@license GNU Affero General Public License v3.0 only\n@author pcaversaccio\n@custom:coauthor bout3fiddy\n@notice These functions implement standard mathematical utility\n        functions that are missing in the Vyper language. If a\n        function is inspired by an existing implementation, it\n        is properly referenced in the function docstring. The\n        following functions have been added for convenience:\n        - `_uint256_average` (`internal` `pure` function),\n        - `_int256_average` (`internal` `pure` function),\n        - `_ceil_div` (`internal` `pure` function),\n        - `_signum` (`internal` `pure` function),\n        - `_mul_div` (`internal` `pure` function),\n        - `_log2` (`internal` `pure` function),\n        - `_log10` (`internal` `pure` function),\n        - `_log256` (`internal` `pure` function),\n        - `_wad_ln` (`internal` `pure` function),\n        - `_wad_exp` (`internal` `pure` function),\n        - `_cbrt` (`internal` `pure` function),\n        - `_wad_cbrt` (`internal` `pure` function).\n\"\"\"\n\n\n@deploy\n@payable\ndef __init__():\n    \"\"\"\n    @dev To omit the opcodes for checking the `msg.value`\n         in the creation-time EVM bytecode, the constructor\n         is declared as `payable`.\n    \"\"\"\n    pass\n\n\n@internal\n@pure\ndef _uint256_average(x: uint256, y: uint256) -> uint256:\n    \"\"\"\n    @dev Returns the average of two 32-byte unsigned integers.\n    @notice Note that the result is rounded towards zero. For\n            more details on finding the average of two unsigned\n            integers without an overflow, please refer to:\n            https://devblogs.microsoft.com/oldnewthing/20220207-00/?p=106223.\n    @param x The first 32-byte unsigned integer of the data set.\n    @param y The second 32-byte unsigned integer of the data set.\n    @return uint256 The 32-byte average (rounded towards zero) of\n            `x` and `y`.\n    \"\"\"\n    return unsafe_add(x & y, (x ^ y) >> 1)\n\n\n@internal\n@pure\ndef _int256_average(x: int256, y: int256) -> int256:\n    \"\"\"\n    @dev Returns the average of two 32-byte signed integers.\n    @notice Note that the result is rounded towards infinity.\n            For more details on finding the average of two signed\n            integers without an overflow, please refer to:\n            https://patents.google.com/patent/US6007232A/en.\n    @param x The first 32-byte signed integer of the data set.\n    @param y The second 32-byte signed integer of the data set.\n    @return int256 The 32-byte average (rounded towards infinity)\n            of `x` and `y`.\n    \"\"\"\n    return unsafe_add(unsafe_add(x >> 1, y >> 1), x & y & 1)\n\n\n@internal\n@pure\ndef _ceil_div(x: uint256, y: uint256) -> uint256:\n    \"\"\"\n    @dev Calculates \"ceil(x / y)\" for any strictly positive `y`.\n    @notice The implementation is inspired by OpenZeppelin's\n            implementation here:\n            https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol.\n    @param x The 32-byte numerator.\n    @param y The 32-byte denominator.\n    @return uint256 The 32-byte rounded up result of \"x/y\".\n    \"\"\"\n    assert y != empty(uint256), \"math: ceil_div division by zero\"\n    # Due to a known compiler bug (https://github.com/vyperlang/vyper/issues/3480),\n    # we use `0` instead of `empty(uint256)` as return value.\n    return 0 if (x == empty(uint256)) else unsafe_add(unsafe_div(x - 1, y), 1)\n\n\n@internal\n@pure\ndef _signum(x: int256) -> int256:\n    \"\"\"\n    @dev Returns the indication of the sign of a 32-byte signed integer.\n    @notice The function returns `-1` if `x < 0`, `0` if `x == 0`, and `1`\n            if `x > 0`. For more details on finding the sign of a signed\n            integer, please refer to:\n            https://graphics.stanford.edu/~seander/bithacks.html#CopyIntegerSign.\n    @param x The 32-byte signed integer variable.\n    @return int256 The 32-byte sign indication (`1`, `0`, or `-1`) of `x`.\n    \"\"\"\n    return unsafe_sub(convert((x > empty(int256)), int256), convert((x < empty(int256)), int256))\n\n\n@internal\n@pure\ndef _mul_div(x: uint256, y: uint256, denominator: uint256, roundup: bool) -> uint256:\n    \"\"\"\n    @dev Calculates \"(x * y) / denominator\" in 512-bit precision,\n         following the selected rounding direction.\n    @notice The implementation is inspired by Remco Bloemen's\n            implementation under the MIT license here:\n            https://xn--2-umb.com/21/muldiv.\n            Furthermore, the rounding direction design pattern is\n            inspired by OpenZeppelin's implementation here:\n            https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol.\n    @param x The 32-byte multiplicand.\n    @param y The 32-byte multiplier.\n    @param denominator The 32-byte divisor.\n    @param roundup The Boolean variable that specifies whether\n           to round up or not. The default `False` is round down.\n    @return uint256 The 32-byte calculation result.\n    \"\"\"\n    # Handle division by zero.\n    assert denominator != empty(uint256), \"math: mul_div division by zero\"\n\n    # 512-bit multiplication \"[prod1 prod0] = x * y\".\n    # Compute the product \"mod 2**256\" and \"mod 2**256 - 1\".\n    # Then use the Chinese Remainder theorem to reconstruct\n    # the 512-bit result. The result is stored in two 256-bit\n    # variables, where: \"product = prod1 * 2**256 + prod0\".\n    mm: uint256 = uint256_mulmod(x, y, max_value(uint256))\n    # The least significant 256 bits of the product.\n    prod0: uint256 = unsafe_mul(x, y)\n    # The most significant 256 bits of the product.\n    prod1: uint256 = empty(uint256)\n\n    if mm < prod0:\n        prod1 = unsafe_sub(unsafe_sub(mm, prod0), 1)\n    else:\n        prod1 = unsafe_sub(mm, prod0)\n\n    # Handling of non-overflow cases, 256 by 256 division.\n    if prod1 == empty(uint256):\n        if roundup and uint256_mulmod(x, y, denominator) != empty(uint256):\n            # Calculate \"ceil((x * y) / denominator)\". The following\n            # line cannot overflow because we have the previous check\n            # \"(x * y) % denominator != 0\", which accordingly rules out\n            # the possibility of \"x * y = 2**256 - 1\" and `denominator == 1`.\n            return unsafe_add(unsafe_div(prod0, denominator), 1)\n\n        return unsafe_div(prod0, denominator)\n\n    # Ensure that the result is less than \"2**256\". Also,\n    # prevents that `denominator == 0`.\n    assert denominator > prod1, \"math: mul_div overflow\"\n\n    #######################\n    # 512 by 256 Division #\n    #######################\n\n    # Make division exact by subtracting the remainder\n    # from \"[prod1 prod0]\". First, compute remainder using\n    # the `uint256_mulmod` operation.\n    remainder: uint256 = uint256_mulmod(x, y, denominator)\n\n    # Second, subtract the 256-bit number from the 512-bit\n    # number.\n    if remainder > prod0:\n        prod1 = unsafe_sub(prod1, 1)\n    prod0 = unsafe_sub(prod0, remainder)\n\n    # Factor powers of two out of the denominator and calculate\n    # the largest power of two divisor of denominator. Always `>= 1`,\n    # unless the denominator is zero (which is prevented above),\n    # in which case `twos` is zero. For more details, please refer to:\n    # https://cs.stackexchange.com/q/138556.\n    twos: uint256 = unsafe_sub(empty(uint256), denominator) & denominator\n    # Divide denominator by `twos`.\n    denominator_div: uint256 = unsafe_div(denominator, twos)\n    # Divide \"[prod1 prod0]\" by `twos`.\n    prod0 = unsafe_div(prod0, twos)\n    # Flip `twos` such that it is \"2**256 / twos\". If `twos` is zero,\n    # it becomes one.\n    twos = unsafe_add(unsafe_div(unsafe_sub(empty(uint256), twos), twos), 1)\n\n    # Shift bits from `prod1` to `prod0`.\n    prod0 |= unsafe_mul(prod1, twos)\n\n    # Invert the denominator \"mod 2**256\". Since the denominator is\n    # now an odd number, it has an inverse modulo \"2**256\", so we have:\n    # \"denominator * inverse = 1 mod 2**256\". Calculate the inverse by\n    # starting with a seed that is correct for four bits. That is,\n    # \"denominator * inverse = 1 mod 2**4\".\n    inverse: uint256 = unsafe_mul(3, denominator_div) ^ 2\n\n    # Use Newton-Raphson iteration to improve accuracy. Thanks to Hensel's\n    # lifting lemma, this also works in modular arithmetic by doubling the\n    # correct bits in each step.\n    inverse = unsafe_mul(inverse, unsafe_sub(2, unsafe_mul(denominator_div, inverse))) # Inverse \"mod 2**8\".\n    inverse = unsafe_mul(inverse, unsafe_sub(2, unsafe_mul(denominator_div, inverse))) # Inverse \"mod 2**16\".\n    inverse = unsafe_mul(inverse, unsafe_sub(2, unsafe_mul(denominator_div, inverse))) # Inverse \"mod 2**32\".\n    inverse = unsafe_mul(inverse, unsafe_sub(2, unsafe_mul(denominator_div, inverse))) # Inverse \"mod 2**64\".\n    inverse = unsafe_mul(inverse, unsafe_sub(2, unsafe_mul(denominator_div, inverse))) # Inverse \"mod 2**128\".\n    inverse = unsafe_mul(inverse, unsafe_sub(2, unsafe_mul(denominator_div, inverse))) # Inverse \"mod 2**256\".\n\n    # Since the division is now exact, we can divide by multiplying\n    # with the modular inverse of the denominator. This returns the\n    # correct result modulo \"2**256\". Since the preconditions guarantee\n    # that the result is less than \"2**256\", this is the final result.\n    # We do not need to calculate the high bits of the result and\n    # `prod1` is no longer necessary.\n    result: uint256 = unsafe_mul(prod0, inverse)\n\n    if roundup and uint256_mulmod(x, y, denominator) != empty(uint256):\n        # Calculate \"ceil((x * y) / denominator)\". The following\n        # line uses intentionally checked arithmetic to prevent\n        # a theoretically possible overflow.\n        result += 1\n\n    return result\n\n\n@internal\n@pure\ndef _log2(x: uint256, roundup: bool) -> uint256:\n    \"\"\"\n    @dev Returns the log in base 2 of `x`, following the selected\n         rounding direction.\n    @notice Note that it returns `0` if given `0`. The implementation\n            is inspired by OpenZeppelin's implementation here:\n            https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol.\n    @param x The 32-byte variable.\n    @param roundup The Boolean variable that specifies whether\n           to round up or not. The default `False` is round down.\n    @return uint256 The 32-byte calculation result.\n    \"\"\"\n    # For the special case `x == 0`, we already return `0` here in order\n    # not to iterate through the remaining code.\n    if x == empty(uint256):\n        return empty(uint256)\n\n    value: uint256 = x\n    result: uint256 = empty(uint256)\n\n    # The following lines cannot overflow because we have the well-known\n    # decay behaviour of `log2(max_value(uint256)) < max_value(uint256)`.\n    if x >> 128 != empty(uint256):\n        x >>= 128\n        result = 128\n    if x >> 64 != empty(uint256):\n        x >>= 64\n        result = unsafe_add(result, 64)\n    if x >> 32 != empty(uint256):\n        x >>= 32\n        result = unsafe_add(result, 32)\n    if x >> 16 != empty(uint256):\n        x >>= 16\n        result = unsafe_add(result, 16)\n    if x >> 8 != empty(uint256):\n        x >>= 8\n        result = unsafe_add(result, 8)\n    if x >> 4 != empty(uint256):\n        x >>= 4\n        result = unsafe_add(result, 4)\n    if x >> 2 != empty(uint256):\n        x >>= 2\n        result = unsafe_add(result, 2)\n    if x >> 1 != empty(uint256):\n        result = unsafe_add(result, 1)\n\n    if roundup and (1 << result) < value:\n        result = unsafe_add(result, 1)\n\n    return result\n\n\n@internal\n@pure\ndef _log10(x: uint256, roundup: bool) -> uint256:\n    \"\"\"\n    @dev Returns the log in base 10 of `x`, following the selected\n         rounding direction.\n    @notice Note that it returns `0` if given `0`. The implementation\n            is inspired by OpenZeppelin's implementation here:\n            https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol.\n    @param x The 32-byte variable.\n    @param roundup The Boolean variable that specifies whether\n           to round up or not. The default `False` is round down.\n    @return uint256 The 32-byte calculation result.\n    \"\"\"\n    # For the special case `x == 0`, we already return `0` here in order\n    # not to iterate through the remaining code.\n    if x == empty(uint256):\n        return empty(uint256)\n\n    value: uint256 = x\n    result: uint256 = empty(uint256)\n\n    # The following lines cannot overflow because we have the well-known\n    # decay behaviour of `log10(max_value(uint256)) < max_value(uint256)`.\n    if x >= 10 ** 64:\n        x = unsafe_div(x, 10 ** 64)\n        result = 64\n    if x >= 10 ** 32:\n        x = unsafe_div(x, 10 ** 32)\n        result = unsafe_add(result, 32)\n    if x >= 10 ** 16:\n        x = unsafe_div(x, 10 ** 16)\n        result = unsafe_add(result, 16)\n    if x >= 10 ** 8:\n        x = unsafe_div(x, 10 ** 8)\n        result = unsafe_add(result, 8)\n    if x >= 10 ** 4:\n        x = unsafe_div(x, 10 ** 4)\n        result = unsafe_add(result, 4)\n    if x >= 10 ** 2:\n        x = unsafe_div(x, 10 ** 2)\n        result = unsafe_add(result, 2)\n    if x >= 10:\n        result = unsafe_add(result, 1)\n\n    if roundup and (10 ** result) < value:\n        result = unsafe_add(result, 1)\n\n    return result\n\n\n@internal\n@pure\ndef _log256(x: uint256, roundup: bool) -> uint256:\n    \"\"\"\n    @dev Returns the log in base 256 of `x`, following the selected\n         rounding direction.\n    @notice Note that it returns `0` if given `0`. Also, adding one to the\n            rounded down result gives the number of pairs of hex symbols\n            needed to represent `x` as a hex string. The implementation is\n            inspired by OpenZeppelin's implementation here:\n            https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol.\n    @param x The 32-byte variable.\n    @param roundup The Boolean variable that specifies whether\n           to round up or not. The default `False` is round down.\n    @return uint256 The 32-byte calculation result.\n    \"\"\"\n    # For the special case `x == 0`, we already return `0` here in order\n    # not to iterate through the remaining code.\n    if x == empty(uint256):\n        return empty(uint256)\n\n    value: uint256 = x\n    result: uint256 = empty(uint256)\n\n    # The following lines cannot overflow because we have the well-known\n    # decay behaviour of `log256(max_value(uint256)) < max_value(uint256)`.\n    if x >> 128 != empty(uint256):\n        x >>= 128\n        result = 16\n    if x >> 64 != empty(uint256):\n        x >>= 64\n        result = unsafe_add(result, 8)\n    if x >> 32 != empty(uint256):\n        x >>= 32\n        result = unsafe_add(result, 4)\n    if x >> 16 != empty(uint256):\n        x >>= 16\n        result = unsafe_add(result, 2)\n    if x >> 8 != empty(uint256):\n        result = unsafe_add(result, 1)\n\n    if roundup and (1 << (result << 3)) < value:\n        result = unsafe_add(result, 1)\n\n    return result\n\n\n@internal\n@pure\ndef _wad_ln(x: int256) -> int256:\n    \"\"\"\n    @dev Calculates the natural logarithm of a signed integer with a\n         precision of 1e18.\n    @notice Note that it returns `0` if given `0`. Furthermore, this function\n            consumes about 1,400 to 1,650 gas units depending on the value\n            of `x`. The implementation is inspired by Remco Bloemen's\n            implementation under the MIT license here:\n            https://xn--2-umb.com/22/exp-ln.\n    @param x The 32-byte variable.\n    @return int256 The 32-byte calculation result.\n    \"\"\"\n    assert x >= empty(int256), \"math: wad_ln undefined\"\n\n    # For the special case `x == 0`, we already return `0` here in order\n    # not to iterate through the remaining code.\n    if x == empty(int256):\n        return empty(int256)\n\n    # We want to convert `x` from \"10**18\" fixed point to \"2**96\"\n    # fixed point. We do this by multiplying by \"2**96 / 10**18\".\n    # But since \"ln(x * C) = ln(x) + ln(C)\" holds, we can just do\n    # nothing here and add \"ln(2**96 / 10**18)\" at the end.\n\n    # Reduce the range of `x` to \"(1, 2) * 2**96\".\n    # Also remember that \"ln(2**k * x) = k * ln(2) + ln(x)\" holds.\n    k: int256 = unsafe_sub(convert(self._log2(convert(x, uint256), False), int256), 96)\n    # Note that to circumvent Vyper's safecast feature for the potentially\n    # negative expression `x <<= uint256(159 - k)`, we first convert the\n    # expression `x <<= uint256(159 - k)` to `bytes32` and subsequently\n    # to `uint256`. Remember that the EVM default behaviour is to use two's\n    # complement representation to handle signed integers.\n    x = convert(convert(convert(x << convert(unsafe_sub(159, k), uint256), bytes32), uint256) >> 159, int256)\n\n    # Evaluate using a \"(8, 8)\"-term rational approximation. Since `p` is monic,\n    # we will multiply by a scaling factor later.\n    p: int256 = unsafe_add(\n        unsafe_mul(unsafe_add(x, 3_273_285_459_638_523_848_632_254_066_296), x) >> 96,\n        24_828_157_081_833_163_892_658_089_445_524,\n    )\n    p = unsafe_add(unsafe_mul(p, x) >> 96, 43_456_485_725_739_037_958_740_375_743_393)\n    p = unsafe_sub(unsafe_mul(p, x) >> 96, 11_111_509_109_440_967_052_023_855_526_967)\n    p = unsafe_sub(unsafe_mul(p, x) >> 96, 45_023_709_667_254_063_763_336_534_515_857)\n    p = unsafe_sub(unsafe_mul(p, x) >> 96, 14_706_773_417_378_608_786_704_636_184_526)\n    p = unsafe_sub(unsafe_mul(p, x), 795_164_235_651_350_426_258_249_787_498 << 96)\n\n    # We leave `p` in the \"2**192\" base so that we do not have to scale it up\n    # again for the division. Note that `q` is monic by convention.\n    q: int256 = unsafe_add(\n        unsafe_mul(unsafe_add(x, 5_573_035_233_440_673_466_300_451_813_936), x) >> 96,\n        71_694_874_799_317_883_764_090_561_454_958,\n    )\n    q = unsafe_add(unsafe_mul(q, x) >> 96, 283_447_036_172_924_575_727_196_451_306_956)\n    q = unsafe_add(unsafe_mul(q, x) >> 96, 401_686_690_394_027_663_651_624_208_769_553)\n    q = unsafe_add(unsafe_mul(q, x) >> 96, 204_048_457_590_392_012_362_485_061_816_622)\n    q = unsafe_add(unsafe_mul(q, x) >> 96, 31_853_899_698_501_571_402_653_359_427_138)\n    q = unsafe_add(unsafe_mul(q, x) >> 96, 909_429_971_244_387_300_277_376_558_375)\n\n    # It is known that the polynomial `q` has no zeros in the domain.\n    # No scaling is required, as `p` is already \"2**96\" too large. Also,\n    # `r` is in the range \"(0, 0.125) * 2**96\" after the division.\n    r: int256 = unsafe_div(p, q)\n\n    # To finalise the calculation, we have to proceed with the following steps:\n    #   - multiply by the scaling factor \"s = 5.549...\",\n    #   - add \"ln(2**96 / 10**18)\",\n    #   - add \"k * ln(2)\", and\n    #   - multiply by \"10**18 / 2**96 = 5**18 >> 78\".\n    # In order to perform the most gas-efficient calculation, we carry out all\n    # these steps in one expression.\n    return (\n        unsafe_add(\n            unsafe_add(\n                unsafe_mul(r, 1_677_202_110_996_718_588_342_820_967_067_443_963_516_166),\n                unsafe_mul(\n                    k, 16_597_577_552_685_614_221_487_285_958_193_947_469_193_820_559_219_878_177_908_093_499_208_371\n                ),\n            ),\n            600_920_179_829_731_861_736_702_779_321_621_459_595_472_258_049_074_101_567_377_883_020_018_308,\n        )\n        >> 174\n    )\n\n\n@internal\n@pure\ndef _wad_exp(x: int256) -> int256:\n    \"\"\"\n    @dev Calculates the natural exponential function of a signed integer with\n         a precision of 1e18.\n    @notice Note that this function consumes about 810 gas units. The implementation\n            is inspired by Remco Bloemen's implementation under the MIT license here:\n            https://xn--2-umb.com/22/exp-ln.\n    @param x The 32-byte variable.\n    @return int256 The 32-byte calculation result.\n    \"\"\"\n    # If the result is `< 1`, we return zero. This happens when we have the following:\n    # \"x <= (log(1e-18) * 1e18) ~ -4.15e19\".\n    if x <= -41_446_531_673_892_822_313:\n        return empty(int256)\n\n    # When the result is \"> (2**255 - 1) / 1e18\" we cannot represent it as a signed integer.\n    # This happens when \"x >= floor(log((2**255 - 1) / 1e18) * 1e18) ~ 135\".\n    assert x < 135_305_999_368_893_231_589, \"math: wad_exp overflow\"\n\n    # `x` is now in the range \"(-42, 136) * 1e18\". Convert to \"(-42, 136) * 2**96\" for higher\n    # intermediate precision and a binary base. This base conversion is a multiplication with\n    # \"1e18 / 2**96 = 5**18 / 2**78\".\n    x = unsafe_div(x << 78, 5 ** 18)\n\n    # Reduce the range of `x` to \"(-\u00bd ln 2, \u00bd ln 2) * 2**96\" by factoring out powers of two\n    # so that \"exp(x) = exp(x') * 2**k\", where `k` is a signer integer. Solving this gives\n    # \"k = round(x / log(2))\" and \"x' = x - k * log(2)\". Thus, `k` is in the range \"[-61, 195]\".\n    k: int256 = unsafe_add(unsafe_div(x << 96, 54_916_777_467_707_473_351_141_471_128), 2 ** 95) >> 96\n    x = unsafe_sub(x, unsafe_mul(k, 54_916_777_467_707_473_351_141_471_128))\n\n    # Evaluate using a \"(6, 7)\"-term rational approximation. Since `p` is monic,\n    # we will multiply by a scaling factor later.\n    y: int256 = unsafe_add(\n        unsafe_mul(unsafe_add(x, 1_346_386_616_545_796_478_920_950_773_328), x) >> 96,\n        57_155_421_227_552_351_082_224_309_758_442,\n    )\n    p: int256 = unsafe_add(\n        unsafe_mul(\n            unsafe_add(\n                unsafe_mul(unsafe_sub(unsafe_add(y, x), 94_201_549_194_550_492_254_356_042_504_812), y) >> 96,\n                28_719_021_644_029_726_153_956_944_680_412_240,\n            ),\n            x,\n        ),\n        4_385_272_521_454_847_904_659_076_985_693_276 << 96,\n    )\n\n    # We leave `p` in the \"2**192\" base so that we do not have to scale it up\n    # again for the division.\n    q: int256 = unsafe_add(\n        unsafe_mul(unsafe_sub(x, 2_855_989_394_907_223_263_936_484_059_900), x) >> 96,\n        50_020_603_652_535_783_019_961_831_881_945,\n    )\n    q = unsafe_sub(unsafe_mul(q, x) >> 96, 533_845_033_583_426_703_283_633_433_725_380)\n    q = unsafe_add(unsafe_mul(q, x) >> 96, 3_604_857_256_930_695_427_073_651_918_091_429)\n    q = unsafe_sub(unsafe_mul(q, x) >> 96, 14_423_608_567_350_463_180_887_372_962_807_573)\n    q = unsafe_add(unsafe_mul(q, x) >> 96, 26_449_188_498_355_588_339_934_803_723_976_023)\n\n    # The polynomial `q` has no zeros in the range because all its roots are complex.\n    # No scaling is required, as `p` is already \"2**96\" too large. Also,\n    # `r` is in the range \"(0.09, 0.25) * 2**96\" after the division.\n    r: int256 = unsafe_div(p, q)\n\n    # To finalise the calculation, we have to multiply `r` by:\n    #   - the scale factor \"s = ~6.031367120\",\n    #   - the factor \"2**k\" from the range reduction, and\n    #   - the factor \"1e18 / 2**96\" for the base conversion.\n    # We do this all at once, with an intermediate result in \"2**213\" base,\n    # so that the final right shift always gives a positive value.\n\n    # Note that to circumvent Vyper's safecast feature for the potentially\n    # negative parameter value `r`, we first convert `r` to `bytes32` and\n    # subsequently to `uint256`. Remember that the EVM default behaviour is\n    # to use two's complement representation to handle signed integers.\n    return convert(\n        unsafe_mul(\n            convert(convert(r, bytes32), uint256), 3_822_833_074_963_236_453_042_738_258_902_158_003_155_416_615_667\n        )\n        >> convert(unsafe_sub(195, k), uint256),\n        int256,\n    )\n\n\n@internal\n@pure\ndef _cbrt(x: uint256, roundup: bool) -> uint256:\n    \"\"\"\n    @dev Calculates the cube root of an unsigned integer.\n    @notice Note that this function consumes about 1,600 to 1,800 gas units\n            depending on the value of `x` and `roundup`. The implementation is\n            inspired by Curve Finance's implementation under the MIT license here:\n            https://github.com/curvefi/tricrypto-ng/blob/main/contracts/main/CurveCryptoMathOptimized3.vy.\n    @param x The 32-byte variable from which the cube root is calculated.\n    @param roundup The Boolean variable that specifies whether\n           to round up or not. The default `False` is round down.\n    @return The 32-byte cube root of `x`.\n    \"\"\"\n    # For the special case `x == 0`, we already return `0` here in order\n    # not to iterate through the remaining code.\n    if x == empty(uint256):\n        return empty(uint256)\n\n    y: uint256 = unsafe_div(self._wad_cbrt(x), 10 ** 12)\n\n    if roundup and unsafe_mul(unsafe_mul(y, y), y) != x:\n        y = unsafe_add(y, 1)\n\n    return y\n\n\n@internal\n@pure\ndef _wad_cbrt(x: uint256) -> uint256:\n    \"\"\"\n    @dev Calculates the cube root of an unsigned integer with a precision\n         of 1e18.\n    @notice Note that this function consumes about 1,500 to 1,700 gas units\n            depending on the value of `x`. The implementation is inspired\n            by Curve Finance's implementation under the MIT license here:\n            https://github.com/curvefi/tricrypto-ng/blob/main/contracts/main/CurveCryptoMathOptimized3.vy.\n    @param x The 32-byte variable from which the cube root is calculated.\n    @return The 32-byte cubic root of `x` with a precision of 1e18.\n    \"\"\"\n    # For the special case `x == 0`, we already return `0` here in order\n    # not to iterate through the remaining code.\n    if x == empty(uint256):\n        return empty(uint256)\n\n    # Since this cube root is for numbers with base 1e18, we have to scale\n    # the input by 1e36 to increase the precision. This leads to an overflow\n    # for very large numbers. So we conditionally sacrifice precision.\n    value: uint256 = empty(uint256)\n    if x >= unsafe_mul(unsafe_div(max_value(uint256), 10 ** 36), 10 ** 18):\n        value = x\n    elif x >= unsafe_div(max_value(uint256), 10 ** 36):\n        value = unsafe_mul(x, 10 ** 18)\n    else:\n        value = unsafe_mul(x, 10 ** 36)\n\n    # Compute the binary logarithm of `value`.\n    log2x: uint256 = self._log2(value, False)\n\n    # If we divide log2x by 3, the remainder is \"log2x % 3\". So if we simply\n    # multiply \"2**(log2x/3)\" and discard the remainder to calculate our guess,\n    # the Newton-Raphson method takes more iterations to converge to a solution\n    # because it lacks this precision. A few more calculations now in order to\n    # do fewer calculations later:\n    #   - \"pow = log2(x) // 3\" (the operator `//` means integer division),\n    #   - \"remainder = log2(x) % 3\",\n    #   - \"initial_guess = 2**pow * cbrt(2)**remainder\".\n    # Now substituting \"2 = 1.26 \u2248 1,260 / 1,000\", we get:\n    #   - \"initial_guess = 2**pow * 1,260**remainder // 1,000**remainder\".\n    remainder: uint256 = log2x % 3\n    y: uint256 = unsafe_div(\n        unsafe_mul(pow_mod256(2, unsafe_div(log2x, 3)), pow_mod256(1_260, remainder)), pow_mod256(1_000, remainder)\n    )\n\n    # Since we have chosen good initial values for the cube roots, 7 Newton-Raphson\n    # iterations are just sufficient. 6 iterations would lead to non-convergences,\n    # and 8 would be one iteration too many. Without initial values, the iteration\n    # number can be up to 20 or more. The iterations are unrolled. This reduces the\n    # gas cost, but requires more bytecode.\n    y = unsafe_div(unsafe_add(unsafe_mul(2, y), unsafe_div(value, unsafe_mul(y, y))), 3)\n    y = unsafe_div(unsafe_add(unsafe_mul(2, y), unsafe_div(value, unsafe_mul(y, y))), 3)\n    y = unsafe_div(unsafe_add(unsafe_mul(2, y), unsafe_div(value, unsafe_mul(y, y))), 3)\n    y = unsafe_div(unsafe_add(unsafe_mul(2, y), unsafe_div(value, unsafe_mul(y, y))), 3)\n    y = unsafe_div(unsafe_add(unsafe_mul(2, y), unsafe_div(value, unsafe_mul(y, y))), 3)\n    y = unsafe_div(unsafe_add(unsafe_mul(2, y), unsafe_div(value, unsafe_mul(y, y))), 3)\n    y = unsafe_div(unsafe_add(unsafe_mul(2, y), unsafe_div(value, unsafe_mul(y, y))), 3)\n\n    # Since we scaled up, we have to scale down accordingly.\n    if x >= unsafe_mul(unsafe_div(max_value(uint256), 10 ** 36), 10 ** 18):\n        return unsafe_mul(y, 10 ** 12)\n    elif x >= unsafe_div(max_value(uint256), 10 ** 36):\n        return unsafe_mul(y, 10 ** 6)\n\n    return y\n"
+    },
+    {
+      "path": "contracts/LT.vy",
+      "sha256": "92a526558bf9b005e4b9c813d1612d7a6933b2bc6c7a4afbd227cdbc00a1c796",
+      "content": "# @version 0.4.3\n\"\"\"\n@title LT\n@notice Implementation of leveraged liquidity for Yield Basis\n@author Scientia Spectra AG\n@license Copyright (c) 2025\n\"\"\"\nfrom ethereum.ercs import IERC20\nfrom snekmate.utils import math\n\nimplements: IERC20\n\n\ninterface IERC20Detailed:\n    def decimals() -> uint256: view\n\ninterface IERC20Slice:\n    def symbol() -> String[29]: view\n\ninterface LevAMM:\n    def _deposit(d_collateral: uint256, d_debt: uint256) -> OraclizedValue: nonpayable\n    def _withdraw(frac: uint256) -> Pair: nonpayable\n    def value_change(collateral_amount: uint256, borrowed_amount: uint256, is_deposit: bool) -> OraclizedValue: view\n    def fee() -> uint256: view\n    def value_oracle() -> OraclizedValue: view\n    def get_state() -> AMMState: view\n    def get_debt() -> uint256: view\n    def collateral_amount() -> uint256: view\n    def value_oracle_for(collateral: uint256, debt: uint256) -> OraclizedValue: view\n    def set_rate(rate: uint256) -> uint256: nonpayable\n    def collect_fees() -> uint256: nonpayable\n    def PRICE_ORACLE_CONTRACT() -> PriceOracle: view\n    def max_debt() -> uint256: view\n    def COLLATERAL() -> address: view\n    def STABLECOIN() -> address: view\n    def LT_CONTRACT() -> address: view\n    def set_killed(is_killed: bool): nonpayable\n    def check_nonreentrant(): nonpayable\n    def is_killed() -> bool: view\n    def set_fee(fee: uint256): nonpayable\n\ninterface CurveCryptoPool:\n    def add_liquidity(amounts: uint256[2], min_mint_amount: uint256, receiver: address, donation: bool) -> uint256: nonpayable\n    def remove_liquidity(amount: uint256, min_amounts: uint256[2]) -> uint256[2]: nonpayable\n    def lp_price() -> uint256: view\n    def price_scale() -> uint256: view\n    def decimals() -> uint256: view\n    def mid_fee() -> uint256: view\n    def totalSupply() -> uint256: view\n    def coins(i: uint256) -> address: view\n    def calc_token_amount(amounts: uint256[2], deposit: bool) -> uint256: view\n    def balances(i: uint256) -> uint256: view\n    def approve(_to: address, _value: uint256) -> bool: nonpayable\n    def transfer(_to: address, _value: uint256) -> bool: nonpayable\n    def transferFrom(_from: address, _to: address, _value: uint256) -> bool: nonpayable\n    def remove_liquidity_fixed_out(token_amount: uint256, i: uint256, amount_i: uint256, min_amount_j: uint256) -> uint256: nonpayable\n    def calc_withdraw_fixed_out(token_amount: uint256, i: uint256, amount_i: uint256) -> uint256: view\n\ninterface PriceOracle:\n    def price_w() -> uint256: nonpayable\n    def price() -> uint256: view\n    def AGG() -> address: view\n\ninterface Factory:\n    def admin() -> address: view\n    def emergency_admin() -> address: view\n    def fee_receiver() -> address: view\n    def gauge_controller() -> address: view\n    def min_admin_fee() -> uint256: view\n\n\nstruct AMMState:\n    collateral: uint256\n    debt: uint256\n    x0: uint256\n\nstruct Pair:\n    collateral: uint256\n    debt: uint256\n\nstruct OraclizedValue:\n    p_o: uint256\n    value: uint256\n\nstruct LiquidityValues:\n    admin: int256  # Can be negative\n    total: uint256\n    ideal_staked: uint256\n    staked: uint256\n\nstruct LiquidityValuesOut:\n    admin: int256  # Can be negative\n    total: uint256\n    ideal_staked: uint256\n    staked: uint256\n    staked_tokens: uint256\n    supply_tokens: uint256\n    token_reduction: int256\n\n\nevent SetStaker:\n    staker: indexed(address)\n\n\nevent WithdrawAdminFees:\n    receiver: address\n    amount: uint256\n\nevent AllocateStablecoins:\n    allocator: indexed(address)\n    stablecoin_allocation: uint256\n    stablecoin_allocated: uint256\n\nevent DistributeBorrowerFees:\n    sender: indexed(address)\n    amount: uint256\n    min_amount: uint256\n    discount: uint256\n\n\n# ERC4626 events\n\nevent Deposit:\n    sender: indexed(address)\n    owner: indexed(address)\n    assets: uint256\n    shares: uint256\n\nevent Withdraw:\n    sender: indexed(address)\n    receiver: indexed(address)\n    owner: indexed(address)\n    assets: uint256\n    shares: uint256\n\n\nevent SetAdmin:\n    admin: address\n\n\nCRYPTOPOOL: public(immutable(CurveCryptoPool))  # Liquidity like LP(TBTC/crvUSD)\nSTABLECOIN: public(immutable(IERC20))  # For example, crvUSD\nASSET_TOKEN: public(immutable(IERC20))  # For example, TBTC\n\nCRYPTOPOOL_N_COINS: constant(uint256) = 2\nFEE_CLAIM_DISCOUNT: constant(uint256) = 10**16\nMIN_SHARE_REMAINDER: constant(uint256) = 10**6  # We leave at least this much of shares if > 0\nSQRT_MIN_UNSTAKED_FRACTION: constant(int256) = 10**14  # == 1e-4, avoiding infinite APR and 0/0 errors\nMIN_STAKED_FOR_FEES: constant(int256) = 10**16\n\nadmin: public(address)\namm: public(LevAMM)\nagg: public(PriceOracle)\n\nstaker: public(address)\n\nliquidity: public(LiquidityValues)\n\nallowance: public(HashMap[address, HashMap[address, uint256]])\nbalanceOf: public(HashMap[address, uint256])\ntotalSupply: public(uint256)\ndecimals: public(constant(uint8)) = 18\n\nstablecoin_allocation: public(uint256)\nstablecoin_allocated: public(uint256)\n\n\n@deploy\ndef __init__(asset_token: IERC20, stablecoin: IERC20, cryptopool: CurveCryptoPool,\n             admin: address):\n    \"\"\"\n    @notice Initializer (can be performed by an EOA deployer or a factory)\n    @param asset_token Token which gets deposited. Can be collateral or can be not\n    @param stablecoin Stablecoin which gets \"granted\" to this contract to use for loans. Has to be 18 decimals\n    @param cryptopool Cryptopool LP collateral token\n    @param admin Admin which can set callbacks, stablecoin allocator and fee. Sensitive!\n    \"\"\"\n    # Example:\n    # asset_token = WBTC\n    # stablecoin = crvUSD\n    # cryptopool = WBTC LP\n\n    STABLECOIN = stablecoin\n    CRYPTOPOOL = cryptopool\n    ASSET_TOKEN = asset_token\n    self.admin = admin\n    assert extcall asset_token.approve(cryptopool.address, max_value(uint256), default_return_value=True)\n    assert extcall stablecoin.approve(cryptopool.address, max_value(uint256), default_return_value=True)\n    assert staticcall cryptopool.coins(0) == stablecoin.address\n    assert staticcall cryptopool.coins(1) == asset_token.address\n\n    # Twocrypto has no N_COINS public, so we check that coins(2) reverts\n    success: bool = False\n    res: Bytes[32] = empty(Bytes[32])\n    success, res = raw_call(\n        cryptopool.address,\n        abi_encode(CRYPTOPOOL_N_COINS, method_id=method_id(\"coins(uint256)\")),\n        max_outsize=32,\n        is_static_call=True,\n        revert_on_failure=False)\n    assert not success, \"N>2\"\n\n\n@internal\n@view\ndef _check_admin():\n    admin: address = self.admin\n    if admin.is_contract:\n        assert msg.sender == admin or msg.sender == staticcall Factory(admin).admin(), \"Access\"\n    else:\n        assert msg.sender == admin, \"Access\"\n\n\n@internal\n@view\ndef _price_oracle() -> uint256:\n    return staticcall CRYPTOPOOL.price_scale() * staticcall self.agg.price() // 10**18\n\n\n@internal\ndef _price_oracle_w() -> uint256:\n    return staticcall CRYPTOPOOL.price_scale() * extcall self.agg.price_w() // 10**18\n\n\n@internal\ndef _checkpoint_gauge():\n    \"\"\"\n    @notice Checkpoint a gauge if any to prevent flash loan attacks on reward distribution, reverts are ignored\n    \"\"\"\n    gauge: address = self.staker\n    if gauge != empty(address):\n        admin: address = self.admin\n        if admin.is_contract:\n            gc: address = staticcall Factory(admin).gauge_controller()\n            if gc != empty(address):\n                success: bool = raw_call(\n                    gc,\n                    abi_encode(gauge, method_id=method_id(\"checkpoint(address)\")),\n                    is_static_call=False,\n                    revert_on_failure=False)\n                if not success:\n                    # Try again but with fixed gas. This will just make TX fail if one tries to manipulate\n                    # the gas attached to the call while NOT inflating the gas estimate if the call does not revert\n                    assert msg.gas >= 200_000, \"GAS\"\n                    success = raw_call(\n                        gc,\n                        abi_encode(gauge, method_id=method_id(\"checkpoint(address)\")),\n                        gas=200_000,\n                        is_static_call=False,\n                        revert_on_failure=False)\n\n\n@internal\n@view\ndef _min_admin_fee() -> uint256:\n    admin: address = self.admin\n    if admin.is_contract:\n        return staticcall Factory(admin).min_admin_fee()\n    else:\n        return 0\n\n\n@external\n@view\ndef min_admin_fee() -> uint256:\n    return self._min_admin_fee()\n\n\n@internal\n@pure\ndef mul_div_signed(x: int256, y: int256, denominator: int256) -> int256:\n    if denominator == 0:\n        return 0\n\n    value: int256 = convert(\n        math._mul_div(\n            convert(abs(x), uint256),\n            convert(abs(y), uint256),\n            convert(abs(denominator), uint256),\n            False),\n        int256)\n\n    if ((x < 0) != (y < 0)) != (denominator < 0):\n        value = -value\n\n    return value\n\n\n@internal\n@view\ndef _calculate_values(p_o: uint256, _amm_value: uint256 = 0) -> LiquidityValuesOut:\n    prev: LiquidityValues = self.liquidity\n    staker: address = self.staker\n    staked: int256 = 0\n    if staker != empty(address):\n        staked = convert(self.balanceOf[self.staker], int256)\n    supply: int256 = convert(self.totalSupply, int256)\n    # staked is guaranteed to be <= supply\n\n    f_a: int256 = convert(\n        10**18 - (10**18 - self._min_admin_fee()) * isqrt(convert(10**36 - staked * 10**36 // supply, uint256)) // 10**18,\n        int256)\n\n    amm_value: uint256 = _amm_value\n    if amm_value == 0:\n        amm_value = (staticcall self.amm.value_oracle()).value\n\n    cur_value: int256 = convert(amm_value * 10**18 // p_o, int256)\n    prev_value: int256 = convert(prev.total, int256)\n    value_change: int256 = cur_value - (prev_value + prev.admin)\n\n    v_st: int256 = convert(prev.staked, int256)\n    v_st_ideal: int256 = convert(prev.ideal_staked, int256)\n    # ideal_staked is set when some tokens are transferred to staker address\n\n    # _36 postifix is to emphasize that the value is 1e36-based, not 1e18, for type tracking purposes\n\n    # Admin fees are earned only when all losses are paid off\n    dv_use_36: int256 = 0\n    v_st_loss: int256 = max(v_st_ideal - v_st, 0)\n    if staked >= MIN_STAKED_FOR_FEES:\n        if value_change > 0:\n            # Admin fee is only charged once the loss if fully paid off\n            v_loss: int256 = min(value_change, v_st_loss * supply // staked)\n            dv_use_36 = v_loss * 10**18 + (value_change - v_loss) * (10**18 - f_a)\n        else:\n            # Admin doesn't pay for value loss\n            dv_use_36 = value_change * 10**18\n    else:\n        # If staked part is small - positive admin fees are charged on profits and negative on losses\n        dv_use_36 = value_change * (10**18 - f_a)\n\n    prev.admin += (value_change - dv_use_36 // 10**18)\n\n    # dv_s is guaranteed to be <= dv_use\n    # if staked < supply (not exactly 100.0% staked) - dv_s is strictly < dv_use\n    dv_s_36: int256 = self.mul_div_signed(dv_use_36, staked, supply)\n    if dv_use_36 > 0:\n        dv_s_36 = min(dv_s_36, v_st_loss * 10**18)\n\n    # new_staked_value is guaranteed to be <= new_total_value\n    new_total_value_36: int256 = max(prev_value * 10**18 + dv_use_36, 0)\n    new_staked_value_36: int256 = max(v_st * 10**18 + dv_s_36, 0)\n\n    # Solution of:\n    # staked - token_reduction       new_staked_value\n    # -------------------------  =  -------------------\n    # supply - token_reduction         new_total_value\n    #\n    # the result:\n    #                      new_total_value * staked - new_staked_value * supply\n    # token_reduction  =  ------------------------------------------------------\n    #                               new_total_value - new_staked_value\n    #\n    # When eps = (supply - staked) / supply << 1, it comes down to:\n    # token_reduction = value_change / total_value * (1.0 - min_admin_fee) / sqrt(eps) * supply\n    # So when eps < 1e-8 - we'll limit token_reduction\n\n    # If denominator is 0 -> token_reduction = 0 (not a revert)\n\n    token_reduction: int256 = new_total_value_36 - new_staked_value_36  # Denominator\n    token_reduction = self.mul_div_signed(new_total_value_36, staked, token_reduction) - self.mul_div_signed(new_staked_value_36, supply, token_reduction)\n\n    max_token_reduction: int256 = abs(value_change * supply // (prev_value + value_change + 1) * (10**18 - f_a) // SQRT_MIN_UNSTAKED_FRACTION)\n\n    # let's leave at least 1 LP token for staked and for total\n    if staked > 0:\n        token_reduction = min(token_reduction, staked - 1)\n    if supply > 0:\n        token_reduction = min(token_reduction, supply - 1)\n    # But most likely it's this condition to apply\n    if token_reduction >= 0:\n        token_reduction = min(token_reduction, max_token_reduction)\n    else:\n        token_reduction = max(token_reduction, -max_token_reduction)\n    # And don't allow negatives if denominator was too small\n    if new_total_value_36 - new_staked_value_36 < 10**4 * 10**18:\n        token_reduction = max(token_reduction, 0)\n\n    # Supply changes each time:\n    # value split reduces the amount of staked tokens (but not others),\n    # and this also reduces the supply of LP tokens\n\n    return LiquidityValuesOut(\n        admin=prev.admin,\n        total=convert(new_total_value_36 // 10**18, uint256),\n        ideal_staked=prev.ideal_staked,\n        staked=convert(new_staked_value_36 // 10**18, uint256),\n        staked_tokens=convert(staked - token_reduction, uint256),\n        supply_tokens=convert(supply - token_reduction, uint256),\n        token_reduction=token_reduction\n    )\n\n\n@internal\ndef _log_token_reduction(staker: address, token_reduction: int256):\n    if token_reduction < 0:\n        log IERC20.Transfer(sender=empty(address), receiver=staker, value=convert(-token_reduction, uint256))\n    if token_reduction > 0:\n        log IERC20.Transfer(sender=staker, receiver=empty(address), value=convert(token_reduction, uint256))\n\n\n@external\n@view\n@nonreentrant\ndef preview_deposit(assets: uint256, debt: uint256, raise_overflow: bool = True) -> uint256:\n    \"\"\"\n    @notice Returns the amount of shares which can be obtained upon depositing assets, including slippage.\n            Reverts if amounts are too high\n    @param assets Amount of crypto to deposit\n    @param debt Amount of stables to borrow for MMing (approx same value as crypto)\n    @param raise_overflow Raise if deposit overflows (optional and true by default)\n    \"\"\"\n    lp_tokens: uint256 = staticcall CRYPTOPOOL.calc_token_amount([debt, assets], True)\n    supply: uint256 = self.totalSupply\n    p_o: uint256 = self._price_oracle()\n    amm: LevAMM = self.amm\n    amm_max_debt: uint256 = staticcall amm.max_debt() // 2\n\n    if supply > 0:\n        liquidity: LiquidityValuesOut = self._calculate_values(p_o)\n        if liquidity.total > 0:\n            v: OraclizedValue = staticcall amm.value_change(lp_tokens, debt, True)\n            if raise_overflow:\n                if amm_max_debt < v.value:\n                    raise \"Debt too high\"\n            # Liquidity contains admin fees, so we need to subtract\n            # If admin fees are negative - we get LESS LP tokens\n            # value_before = v.value_before - liquidity.admin = total\n            value_after: uint256 = convert(convert(v.value * 10**18 // p_o, int256) - liquidity.admin, uint256)\n            return liquidity.supply_tokens * value_after // liquidity.total - liquidity.supply_tokens\n\n    v: OraclizedValue = staticcall amm.value_oracle_for(lp_tokens, debt)\n    if raise_overflow:\n        if amm_max_debt < v.value:\n            raise \"Debt too high\"\n    return v.value * 10**18 // p_o\n\n\n@external\n@view\n@nonreentrant\ndef preview_withdraw(tokens: uint256) -> uint256:\n    \"\"\"\n    @notice Returns the amount of assets which can be obtained upon withdrawing from tokens\n    \"\"\"\n    v: LiquidityValuesOut = self._calculate_values(self._price_oracle())\n    state: AMMState = staticcall self.amm.get_state()\n    # Total does NOT include uncollected admin fees\n    # however we account only for positive admin balance. This \"socializes\" losses if they happen\n    admin_balance: uint256 = convert(max(v.admin, 0), uint256)\n    frac: uint256 = 10**18 * v.total // (v.total + admin_balance) * tokens // v.supply_tokens\n    withdrawn_lp: uint256 = state.collateral * frac // 10**18\n    withdrawn_debt: uint256 = state.debt * frac // 10**18\n    return staticcall CRYPTOPOOL.calc_withdraw_fixed_out(withdrawn_lp, 0, withdrawn_debt)\n\n\n@external\n@nonreentrant\ndef deposit(assets: uint256, debt: uint256, min_shares: uint256, receiver: address = msg.sender) -> uint256:\n    \"\"\"\n    @notice Method to deposit assets (e.g. like BTC) to receive shares (e.g. like yield-bearing BTC)\n    @param assets Amount of assets to deposit\n    @param debt Amount of debt for AMM to take (approximately BTC * btc_price)\n    @param min_shares Minimal amount of shares to receive (important to calculate to exclude sandwich attacks)\n    @param receiver Receiver of the shares who is optional. If not specified - receiver is the sender\n    \"\"\"\n    staker: address = self.staker\n    assert receiver != staker, \"Deposit to staker\"\n\n    amm: LevAMM = self.amm\n    assert extcall STABLECOIN.transferFrom(amm.address, self, debt, default_return_value=True)\n    assert extcall ASSET_TOKEN.transferFrom(msg.sender, self, assets, default_return_value=True)\n\n    # add_liquidity can make profit, but change in price_scale (IF) can cause loss\n    lp_tokens: uint256 = extcall CRYPTOPOOL.add_liquidity([debt, assets], 0, amm.address, False)\n    p_o: uint256 = self._price_oracle_w()\n\n    supply: uint256 = self.totalSupply\n    shares: uint256 = 0\n\n    # Running calculate_values before _deposit but after add_liquidity means that:\n    # fees from add_liquidity are given to all the previous LPs in YB\n    # as well as loss from adjustment of price_scale is shared by them\n    # but not by the new depositor\n    liquidity_values: LiquidityValuesOut = empty(LiquidityValuesOut)\n    if supply > 0:\n        liquidity_values = self._calculate_values(p_o)\n\n    v: OraclizedValue = extcall amm._deposit(lp_tokens, debt)\n    value_after: uint256 = v.value * 10**18 // p_o\n\n    # Value is measured in USD\n    # Do not allow value to become larger than HALF of the available stablecoins after the deposit\n    # If value becomes too large - we don't allow to deposit more to have a buffer when the price rises\n    assert staticcall amm.max_debt() // 2 >= v.value, \"Debt too high\"\n\n    if supply > 0 and liquidity_values.total > 0:\n        supply = liquidity_values.supply_tokens\n        self.liquidity.admin = liquidity_values.admin\n        value_before: uint256 = liquidity_values.total\n        value_after = convert(convert(value_after, int256) - liquidity_values.admin, uint256)\n        self.liquidity.total = value_after\n        self.liquidity.staked = liquidity_values.staked\n        self.totalSupply = liquidity_values.supply_tokens  # will be increased by mint\n        if staker != empty(address):\n            self.balanceOf[staker] = liquidity_values.staked_tokens\n            self._log_token_reduction(staker, liquidity_values.token_reduction)\n        # ideal_staked is only changed when we transfer coins to staker\n        shares = supply * value_after // value_before - supply\n\n    else:\n        # Initial value/shares ratio is EXACTLY 1.0 in collateral units\n        # Value is measured in USD\n        shares = value_after\n        # self.liquidity.admin is 0 at start but can be rolled over if everything was withdrawn\n        self.liquidity.ideal_staked = 0         # Likely already 0 since supply was 0\n        self.liquidity.staked = 0               # Same: nothing staked when supply is 0\n        self.liquidity.total = shares + supply  # 1 share = 1 crypto at first deposit\n        self.liquidity.admin = 0                # if we had admin fees - give them to the first depositor; simpler to handle\n        if self.balanceOf[staker] > 0:\n            log IERC20.Transfer(sender=staker, receiver=empty(address), value=self.balanceOf[staker])\n        self.balanceOf[staker] = 0\n\n    assert shares + supply >= MIN_SHARE_REMAINDER, \"Remainder too small\"\n    assert shares >= min_shares, \"Slippage\"\n\n    self._mint(receiver, shares)\n    self._checkpoint_gauge()\n    log Deposit(sender=msg.sender, owner=receiver, assets=assets, shares=shares)\n    self._distribute_borrower_fees(FEE_CLAIM_DISCOUNT)\n    return shares\n\n\n@external\n@nonreentrant\ndef withdraw(shares: uint256, min_assets: uint256, receiver: address = msg.sender) -> uint256:\n    \"\"\"\n    @notice Method to withdraw assets (e.g. like BTC) by spending shares (e.g. like yield-bearing BTC)\n    @param shares Shares to withdraw\n    @param min_assets Minimal amount of assets to receive (important to calculate to exclude sandwich attacks)\n    @param receiver Receiver of the assets who is optional. If not specified - receiver is the sender\n    \"\"\"\n    assert shares > 0, \"Withdrawing nothing\"\n\n    staker: address = self.staker\n    assert staker not in [msg.sender, receiver], \"Withdraw to/from staker\"\n\n    assert not (staticcall self.amm.is_killed()), \"We're dead. Use emergency_withdraw\"\n\n    amm: LevAMM = self.amm\n    liquidity_values: LiquidityValuesOut = self._calculate_values(self._price_oracle_w())\n    supply: uint256 = liquidity_values.supply_tokens\n    self.liquidity.admin = liquidity_values.admin\n    # self.liquidity.total = liquidity_values.total  no need to update since we will record this value later\n    self.liquidity.staked = liquidity_values.staked\n    self.totalSupply = supply\n\n    assert supply >= MIN_SHARE_REMAINDER + shares or supply == shares, \"Remainder too small\"\n\n    if staker != empty(address):\n        self.balanceOf[staker] = liquidity_values.staked_tokens\n        self._log_token_reduction(staker, liquidity_values.token_reduction)\n\n    admin_balance: uint256 = convert(max(liquidity_values.admin, 0), uint256)\n\n    withdrawn: Pair = extcall amm._withdraw(10**18 * liquidity_values.total // (liquidity_values.total + admin_balance) * shares // supply)\n    assert extcall CRYPTOPOOL.transferFrom(amm.address, self, withdrawn.collateral, default_return_value=True)\n    crypto_received: uint256 = extcall CRYPTOPOOL.remove_liquidity_fixed_out(withdrawn.collateral, 0, withdrawn.debt, 0)\n\n    self._burn(msg.sender, shares)  # Changes self.totalSupply\n    self.liquidity.total = liquidity_values.total * (supply - shares) // supply\n    if liquidity_values.admin < 0:\n        # If admin fees are negative - we are skipping them, so reduce proportionally\n        self.liquidity.admin = liquidity_values.admin * convert(supply - shares, int256) // convert(supply, int256)\n    assert crypto_received >= min_assets, \"Slippage\"\n    assert extcall STABLECOIN.transfer(amm.address, withdrawn.debt, default_return_value=True)\n    assert extcall ASSET_TOKEN.transfer(receiver, crypto_received, default_return_value=True)\n\n    self._checkpoint_gauge()\n    log Withdraw(sender=msg.sender, receiver=receiver, owner=msg.sender, assets=crypto_received, shares=shares)\n    self._distribute_borrower_fees(FEE_CLAIM_DISCOUNT)\n    return crypto_received\n\n\n@external\n@view\n@nonreentrant\ndef preview_emergency_withdraw(shares: uint256) -> (uint256, int256):\n    \"\"\"\n    @notice Method to simulate repay of the debt from the wallet and withdraw what is in the AMM. Does not use heavy math but\n            does not necessarily work as single asset withdrawal\n    @param shares Shares to withdraw\n    @return (unsigned collateral, signed stables). If stables < 0 - we need to bring them\n    \"\"\"\n    supply: uint256 = 0\n    lv: LiquidityValuesOut = empty(LiquidityValuesOut)\n    amm: LevAMM = self.amm\n\n    if staticcall amm.is_killed():\n        supply = self.totalSupply\n    else:\n        lv = self._calculate_values(self._price_oracle())\n        supply = lv.supply_tokens\n\n    frac: uint256 = 10**18 * shares // supply\n    if lv.admin > 0 and lv.total != 0:\n        frac = frac * lv.total // (convert(lv.admin, uint256) + lv.total)\n\n    lp_collateral: uint256 = (staticcall amm.collateral_amount()) * frac // 10**18\n    debt: int256 = convert(math._ceil_div((staticcall amm.get_debt()) * frac, 10**18), int256)\n\n    cryptopool_supply: uint256 = staticcall CRYPTOPOOL.totalSupply()\n    withdraw_amounts: uint256[2] = [staticcall CRYPTOPOOL.balances(0), staticcall CRYPTOPOOL.balances(1)]\n    withdraw_amounts = [\n        lp_collateral * withdraw_amounts[0] // cryptopool_supply,\n        lp_collateral * withdraw_amounts[1] // cryptopool_supply\n    ]\n\n    return (withdraw_amounts[1], convert(withdraw_amounts[0], int256) - debt)\n\n\n@external\n@nonreentrant\ndef emergency_withdraw(shares: uint256, receiver: address = msg.sender, owner: address = msg.sender) -> (uint256, int256):\n    \"\"\"\n    @notice Method to repay the debt from the wallet and withdraw what is in the AMM. Does not use heavy math but\n            does not necessarily work as single asset withdrawal. Minimal output is not specified: convexity of\n            bonding curves ensures that attackers can only lose value, not gain\n    @param shares Shares to withdraw\n    @param receiver Receiver of the assets who is optional. If not specified - receiver is the sender\n    @return (unsigned asset, signed stables). If stables < 0 - we need to bring them\n    \"\"\"\n    staker: address = self.staker\n    assert staker not in [owner, receiver], \"Withdraw to/from staker\"\n\n    supply: uint256 = 0\n    lv: LiquidityValuesOut = empty(LiquidityValuesOut)\n    amm: LevAMM = self.amm\n    killed: bool = staticcall amm.is_killed()\n\n    # Read value_oracle without fail at revert\n    response: Bytes[64] = empty(Bytes[64])\n    success: bool = False\n    success, response = raw_call(\n        amm.address,\n        method_id(\"value_oracle()\"),\n        max_outsize=64,\n        revert_on_failure=False,\n        is_static_call=True\n    )\n    amm_value: uint256 = 0\n    if success:\n        amm_value = abi_decode(response, OraclizedValue).value\n\n    if killed or not success:\n        # If killed:\n        admin: address = self.admin\n        if admin.is_contract:\n            if msg.sender == staticcall Factory(admin).emergency_admin():\n                # Only emergency admin is allowed to withdraw for others, but then only transfer to themselves\n                assert receiver == owner, \"receiver\"\n            else:\n                # If sender is a different smart contract - it must be the owner\n                assert owner == msg.sender, \"owner\"\n        else:\n            if msg.sender == admin:\n                # If admin is EOA - it can withdraw for receivers when killed, but only send to themselves\n                assert receiver == owner, \"receiver\"\n            else:\n                # If EOA caller is not admin - it must be the owner\n                assert owner == msg.sender, \"owner\"\n\n        supply = self.totalSupply\n\n    else:\n        # If not killed - only owner is allowed to work with their LP\n        assert owner == msg.sender, \"Not killed\"\n\n        lv = self._calculate_values(self._price_oracle_w(), amm_value)\n        supply = lv.supply_tokens\n        self.liquidity.admin = lv.admin\n        self.liquidity.total = lv.total\n        self.liquidity.staked = lv.staked\n        self.totalSupply = supply\n        if staker != empty(address):\n            self.balanceOf[staker] = lv.staked_tokens\n            self._log_token_reduction(staker, lv.token_reduction)\n\n    assert supply >= MIN_SHARE_REMAINDER + shares or supply == shares, \"Remainder too small\"\n\n    frac: uint256 = 10**18 * shares // supply\n    frac_clean: int256 = convert(frac, int256)\n    if lv.admin > 0 and lv.total != 0:\n        frac = frac * lv.total // (convert(lv.admin, uint256) + lv.total)\n\n    withdrawn_levamm: Pair = extcall amm._withdraw(frac)\n    assert extcall CRYPTOPOOL.transferFrom(amm.address, self, withdrawn_levamm.collateral, default_return_value=True)\n    withdrawn_cswap: uint256[2] = extcall CRYPTOPOOL.remove_liquidity(withdrawn_levamm.collateral, [0, 0])\n    stables_to_return: int256 = convert(withdrawn_cswap[0], int256) - convert(withdrawn_levamm.debt, int256)\n\n    self._burn(owner, shares)\n\n    self.liquidity.total = self.liquidity.total * (supply - shares) // supply\n    if self.liquidity.admin < 0 or killed or not success:\n        self.liquidity.admin = self.liquidity.admin * (10**18 - frac_clean) // 10**18\n\n    if stables_to_return > 0:\n        assert extcall STABLECOIN.transfer(receiver, convert(stables_to_return, uint256), default_return_value=True)\n    elif stables_to_return < 0:\n        assert extcall STABLECOIN.transferFrom(msg.sender, self, convert(-stables_to_return, uint256), default_return_value=True)\n    assert extcall STABLECOIN.transfer(amm.address, withdrawn_levamm.debt, default_return_value=True)\n    assert extcall ASSET_TOKEN.transfer(receiver, withdrawn_cswap[1], default_return_value=True)\n\n    if not killed:\n        self._checkpoint_gauge()\n\n    return (withdrawn_cswap[1], stables_to_return)\n\n\n@external\ndef checkpoint_staker_rebase():\n    staker: address = self.staker\n    killed: bool = staticcall self.amm.is_killed()\n\n    if msg.sender == staker and not killed:\n        lv: LiquidityValuesOut = self._calculate_values(self._price_oracle_w())\n        self.liquidity.admin = lv.admin\n        self.liquidity.total = lv.total\n        self.liquidity.staked = lv.staked\n        self.totalSupply = lv.supply_tokens\n        self.balanceOf[staker] = lv.staked_tokens\n        self._log_token_reduction(staker, lv.token_reduction)\n\n\n@external\n@view\ndef updated_balances() -> (uint256, uint256):\n    if self.totalSupply > 0:\n        lv: LiquidityValuesOut = self._calculate_values(self._price_oracle())\n        return (lv.supply_tokens, lv.staked_tokens)\n    else:\n        return (0, 0)\n\n\n@external\n@view\ndef pricePerShare() -> uint256:\n    \"\"\"\n    Non-manipulatable \"fair price per share\" oracle\n    \"\"\"\n    if self.totalSupply == 0:\n        return 10**18\n    else:\n        v: LiquidityValuesOut = self._calculate_values(self._price_oracle())\n        return v.total * 10**18 // v.supply_tokens\n\n\n@external\n@nonreentrant\ndef set_amm(amm: LevAMM):\n    \"\"\"\n    Set AMM: only allowed once (at init time)\n    \"\"\"\n    self._check_admin()\n    assert self.amm == empty(LevAMM), \"Already set\"\n    assert staticcall amm.STABLECOIN() == STABLECOIN.address\n    assert staticcall amm.COLLATERAL() == CRYPTOPOOL.address\n    assert staticcall amm.LT_CONTRACT() == self\n    self.amm = amm\n    self.agg = PriceOracle(staticcall (staticcall amm.PRICE_ORACLE_CONTRACT()).AGG())\n\n\n@external\n@nonreentrant\ndef set_admin(new_admin: address):\n    \"\"\"\n    Set admin to factory or EOA\n    \"\"\"\n    self._check_admin()\n\n    # Sanity check for the new admin\n    if new_admin.is_contract:\n        check_address: address = staticcall Factory(new_admin).admin()\n        check_address = staticcall Factory(new_admin).emergency_admin()\n        check_address = staticcall Factory(new_admin).fee_receiver()\n        check_address = staticcall Factory(new_admin).gauge_controller()\n        check_uint: uint256 = staticcall Factory(new_admin).min_admin_fee()\n\n    self.admin = new_admin\n    log SetAdmin(admin=new_admin)\n\n\n@external\n@nonreentrant\ndef set_rate(rate: uint256):\n    \"\"\"\n    @notice Set borrow rate == donation rate for the AMM in units of 1e18-based fraction per second\n    \"\"\"\n    self._check_admin()\n    extcall self.amm.set_rate(rate)\n\n\n@external\n@nonreentrant\ndef set_amm_fee(fee: uint256):\n    \"\"\"\n    @notice Set 1e18-based AMM fee\n    \"\"\"\n    self._check_admin()\n    extcall self.amm.set_fee(fee)\n\n\n@external\n@nonreentrant\ndef allocate_stablecoins(limit: uint256 = max_value(uint256)):\n    \"\"\"\n    @notice This method has to be used once this contract has received allocation of stablecoins\n    @param limit Limit to allocate for this pool from this allocator. Max uint256 = do not change\n    \"\"\"\n    allocator: address = self.admin\n    allocation: uint256 = limit\n    allocated: uint256 = self.stablecoin_allocated\n    if limit == max_value(uint256):\n        allocation = self.stablecoin_allocation\n    else:\n        self._check_admin()\n        self.stablecoin_allocation = limit\n\n    extcall self.amm.check_nonreentrant()\n\n    if allocation > allocated:\n        to_transfer: uint256 = min(allocation - allocated, staticcall STABLECOIN.balanceOf(allocator))\n        assert extcall STABLECOIN.transferFrom(allocator, self.amm.address, to_transfer, default_return_value=True)\n        allocated += to_transfer\n        self.stablecoin_allocated = allocated\n\n    elif allocation < allocated:\n        lp_price: uint256 = extcall (staticcall self.amm.PRICE_ORACLE_CONTRACT()).price_w()\n        # Normal operation leaves 50% surplus - coefficient 1\n        # \"At the edge\" is 1/2\n        # Safe lower limit for deflating the market - 3/4\n        safe_lower_limit: uint256 = lp_price * (staticcall self.amm.collateral_amount()) * 3 // 4 // 10**18\n        to_transfer: uint256 = min(\n            min(allocated - allocation, allocated - safe_lower_limit),\n            staticcall STABLECOIN.balanceOf(self.amm.address))\n        allocated -= to_transfer\n        assert extcall STABLECOIN.transferFrom(self.amm.address, allocator, to_transfer, default_return_value=True)\n        self.stablecoin_allocated = allocated\n\n    log AllocateStablecoins(allocator=allocator, stablecoin_allocation=allocation, stablecoin_allocated=allocated)\n\n\n@internal\ndef _distribute_borrower_fees(discount: uint256):\n    amm: LevAMM = self.amm\n    if discount > FEE_CLAIM_DISCOUNT:\n        self._check_admin()\n    if msg.sender != amm.address:\n        extcall amm.collect_fees()\n    amount: uint256 = staticcall STABLECOIN.balanceOf(self)\n    if amount > 0:\n        # We price to the stablecoin we use, not the aggregated USD here, and this is correct\n        # It is possible to have a temporary denial of service here which, though, does not affect emergency\n        # withdrawal. It only can happen if price moves too fast. It does not prevent cryptopool from\n        # being traded and returning back to normal operation\n        min_amount: uint256 = (10**18 - discount) * amount // staticcall CRYPTOPOOL.lp_price()\n        extcall CRYPTOPOOL.add_liquidity([amount, 0], min_amount, empty(address), True)\n        log DistributeBorrowerFees(sender=msg.sender, amount=amount, min_amount=min_amount, discount=discount)\n\n\n@external\n@nonreentrant\ndef distribute_borrower_fees(discount: uint256 = FEE_CLAIM_DISCOUNT):\n    \"\"\"\n    @notice Distribute borrower fees to the AMM\n    @param discount Optional discount (1% by default): only settable by admin\n    \"\"\"\n    self._distribute_borrower_fees(discount)\n\n\n@external\n@nonreentrant\ndef withdraw_admin_fees():\n    \"\"\"\n    @notice Withdraw admin fees and distribute to the DAO\n    \"\"\"\n    admin: address = self.admin\n    assert admin.is_contract, \"Need factory\"\n    assert not staticcall self.amm.is_killed(), \"Killed\"\n    extcall self.amm.check_nonreentrant()\n\n    fee_receiver: address = staticcall Factory(admin).fee_receiver()\n    assert fee_receiver != empty(address), \"No fee_receiver\"\n\n    staker: address = self.staker\n    assert fee_receiver != staker, \"Staker=fee_receiver\"\n\n    v: LiquidityValuesOut = self._calculate_values(self._price_oracle_w())\n    assert v.admin >= 0, \"Loss made admin fee negative\"\n    self.totalSupply = v.supply_tokens\n    # Mint YB tokens to fee receiver and burn the untokenized admin buffer at the same time\n    # fee_receiver is just a normal user\n    new_total: uint256 = v.total + convert(v.admin, uint256)\n    to_mint: uint256 = v.supply_tokens * new_total // v.total - v.supply_tokens\n    self._mint(fee_receiver, to_mint)\n    self.liquidity.total = new_total\n    self.liquidity.admin = 0\n    self.liquidity.staked = v.staked\n    if staker != empty(address):\n        self.balanceOf[staker] = v.staked_tokens\n        self._log_token_reduction(staker, v.token_reduction)\n\n    log WithdrawAdminFees(receiver=fee_receiver, amount=to_mint)\n\n\n@external\n@nonreentrant\ndef set_staker(staker: address):\n    \"\"\"\n    @notice Set staker contract - allowed only once\n    \"\"\"\n    assert self.staker == empty(address), \"Staker already set\"\n    assert staker != empty(address)\n    self._check_admin()\n\n    staker_balance: uint256 = self.balanceOf[staker]\n    if staker_balance > 0:\n        # Take that all as admin fee, staker should not have this\n        fee_receiver: address = staticcall Factory(self.admin).fee_receiver()\n        assert staker != fee_receiver, \"Staker=fee_receiver\"\n        self._transfer(staker, fee_receiver, staker_balance)\n\n    self.staker = staker\n    log SetStaker(staker=staker)\n\n\n@external\ndef set_killed(is_killed: bool):\n    \"\"\"\n    @notice Kill or unkill the pool\n    \"\"\"\n    admin: address = self.admin\n    if admin.is_contract:\n        assert msg.sender in [admin, staticcall Factory(admin).admin(), staticcall Factory(admin).emergency_admin()], \"Access\"\n    else:\n        assert msg.sender == admin, \"Access\"\n    extcall self.amm.set_killed(is_killed)\n\n\n# ERC20 methods\n\n@external\n@view\ndef symbol() -> String[32]:\n    return concat('yb-', staticcall IERC20Slice(ASSET_TOKEN.address).symbol())\n\n\n@external\n@view\ndef name() -> String[58]:\n    return concat('Yield Basis liquidity for ', staticcall IERC20Slice(ASSET_TOKEN.address).symbol())\n\n\n@internal\ndef _approve(_owner: address, _spender: address, _value: uint256):\n    self.allowance[_owner][_spender] = _value\n\n    log IERC20.Approval(owner=_owner, spender=_spender, value=_value)\n\n\n@internal\ndef _burn(_from: address, _value: uint256):\n    self.balanceOf[_from] -= _value\n    self.totalSupply -= _value\n\n    log IERC20.Transfer(sender=_from, receiver=empty(address), value=_value)\n\n\n@internal\ndef _mint(_to: address, _value: uint256):\n    self.balanceOf[_to] += _value\n    self.totalSupply += _value\n\n    log IERC20.Transfer(sender=empty(address), receiver=_to, value=_value)\n\n\n@internal\ndef _transfer(_from: address, _to: address, _value: uint256):\n    assert _to not in [self, empty(address)]\n\n    staker: address = self.staker\n    staker_used: bool = (staker != empty(address) and staker in [_from, _to])\n    if staker_used:\n        assert _from != _to\n        liquidity: LiquidityValuesOut = empty(LiquidityValuesOut)\n\n        if msg.sender == staker or staticcall self.amm.is_killed():\n            # If sender is staker - it's mint/redeem/deposit/withdraw\n            # where we did checkpoint_staker_rebase() in the same tx\n            liquidity.ideal_staked = self.liquidity.ideal_staked\n            liquidity.staked = self.liquidity.staked\n            liquidity.total = self.liquidity.total\n            liquidity.supply_tokens = self.totalSupply\n            liquidity.staked_tokens = self.balanceOf[staker]\n        else:\n            liquidity = self._calculate_values(self._price_oracle_w())\n            self.liquidity.admin = liquidity.admin\n            self.liquidity.total = liquidity.total\n            self.totalSupply = liquidity.supply_tokens\n            self.balanceOf[staker] = liquidity.staked_tokens\n            self._log_token_reduction(staker, liquidity.token_reduction)\n\n        if _from == staker:\n            # Reduce the staked part\n            # change by 0 if no supply_tokens or stake_tokens found\n            liquidity.staked -= unsafe_div(liquidity.total * _value, liquidity.supply_tokens)\n            liquidity.ideal_staked = unsafe_div(liquidity.ideal_staked * (liquidity.staked_tokens - _value), liquidity.staked_tokens)\n        elif _to == staker:\n            # Increase the staked part\n            d_staked_value: uint256 = liquidity.total * _value // liquidity.supply_tokens\n            liquidity.staked += d_staked_value\n            if liquidity.staked_tokens > 10**10:\n                liquidity.ideal_staked = liquidity.ideal_staked * (liquidity.staked_tokens + _value) // liquidity.staked_tokens\n            else:\n                # To exclude division by zero and numerical noise errors\n                liquidity.ideal_staked += d_staked_value\n\n        self.liquidity.staked = liquidity.staked\n        self.liquidity.ideal_staked = liquidity.ideal_staked\n\n    self.balanceOf[_from] -= _value\n    self.balanceOf[_to] += _value\n\n    if staker_used and msg.sender != staker:\n        self._checkpoint_gauge()\n\n    log IERC20.Transfer(sender=_from, receiver=_to, value=_value)\n\n\n@external\ndef transferFrom(_from: address, _to: address, _value: uint256) -> bool:\n    \"\"\"\n    @notice Transfer tokens from one account to another.\n    @dev The caller needs to have an allowance from account `_from` greater than or\n        equal to the value being transferred. An allowance equal to the uint256 type's\n        maximum, is considered infinite and does not decrease.\n    @param _from The account which tokens will be spent from.\n    @param _to The account which tokens will be sent to.\n    @param _value The amount of tokens to be transferred.\n    \"\"\"\n    allowance: uint256 = self.allowance[_from][msg.sender]\n    if allowance != max_value(uint256):\n        self._approve(_from, msg.sender, allowance - _value)\n\n    self._transfer(_from, _to, _value)\n    return True\n\n\n@external\ndef transfer(_to: address, _value: uint256) -> bool:\n    \"\"\"\n    @notice Transfer tokens to `_to`.\n    @param _to The account to transfer tokens to.\n    @param _value The amount of tokens to transfer.\n    \"\"\"\n    self._transfer(msg.sender, _to, _value)\n    return True\n\n\n@external\ndef approve(_spender: address, _value: uint256) -> bool:\n    \"\"\"\n    @notice Allow `_spender` to transfer up to `_value` amount of tokens from the caller's account.\n    @dev Non-zero to non-zero approvals are allowed, but should be used cautiously. The methods\n        increaseAllowance + decreaseAllowance are available to prevent any front-running that\n        may occur.\n    @param _spender The account permitted to spend up to `_value` amount of caller's funds.\n    @param _value The amount of tokens `_spender` is allowed to spend.\n    \"\"\"\n    self._approve(msg.sender, _spender, _value)\n    return True\n\n\n@external\n@view\ndef is_killed() -> bool:\n    return staticcall self.amm.is_killed()\n"
+    }
+  ],
+  "functionInventory": [
+    {
+      "signature": "min_admin_fee()",
+      "functionName": "min_admin_fee",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "preview_deposit(uint256,uint256)",
+      "functionName": "preview_deposit",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "preview_deposit(uint256,uint256,bool)",
+      "functionName": "preview_deposit",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "preview_withdraw(uint256)",
+      "functionName": "preview_withdraw",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "deposit(uint256,uint256,uint256)",
+      "functionName": "deposit",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary explicit user action; reviewed exact deployed source semantics and dependencies. Deposit cbBTC with debt and minimum shares."
+    },
+    {
+      "signature": "deposit(uint256,uint256,uint256,address)",
+      "functionName": "deposit",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary explicit user action; reviewed exact deployed source semantics and dependencies. Deposit cbBTC to receiver with debt and minimum shares."
+    },
+    {
+      "signature": "withdraw(uint256,uint256)",
+      "functionName": "withdraw",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary explicit user action; reviewed exact deployed source semantics and dependencies. Withdraw caller yb-cbBTC shares for cbBTC."
+    },
+    {
+      "signature": "withdraw(uint256,uint256,address)",
+      "functionName": "withdraw",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary explicit user action; reviewed exact deployed source semantics and dependencies. Withdraw caller yb-cbBTC shares to receiver."
+    },
+    {
+      "signature": "preview_emergency_withdraw(uint256)",
+      "functionName": "preview_emergency_withdraw",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "emergency_withdraw(uint256)",
+      "functionName": "emergency_withdraw",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Separate emergency dual-asset settlement, not ordinary single-asset withdrawal: may require caller crvUSD funding and has no caller-set minimum; owner overload also has emergency-admin third-party path. Not selected in this ordinary liquidity admission."
+    },
+    {
+      "signature": "emergency_withdraw(uint256,address)",
+      "functionName": "emergency_withdraw",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Separate emergency dual-asset settlement, not ordinary single-asset withdrawal: may require caller crvUSD funding and has no caller-set minimum; owner overload also has emergency-admin third-party path. Not selected in this ordinary liquidity admission."
+    },
+    {
+      "signature": "emergency_withdraw(uint256,address,address)",
+      "functionName": "emergency_withdraw",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Separate emergency dual-asset settlement, not ordinary single-asset withdrawal: may require caller crvUSD funding and has no caller-set minimum; owner overload also has emergency-admin third-party path. Not selected in this ordinary liquidity admission."
+    },
+    {
+      "signature": "checkpoint_staker_rebase()",
+      "functionName": "checkpoint_staker_rebase",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "updated_balances()",
+      "functionName": "updated_balances",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "pricePerShare()",
+      "functionName": "pricePerShare",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "set_amm(address)",
+      "functionName": "set_amm",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "set_admin(address)",
+      "functionName": "set_admin",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "set_rate(uint256)",
+      "functionName": "set_rate",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "set_amm_fee(uint256)",
+      "functionName": "set_amm_fee",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "allocate_stablecoins()",
+      "functionName": "allocate_stablecoins",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "allocate_stablecoins(uint256)",
+      "functionName": "allocate_stablecoins",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "distribute_borrower_fees()",
+      "functionName": "distribute_borrower_fees",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "distribute_borrower_fees(uint256)",
+      "functionName": "distribute_borrower_fees",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "withdraw_admin_fees()",
+      "functionName": "withdraw_admin_fees",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "set_staker(address)",
+      "functionName": "set_staker",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "set_killed(bool)",
+      "functionName": "set_killed",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "symbol()",
+      "functionName": "symbol",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "name()",
+      "functionName": "name",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "transferFrom(address,address,uint256)",
+      "functionName": "transferFrom",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "ERC20 allowance/share-transfer surface; not a protocol deposit/withdraw capability and no authorization management is admitted."
+    },
+    {
+      "signature": "transfer(address,uint256)",
+      "functionName": "transfer",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "ERC20 allowance/share-transfer surface; not a protocol deposit/withdraw capability and no authorization management is admitted."
+    },
+    {
+      "signature": "approve(address,uint256)",
+      "functionName": "approve",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "ERC20 allowance/share-transfer surface; not a protocol deposit/withdraw capability and no authorization management is admitted."
+    },
+    {
+      "signature": "is_killed()",
+      "functionName": "is_killed",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "CRYPTOPOOL()",
+      "functionName": "CRYPTOPOOL",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "STABLECOIN()",
+      "functionName": "STABLECOIN",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "ASSET_TOKEN()",
+      "functionName": "ASSET_TOKEN",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "admin()",
+      "functionName": "admin",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "amm()",
+      "functionName": "amm",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "agg()",
+      "functionName": "agg",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "staker()",
+      "functionName": "staker",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "liquidity()",
+      "functionName": "liquidity",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "allowance(address,address)",
+      "functionName": "allowance",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "balanceOf(address)",
+      "functionName": "balanceOf",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "totalSupply()",
+      "functionName": "totalSupply",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "decimals()",
+      "functionName": "decimals",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "stablecoin_allocation()",
+      "functionName": "stablecoin_allocation",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "stablecoin_allocated()",
+      "functionName": "stablecoin_allocated",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256"
+          },
+          {
+            "name": "debt",
+            "type": "uint256"
+          },
+          {
+            "name": "min_shares",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "yieldbasis-cbbtc-lt:v1:1:0x722fc3640ba007c3e9867ccdb0dca59f2e2f29f9:deposit",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,uint256,uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.yieldbasis.com/user/reference/contract-addresses ; https://etherscan.io/address/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9#code ; https://sourcify.dev/server/v2/contract/1/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9?fields=all ; https://docs.yieldbasis.com/dev/core/lt",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "YieldBasis",
+      "operation": "deposit",
+      "label": "YieldBasis Deposit cbBTC with debt and minimum shares",
+      "warnings": [
+        "Static deployment/source inventory only; not a fresh RPC/storage/runtime identity, balance, liquidity, pause-state, eligibility or successful-execution attestation. Exact grants, canonical calldata, pauses and independent controls still apply. All admitted calls are nonpayable and require zero native value.",
+        "Only current Ethereum cbBTC LT 0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9 is admitted; legacy/v2 markets, factory, LEVAMM, Curve pool, gauges, zaps and HybridVaults are not transaction targets in this admission. This is the exact Vyper LT interface, not generic ERC4626.",
+        "assets/min_assets are native cbBTC units (8 decimals); shares/min_shares are yb-cbBTC units (18 decimals). debt is crvUSD units (18 decimals) borrowed by the market from its allocation, not stablecoins transferred from depositor. Depositor needs cbBTC balance and allowance to LT.",
+        "Deposit requires an appropriate caller-chosen debt amount, available credit and AMM safety/debt limits; min_shares bounds net shares. withdraw burns caller-owned shares and settles market debt through fixed-output Curve removal; min_assets bounds cbBTC output. No caller-set deadline exists. Receiver must not be the configured staker; withdraw also forbids staker as caller.",
+        "Share supply/value can change through staker rebases, oracle/price-scale accounting, admin fee accounting, debt interest and borrower-fee distribution; positive small deposits can round to zero shares when min_shares is zero. Remaining total supply must be at least 10^6 share units unless fully withdrawn. Minimums must be chosen meaningfully.",
+        "Underlying pool, AMM/oracle, gauge checkpoint and fee-distribution dependencies can revert; ordinary withdraw rejects killed AMM. Kill state, credit allocation, fee/rate/staker/admin controls and current dependencies are not attested. Emergency exits have different dual-asset/crvUSD-funding semantics and are not admitted. No no-loss or financial-safety assurance is made."
+      ]
+    },
+    {
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256"
+          },
+          {
+            "name": "debt",
+            "type": "uint256"
+          },
+          {
+            "name": "min_shares",
+            "type": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "yieldbasis-cbbtc-lt:v1:1:0x722fc3640ba007c3e9867ccdb0dca59f2e2f29f9:deposit-to",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,uint256,uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.yieldbasis.com/user/reference/contract-addresses ; https://etherscan.io/address/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9#code ; https://sourcify.dev/server/v2/contract/1/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9?fields=all ; https://docs.yieldbasis.com/dev/core/lt",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "YieldBasis",
+      "operation": "deposit-to",
+      "label": "YieldBasis Deposit cbBTC to receiver with debt and minimum shares",
+      "warnings": [
+        "Static deployment/source inventory only; not a fresh RPC/storage/runtime identity, balance, liquidity, pause-state, eligibility or successful-execution attestation. Exact grants, canonical calldata, pauses and independent controls still apply. All admitted calls are nonpayable and require zero native value.",
+        "Only current Ethereum cbBTC LT 0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9 is admitted; legacy/v2 markets, factory, LEVAMM, Curve pool, gauges, zaps and HybridVaults are not transaction targets in this admission. This is the exact Vyper LT interface, not generic ERC4626.",
+        "assets/min_assets are native cbBTC units (8 decimals); shares/min_shares are yb-cbBTC units (18 decimals). debt is crvUSD units (18 decimals) borrowed by the market from its allocation, not stablecoins transferred from depositor. Depositor needs cbBTC balance and allowance to LT.",
+        "Deposit requires an appropriate caller-chosen debt amount, available credit and AMM safety/debt limits; min_shares bounds net shares. withdraw burns caller-owned shares and settles market debt through fixed-output Curve removal; min_assets bounds cbBTC output. No caller-set deadline exists. Receiver must not be the configured staker; withdraw also forbids staker as caller.",
+        "Share supply/value can change through staker rebases, oracle/price-scale accounting, admin fee accounting, debt interest and borrower-fee distribution; positive small deposits can round to zero shares when min_shares is zero. Remaining total supply must be at least 10^6 share units unless fully withdrawn. Minimums must be chosen meaningfully.",
+        "Underlying pool, AMM/oracle, gauge checkpoint and fee-distribution dependencies can revert; ordinary withdraw rejects killed AMM. Kill state, credit allocation, fee/rate/staker/admin controls and current dependencies are not attested. Emergency exits have different dual-asset/crvUSD-funding semantics and are not admitted. No no-loss or financial-safety assurance is made."
+      ]
+    },
+    {
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256"
+          },
+          {
+            "name": "min_assets",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "yieldbasis-cbbtc-lt:v1:1:0x722fc3640ba007c3e9867ccdb0dca59f2e2f29f9:withdraw",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.yieldbasis.com/user/reference/contract-addresses ; https://etherscan.io/address/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9#code ; https://sourcify.dev/server/v2/contract/1/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9?fields=all ; https://docs.yieldbasis.com/dev/core/lt",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "YieldBasis",
+      "operation": "withdraw",
+      "label": "YieldBasis Withdraw caller yb-cbBTC shares for cbBTC",
+      "warnings": [
+        "Static deployment/source inventory only; not a fresh RPC/storage/runtime identity, balance, liquidity, pause-state, eligibility or successful-execution attestation. Exact grants, canonical calldata, pauses and independent controls still apply. All admitted calls are nonpayable and require zero native value.",
+        "Only current Ethereum cbBTC LT 0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9 is admitted; legacy/v2 markets, factory, LEVAMM, Curve pool, gauges, zaps and HybridVaults are not transaction targets in this admission. This is the exact Vyper LT interface, not generic ERC4626.",
+        "assets/min_assets are native cbBTC units (8 decimals); shares/min_shares are yb-cbBTC units (18 decimals). debt is crvUSD units (18 decimals) borrowed by the market from its allocation, not stablecoins transferred from depositor. Depositor needs cbBTC balance and allowance to LT.",
+        "Deposit requires an appropriate caller-chosen debt amount, available credit and AMM safety/debt limits; min_shares bounds net shares. withdraw burns caller-owned shares and settles market debt through fixed-output Curve removal; min_assets bounds cbBTC output. No caller-set deadline exists. Receiver must not be the configured staker; withdraw also forbids staker as caller.",
+        "Share supply/value can change through staker rebases, oracle/price-scale accounting, admin fee accounting, debt interest and borrower-fee distribution; positive small deposits can round to zero shares when min_shares is zero. Remaining total supply must be at least 10^6 share units unless fully withdrawn. Minimums must be chosen meaningfully.",
+        "Underlying pool, AMM/oracle, gauge checkpoint and fee-distribution dependencies can revert; ordinary withdraw rejects killed AMM. Kill state, credit allocation, fee/rate/staker/admin controls and current dependencies are not attested. Emergency exits have different dual-asset/crvUSD-funding semantics and are not admitted. No no-loss or financial-safety assurance is made."
+      ]
+    },
+    {
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256"
+          },
+          {
+            "name": "min_assets",
+            "type": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "yieldbasis-cbbtc-lt:v1:1:0x722fc3640ba007c3e9867ccdb0dca59f2e2f29f9:withdraw-to",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.yieldbasis.com/user/reference/contract-addresses ; https://etherscan.io/address/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9#code ; https://sourcify.dev/server/v2/contract/1/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9?fields=all ; https://docs.yieldbasis.com/dev/core/lt",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "YieldBasis",
+      "operation": "withdraw-to",
+      "label": "YieldBasis Withdraw caller yb-cbBTC shares to receiver",
+      "warnings": [
+        "Static deployment/source inventory only; not a fresh RPC/storage/runtime identity, balance, liquidity, pause-state, eligibility or successful-execution attestation. Exact grants, canonical calldata, pauses and independent controls still apply. All admitted calls are nonpayable and require zero native value.",
+        "Only current Ethereum cbBTC LT 0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9 is admitted; legacy/v2 markets, factory, LEVAMM, Curve pool, gauges, zaps and HybridVaults are not transaction targets in this admission. This is the exact Vyper LT interface, not generic ERC4626.",
+        "assets/min_assets are native cbBTC units (8 decimals); shares/min_shares are yb-cbBTC units (18 decimals). debt is crvUSD units (18 decimals) borrowed by the market from its allocation, not stablecoins transferred from depositor. Depositor needs cbBTC balance and allowance to LT.",
+        "Deposit requires an appropriate caller-chosen debt amount, available credit and AMM safety/debt limits; min_shares bounds net shares. withdraw burns caller-owned shares and settles market debt through fixed-output Curve removal; min_assets bounds cbBTC output. No caller-set deadline exists. Receiver must not be the configured staker; withdraw also forbids staker as caller.",
+        "Share supply/value can change through staker rebases, oracle/price-scale accounting, admin fee accounting, debt interest and borrower-fee distribution; positive small deposits can round to zero shares when min_shares is zero. Remaining total supply must be at least 10^6 share units unless fully withdrawn. Minimums must be chosen meaningfully.",
+        "Underlying pool, AMM/oracle, gauge checkpoint and fee-distribution dependencies can revert; ordinary withdraw rejects killed AMM. Kill state, credit allocation, fee/rate/staker/admin controls and current dependencies are not attested. Emergency exits have different dual-asset/crvUSD-funding semantics and are not admitted. No no-loss or financial-safety assurance is made."
+      ]
+    }
+  ],
+  "excludedFunctions": [
+    {
+      "signature": "min_admin_fee()",
+      "functionName": "min_admin_fee",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "preview_deposit(uint256,uint256)",
+      "functionName": "preview_deposit",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "preview_deposit(uint256,uint256,bool)",
+      "functionName": "preview_deposit",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "preview_withdraw(uint256)",
+      "functionName": "preview_withdraw",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "preview_emergency_withdraw(uint256)",
+      "functionName": "preview_emergency_withdraw",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "emergency_withdraw(uint256)",
+      "functionName": "emergency_withdraw",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Separate emergency dual-asset settlement, not ordinary single-asset withdrawal: may require caller crvUSD funding and has no caller-set minimum; owner overload also has emergency-admin third-party path. Not selected in this ordinary liquidity admission."
+    },
+    {
+      "signature": "emergency_withdraw(uint256,address)",
+      "functionName": "emergency_withdraw",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Separate emergency dual-asset settlement, not ordinary single-asset withdrawal: may require caller crvUSD funding and has no caller-set minimum; owner overload also has emergency-admin third-party path. Not selected in this ordinary liquidity admission."
+    },
+    {
+      "signature": "emergency_withdraw(uint256,address,address)",
+      "functionName": "emergency_withdraw",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Separate emergency dual-asset settlement, not ordinary single-asset withdrawal: may require caller crvUSD funding and has no caller-set minimum; owner overload also has emergency-admin third-party path. Not selected in this ordinary liquidity admission."
+    },
+    {
+      "signature": "checkpoint_staker_rebase()",
+      "functionName": "checkpoint_staker_rebase",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "updated_balances()",
+      "functionName": "updated_balances",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "pricePerShare()",
+      "functionName": "pricePerShare",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "set_amm(address)",
+      "functionName": "set_amm",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "set_admin(address)",
+      "functionName": "set_admin",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "set_rate(uint256)",
+      "functionName": "set_rate",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "set_amm_fee(uint256)",
+      "functionName": "set_amm_fee",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "allocate_stablecoins()",
+      "functionName": "allocate_stablecoins",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "allocate_stablecoins(uint256)",
+      "functionName": "allocate_stablecoins",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "distribute_borrower_fees()",
+      "functionName": "distribute_borrower_fees",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "distribute_borrower_fees(uint256)",
+      "functionName": "distribute_borrower_fees",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "withdraw_admin_fees()",
+      "functionName": "withdraw_admin_fees",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Protocol/staker rebasing, borrower fee distribution, stablecoin allocation or admin-fee maintenance; not an ordinary user liquidity action. Permissionless reachability does not make it a user capability."
+    },
+    {
+      "signature": "set_staker(address)",
+      "functionName": "set_staker",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "set_killed(bool)",
+      "functionName": "set_killed",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Privileged administration, emergency/role control, treasury/asset rescue, approvals or protocol configuration; not ordinary user transaction capability."
+    },
+    {
+      "signature": "symbol()",
+      "functionName": "symbol",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "name()",
+      "functionName": "name",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "transferFrom(address,address,uint256)",
+      "functionName": "transferFrom",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "ERC20 allowance/share-transfer surface; not a protocol deposit/withdraw capability and no authorization management is admitted."
+    },
+    {
+      "signature": "transfer(address,uint256)",
+      "functionName": "transfer",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "ERC20 allowance/share-transfer surface; not a protocol deposit/withdraw capability and no authorization management is admitted."
+    },
+    {
+      "signature": "approve(address,uint256)",
+      "functionName": "approve",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "ERC20 allowance/share-transfer surface; not a protocol deposit/withdraw capability and no authorization management is admitted."
+    },
+    {
+      "signature": "is_killed()",
+      "functionName": "is_killed",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "CRYPTOPOOL()",
+      "functionName": "CRYPTOPOOL",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "STABLECOIN()",
+      "functionName": "STABLECOIN",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "ASSET_TOKEN()",
+      "functionName": "ASSET_TOKEN",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "admin()",
+      "functionName": "admin",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "amm()",
+      "functionName": "amm",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "agg()",
+      "functionName": "agg",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "staker()",
+      "functionName": "staker",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "liquidity()",
+      "functionName": "liquidity",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "allowance(address,address)",
+      "functionName": "allowance",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "balanceOf(address)",
+      "functionName": "balanceOf",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "totalSupply()",
+      "functionName": "totalSupply",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "decimals()",
+      "functionName": "decimals",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "stablecoin_allocation()",
+      "functionName": "stablecoin_allocation",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    },
+    {
+      "signature": "stablecoin_allocated()",
+      "functionName": "stablecoin_allocated",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter, quote, preview, validation or accounting inspection; no transaction capability or read API is created."
+    }
+  ],
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://docs.yieldbasis.com/user/reference/contract-addresses",
+      "observedAt": "2026-10-22",
+      "sha256": "a079a3595b7f680600b22fb544f123cc2b4873a4f4c34196540474c4ec902967",
+      "excerpt": "Official current reference places this address under Active Markets > cbBTC, and explicitly separates deprecated v2/legacy cbBTC markets. No deprecated address is admitted."
+    },
+    {
+      "sourceRef": "https://docs.yieldbasis.com/user/guides/provide-liquidity",
+      "observedAt": "2026-10-22",
+      "sha256": "1da6d77f06add92111c335de517d8397be5fbfa5f2750b10eb133f7b66b0ab85",
+      "excerpt": "Provide Liquidity: go to yieldbasis.com Pools, choose market, approve asset to LT and deposit; ordinary ongoing deposit and optional stake instructions."
+    }
+  ],
+  "sourceSemantics": {
+    "interface": "Exact Vyper 0.4.3 deployed LT ABI: two deposit overloads and two withdraw overloads. There is no ERC4626 mint/redeem entry.",
+    "deposit": "def deposit(assets: uint256, debt: uint256, min_shares: uint256, receiver: address = msg.sender) -> uint256:\n    \"\"\"\n    @notice Method to deposit assets (e.g. like BTC) to receive shares (e.g. like yield-bearing BTC)\n    @param assets Amount of assets to deposit\n    @param debt Amount of debt for AMM to take (approximately BTC * btc_price)\n    @param min_shares Minimal amount of shares to receive (important to calculate to exclude sandwich attacks)\n    @param receiver Receiver of the shares who is optional. If not specified - receiver is the sender\n    \"\"\"\n    staker: address = self.staker\n    assert receiver != staker, \"Deposit to staker\"\n\n    amm: LevAMM = self.amm\n    assert extcall STABLECOIN.transferFrom(amm.address, self, debt, default_return_value=True)\n    assert extcall ASSET_TOKEN.transferFrom(msg.sender, self, assets, default_return_value=True)\n\n    # add_liquidity can make profit, but change in price_scale (IF) can cause loss\n    lp_tokens: uint256 = extcall CRYPTOPOOL.add_liquidity([debt, assets], 0, amm.address, False)\n    p_o: uint256 = self._price_oracle_w()\n\n    supply: uint256 = self.totalSupply\n    shares: uint256 = 0\n\n    # Running calculate_values before _deposit but after add_liquidity means that:\n    # fees from add_liquidity are given to all the previous LPs in YB\n    # as well as loss from adjustment of price_scale is shared by them\n    # but not by the new depositor\n    liquidity_values: LiquidityValuesOut = empty(LiquidityValuesOut)\n    if supply > 0:\n        liquidity_values = self._calculate_values(p_o)\n\n    v: OraclizedValue = extcall amm._deposit(lp_tokens, debt)\n    value_after: uint256 = v.value * 10**18 // p_o\n\n    # Value is measured in USD\n    # Do not allow value to become larger than HALF of the available stablecoins after the deposit\n    # If value becomes too large - we don't allow to deposit more to have a buffer when the price rises\n    assert staticcall amm.max_debt() // 2 >= v.value, \"Debt too high\"\n\n    if supply > 0 and liquidity_values.total > 0:\n        supply = liquidity_values.supply_tokens\n        self.liquidity.admin = liquidity_values.admin\n        value_before: uint256 = liquidity_values.total\n        value_after = convert(convert(value_after, int256) - liquidity_values.admin, uint256)\n        self.liquidity.total = value_after\n        self.liquidity.staked = liquidity_values.staked\n        self.totalSupply = liquidity_values.supply_tokens  # will be increased by mint\n        if staker != empty(address):\n            self.balanceOf[staker] = liquidity_values.staked_tokens\n            self._log_token_reduction(staker, liquidity_values.token_reduction)\n        # ideal_staked is only changed when we transfer coins to staker\n        shares = supply * value_after // value_before - supply\n\n    else:\n        # Initial value/shares ratio is EXACTLY 1.0 in collateral units\n        # Value is measured in USD\n        shares = value_after\n        # self.liquidity.admin is 0 at start but can be rolled over if everything was withdrawn\n        self.liquidity.ideal_staked = 0         # Likely already 0 since supply was 0\n        self.liquidity.staked = 0               # Same: nothing staked when supply is 0\n        self.liquidity.total = shares + supply  # 1 share = 1 crypto at first deposit\n        self.liquidity.admin = 0                # if we had admin fees - give them to the first depositor; simpler to handle\n        if self.balanceOf[staker] > 0:\n            log IERC20.Transfer(sender=staker, receiver=empty(address), value=self.balanceOf[staker])\n        self.balanceOf[staker] = 0\n\n    assert shares + supply >= MIN_SHARE_REMAINDER, \"Remainder too small\"\n    assert shares >= min_shares, \"Slippage\"\n\n    self._mint(receiver, shares)\n    self._checkpoint_gauge()\n    log Deposit(sender=msg.sender, owner=receiver, assets=assets, shares=shares)\n    self._distribute_borrower_fees(FEE_CLAIM_DISCOUNT)\n    return shares\n\n\n",
+    "withdraw": "def withdraw(shares: uint256, min_assets: uint256, receiver: address = msg.sender) -> uint256:\n    \"\"\"\n    @notice Method to withdraw assets (e.g. like BTC) by spending shares (e.g. like yield-bearing BTC)\n    @param shares Shares to withdraw\n    @param min_assets Minimal amount of assets to receive (important to calculate to exclude sandwich attacks)\n    @param receiver Receiver of the assets who is optional. If not specified - receiver is the sender\n    \"\"\"\n    assert shares > 0, \"Withdrawing nothing\"\n\n    staker: address = self.staker\n    assert staker not in [msg.sender, receiver], \"Withdraw to/from staker\"\n\n    assert not (staticcall self.amm.is_killed()), \"We're dead. Use emergency_withdraw\"\n\n    amm: LevAMM = self.amm\n    liquidity_values: LiquidityValuesOut = self._calculate_values(self._price_oracle_w())\n    supply: uint256 = liquidity_values.supply_tokens\n    self.liquidity.admin = liquidity_values.admin\n    # self.liquidity.total = liquidity_values.total  no need to update since we will record this value later\n    self.liquidity.staked = liquidity_values.staked\n    self.totalSupply = supply\n\n    assert supply >= MIN_SHARE_REMAINDER + shares or supply == shares, \"Remainder too small\"\n\n    if staker != empty(address):\n        self.balanceOf[staker] = liquidity_values.staked_tokens\n        self._log_token_reduction(staker, liquidity_values.token_reduction)\n\n    admin_balance: uint256 = convert(max(liquidity_values.admin, 0), uint256)\n\n    withdrawn: Pair = extcall amm._withdraw(10**18 * liquidity_values.total // (liquidity_values.total + admin_balance) * shares // supply)\n    assert extcall CRYPTOPOOL.transferFrom(amm.address, self, withdrawn.collateral, default_return_value=True)\n    crypto_received: uint256 = extcall CRYPTOPOOL.remove_liquidity_fixed_out(withdrawn.collateral, 0, withdrawn.debt, 0)\n\n    self._burn(msg.sender, shares)  # Changes self.totalSupply\n    self.liquidity.total = liquidity_values.total * (supply - shares) // supply\n    if liquidity_values.admin < 0:\n        # If admin fees are negative - we are skipping them, so reduce proportionally\n        self.liquidity.admin = liquidity_values.admin * convert(supply - shares, int256) // convert(supply, int256)\n    assert crypto_received >= min_assets, \"Slippage\"\n    assert extcall STABLECOIN.transfer(amm.address, withdrawn.debt, default_return_value=True)\n    assert extcall ASSET_TOKEN.transfer(receiver, crypto_received, default_return_value=True)\n\n    self._checkpoint_gauge()\n    log Withdraw(sender=msg.sender, receiver=receiver, owner=msg.sender, assets=crypto_received, shares=shares)\n    self._distribute_borrower_fees(FEE_CLAIM_DISCOUNT)\n    return crypto_received\n\n\n",
+    "nestedCalls": "Fixed Curve add_liquidity/remove_liquidity_fixed_out and configured AMM deposit/withdraw, oracle, fee-distribution and fixed-selector gauge checkpoint; no caller-controlled target/calldata or callback blob. Administrative dependencies remain mutable.",
+    "unitsEvidence": [
+      {
+        "sourceRef": "https://etherscan.io/token/0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+        "excerpt": "Token Contract (WITH 8 Decimals)"
+      },
+      {
+        "sourceRef": "https://docs.yieldbasis.com/dev/core/lt",
+        "excerpt": "LT ERC20 18 decimals; stablecoin constructor requires 18 decimals."
+      }
+    ]
+  },
+  "limitations": [
+    "Static deployment/source inventory only; not a fresh RPC/storage/runtime identity, balance, liquidity, pause-state, eligibility or successful-execution attestation. Exact grants, canonical calldata, pauses and independent controls still apply. All admitted calls are nonpayable and require zero native value.",
+    "Only current Ethereum cbBTC LT 0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9 is admitted; legacy/v2 markets, factory, LEVAMM, Curve pool, gauges, zaps and HybridVaults are not transaction targets in this admission. This is the exact Vyper LT interface, not generic ERC4626.",
+    "assets/min_assets are native cbBTC units (8 decimals); shares/min_shares are yb-cbBTC units (18 decimals). debt is crvUSD units (18 decimals) borrowed by the market from its allocation, not stablecoins transferred from depositor. Depositor needs cbBTC balance and allowance to LT.",
+    "Deposit requires an appropriate caller-chosen debt amount, available credit and AMM safety/debt limits; min_shares bounds net shares. withdraw burns caller-owned shares and settles market debt through fixed-output Curve removal; min_assets bounds cbBTC output. No caller-set deadline exists. Receiver must not be the configured staker; withdraw also forbids staker as caller.",
+    "Share supply/value can change through staker rebases, oracle/price-scale accounting, admin fee accounting, debt interest and borrower-fee distribution; positive small deposits can round to zero shares when min_shares is zero. Remaining total supply must be at least 10^6 share units unless fully withdrawn. Minimums must be chosen meaningfully.",
+    "Underlying pool, AMM/oracle, gauge checkpoint and fee-distribution dependencies can revert; ordinary withdraw rejects killed AMM. Kill state, credit allocation, fee/rate/staker/admin controls and current dependencies are not attested. Emergency exits have different dual-asset/crvUSD-funding semantics and are not admitted. No no-loss or financial-safety assurance is made."
+  ],
+  "sourceRefs": [
+    "https://docs.yieldbasis.com/user/reference/contract-addresses",
+    "https://etherscan.io/address/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9#code",
+    "https://sourcify.dev/server/v2/contract/1/0x722FC3640BA007C3E9867CCdB0dCa59F2e2F29F9?fields=all",
+    "https://docs.yieldbasis.com/dev/core/lt"
+  ]
+}

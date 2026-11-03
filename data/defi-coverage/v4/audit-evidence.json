@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "auditedCatalogVersion": "v4",
+  "auditAsOf": "2026-10-04T00:26:00Z",
+  "sourceFiles": [
+    {
+      "path": "data/defi-coverage/market-snapshot.json",
+      "sha256": "484cc9562ccb6d537094b195f42b0af09f07aaf47250446765e6a524f69a26b7"
+    },
+    {
+      "path": "data/defi-coverage/discovery-classification.json",
+      "sha256": "adb7119605bf572c08f04759cb7ae593da4c083a940c3c126c091cc4c7037a10"
+    },
+    {
+      "path": "data/defi-catalog/v1/catalog.json",
+      "sha256": "25b9f2bcfb43075dfa99e2e6fe177439b347d625d86b8b7cfccfa9e542e318ab"
+    },
+    {
+      "path": "data/defi-catalog/v2/catalog.json",
+      "sha256": "80c32b593fa9ac569b3e5f1a199ee2fb5519045fddfddb72c567e2b7b26397bc"
+    },
+    {
+      "path": "data/defi-catalog/v2/sources/dex.json",
+      "sha256": "20fd2974ae3b184a0173a5d82d1861cef3f2f4819c0f4efed87a2e43173498d9"
+    },
+    {
+      "path": "data/defi-catalog/v3/catalog.json",
+      "sha256": "600fb0f308652e0233538fe35250ae6f549c4f591ecc7d0fb16b3566c4fef97e"
+    },
+    {
+      "path": "data/defi-catalog/v3/admissions.json",
+      "sha256": "512d25f50d1fcc545bfed712f87f855089007f633b8648071e395272929e93bc"
+    },
+    {
+      "path": "data/defi-catalog/v3/sources/workflow-extensions.json",
+      "sha256": "1e8bd7027382e08bf59c5ef474e37de64831f003339092a0940b72b225060f01"
+    },
+    {
+      "path": "data/defi-coverage/v2/activity-snapshot.json",
+      "sha256": "6a2d879846fbdb572745ac551d00bba18820f2cf7dc1d21a93b31645defe77ea"
+    },
+    {
+      "path": "data/defi-coverage/v2/activity-methods.json",
+      "sha256": "2fc926cf62bbaebb805fe4ee4d2056f79ee9f02f0743461ce868c804c7eb0de6"
+    },
+    {
+      "path": "data/defi-coverage/v2/identity-crosswalk.json",
+      "sha256": "8b61157f606b1184c83ff821f0e95b9031275a4850bb88cb670308741410359c"
+    },
+    {
+      "path": "data/defi-coverage/v2/normalization-evidence.json",
+      "sha256": "f8d0238b9d2e2ea0c9535682df8c5d0fc14487c306be289f5e95680a43f5461b"
+    },
+    {
+      "path": "data/defi-coverage/v2/coverage-report.json",
+      "sha256": "34a8e9dc15c2680a5aa71d36890ad725d1c25b4f6a2271ee5a56b8179e5aec3a"
+    },
+    {
+      "path": "data/defi-coverage/v2/workflow-inventory.json",
+      "sha256": "8ddfa923be1d9ed87fac8bca28b741cb4457ea1fd9ab6bdd058e78a9274d34b3"
+    },
+    {
+      "path": "data/defi-coverage/v2/normalized-input.json",
+      "sha256": "48e1e1cdd0e3ca135e9c31749224642497a98a1ca08f60ed099c07654be9a3cc"
+    },
+    {
+      "path": "data/defi-coverage/v3/normalized-input.json",
+      "sha256": "45d36c24d27b739f693e9e303fef783356caf8585cd0caaf4bfaaa336d262ff2"
+    },
+    {
+      "path": "data/defi-coverage/v3/workflow-inventory.json",
+      "sha256": "d89501e3bf495363bd286f304373625f2091ecd0af4337f90fb063ae275491d2"
+    },
+    {
+      "path": "data/defi-coverage/v3/coverage-report.json",
+      "sha256": "774d0fcc46909e093293013a79d587e453ece125ac943be50e30ff8c48889bae"
+    },
+    {
+      "path": "src/modules/defi/catalog-tooling/__fixtures__/v3-bundle-baseline.json",
+      "sha256": "f5f06ce93f46bf2ddf8554da6b9efb7db9b1a8175cd19b40dc69c454f873a607"
+    },
+    {
+      "path": "data/defi-catalog/v4/catalog.json",
+      "sha256": "e143be9a23e48f115d012aa960fecdb3b05e2163d0ae62dd7dc7a2a150dd60d7"
+    },
+    {
+      "path": "data/defi-catalog/v4/admissions.json",
+      "sha256": "6ef035b216b9fecf60151728e0021a03e13ba7e7d7317bc2238f970ef433a3e5"
+    },
+    {
+      "path": "data/defi-catalog/v4/sources/ordinary-protocols.json",
+      "sha256": "17c000ae88effc6ed0a25d88198cc306172cd5d784bd4bec90e956b28bc33b52"
+    },
+    {
+      "path": "data/defi-catalog/v4/sources/yearn.json",
+      "sha256": "71f979731f231c839c10d149e91a5a5dd2c522a851b475c0a2210d218c43df08"
+    },
+    {
+      "path": "src/modules/defi/bundles/production-bundles.ts",
+      "sha256": "dbae2df5af5dc343d27726301b537a78df00eb28d6214042764f9486b2c8dde2"
+    }
+  ],
+  "protocolUniverseCompactSha256": "7fc3a4de44a3eebc1354aa57736cb72b48b21321c766d3c9a31e9eeea47c9b24",
+  "sourceAuditMethod": "Raw-byte SHA-256 for named input files; frozen roster SHA-256 over original compact JSON array lexemes; Keccak ABI/scope fingerprints independently canonicalized here.",
+  "factsValid": true,
+  "outputReportSha256": "9eb8472b1a99248f0d74629b8f5e95041d03ad5c0101518a7c7b9c25a517b815"
+}

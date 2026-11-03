@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "batch": 14,
+  "observedAt": "2026-10-22",
+  "purpose": "Lifecycle rejection evidence only; no admission, ABI substitution or active capability is implied. Review stopped before deployed ABI inventory when primary lifecycle evidence excluded candidates.",
+  "candidates": [
+    {
+      "protocol": "Goldfinch",
+      "status": "rejected",
+      "selectedFunctions": [],
+      "functionDecisions": [],
+      "abi": null,
+      "abiInventoryStatus": "Not attempted after lifecycle exclusion; no ABI fabricated.",
+      "lifecycleEvidence": [
+        {
+          "sourceRef": "https://gov.goldfinch.finance/t/gip-87-maintenance-mode-of-goldfinch-operations-and-wind-down-goldfinch-prime/2202",
+          "authors": "Mike Sall and Blake West",
+          "date": "2026-06-12",
+          "excerpt": "Orderly wind-down of Goldfinch Prime and move Goldfinch into maintenance mode solely focused on supporting collection of remaining legacy borrower payments; stop new protocol development and growth, maintain legacy app for recoveries and collection only."
+        },
+        {
+          "sourceRef": "https://gov.goldfinch.finance/t/gip-87-maintenance-mode-of-goldfinch-operations-and-wind-down-goldfinch-prime/2202/13",
+          "author": "Blake West",
+          "date": "2026-07-07",
+          "excerpt": "The redemption process was successfully completed. No new deposits will be accepted. The contract has been paused. Legacy V1 deals are still waiting on payments or actively in recovery. Prime frontend maintained two more weeks for roughly $300 unclaimed historical redemptions then disabled; direct withdrawal ABI remains possible.",
+          "referencedPrimeAddress": "0xCBbd935861542d94a168cAC3B523f6450a69ECF4"
+        }
+      ],
+      "reason": "Current Prime explicitly shuttered/paused after wind-down; legacy Senior Pool/borrower pools maintained for recoveries and repayment collection only, excluded by no exit-only exception. Live stale app/docs and token persistence do not establish a currently maintained ordinary lender product."
+    },
+    {
+      "protocol": "Perennial",
+      "status": "rejected",
+      "selectedFunctions": [],
+      "functionDecisions": [],
+      "abi": null,
+      "abiInventoryStatus": "Not attempted after primary supported-chain lifecycle exclusion; no ABI fabricated.",
+      "lifecycleEvidence": [
+        {
+          "sourceRef": "https://dune.com/perennial/perennial-v2",
+          "publisher": "perennial protocol-owned dashboard",
+          "excerpt": "THIS DASHBOARD IS DEPRECATED. The Perennial Arbitrum Deployment is now closed. Stay tuned for a new stats page in the future."
+        },
+        {
+          "sourceRef": "https://v1.perennial.finance/earn",
+          "excerpt": "Perennial V1 Is Deprecated. V1 Markets and Vaults are closed. Withdrawals will remain enabled. Head over to Perennial V2 to continue trading and earning!"
+        }
+      ],
+      "sourceLimitations": [
+        "Current app.perennial.finance and docs.perennial.finance direct retrieval failed connection. Historical indexed markets page lists Arbitrum vaults, but cannot override protocol-owned closure notice.",
+        "Newer deployment docs concern Perennial chain1424, outside allowed chains; no chain-scope expansion authorized."
+      ],
+      "reason": "Only discovered supported-chain Arbitrum V1/V2 deployments are closed/deprecated. Dedicated-chain successor is out of scope; no stale historical vault/market ABI admitted."
+    }
+  ]
+}

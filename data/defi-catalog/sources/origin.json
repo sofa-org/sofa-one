@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "families": [{
+    "familyId": "origin",
+    "familyVersion": "oeth-v1@1d7e1dcb",
+    "contracts": [{
+      "chainId": 1,
+      "address": "0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab",
+      "status": "inactive",
+      "contractName": "Origin OETH Vault user proxy",
+      "sourceRefs": ["origin-oeth-proxy-deployment", "origin-oeth-implementation-deployment", "origin-oeth-vault-source", "origin-proxy-source"],
+      "abiFunctions": [
+        { "type": "function", "name": "mint", "stateMutability": "nonpayable", "inputs": [{ "name": "_amount", "type": "uint256", "internalType": "uint256" }], "outputs": [], "sourceId": "origin-oeth-implementation-deployment" },
+        { "type": "function", "name": "requestWithdrawal", "stateMutability": "nonpayable", "inputs": [{ "name": "_amount", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "requestId", "type": "uint256", "internalType": "uint256" }, { "name": "queued", "type": "uint256", "internalType": "uint256" }], "sourceId": "origin-oeth-implementation-deployment" },
+        { "type": "function", "name": "claimWithdrawal", "stateMutability": "nonpayable", "inputs": [{ "name": "_requestId", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "amount", "type": "uint256", "internalType": "uint256" }], "sourceId": "origin-oeth-implementation-deployment" },
+        { "type": "function", "name": "claimWithdrawals", "stateMutability": "nonpayable", "inputs": [{ "name": "_requestIds", "type": "uint256[]", "internalType": "uint256[]" }], "outputs": [{ "name": "amounts", "type": "uint256[]", "internalType": "uint256[]" }, { "name": "totalAmount", "type": "uint256", "internalType": "uint256" }], "sourceId": "origin-oeth-implementation-deployment" }
+      ]
+    }]
+  }],
+  "sources": [
+    { "sourceId": "origin-oeth-proxy-deployment", "url": "https://github.com/OriginProtocol/origin-dollar/blob/1d7e1dcb5681327b8037c3df991c27fd7583c643/contracts/deployments/mainnet/OETHVaultProxy.json", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned deployment artifact identifies Ethereum OETH user proxy 0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab. It is the caller-facing target, not an assertion about current implementation slot or runtime code." },
+    { "sourceId": "origin-oeth-implementation-deployment", "url": "https://github.com/OriginProtocol/origin-dollar/blob/1d7e1dcb5681327b8037c3df991c27fd7583c643/contracts/deployments/mainnet/OETHVault.json", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned deployment artifact at implementation address 0x0E979edF516f88119fa2843fA3f08A9643F8e575 supplies the exact ABI fixture. This implementation address is source/ABI evidence only and is not a user grant target." },
+    { "sourceId": "origin-oeth-vault-source", "url": "https://github.com/OriginProtocol/origin-dollar/blob/1d7e1dcb5681327b8037c3df991c27fd7583c643/contracts/contracts/vault/VaultCore.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned VaultCore defines mint(uint256), requestWithdrawal(uint256), claimWithdrawal(uint256), and claimWithdrawals(uint256[]) ordinary nonpayable user operations. Mint pulls a supported ERC20 asset and mints OETH; requests burn OETH and enqueue withdrawal; claims transfer the queued asset. Queue minimum delay, available liquidity, capital pause and supported-asset conditions are protocol behavior." },
+    { "sourceId": "origin-proxy-source", "url": "https://github.com/OriginProtocol/origin-dollar/blob/1d7e1dcb5681327b8037c3df991c27fd7583c643/contracts/contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned proxy initialization delegatecalls implementation initialization and fallback delegates calls to implementation. This source supports the historical proxy/implementation role bridge only; it is not a current implementation-slot or live-code assertion." }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "symbiotic",
+      "familyVersion": "vault@83a3a9ab",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x007e0B8E99c6134E81A1eAAE754460E3202cB671",
+          "status": "inactive",
+          "contractName": "Symbiotic Keyrock Flagship USDC Vault",
+          "sourceRefs": ["symbiotic-mainnet-vault-metadata", "symbiotic-ivault-interface", "symbiotic-vault-implementation", "symbiotic-vault-factory"],
+          "abiFunctions": [
+            {
+              "type": "function", "name": "deposit", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "onBehalfOf", "internalType": "address", "type": "address" }, { "name": "amount", "internalType": "uint256", "type": "uint256" }],
+              "outputs": [{ "name": "depositedAmount", "internalType": "uint256", "type": "uint256" }, { "name": "mintedShares", "internalType": "uint256", "type": "uint256" }],
+              "sourceId": "symbiotic-ivault-interface"
+            },
+            {
+              "type": "function", "name": "withdraw", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "claimer", "internalType": "address", "type": "address" }, { "name": "amount", "internalType": "uint256", "type": "uint256" }],
+              "outputs": [{ "name": "burnedShares", "internalType": "uint256", "type": "uint256" }, { "name": "mintedShares", "internalType": "uint256", "type": "uint256" }],
+              "sourceId": "symbiotic-ivault-interface"
+            },
+            {
+              "type": "function", "name": "redeem", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "claimer", "internalType": "address", "type": "address" }, { "name": "shares", "internalType": "uint256", "type": "uint256" }],
+              "outputs": [{ "name": "withdrawnAssets", "internalType": "uint256", "type": "uint256" }, { "name": "mintedShares", "internalType": "uint256", "type": "uint256" }],
+              "sourceId": "symbiotic-ivault-interface"
+            },
+            {
+              "type": "function", "name": "claim", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "recipient", "internalType": "address", "type": "address" }, { "name": "epoch", "internalType": "uint256", "type": "uint256" }],
+              "outputs": [{ "name": "amount", "internalType": "uint256", "type": "uint256" }],
+              "sourceId": "symbiotic-ivault-interface"
+            },
+            {
+              "type": "function", "name": "claimBatch", "stateMutability": "nonpayable",
+              "inputs": [{ "name": "recipient", "internalType": "address", "type": "address" }, { "name": "epochs", "internalType": "uint256[]", "type": "uint256[]" }],
+              "outputs": [{ "name": "amount", "internalType": "uint256", "type": "uint256" }],
+              "sourceId": "symbiotic-ivault-interface"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "symbiotic-mainnet-vault-metadata",
+      "url": "https://github.com/symbioticfi/metadata-mainnet/blob/0b2722aaf38d46c7c34c77ddc5336bbd861cc0d3/vaults/0x007e0B8E99c6134E81A1eAAE754460E3202cB671/info.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official Symbiotic Ethereum mainnet metadata identifies 0x007e0B8E99c6134E81A1eAAE754460E3202cB671 as the Keyrock Flagship USDC vault. Metadata identifies a published vault entry, not current capacity, whitelist eligibility, deployed runtime version, or liquidity."
+    },
+    {
+      "sourceId": "symbiotic-ivault-interface",
+      "url": "https://github.com/symbioticfi/core/blob/83a3a9ab8febe868896780a68345dbf820d843ff/src/interfaces/vault/IVault.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official IVault.sol declares the exact nonpayable user methods deposit(address onBehalfOf,uint256 amount) returns (uint256 depositedAmount,uint256 mintedShares), withdraw(address claimer,uint256 amount) returns (uint256 burnedShares,uint256 mintedShares), redeem(address claimer,uint256 shares) returns (uint256 withdrawnAssets,uint256 mintedShares), claim(address recipient,uint256 epoch) returns (uint256 amount), and claimBatch(address recipient,uint256[] epochs) returns (uint256 amount). These five methods alone are selected."
+    },
+    {
+      "sourceId": "symbiotic-vault-implementation",
+      "url": "https://github.com/symbioticfi/core/blob/83a3a9ab8febe868896780a68345dbf820d843ff/src/contracts/vault/Vault.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official Vault.sol confirms direct deposit transfers collateral from msg.sender and checks nonzero recipient, configured depositor whitelist, positive received amount, and protocol deposit limit. Withdraw/redeem burn the caller's active shares into next-epoch withdrawal shares assigned to the selected claimer; claim and claimBatch consume the caller's claim and transfer the result to the selected recipient. Protocol conditions are disclosed, not replicated as platform argument filters. Source declaration/implementation do not prove this address currently runs this version or has capacity."
+    },
+    {
+      "sourceId": "symbiotic-vault-factory",
+      "url": "https://github.com/symbioticfi/core/blob/83a3a9ab8febe868896780a68345dbf820d843ff/src/interfaces/IVaultFactory.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official IVaultFactory interface supplies the factory API context used to cross-check the published vault population against the reported Ethereum factory role at 0xAEb6bdd95c502390db8f52c8909F703E9Af6a346. The factory is not the execution target and this association is neither an independent capability nor current runtime verification for the selected vault."
+    }
+  ]
+}

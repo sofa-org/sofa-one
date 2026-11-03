@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "harvest",
+      "familyVersion": "v1@14420a44",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xf0358e8c3CD5Fa238a29301d0bEa3D63A17bEdBE",
+          "status": "inactive",
+          "contractName": "Harvest Ethereum fUSDC Vault",
+          "sourceRefs": [
+            "harvest-official-repository",
+            "harvest-ethereum-vault-deployment",
+            "harvest-vault-interface",
+            "harvest-vault-implementation"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "amountWei",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "harvest-vault-interface"
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "numberOfShares",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "harvest-vault-interface"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "harvest-official-repository",
+      "url": "https://github.com/harvest-finance/harvest/tree/14420a4444c6aaa7bf0d2303a5888feb812a0521",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official Harvest Finance repository snapshot at commit 14420a4444c6aaa7bf0d2303a5888feb812a0521; a source snapshot is not a current runtime-code, liquidity, or complete-workflow attestation."
+    },
+    {
+      "sourceId": "harvest-ethereum-vault-deployment",
+      "url": "https://github.com/harvest-finance/harvest/blob/14420a4444c6aaa7bf0d2303a5888feb812a0521/README.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned README identifies Ethereum fUSDC vault 0xf0358e8c3CD5Fa238a29301d0bEa3D63A17bEdBE and USDC as underlying."
+    },
+    {
+      "sourceId": "harvest-vault-interface",
+      "url": "https://github.com/harvest-finance/harvest/blob/14420a4444c6aaa7bf0d2303a5888feb812a0521/contracts/hardworkInterface/IVault.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned IVault declares deposit(uint256 amountWei) and withdraw(uint256 numberOfShares), both nonpayable with no outputs; exact argument names/types retained. Only these two user operations selected."
+    },
+    {
+      "sourceId": "harvest-vault-implementation",
+      "url": "https://github.com/harvest-finance/harvest/blob/14420a4444c6aaa7bf0d2303a5888feb812a0521/contracts/Vault.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned Vault implementation describes deposit pulling underlying from the caller and minting shares to the caller, and withdraw burning/redeeming caller shares to underlying. Protocol-side allowance, access, fees, amount conditions and available assets remain independent prerequisites."
+    }
+  ]
+}

@@ -1,0 +1,2153 @@
+{
+  "schemaVersion": 1,
+  "chainId": 56,
+  "address": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+  "protocol": "jetswap-v1",
+  "contractName": "JetswapRouter",
+  "reviewedAt": "2026-10-17",
+  "website": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts",
+  "websiteEvidence": {
+    "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://dappbay.bnbchain.org/detail/jetswap ; https://jetswap.finance/",
+    "verifiedAt": "2026-10-17",
+    "evidence": "Use the archived official Jetswap contract documentation as the frontend reference, not the former frontend. BNB Chain DappBay attributes Jetswap to jetswap.finance and Jetfuelfinance social accounts and labels the dApp inactive. The historical official documentation snapshot identifies this BSC router. The current jetswap.finance root serves unrelated Danish casino content; docs.jetswap.finance and exchange.jetswap.finance were unreachable. No surviving live frontend is endorsed; third-party Netlify clones and similarly named services are not substituted."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+    "sourceType": "archived official BSC deployed-contract mapping, corroborated by exact-address Sourcify record",
+    "corroboratingSourceRef": "https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+    "deployment": {
+      "transactionHash": "0xa5d94a0c18693b96ae15f01dd8db52e12cee5309ae4b7b461b2ac9b3ee4af511",
+      "blockNumber": "7092042",
+      "transactionIndex": "174",
+      "deployer": "0xc9CB0B9Fe83698DFC3d3935d31BAddEDb5C06151"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "constructorArguments": {
+      "encodedSuffix": "0x0000000000000000000000000eb58e5c8aa63314ff5547289185cc4583dfcbd5000000000000000000000000bb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c",
+      "factory": "0x0eb58E5c8aA63314ff5547289185cC4583DfCBD5",
+      "WETH": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"
+    },
+    "officialMappingExcerpt": "BSC Smart Contracts: Factory: 0x0eb58E5c8aA63314ff5547289185cC4583DfCBD5; Router: 0xBe65b8f75B9F20f4C522e0067a3887FADa714800; INIT_CODE_PAIR_HASH: 0x3125d0a15fa7af49ce234ba1cf5f931bad0504242e0e1ee9fcd7d1d7aa88c651.",
+    "evidence": "The 2022-01-17 archived official contracts page explicitly names this address as Router under BSC Smart Contracts, separately from Polygon and Fantom. Exact chain-56 Sourcify record supplies JetswapRouter deployment, ABI and complete flattened source. Constructor factory agrees with the official table and constructor WETH is BSC WBNB. This is a direct non-proxy router.",
+    "limitations": [
+      "Current official documentation and exchange subdomains were unreachable; attribution uses the identified historical official snapshot, not guessed addresses or generic fork interfaces.",
+      "Sourcify reports match for creation and runtime, not exact_match. No independent current RPC bytecode, state, configuration or execution check was performed.",
+      "Historical deployment attribution is not evidence of current frontend operation, liquidity, financial safety or execution readiness."
+    ]
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+    "sourceType": "exact-address Sourcify v2 full deployed ABI and source",
+    "matchId": "30325093",
+    "sourcifyVerifiedAt": "2026-06-02T12:09:01Z",
+    "reportedMatch": "match",
+    "reportedCreationMatch": "match",
+    "reportedRuntimeMatch": "match",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.6.6+commit.6c089d02",
+      "compilerSettings": {
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        }
+      },
+      "name": "JetswapRouter",
+      "fullyQualifiedName": "JetswapRouter.sol:JetswapRouter"
+    },
+    "sourceFile": "JetswapRouter.sol",
+    "sourceSha256": "92edf2530c8cfd7d780ca5d2bab5a6cd580443c7c82d929b164e8f8e5dd42793",
+    "sourceHashRecipe": "SHA-256 of complete UTF-8 source content returned by Sourcify, without newline or whitespace normalization.",
+    "evidence": "The full ABI below is copied unchanged from this exact chain/address record, including constructor, receive and all 24 callable functions. Each selected ABI fragment is copied unchanged from that array. Reviewed the entire router implementation and its flattened JetswapLibrary, TransferHelper, SafeMath and external dependency interfaces; no generic Uniswap/fork ABI or unbound repository implementation was substituted. No separately deployed factory/pair/token code audit or fresh runtime attestation is claimed.",
+    "libraryBinding": {
+      "sourceFile": "JetswapRouter.sol",
+      "deployedPairInitCodeHash": "0x3125d0a15fa7af49ce234ba1cf5f931bad0504242e0e1ee9fcd7d1d7aa88c651",
+      "deployedSwapArithmetic": "getAmountOut uses amountIn * 997 / (reserveIn * 1000 + amountIn * 997) with reserveOut in numerator; inverse uses 1000/997 and adds one after division.",
+      "evidence": "Constructor-bound immutable factory/WETH; CREATE2 pair derivation uses sorted token addresses and the exact hash also listed in archived official BSC docs. Both swap loops call deterministic pairs with empty callback bytes. Router has no owner, configurable reward hook, arbitrary executor, delegatecall or multicall. TransferHelper encodes only explicit ERC20 selectors or empty-data native transfers."
+    }
+  },
+  "sourceSemantics": {
+    "nativeAsset": "ETH/WETH method and parameter names mean BNB/WBNB on BSC. Constructor WETH is 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. receive only accepts native currency from WETH.",
+    "liquidity": "Ordinary adds may create factory pairs; caller token allowances fund pairs and LP is minted to recipient. Minimum checks are branch-dependent: no checks for initially empty reserves and only the optimized side checked for existing reserves. No min LP output argument exists. Removals consume caller LP allowance and check pair-burn accounting, not net post-tax receipts.",
+    "feeSupporting": "Actual hop input is pair token balance minus reserve; token-output variants check recipient balance increase. Supporting native removal forwards router entire token balance; supporting token/native swap minimum-checks and unwraps router entire WBNB balance.",
+    "execution": "All selected actions enforce caller deadline; exact-input paths check output minimum and exact-output paths bound input. Payable exact-input paths spend msg.value; native exact-output swaps and native adds refund unused value to caller. Native sends use empty calldata and may revert for incompatible recipient/refund receiver. Token/LP allowance, balances, path, tax behavior, gas, price, recipient, deadline and pool liquidity remain caller responsibilities.",
+    "nonFunctionEntries": "Constructor and receive remain in full ABI but create no capabilities. External interface declarations in flattened source are dependencies, not additional router callable functions.",
+    "limitations": "Source and verification-service evidence are inventory provenance only, not an assurance of fresh deployed bytecode identity, external dependency code/configuration, funds, approvals, reserves, financial safety or successful execution. Existing authorization, pauses, canonical ABI/value validation and independent signing/execution policies remain authoritative."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_WETH",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "WETH",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountTokenDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountsIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quote",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapETHForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactTokensForETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "WETH",
+      "signature": "WETH()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit token/token liquidity provision; transfers caller tokens by allowance to deterministic factory pair (creating it when absent) and mints LP to chosen recipient. Deadline enforced; amount minimum checks are branch-dependent and no minimum LP output is supplied."
+    },
+    {
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit token/native-BNB liquidity provision; transfers caller tokens, wraps required msg.value in constructor-bound WBNB, mints LP to recipient and refunds unused BNB to caller. Deadline enforced; amount minimum checks are branch-dependent and no minimum LP output is supplied."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "getAmountIn",
+      "signature": "getAmountIn(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "getAmountsIn",
+      "signature": "getAmountsIn(uint256,address[])",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "getAmountsOut",
+      "signature": "getAmountsOut(uint256,address[])",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "quote",
+      "signature": "quote(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/token removal; transfers specified caller LP by allowance to deterministic pair, burns LP to recipient and checks both pair-accounting minimums and deadline."
+    },
+    {
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/native-BNB removal; consumes specified caller LP allowance, checks pair-burn amounts and deadline, transfers calculated token output and unwraps calculated WBNB output for recipient."
+    },
+    {
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit non-permit fee-supporting token/native removal; checks burn-accounting minimums and deadline, forwards entire router token balance and unwraps calculated WBNB amount. Minimum token amount does not guarantee net post-tax recipient receipt."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermit",
+      "signature": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit path, including approveMax allowance authority; ordinary non-permit removal is selected separately."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit path, including approveMax allowance authority; ordinary non-permit removal is selected separately."
+    },
+    {
+      "functionName": "removeLiquidityWithPermit",
+      "signature": "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit path, including approveMax allowance authority; ordinary non-permit removal is selected separately."
+    },
+    {
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit exact-output native-BNB/token path swap; requires WBNB path start, checks calculated input against msg.value and deadline, wraps required input and refunds unused BNB to caller."
+    },
+    {
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input native-BNB/token path swap; requires WBNB at path start, wraps msg.value, checks calculated output minimum and deadline and sends tokens to recipient."
+    },
+    {
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input fee-supporting native-BNB/token path swap; wraps msg.value, requires WBNB path start, computes actual per-hop input and checks recipient final-token balance increase and deadline."
+    },
+    {
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/native-BNB path swap; requires WBNB path end, pulls caller input, checks calculated minimum and deadline, unwraps calculated WBNB output and pays recipient."
+    },
+    {
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input fee-supporting token/native-BNB path swap; pulls caller input and requires WBNB path end and deadline, then minimum-checks and unwraps the entire router WBNB balance rather than this call balance delta."
+    },
+    {
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token path swap; pulls caller allowance-bounded amount, calculates outputs using deployed fixed-fee library, checks minimum and deadline and uses deterministic pair calls with empty callback data."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input fee-supporting token path swap; transfers caller amount, computes each hop from pair balance increase, uses empty callback data and checks recipient final-token balance increase against minimum and deadline."
+    },
+    {
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-output token/native-BNB path swap; requires WBNB path end, pulls calculated caller token input subject to maximum and deadline, unwraps calculated WBNB output and pays recipient."
+    },
+    {
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-output token path swap; calculates required caller input, checks maximum input and deadline and uses deterministic pair calls with empty callback data to requested recipient."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:add-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountADesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap addLiquidity",
+      "operation": "add-liquidity",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:add-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountTokenDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap addLiquidityETH",
+      "operation": "add-liquidity-eth",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap removeLiquidity",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:remove-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap removeLiquidityETH",
+      "operation": "remove-liquidity-eth",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap removeLiquidityETHSupportingFeeOnTransferTokens",
+      "operation": "remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:swap-eth-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapETHForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap swapETHForExactTokens",
+      "operation": "swap-eth-for-exact-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:swap-exact-eth-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap swapExactETHForTokens",
+      "operation": "swap-exact-eth-for-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:swap-exact-tokens-for-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap swapExactTokensForETH",
+      "operation": "swap-exact-tokens-for-eth",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:swap-exact-tokens-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap swapExactTokensForTokens",
+      "operation": "swap-exact-tokens-for-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:swap-tokens-for-exact-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap swapTokensForExactETH",
+      "operation": "swap-tokens-for-exact-eth",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "jetswap-v1:v1:56:0xbe65b8f75b9f20f4c522e0067a3887fada714800:swap-tokens-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xBe65b8f75B9F20f4C522e0067a3887FADa714800",
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://web.archive.org/web/20220117062434id_/https://docs.jetswap.finance/contracts ; https://sourcify.dev/server/v2/contract/56/0xBe65b8f75B9F20f4C522e0067a3887FADa714800?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "jetswap-v1",
+      "label": "JetSwap swapTokensForExactTokens",
+      "operation": "swap-tokens-for-exact-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; these financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending requires caller balances and allowances. Four payable functions spend native BNB despite their ETH/WETH ABI names; nonpayable functions require zero native value.",
+        "Fee-supporting token/native removal forwards the entire router token balance, and supporting token-to-native swaps unwrap the entire router WBNB balance. Removal minimums check pair-burn accounting, not net post-tax recipient receipt; rebasing and nonstandard-token compatibility are not guaranteed.",
+        "Liquidity-add minimum checks are branch-dependent: an empty pool accepts desired amounts without either minimum check, and an existing pool checks only the optimized side. There is no minimum LP-output argument.",
+        "Pairs are derived from constructor-bound factory and deployed init-code hash; swaps pass empty callback bytes. No opaque executor, multicall, permit or administrative function is selected. Source-service match is not exact_match and does not attest fresh runtime identity, dependencies, funding, liquidity, successful execution or financial safety. Catalog metadata grants no API-key permission and bypasses no independent policy."
+      ]
+    }
+  ]
+}

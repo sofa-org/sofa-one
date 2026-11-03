@@ -6,9 +6,6 @@ jest.mock('./wallet.service', () => ({
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
 }));
-jest.mock('../../common/guards/either-auth.guard', () => ({
-  EitherAuthGuard: class EitherAuthGuard {},
-}));
 jest.mock('../../common/guards/api-key-auth.guard', () => ({
   ApiKeyAuthGuard: class ApiKeyAuthGuard {},
 }));
@@ -22,7 +19,7 @@ jest.mock('../../common/guards/step-up.guard', () => ({
   StepUpGuard: class StepUpGuard {},
 }));
 
-import { WalletController } from './wallet.controller';
+import { WalletController, DashboardWalletController } from './wallet.controller';
 import { ApiKeyAuthGuard } from '../../common/guards/api-key-auth.guard';
 import { ApiKeyPermissionGuard } from '../../common/guards/api-key-permission.guard';
 import { API_KEY_PERMISSION_KEY } from '../../common/decorators/api-key-permission.decorator';
@@ -42,11 +39,13 @@ describe('WalletController', () => {
     removeWithdrawalAddress: jest.fn(),
   };
 
-  let controller: WalletController;
+  let controller: DashboardWalletController;
+  let publicController: WalletController;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    controller = new WalletController(walletService as any);
+    controller = new DashboardWalletController(walletService as any);
+    publicController = new WalletController(walletService as any);
   });
 
   describe('getBalances', () => {
@@ -92,20 +91,20 @@ describe('WalletController', () => {
       const req = { apiKeyRecord };
       walletService.sign.mockResolvedValue({ signature: '0xsig' });
 
-      const result = await controller.sign('user-1', dto as any, req as any);
+      const result = await publicController.sign('user-1', dto as any, req as any);
 
       expect(walletService.sign).toHaveBeenCalledWith('user-1', dto, apiKeyRecord);
       expect(result).toEqual({ signature: '0xsig' });
     });
 
     it('is public API-only', () => {
-      const guards = Reflect.getMetadata(GUARDS_METADATA, controller.sign) ?? [];
+      const guards = Reflect.getMetadata(GUARDS_METADATA, publicController.sign) ?? [];
 
       expect(guards).toContain(ApiKeyAuthGuard);
       expect(guards).toContain(ApiKeyPermissionGuard);
-      expect(Reflect.getMetadata(API_KEY_PERMISSION_KEY, controller.sign)).toBe('canSign');
+      expect(Reflect.getMetadata(API_KEY_PERMISSION_KEY, publicController.sign)).toBe('canSign');
       expect(guards).not.toContain(FrontendOnlyGuard);
-      expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, controller.sign)).toBeUndefined();
+      expect(Reflect.getMetadata(IS_FRONTEND_ONLY_KEY, publicController.sign)).toBeUndefined();
     });
   });
 

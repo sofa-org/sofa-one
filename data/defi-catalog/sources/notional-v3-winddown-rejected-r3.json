@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Notional",
+  "website": "https://www.notional.finance/",
+  "status": "rejected",
+  "selectedFunctions": [],
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://blog.notional.finance/balancer-hack-response/",
+      "publishedAt": "2025-11-20",
+      "verifiedAt": "2026-10-23",
+      "author": "Teddy Woodward, Co-Founder and CEO",
+      "excerpts": [
+        "On November 3rd, Notional V3 was impacted by a smart contract hack of Balancer V2. This incident led to significant losses for Notional users and ultimately a full wind-down of Notional V3.",
+        "Upon discovery of the issue, the Notional team disabled all Balancer vaults to guard against the possibility of any further losses and fully paused the protocol on Mainnet and Arbitrum.",
+        "After evaluating the extent of the damage, it was determined that it would not be possible to return Notional V3 to a functioning state in production. The team then decided that the best course of action would be to wind down Notional V3 and fully distribute all user funds.",
+        "The team is currently determining a path forward and will share details soon."
+      ],
+      "decision": "Reject Mainnet and Arbitrum V3, including residual recovery/exit functions. No maintained successor deployment established."
+    },
+    {
+      "sourceRef": "https://v2.notional.finance/",
+      "verifiedAt": "2026-10-23",
+      "excerpt": "Notional V2 is being deprecated. Notional V3 is Live!",
+      "decision": "V2 is not a maintained fallback."
+    }
+  ],
+  "limitations": [
+    "Lifecycle gate failed before deployment/function admission; no implementation ABI was substituted or advertised. Historical marketing frontend and technical docs do not override explicit primary wind-down notice.",
+    "Future asset recovery is not a current maintained lending product. This does not assert that the team disbanded or that no future protocol could launch."
+  ],
+  "replacement": {
+    "name": "Yelay",
+    "authorization": "Main exclusively authorized Yelay as batch27 replacement; former Spool continuity counts only once."
+  }
+}

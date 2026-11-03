@@ -1,7 +1,7 @@
 # src/modules/billing/dto/
 
 Request DTOs for the frontend-only billing routes. These are the only inputs
-accepted by `BillingController` (`@Controller('v1/billing')`); each maps to
+accepted by `BillingController` (`@Controller('billing')`); each maps to
 exactly one controller route and then to one service call.
 
 ## Responsibility
@@ -11,13 +11,13 @@ dashboard-only billing endpoints:
 
 | File | Exported symbol | Binds to route | Consumed by |
 | --- | --- | --- | --- |
-| `assign-plan-body.dto.ts` | `AssignPlanBodyDto` | `POST /v1/billing/plan` | `billingService.assignPlan(userId, body.planCode)` |
-| `get-summary-query.dto.ts` | `GetSummaryQueryDto` | `GET /v1/billing/summary?period=` | `billingService.getSummary(userId, query.period)` |
-| `list-invoices-query.dto.ts` | `ListInvoicesQueryDto` | `GET /v1/billing/invoices?page=&limit=` | `billingService.listInvoices(userId, { page, limit })` |
-| `reconcile-body.dto.ts` | `ReconcileBodyDto` | `POST /v1/billing/reconcile` | `billingReconciliationService.reconcile(userId, { limit })` |
-| `create-subscription-checkout.dto.ts` | `CreateSubscriptionCheckoutDto` | `POST /v1/billing/invoices/:id/subscription-checkout` | `stripePaymentService.createSubscriptionCheckout(userId, id, body.planVersionId)` |
+| `assign-plan-body.dto.ts` | `AssignPlanBodyDto` | `POST /billing/plan` | `billingService.assignPlan(userId, body.planCode)` |
+| `get-summary-query.dto.ts` | `GetSummaryQueryDto` | `GET /billing/summary?period=` | `billingService.getSummary(userId, query.period)` |
+| `list-invoices-query.dto.ts` | `ListInvoicesQueryDto` | `GET /billing/invoices?page=&limit=` | `billingService.listInvoices(userId, { page, limit })` |
+| `reconcile-body.dto.ts` | `ReconcileBodyDto` | `POST /billing/reconcile` | `billingReconciliationService.reconcile(userId, { limit })` |
+| `create-subscription-checkout.dto.ts` | `CreateSubscriptionCheckoutDto` | `POST /billing/invoices/:id/subscription-checkout` | `stripePaymentService.createSubscriptionCheckout(userId, id, body.planVersionId)` |
 
-All routes are gated by `OpenfortUserGuard` + `FrontendOnlyGuard` (see
+All routes are gated by AppSessionGuard + FrontendOnlyGuard (see
 `billing.controller.ts`), so these DTOs never validate API-key requests.
 
 ## Design/Patterns
@@ -51,24 +51,24 @@ HTTP request
 
 Per DTO:
 
-- `AssignPlanBodyDto` → `POST /v1/billing/plan`
+- `AssignPlanBodyDto` → `POST /billing/plan`
   input `{ planCode: string }` (required, non-empty string) →
   `billingService.assignPlan(userId, planCode)` → `AssignPlanResult` (next
   UTC-month plan change + future-period invoice create/update).
-- `GetSummaryQueryDto` → `GET /v1/billing/summary`
+- `GetSummaryQueryDto` → `GET /billing/summary`
   input `{ period?: string }` (optional, must match `YYYY-MM`) →
   `billingService.getSummary(userId, period?)` → `BillingSummaryDto`. Omitted
   period means "current month" server-side.
-- `ListInvoicesQueryDto` → `GET /v1/billing/invoices`
+- `ListInvoicesQueryDto` → `GET /billing/invoices`
   input `{ page?: number = 1, limit?: number = 20 }` (`page ≥ 1`, `1 ≤ limit ≤
   100`) → `billingService.listInvoices(userId, { page, limit })` →
   `BillingInvoiceDto[]` result set.
-- `ReconcileBodyDto` → `POST /v1/billing/reconcile`
+- `ReconcileBodyDto` → `POST /billing/reconcile`
   input `{ limit?: number }` (`1 ≤ limit ≤ 200`) →
   `billingReconciliationService.reconcile(userId, { limit })` →
   `ReconcileResult` scan statistics. Receipt logs/calldata/secrets are never
   exposed.
-- `CreateSubscriptionCheckoutDto` → `POST /v1/billing/invoices/:id/subscription-checkout`
+- `CreateSubscriptionCheckoutDto` → `POST /billing/invoices/:id/subscription-checkout`
   input `{ planVersionId: UUID }` (required) →
   `stripePaymentService.createSubscriptionCheckout(userId, id, planVersionId)` →
   `CheckoutSessionResult` (`{ invoiceId, sessionId, checkoutUrl }`) for a

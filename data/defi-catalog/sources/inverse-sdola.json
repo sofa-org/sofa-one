@@ -1,0 +1,1678 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Inverse Finance",
+  "protocolId": "inverse-sdola",
+  "chainId": 1,
+  "address": "0xb45ad160634c528cc3d2926d9807104fa3157305",
+  "website": "https://www.inverse.finance/",
+  "lifecycleEvidence": {
+    "sourceRef": "https://docs.inverse.finance/inverse-finance/inverse-finance/products/tokens/dola/sdola.md",
+    "verifiedAt": "2026-10-22",
+    "evidence": "Current official sDOLA product guide documents permissionless mainnet minting and unwrapping. Smart-contract registry updated for October 2026 lists this exact mainnet sDOLA token; retired CCIP lanes and L2 receipts are explicitly separate historical deployments, not retirement of mainnet sDOLA. No mainnet vault shutdown notice encountered in reviewed official sources."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.inverse.finance/inverse-finance/inverse-finance/technical/smart-contracts.md",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0xb45ad160634c528cc3d2926d9807104fa3157305",
+    "proxyType": "none in reviewed direct sDola source",
+    "sourceServiceProxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "deployment": {
+      "transactionHash": "0x825884709aef8fce977e51361fa4293f1028739f46058ff1f9e889780594cbda",
+      "blockNumber": "19128269",
+      "transactionIndex": "87",
+      "deployer": "0x11EC78492D53c9276dD7a184B1dbfB34E50B710D"
+    },
+    "explorerSourceRef": "https://etherscan.io/address/0xb45ad160634c528cc3d2926d9807104fa3157305#code",
+    "reportedExplorerVerification": "Exact Match"
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xb45ad160634c528cc3d2926d9807104fa3157305?fields=abi,compilation,sources,deployment,proxyResolution",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0xb45ad160634c528cc3d2926d9807104fa3157305",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.21+commit.d9974bed",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "paris",
+        "remappings": [
+          ":ds-test/=lib/solmate/lib/ds-test/src/",
+          ":forge-std/=lib/forge-std/src/",
+          ":solmate/=lib/solmate/src/"
+        ]
+      },
+      "name": "sDola",
+      "fullyQualifiedName": "src/sDola.sol:sDola"
+    },
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "reportedMatch": "exact_match",
+    "sourceServiceVerifiedAt": "2024-08-08T14:35:01Z",
+    "sourceSha256": {
+      "src/sDola.sol": "b909ea0ec9ef3f19ba57e4d76cd0d5075fda185f4ffb327a9a9076991cea79fb",
+      "lib/solmate/src/tokens/ERC20.sol": "a3a7e839f42762ef24623581542a916e838f3c7c0bef647963d1fdad0f9d208a",
+      "lib/solmate/src/mixins/ERC4626.sol": "06df4ff9dec862306d8ec8abceffa944c3f09544c87462b7dab65f60b4f6ed63",
+      "lib/solmate/src/utils/SafeTransferLib.sol": "ed12cae0865a8a92adb9dadd125b2cf23920870845ef128431d811963b474103",
+      "lib/solmate/src/utils/FixedPointMathLib.sol": "edfd7fa8ec4087d252f637df16669599d5c0ac803ab465730f8cc3a5e8a8d55a"
+    }
+  },
+  "sourceReview": {
+    "reviewedSources": [
+      "src/sDola.sol",
+      "lib/solmate/src/tokens/ERC20.sol",
+      "lib/solmate/src/mixins/ERC4626.sol",
+      "lib/solmate/src/utils/SafeTransferLib.sol",
+      "lib/solmate/src/utils/FixedPointMathLib.sol"
+    ],
+    "semantics": [
+      "Direct sDola inherits the deployed Solmate ERC4626 and ERC20 implementation, not a generic replacement ABI. All four entry/exit functions are inherited and their afterDeposit/beforeWithdraw hooks bind the DolaSavings stake/unstake workflow.",
+      "Deposits are never redeployed to borrowers by this wrapper: afterDeposit stakes into DolaSavings; DOLA revenue from buyDBR is added to weeklyRevenue and released linearly over the following week. No lock-up or user claim function.",
+      "beforeWithdraw requires totalAssets >= assets + 10**16 and totalSupply - shares >= 10**18; inherited maxWithdraw/maxRedeem omit these residual constraints.",
+      "Governance can reconfigure auction operator/K/governance and sweep assets other than DBR. Permissionless reapprove affects protocol allowance; buyDBR has a source-level UI warning; neither is a savings user action."
+    ]
+  },
+  "activityEvidence": {
+    "sourceRef": "https://etherscan.io/address/0xb45ad160634c528cc3d2926d9807104fa3157305#code",
+    "verifiedAt": "2026-10-22",
+    "evidence": "Explorer indexed deposit on 2026-10-17 and withdrawal on 2026-10-22 support observed activity, not unique users/DAU, vault TVL, current RPC execution or maintenance guarantee.",
+    "dauMau": "unverified",
+    "vaultTvl": "unverified"
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_dola",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_savings",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_gov",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_operator",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_K",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Buy",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "exactDolaIn",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "exactDbrOut",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SetTargetK",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "newTargetK",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DOMAIN_SEPARATOR",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "MAX_ASSETS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "MIN_SHARES",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "acceptGov",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "asset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract ERC20"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "buyDBR",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "exactDolaIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "exactDbrOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "dbr",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract ERC20"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "getDbrReserve",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDolaReserve",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDolaReserve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "dbrReserve",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getK",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "gov",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "lastKUpdate",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "nonces",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "operator",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pendingGov",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "permit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "prevK",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "reapprove",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "savings",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IDolaSavings"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "setOperator",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_operator",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setPendingGov",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_gov",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setTargetK",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_K",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "sweep",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "targetK",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "weeklyRevenue",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "functionDecisions": [
+    {
+      "signature": "DOMAIN_SEPARATOR()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only DOMAIN_SEPARATOR() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "MAX_ASSETS()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only MAX_ASSETS() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "MIN_SHARES()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only MIN_SHARES() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "acceptGov()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Only pendingGov may accept governance; governance-role handoff is not a normal user vault action."
+    },
+    {
+      "signature": "allowance(address,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only allowance(address,address) exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "approve(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Changes sDOLA share spending allowance; generic token authorization is outside the selected deposit/exit vault operations."
+    },
+    {
+      "signature": "asset()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only asset() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "balanceOf(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only balanceOf(address) exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "buyDBR(uint256,uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Standalone DBR auction purchase rather than savings entry/exit. Verified source explicitly warns never to expose directly to UI because delayed execution may cause loss; helper-based auction flow not reviewed/admitted."
+    },
+    {
+      "signature": "convertToAssets(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToAssets(uint256) exposes vault asset/share conversion or limit information; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "convertToShares(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToShares(uint256) exposes vault asset/share conversion or limit information; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "dbr()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only dbr() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "decimals()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only decimals() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "deposit(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary caller-funded DOLA deposit: Solmate ERC4626 mints receiver shares then sDola.afterDeposit stakes assets in fixed savings contract; minimum share invariant applies."
+    },
+    {
+      "signature": "getDbrReserve()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getDbrReserve() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "getDolaReserve()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getDolaReserve() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "getDolaReserve(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getDolaReserve(uint256) exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "getK()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getK() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "gov()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only gov() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "lastKUpdate()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only lastKUpdate() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "maxDeposit(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxDeposit(address) exposes vault asset/share conversion or limit information; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "maxMint(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxMint(address) exposes vault asset/share conversion or limit information; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "maxRedeem(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxRedeem(address) exposes vault asset/share conversion or limit information; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "maxWithdraw(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only maxWithdraw(address) exposes vault asset/share conversion or limit information; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "mint(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary exact-share mint: caller funds rounded-up DOLA, receiver receives shares, and fixed savings stake is made; no role gate."
+    },
+    {
+      "signature": "name()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only name() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "nonces(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only nonces(address) exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "operator()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only operator() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "pendingGov()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only pendingGov() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Signed ERC2612 allowance authorization surface; permit/signing is explicitly outside this admission."
+    },
+    {
+      "signature": "prevK()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only prevK() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "previewDeposit(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewDeposit(uint256) exposes vault asset/share conversion or limit information; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "previewMint(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewMint(uint256) exposes vault asset/share conversion or limit information; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "previewRedeem(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewRedeem(uint256) exposes vault asset/share conversion or limit information; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "previewWithdraw(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewWithdraw(uint256) exposes vault asset/share conversion or limit information; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "reapprove()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Permissionless but resets the protocol's unlimited DOLA allowance to its immutable savings contract, not the caller's vault position; protocol-maintenance action excluded."
+    },
+    {
+      "signature": "redeem(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary exact-share exit: caller or approved spender burns owner shares, unstakes from fixed savings and pays rounded-down DOLA to receiver, subject to residual minima."
+    },
+    {
+      "signature": "savings()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only savings() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "setOperator(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyGov changes privileged auction operator; administrative configuration excluded."
+    },
+    {
+      "signature": "setPendingGov(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyGov schedules governance replacement; administrative configuration excluded."
+    },
+    {
+      "signature": "setTargetK(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyOperator (gov or operator) changes DBR auction constant over time; privileged pricing configuration excluded."
+    },
+    {
+      "signature": "sweep(address,uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "onlyGov token recovery sends non-DBR tokens to a selected recipient; administrative sweep excluded."
+    },
+    {
+      "signature": "symbol()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only symbol() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "targetK()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only targetK() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "totalAssets()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalAssets() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "totalSupply()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalSupply() exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "transfer(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Transfers sDOLA shares rather than entering/exiting the vault; generic receipt-token transfer not admitted."
+    },
+    {
+      "signature": "transferFrom(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Transfers another owner's sDOLA shares under allowance; generic receipt-token transfer not admitted."
+    },
+    {
+      "signature": "weeklyRevenue(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only weeklyRevenue(uint256) exposes token metadata, balances, governance, savings or auction accounting state; retained in complete ABI inventory but no read/transaction capability activated in this deposit/exit slice."
+    },
+    {
+      "signature": "withdraw(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary exact-asset DOLA exit: owner shares/allowance consumed, beforeWithdraw enforces residual asset/share minima and unstakes from fixed savings, then DOLA paid to receiver."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "inverse-sdola:v1:1:0xb45ad160634c528cc3d2926d9807104fa3157305:deposit",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xb45ad160634c528cc3d2926d9807104fa3157305",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.inverse.finance/inverse-finance/inverse-finance/technical/smart-contracts.md ; https://sourcify.dev/server/v2/contract/1/0xb45ad160634c528cc3d2926d9807104fa3157305?fields=abi,compilation,sources,deployment,proxyResolution ; https://etherscan.io/address/0xb45ad160634c528cc3d2926d9807104fa3157305#code ; https://docs.inverse.finance/inverse-finance/inverse-finance/products/tokens/dola/sdola.md",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Inverse Finance",
+      "operation": "deposit",
+      "label": "Inverse Finance sDOLA deposit",
+      "warnings": [
+        "Ethereum mainnet sDOLA only. Official docs explicitly shut down sDOLA CCIP lanes in August 2026; historical L2 tokens and all bridge functions are outside this integration.",
+        "Underlying is DOLA (0x865377367054516e17014ccded1e7d814edc9ce4), not USDC. Deposits/mints transfer caller DOLA using allowance and stake it in the fixed savings contract; withdrawals/redeems unstake and return DOLA to the chosen receiver. Delegated exits require owner share allowance.",
+        "No caller-set minimum shares/maximum assets/deadline. ERC4626 rounding, weekly revenue vesting, DOLA depeg, smart-contract and fluctuating yield risks apply. totalAssets is capped at 10**32; withdrawing must leave at least 10**16 DOLA accounting units and 10**18 total shares. maxWithdraw/maxRedeem do not subtract these residual minima and are not an execution guarantee.",
+        "No user cooldown or separate reward claim. Yield comes from DBR auctions and vests over the following week; direct buyDBR and protocol allowance maintenance are not admitted. Source warns against treating sDOLA as a borrowable asset in systems sensitive to atomic value jumps.",
+        "Deployment/ABI/source matching evidence, not a fresh runtime/RPC identity, balance, liquidity or successful-execution guarantee. All admitted calls are nonpayable with zero native value. Independent authorization, token approvals, pause and signing controls remain required."
+      ]
+    },
+    {
+      "abi": {
+        "name": "mint",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "inverse-sdola:v1:1:0xb45ad160634c528cc3d2926d9807104fa3157305:mint",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xb45ad160634c528cc3d2926d9807104fa3157305",
+      "functionName": "mint",
+      "signature": "mint(uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.inverse.finance/inverse-finance/inverse-finance/technical/smart-contracts.md ; https://sourcify.dev/server/v2/contract/1/0xb45ad160634c528cc3d2926d9807104fa3157305?fields=abi,compilation,sources,deployment,proxyResolution ; https://etherscan.io/address/0xb45ad160634c528cc3d2926d9807104fa3157305#code ; https://docs.inverse.finance/inverse-finance/inverse-finance/products/tokens/dola/sdola.md",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Inverse Finance",
+      "operation": "mint",
+      "label": "Inverse Finance sDOLA mint",
+      "warnings": [
+        "Ethereum mainnet sDOLA only. Official docs explicitly shut down sDOLA CCIP lanes in August 2026; historical L2 tokens and all bridge functions are outside this integration.",
+        "Underlying is DOLA (0x865377367054516e17014ccded1e7d814edc9ce4), not USDC. Deposits/mints transfer caller DOLA using allowance and stake it in the fixed savings contract; withdrawals/redeems unstake and return DOLA to the chosen receiver. Delegated exits require owner share allowance.",
+        "No caller-set minimum shares/maximum assets/deadline. ERC4626 rounding, weekly revenue vesting, DOLA depeg, smart-contract and fluctuating yield risks apply. totalAssets is capped at 10**32; withdrawing must leave at least 10**16 DOLA accounting units and 10**18 total shares. maxWithdraw/maxRedeem do not subtract these residual minima and are not an execution guarantee.",
+        "No user cooldown or separate reward claim. Yield comes from DBR auctions and vests over the following week; direct buyDBR and protocol allowance maintenance are not admitted. Source warns against treating sDOLA as a borrowable asset in systems sensitive to atomic value jumps.",
+        "Deployment/ABI/source matching evidence, not a fresh runtime/RPC identity, balance, liquidity or successful-execution guarantee. All admitted calls are nonpayable with zero native value. Independent authorization, token approvals, pause and signing controls remain required."
+      ]
+    },
+    {
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "inverse-sdola:v1:1:0xb45ad160634c528cc3d2926d9807104fa3157305:redeem",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xb45ad160634c528cc3d2926d9807104fa3157305",
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.inverse.finance/inverse-finance/inverse-finance/technical/smart-contracts.md ; https://sourcify.dev/server/v2/contract/1/0xb45ad160634c528cc3d2926d9807104fa3157305?fields=abi,compilation,sources,deployment,proxyResolution ; https://etherscan.io/address/0xb45ad160634c528cc3d2926d9807104fa3157305#code ; https://docs.inverse.finance/inverse-finance/inverse-finance/products/tokens/dola/sdola.md",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Inverse Finance",
+      "operation": "redeem",
+      "label": "Inverse Finance sDOLA redeem",
+      "warnings": [
+        "Ethereum mainnet sDOLA only. Official docs explicitly shut down sDOLA CCIP lanes in August 2026; historical L2 tokens and all bridge functions are outside this integration.",
+        "Underlying is DOLA (0x865377367054516e17014ccded1e7d814edc9ce4), not USDC. Deposits/mints transfer caller DOLA using allowance and stake it in the fixed savings contract; withdrawals/redeems unstake and return DOLA to the chosen receiver. Delegated exits require owner share allowance.",
+        "No caller-set minimum shares/maximum assets/deadline. ERC4626 rounding, weekly revenue vesting, DOLA depeg, smart-contract and fluctuating yield risks apply. totalAssets is capped at 10**32; withdrawing must leave at least 10**16 DOLA accounting units and 10**18 total shares. maxWithdraw/maxRedeem do not subtract these residual minima and are not an execution guarantee.",
+        "No user cooldown or separate reward claim. Yield comes from DBR auctions and vests over the following week; direct buyDBR and protocol allowance maintenance are not admitted. Source warns against treating sDOLA as a borrowable asset in systems sensitive to atomic value jumps.",
+        "Deployment/ABI/source matching evidence, not a fresh runtime/RPC identity, balance, liquidity or successful-execution guarantee. All admitted calls are nonpayable with zero native value. Independent authorization, token approvals, pause and signing controls remain required."
+      ]
+    },
+    {
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "inverse-sdola:v1:1:0xb45ad160634c528cc3d2926d9807104fa3157305:withdraw",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xb45ad160634c528cc3d2926d9807104fa3157305",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.inverse.finance/inverse-finance/inverse-finance/technical/smart-contracts.md ; https://sourcify.dev/server/v2/contract/1/0xb45ad160634c528cc3d2926d9807104fa3157305?fields=abi,compilation,sources,deployment,proxyResolution ; https://etherscan.io/address/0xb45ad160634c528cc3d2926d9807104fa3157305#code ; https://docs.inverse.finance/inverse-finance/inverse-finance/products/tokens/dola/sdola.md",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Inverse Finance",
+      "operation": "withdraw",
+      "label": "Inverse Finance sDOLA withdraw",
+      "warnings": [
+        "Ethereum mainnet sDOLA only. Official docs explicitly shut down sDOLA CCIP lanes in August 2026; historical L2 tokens and all bridge functions are outside this integration.",
+        "Underlying is DOLA (0x865377367054516e17014ccded1e7d814edc9ce4), not USDC. Deposits/mints transfer caller DOLA using allowance and stake it in the fixed savings contract; withdrawals/redeems unstake and return DOLA to the chosen receiver. Delegated exits require owner share allowance.",
+        "No caller-set minimum shares/maximum assets/deadline. ERC4626 rounding, weekly revenue vesting, DOLA depeg, smart-contract and fluctuating yield risks apply. totalAssets is capped at 10**32; withdrawing must leave at least 10**16 DOLA accounting units and 10**18 total shares. maxWithdraw/maxRedeem do not subtract these residual minima and are not an execution guarantee.",
+        "No user cooldown or separate reward claim. Yield comes from DBR auctions and vests over the following week; direct buyDBR and protocol allowance maintenance are not admitted. Source warns against treating sDOLA as a borrowable asset in systems sensitive to atomic value jumps.",
+        "Deployment/ABI/source matching evidence, not a fresh runtime/RPC identity, balance, liquidity or successful-execution guarantee. All admitted calls are nonpayable with zero native value. Independent authorization, token approvals, pause and signing controls remain required."
+      ]
+    }
+  ],
+  "limitations": [
+    "Ethereum mainnet sDOLA only. Official docs explicitly shut down sDOLA CCIP lanes in August 2026; historical L2 tokens and all bridge functions are outside this integration.",
+    "Underlying is DOLA (0x865377367054516e17014ccded1e7d814edc9ce4), not USDC. Deposits/mints transfer caller DOLA using allowance and stake it in the fixed savings contract; withdrawals/redeems unstake and return DOLA to the chosen receiver. Delegated exits require owner share allowance.",
+    "No caller-set minimum shares/maximum assets/deadline. ERC4626 rounding, weekly revenue vesting, DOLA depeg, smart-contract and fluctuating yield risks apply. totalAssets is capped at 10**32; withdrawing must leave at least 10**16 DOLA accounting units and 10**18 total shares. maxWithdraw/maxRedeem do not subtract these residual minima and are not an execution guarantee.",
+    "No user cooldown or separate reward claim. Yield comes from DBR auctions and vests over the following week; direct buyDBR and protocol allowance maintenance are not admitted. Source warns against treating sDOLA as a borrowable asset in systems sensitive to atomic value jumps.",
+    "Deployment/ABI/source matching evidence, not a fresh runtime/RPC identity, balance, liquidity or successful-execution guarantee. All admitted calls are nonpayable with zero native value. Independent authorization, token approvals, pause and signing controls remain required."
+  ]
+}

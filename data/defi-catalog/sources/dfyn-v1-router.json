@@ -1,0 +1,2311 @@
+{
+  "schemaVersion": 1,
+  "chainId": 137,
+  "address": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+  "protocol": "dfyn-v1",
+  "contractName": "UniswapV2Router02",
+  "reviewedAt": "2026-10-16",
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.dfyn.network/technical/contracts",
+    "verifiedAt": "2026-10-16",
+    "chainId": 137,
+    "address": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+    "sourceType": "official Dfyn legacy contract mapping retrieved through search index, corroborated by exact-address PolygonScan and Sourcify",
+    "corroboratingRefs": [
+      "https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+      "https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all",
+      "https://github.com/dfyn/dfyn-exchange/blob/c660280354560d4ae67335ff350c052a9edfd63c/contracts/UniswapV2Router02.sol"
+    ],
+    "evidence": "Official Contracts page labels (Dfyn)swapV2Router02 Polygon as this exact address and (Dfyn)swapV2Factory Polygon as 0xE7Fb3e833eFE5F9c441105EB65Ef8b261266423B. This is the legacy Uniswap-V2-style Dfyn V1 deployment; the V2 in swapV2Router02 is not an admission of the separate newer Dfyn V2 router. PolygonScan labels this exact Polygon address DFYN Network: Router and verifies UniswapV2Router02.",
+    "deploymentTransaction": "0x516cf29b5a7989cc4d05bd945c05e57f8dcf0fe0b4e0e9065e7a37c5d41e3001",
+    "deploymentBlock": "6731433",
+    "deployer": "0x74665b21461F8D9b23bAB7d599bfd7566a95fD70",
+    "reportedProxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "constructorArguments": {
+      "encodedSuffix": "0x000000000000000000000000e7fb3e833efe5f9c441105eb65ef8b261266423b0000000000000000000000004c28f48448720e9000907bc2611f73022fdce1fa",
+      "factory": "0xE7Fb3e833eFE5F9c441105EB65Ef8b261266423B",
+      "WETH": "0x4c28f48448720e9000907BC2611F73022fdcE1fA"
+    },
+    "limitations": [
+      "Direct official docs URL, Markdown URL and query-string retry were unreachable; official deployment mapping was retrieved through the search index, not represented as a direct page retrieval.",
+      "PolygonScan displays a heuristic may-be-proxy notice, while exact-address Sourcify reports isProxy:false. The verified source binds factory and WETH immutably, initializes EIP-712 in its constructor, has no delegatecall/upgrade entry point and implements the router directly; an inherited EIP712Base comment about another inheritor using a proxy does not make this router a proxy. No independent live runtime identity attestation was performed.",
+      "PolygonScan labels the constructor-bound wrapped-native address Suspicious_Token804 in displayed internal transfers. This third-party label is not independently verified here; admission does not establish wrapper safety or financial suitability."
+    ]
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all",
+    "verifiedAt": "2026-10-16",
+    "chainId": 137,
+    "address": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+    "sourceType": "exact-chain/address Sourcify ABI and flattened verified source",
+    "sourcifyMatchId": "6395334",
+    "sourcifyVerifiedAt": "2025-05-27T04:39:23Z",
+    "reportedCreationMatch": "match",
+    "reportedRuntimeMatch": "match",
+    "compiler": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.6.12+commit.27d51765",
+      "compilerSettings": {
+        "libraries": {},
+        "optimizer": {
+          "runs": 999999,
+          "enabled": true
+        }
+      },
+      "name": "UniswapV2Router02",
+      "fullyQualifiedName": "UniswapV2Router02.sol:UniswapV2Router02"
+    },
+    "sourceFile": "UniswapV2Router02.sol",
+    "sourceSha256": "6d70458ef259f3dfb280c3a55639db3d83c864871fc2a2c9aff3b3589c9e756c",
+    "sourceHashRecipe": "SHA-256 of UTF-8 sources[UniswapV2Router02.sol].content from this exact-address Sourcify response without newline normalization.",
+    "metadataSourceKeccak256": "0x2d4f27d653dd40572dc070a838de03ac96275abd70613423e5ba729ab8e007bf",
+    "evidence": "The complete ABI below is copied from the exact Polygon137 address-bound Sourcify abi array, including NativeMetaTransaction and EIP-712 additions absent from generic Router02 ABIs. Sourcify reports match (not exact_match) for creation/runtime; PolygonScan independently displays Source Code Verified Exact Match. These are source-service reports, not an independent live-code check.",
+    "officialRepositorySourceRef": "https://github.com/dfyn/dfyn-exchange/blob/c660280354560d4ae67335ff350c052a9edfd63c/contracts/UniswapV2Router02.sol",
+    "officialRepositoryDifference": "Pinned official dfyn-exchange router is an older ordinary Router02 source without NativeMetaTransaction inheritance, constructor EIP-712 initialization or _msgSender substitutions. It is supplementary protocol context, not an exact deployment/ABI substitute; address-bound verified source is authoritative."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_WETH",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "MetaTransactionExecuted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "userAddress",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "relayerAddress",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address payable"
+        },
+        {
+          "name": "functionSignature",
+          "type": "bytes",
+          "indexed": false,
+          "internalType": "bytes"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ERC712_VERSION",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "WETH",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountTokenDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "executeMetaTransaction",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "userAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "functionSignature",
+          "type": "bytes",
+          "internalType": "bytes"
+        },
+        {
+          "name": "sigR",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "sigS",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "sigV",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountsIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getChainId",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getDomainSeperator",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getNonce",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "nonce",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quote",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapETHForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactTokensForETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "ERC712_VERSION",
+      "signature": "ERC712_VERSION()",
+      "decision": "excluded",
+      "reason": "Read-only EIP-712 version constant; not an admitted transaction operation or a new read API."
+    },
+    {
+      "functionName": "WETH",
+      "signature": "WETH()",
+      "decision": "excluded",
+      "reason": "Read-only constructor-bound wrapped-native address getter; not an admitted transaction operation or a new read API."
+    },
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary explicit token/token liquidity deposit: pulls bounded amounts from the direct caller, optionally creates the deterministic factory pair, checks configured minimums for reserve-based balancing, and mints LP to the explicit recipient; no permit or opaque execution."
+    },
+    {
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary explicit token/native-Polygon liquidity deposit: pulls tokens from caller, wraps required msg.value through constructor-bound WETH, mints LP to explicit recipient and refunds unused native value; no permit or opaque execution."
+    },
+    {
+      "functionName": "executeMetaTransaction",
+      "signature": "executeMetaTransaction(address,bytes,bytes32,bytes32,uint8)",
+      "decision": "excluded",
+      "reason": "Excluded signature-authorized opaque self-call executor: accepts arbitrary functionSignature bytes, verifies EIP-712 user signature, increments nonce and calls address(this) with appended signer. Outer ABI canonicalization does not authorize nested calldata or signer authority; no compatible execution scope is admitted."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "decision": "excluded",
+      "reason": "Read-only immutable factory getter; not an admitted transaction operation or a new read API."
+    },
+    {
+      "functionName": "getAmountIn",
+      "signature": "getAmountIn(uint256,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Pure reserve-based required-input arithmetic quote; not an admitted transaction operation or a new read API."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(uint256,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Pure reserve-based output arithmetic quote; not an admitted transaction operation or a new read API."
+    },
+    {
+      "functionName": "getAmountsIn",
+      "signature": "getAmountsIn(uint256,address[])",
+      "decision": "excluded",
+      "reason": "Read-only multihop required-input quote; not an admitted transaction operation or a new read API."
+    },
+    {
+      "functionName": "getAmountsOut",
+      "signature": "getAmountsOut(uint256,address[])",
+      "decision": "excluded",
+      "reason": "Read-only multihop output quote; not an admitted transaction operation or a new read API."
+    },
+    {
+      "functionName": "getChainId",
+      "signature": "getChainId()",
+      "decision": "excluded",
+      "reason": "Pure chain-ID helper for EIP-712; not an admitted transaction operation or a new read API."
+    },
+    {
+      "functionName": "getDomainSeperator",
+      "signature": "getDomainSeperator()",
+      "decision": "excluded",
+      "reason": "Read-only EIP-712 domain separator helper; not an admitted transaction operation or a new read API."
+    },
+    {
+      "functionName": "getNonce",
+      "signature": "getNonce(address)",
+      "decision": "excluded",
+      "reason": "Read-only user meta-transaction nonce getter; not an admitted transaction operation or a new read API."
+    },
+    {
+      "functionName": "quote",
+      "signature": "quote(uint256,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Pure liquidity-ratio arithmetic quote; not an admitted transaction operation or a new read API."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary explicit token/token liquidity withdrawal: pulls the specified LP amount from caller, burns through the deterministic factory pair, checks minimum returned amounts and sends underlying to explicit recipient without permit."
+    },
+    {
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary explicit token/native-Polygon liquidity withdrawal: consumes specified caller LP, checks pair-burn minimum amounts, forwards tokens and unwraps the returned wrapped-native amount to explicit recipient; no permit."
+    },
+    {
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/native liquidity withdrawal with fee-on-transfer support; consumes caller LP and checks pair-burn minimums but forwards the entire router token balance and does not guarantee net post-tax recipient tokens. These accounting risks are recorded, not hidden."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermit",
+      "signature": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Excluded LP permit/signature-authorized token/native withdrawal; ordinary non-permit removeLiquidityETH is independently admitted."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Excluded LP permit/signature-authorized fee-on-transfer token/native withdrawal; corresponding non-permit withdrawal is independently admitted."
+    },
+    {
+      "functionName": "removeLiquidityWithPermit",
+      "signature": "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Excluded LP permit/signature-authorized token/token withdrawal; ordinary non-permit removeLiquidity is independently admitted."
+    },
+    {
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary explicit exact-output native-Polygon/token swap: requires WETH path start, caps calculated input by msg.value, wraps required input and refunds excess to direct caller; explicit recipient, deadline and empty pair callback data."
+    },
+    {
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary explicit exact-input native-Polygon/token swap: wraps msg.value through constructor-bound WETH, requires path to start with WETH, enforces quoted minimum output and deadline and sends to explicit recipient; empty pair callback data."
+    },
+    {
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input native-Polygon/token swap with fee-on-transfer support: wraps msg.value, requires WETH path start, computes hops from pair balances and enforces recipient output balance delta plus deadline; empty pair callback data."
+    },
+    {
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary explicit exact-input token/native-Polygon swap: pulls bounded caller input, requires WETH path end, checks quoted minimum output, unwraps calculated output and pays explicit recipient; empty pair callback data."
+    },
+    {
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/native-Polygon swap with fee-on-transfer support: pulls specified caller input, requires WETH path end and checks minimum against the entire router WETH balance before unwrapping and paying explicit recipient; this whole-balance behavior is recorded."
+    },
+    {
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary explicit exact-input token/token swap: pulls specified caller input, derives pairs from immutable factory and caller token path, enforces quoted minimum output and deadline, and delivers to explicit recipient; pair callback data is empty."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/token swap with fee-on-transfer support: pulls specified caller input, computes hop input using pair balance minus reserve, enforces recipient output balance delta and deadline, and uses empty pair callback data."
+    },
+    {
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary explicit exact-output token/native-Polygon swap: checks input maximum, requires WETH path end, pulls calculated caller input and unwraps the specified native output to explicit recipient before deadline; empty pair callback data."
+    },
+    {
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Ordinary explicit exact-output token/token swap: pulls calculated input subject to caller maximum, uses deterministic path pairs with empty callback data and enforces deadline; no opaque executor."
+    }
+  ],
+  "nonFunctionEntries": [
+    {
+      "type": "constructor",
+      "name": null,
+      "reason": "Deployment-only constructor; no function capability."
+    },
+    {
+      "type": "event",
+      "name": "MetaTransactionExecuted",
+      "reason": "Event declaration; not a callable function."
+    },
+    {
+      "type": "receive",
+      "name": null,
+      "reason": "Native receiver restricted to constructor-bound WETH sender; not a function capability."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:add-liquidity",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountADesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 addLiquidity",
+      "operation": "add-liquidity",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "Nonpayable function requires zero native value; ERC20 or LP spending requires caller allowance to this exact router.",
+        "Ordinary quote/minimum checks are not fee-on-transfer support and do not guarantee net post-tax recipient amounts; nonstandard tokens may revert or produce unintended accounting."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:add-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountTokenDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 addLiquidityETH",
+      "operation": "add-liquidity-eth",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "ABI ETH/WETH names refer to Polygon native value (historically MATIC, now POL), not Ethereum ETH. Constructor-bound WETH is 0x4c28f48448720e9000907BC2611F73022fdcE1fA, not the commonly used 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 wrapped-native token; do not substitute it in paths. No wrapper safety or current configuration attestation is implied.",
+        "Payable function can spend native POL value; native-input exact-input swaps use msg.value, while exact-output native swaps and native liquidity deposits may refund unused value to the direct caller.",
+        "Ordinary quote/minimum checks are not fee-on-transfer support and do not guarantee net post-tax recipient amounts; nonstandard tokens may revert or produce unintended accounting."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 removeLiquidity",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "Nonpayable function requires zero native value; ERC20 or LP spending requires caller allowance to this exact router.",
+        "Ordinary quote/minimum checks are not fee-on-transfer support and do not guarantee net post-tax recipient amounts; nonstandard tokens may revert or produce unintended accounting."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:remove-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 removeLiquidityETH",
+      "operation": "remove-liquidity-eth",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "ABI ETH/WETH names refer to Polygon native value (historically MATIC, now POL), not Ethereum ETH. Constructor-bound WETH is 0x4c28f48448720e9000907BC2611F73022fdcE1fA, not the commonly used 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 wrapped-native token; do not substitute it in paths. No wrapper safety or current configuration attestation is implied.",
+        "Nonpayable function requires zero native value; ERC20 or LP spending requires caller allowance to this exact router.",
+        "Ordinary quote/minimum checks are not fee-on-transfer support and do not guarantee net post-tax recipient amounts; nonstandard tokens may revert or produce unintended accounting."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 removeLiquidityETHSupportingFeeOnTransferTokens",
+      "operation": "remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "ABI ETH/WETH names refer to Polygon native value (historically MATIC, now POL), not Ethereum ETH. Constructor-bound WETH is 0x4c28f48448720e9000907BC2611F73022fdcE1fA, not the commonly used 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 wrapped-native token; do not substitute it in paths. No wrapper safety or current configuration attestation is implied.",
+        "Nonpayable function requires zero native value; ERC20 or LP spending requires caller allowance to this exact router.",
+        "Fee-on-transfer support computes hop input from pair balance minus reserve; recipient token-output swaps check recipient balance delta. Taxes, rebasing and other nonstandard token behavior remain risks. Supporting liquidity removal checks pair-burn amounts before recipient tax, not guaranteed net received tokens.",
+        "Forwards the entire router balance of the selected token, including any pre-existing balance, to to; minimum token checks are based on pair burn return values and do not guarantee net post-tax receipt."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:swap-eth-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapETHForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 swapETHForExactTokens",
+      "operation": "swap-eth-for-exact-tokens",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "ABI ETH/WETH names refer to Polygon native value (historically MATIC, now POL), not Ethereum ETH. Constructor-bound WETH is 0x4c28f48448720e9000907BC2611F73022fdcE1fA, not the commonly used 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 wrapped-native token; do not substitute it in paths. No wrapper safety or current configuration attestation is implied.",
+        "Payable function can spend native POL value; native-input exact-input swaps use msg.value, while exact-output native swaps and native liquidity deposits may refund unused value to the direct caller.",
+        "Ordinary quote/minimum checks are not fee-on-transfer support and do not guarantee net post-tax recipient amounts; nonstandard tokens may revert or produce unintended accounting."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:swap-exact-eth-for-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 swapExactETHForTokens",
+      "operation": "swap-exact-eth-for-tokens",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "ABI ETH/WETH names refer to Polygon native value (historically MATIC, now POL), not Ethereum ETH. Constructor-bound WETH is 0x4c28f48448720e9000907BC2611F73022fdcE1fA, not the commonly used 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 wrapped-native token; do not substitute it in paths. No wrapper safety or current configuration attestation is implied.",
+        "Payable function can spend native POL value; native-input exact-input swaps use msg.value, while exact-output native swaps and native liquidity deposits may refund unused value to the direct caller.",
+        "Ordinary quote/minimum checks are not fee-on-transfer support and do not guarantee net post-tax recipient amounts; nonstandard tokens may revert or produce unintended accounting."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "ABI ETH/WETH names refer to Polygon native value (historically MATIC, now POL), not Ethereum ETH. Constructor-bound WETH is 0x4c28f48448720e9000907BC2611F73022fdcE1fA, not the commonly used 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 wrapped-native token; do not substitute it in paths. No wrapper safety or current configuration attestation is implied.",
+        "Payable function can spend native POL value; native-input exact-input swaps use msg.value, while exact-output native swaps and native liquidity deposits may refund unused value to the direct caller.",
+        "Fee-on-transfer support computes hop input from pair balance minus reserve; recipient token-output swaps check recipient balance delta. Taxes, rebasing and other nonstandard token behavior remain risks. Supporting liquidity removal checks pair-burn amounts before recipient tax, not guaranteed net received tokens."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:swap-exact-tokens-for-eth",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 swapExactTokensForETH",
+      "operation": "swap-exact-tokens-for-eth",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "ABI ETH/WETH names refer to Polygon native value (historically MATIC, now POL), not Ethereum ETH. Constructor-bound WETH is 0x4c28f48448720e9000907BC2611F73022fdcE1fA, not the commonly used 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 wrapped-native token; do not substitute it in paths. No wrapper safety or current configuration attestation is implied.",
+        "Nonpayable function requires zero native value; ERC20 or LP spending requires caller allowance to this exact router.",
+        "Ordinary quote/minimum checks are not fee-on-transfer support and do not guarantee net post-tax recipient amounts; nonstandard tokens may revert or produce unintended accounting."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "ABI ETH/WETH names refer to Polygon native value (historically MATIC, now POL), not Ethereum ETH. Constructor-bound WETH is 0x4c28f48448720e9000907BC2611F73022fdcE1fA, not the commonly used 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 wrapped-native token; do not substitute it in paths. No wrapper safety or current configuration attestation is implied.",
+        "Nonpayable function requires zero native value; ERC20 or LP spending requires caller allowance to this exact router.",
+        "Fee-on-transfer support computes hop input from pair balance minus reserve; recipient token-output swaps check recipient balance delta. Taxes, rebasing and other nonstandard token behavior remain risks. Supporting liquidity removal checks pair-burn amounts before recipient tax, not guaranteed net received tokens.",
+        "Uses the entire router WETH balance for amountOut, minimum checking, unwrapping and native payout, including any pre-existing wrapped balance; output is not isolated to this swap balance delta."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:swap-exact-tokens-for-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 swapExactTokensForTokens",
+      "operation": "swap-exact-tokens-for-tokens",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "Nonpayable function requires zero native value; ERC20 or LP spending requires caller allowance to this exact router.",
+        "Ordinary quote/minimum checks are not fee-on-transfer support and do not guarantee net post-tax recipient amounts; nonstandard tokens may revert or produce unintended accounting."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "Nonpayable function requires zero native value; ERC20 or LP spending requires caller allowance to this exact router.",
+        "Fee-on-transfer support computes hop input from pair balance minus reserve; recipient token-output swaps check recipient balance delta. Taxes, rebasing and other nonstandard token behavior remain risks. Supporting liquidity removal checks pair-burn amounts before recipient tax, not guaranteed net received tokens."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:swap-tokens-for-exact-eth",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 swapTokensForExactETH",
+      "operation": "swap-tokens-for-exact-eth",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "ABI ETH/WETH names refer to Polygon native value (historically MATIC, now POL), not Ethereum ETH. Constructor-bound WETH is 0x4c28f48448720e9000907BC2611F73022fdcE1fA, not the commonly used 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 wrapped-native token; do not substitute it in paths. No wrapper safety or current configuration attestation is implied.",
+        "Nonpayable function requires zero native value; ERC20 or LP spending requires caller allowance to this exact router.",
+        "Ordinary quote/minimum checks are not fee-on-transfer support and do not guarantee net post-tax recipient amounts; nonstandard tokens may revert or produce unintended accounting."
+      ]
+    },
+    {
+      "capabilityId": "dfyn-v1:v1:137:0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429:swap-tokens-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xA102072A4C07F06EC3B4900FDC4C7B80b6c57429",
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Official deployment documentation (retrieved through search index): https://docs.dfyn.network/technical/contracts ; exact-address deployment ABI/source: https://sourcify.dev/server/v2/contract/137/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429?fields=all ; explorer: https://polygonscan.com/address/0xa102072a4c07f06ec3b4900fdc4c7b80b6c57429#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "dfyn-v1",
+      "label": "Dfyn V1 swapTokensForExactTokens",
+      "operation": "swap-tokens-for-exact-tokens",
+      "warnings": [
+        "Caller controls token path/assets, amounts, recipient, minimums and deadline; admission does not constrain these financial parameters. Token/LP approvals, balances, liquidity, slippage, gas and recipient behavior remain caller responsibilities under independent controls.",
+        "Only direct ordinary router calls are admitted. Deployed NativeMetaTransaction changes _msgSender only for router self-calls; executeMetaTransaction and all permit/signature paths remain excluded. No owner-settable router hook or arbitrary callback data appears in the reviewed router source.",
+        "Source snapshots do not attest current runtime identity/configuration, balances, liquidity, successful execution, complete workflows or financial safety; capability metadata grants no API-key authority and changes no independent safety controls.",
+        "Nonpayable function requires zero native value; ERC20 or LP spending requires caller allowance to this exact router.",
+        "Ordinary quote/minimum checks are not fee-on-transfer support and do not guarantee net post-tax recipient amounts; nonstandard tokens may revert or produce unintended accounting."
+      ]
+    }
+  ],
+  "reviewSummary": {
+    "callableFunctionCount": 29,
+    "admittedFunctionCount": 14,
+    "excludedFunctionCount": 15,
+    "admittedSwaps": 9,
+    "admittedNonPermitLiquidityActions": 5,
+    "excludedReadOnlyFunctions": 11,
+    "excludedPermitFunctions": 3,
+    "excludedMetaTransactionExecutors": 1,
+    "nativeAssetNaming": "ABI ETH/WETH names refer to Polygon native value (historically MATIC, now POL), not Ethereum ETH. Constructor-bound WETH is 0x4c28f48448720e9000907BC2611F73022fdcE1fA, not the commonly used 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 wrapped-native token; do not substitute it in paths. No wrapper safety or current configuration attestation is implied.",
+    "routerControls": "No router owner, owner transfer, hook setter, arbitrary target executor, external callback or multicall appears in this deployment ABI. Factory and WETH are immutable. Ordinary router swaps call deterministic factory pairs with empty callback bytes; no capability is created for pair callbacks or separately deployed factory/pair administration. executeMetaTransaction is an opaque signature self-call executor and remains excluded independently.",
+    "wholeBalanceAndTaxBehavior": [
+      "Fee-on-transfer support computes hop input from pair balance minus reserve; recipient token-output swaps check recipient balance delta. Taxes, rebasing and other nonstandard token behavior remain risks. Supporting liquidity removal checks pair-burn amounts before recipient tax, not guaranteed net received tokens.",
+      "removeLiquidityETHSupportingFeeOnTransferTokens transfers the entire router token balance; swapExactTokensForETHSupportingFeeOnTransferTokens unwraps and pays the entire router WETH balance. Neither isolates pre-existing router balances."
+    ],
+    "limitations": [
+      "No tests, build, lint, formatter, live RPC, balance/liquidity check, execution simulation or safety attestation was performed.",
+      "Source evidence is catalog metadata only. Existing ABI canonicalization, grant modes, pauses, value policies, final rechecks and execution/signing boundaries remain independently required."
+    ]
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "vesper-vusdc",
+      "familyVersion": "vusdc@894defe7",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x0c49066c0808ee8c673553b7cbd99bcc9abf113d",
+          "status": "inactive",
+          "contractName": "Vesper vUSDC Pool",
+          "sourceRefs": ["vesper-official-metadata", "vusdc-address-bound-source", "vusdc-address-bound-abi"],
+          "abiFunctions": [
+            {
+              "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+              "name": "deposit",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": ["vesper-official-metadata", "vusdc-address-bound-source", "vusdc-address-bound-abi"]
+            },
+            {
+              "inputs": [{"internalType": "uint256", "name": "shares", "type": "uint256"}],
+              "name": "withdraw",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": ["vesper-official-metadata", "vusdc-address-bound-source", "vusdc-address-bound-abi"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "vesper-official-metadata",
+      "url": "https://github.com/VesperFi/metadata/tree/7334bb44adcce9de3e318e0322218197c932fee0",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Official VesperFi/metadata commit 7334bb44adcce9de3e318e0322218197c932fee0 (2024-12-04); retained vesper-metadata.json SHA-256 8f2b548013e944bb5c91a692e3cd49d0bfd36d54a1db6778bf0588f8ccc774f1 identifies exact Ethereum target 0x0c49066c0808ee8c673553b7cbd99bcc9abf113d as vUSDC, stage prod, type grow, with USDC collateral."
+    },
+    {
+      "sourceId": "vusdc-address-bound-source",
+      "url": "https://etherscan.io/address/0x0c49066c0808ee8c673553b7cbd99bcc9abf113d#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Address-bound VUSDC.verified.sol source carrier SHA-256 894defe72c67e4c7271440af7cf18f1754f900bd18f36a5be1fa5dd1bfa3609f; retained address page vusdc-prod.html SHA-256 0d665bf3a2c299093eb8e6fe176b2ccd58dd8389ecfec4459bd7464580dfa671 identifies this address and verified VUSDC source. The page/source observation is dated, not current runtime, storage, or initialization proof."
+    },
+    {
+      "sourceId": "vusdc-address-bound-abi",
+      "url": "https://etherscan.io/address/0x0c49066c0808ee8c673553b7cbd99bcc9abf113d#code",
+      "retrievedAtUtc": "2026-10-06",
+      "evidence": "Full address-bound ABI carrier SHA-256 4167ed702abe5caf41dd4cc98c5b55ed5f653fbfa5e51954fd078a6e2c144a20. Independently selected deposit(uint256 amount) ABI carrier SHA-256 bea4b91d3c162058d74ddad7a4b3e76092b6e2059f12f2954b906adb57fd4f33 and withdraw(uint256 shares) ABI carrier SHA-256 59eb4544a9098490d5e918fb80b278ee40026aaf78225a5587180d6c7360f319 each match exactly one entry in the full ABI, including parameter names/internal types, nonpayable mutability, and empty outputs. Only these two signatures are selected."
+    }
+  ],
+  "unresolved": []
+}

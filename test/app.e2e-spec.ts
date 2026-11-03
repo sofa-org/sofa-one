@@ -42,12 +42,15 @@ describe('AppController (e2e)', () => {
     await app.close();
   });
 
-  it('/v1/wallets/deposit-info (POST) should require API key', () => {
-    return request(app.getHttpServer()).post('/v1/wallets/deposit-info').expect(401);
+  it('dashboard deposits uses only the unversioned IAM-protected GET route', async () => {
+    await request(app.getHttpServer()).get('/wallets/deposits').expect(401);
+    await request(app.getHttpServer()).get('/wallets/deposit-info').expect(404);
+    await request(app.getHttpServer()).post('/wallets/deposits').expect(404);
   });
 
-  it('/auth/social (POST) should require authorization', () => {
-    return request(app.getHttpServer()).post('/auth/social').expect(401);
+  it('removes the /auth/social alias and keeps /auth/session IAM-protected', async () => {
+    await request(app.getHttpServer()).post('/auth/social').expect(404);
+    await request(app.getHttpServer()).post('/auth/session').expect(401);
   });
 
   it('rejects unknown request fields like the production bootstrap', async () => {

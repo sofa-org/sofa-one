@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { OpenfortService } from '../../core/openfort/openfort.service';
+import { API_ERROR_CODES } from '../errors/api-error-codes';
 
 /**
  * Verifies the Openfort IAM access token from Authorization: Bearer.
@@ -23,19 +24,17 @@ export class OpenfortAuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const token = this.extractBearerToken(request);
-    if (!token) throw new UnauthorizedException('Missing authorization token');
+    if (!token) throw new UnauthorizedException({
+      code: API_ERROR_CODES.AUTH_PROVIDER_INVALID,
+      message: 'Missing Openfort authorization token',
+    });
 
-    try {
-      const session = await this.openfort.verifyIamSession(token);
-      request.openfortUserId = session.openfortUserId;
-      request.openfortAccessToken = token;
-      request.openfortSession = session.session;
-      request.openfortEmail = session.email;
-      return true;
-    } catch (err) {
-      if (err instanceof UnauthorizedException) throw err;
-      throw new UnauthorizedException('Invalid authorization token');
-    }
+    const session = await this.openfort.verifyIamSession(token);
+    request.openfortUserId = session.openfortUserId;
+    request.openfortAccessToken = token;
+    request.openfortSession = session.session;
+    request.openfortEmail = session.email;
+    return true;
   }
 
   private extractBearerToken(request: { headers: Record<string, string> }): string | undefined {

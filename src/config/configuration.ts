@@ -1,15 +1,22 @@
+import { SUPPORTED_CHAINS } from '../common/chains/supported-chains';
+
 /**
- * Load per-chain simulation RPC URLs from `SIMULATION_RPC_URLS__<chainId>` env vars
+ * Load shared per-chain RPC URLs from `RPC_URLS__<chainId>` env vars
  * (Nest-style double-underscore nested keys). Keys are numeric chain id strings.
  * Startup validation in env.validation.ts enforces supported chains + https;
  * it also rejects non-numeric / unknown-chain suffixes on the same prefix.
  */
-function loadSimulationRpcUrls(): Record<string, string> {
+function loadRpcUrls(): Record<string, string> {
   const urls: Record<string, string> = {};
+  for (const { chainId, chain } of Object.values(SUPPORTED_CHAINS)) {
+    const url = chain.rpcUrls.default.http.find((candidate) => candidate.startsWith('https://'));
+    if (!url) throw new Error(`No default HTTPS RPC for supported chain ${chainId}`);
+    urls[String(chainId)] = url;
+  }
   for (const [key, value] of Object.entries(process.env)) {
-    const match = /^SIMULATION_RPC_URLS__(\d+)$/.exec(key);
+    const match = /^RPC_URLS__(\d+)$/.exec(key);
     if (!match) continue;
-    urls[match[1]] = typeof value === 'string' ? value : '';
+    urls[match[1]] = typeof value === 'string' ? value.trim() : '';
   }
   return urls;
 }
@@ -40,6 +47,9 @@ export default () => ({
     cancelUrl: process.env.STRIPE_CANCEL_URL,
   },
   billing: {
+    outbound: {
+      requiredConfirmations: parseInt(process.env.BILLING_OUTBOUND_REQUIRED_CONFIRMATIONS || '5', 10),
+    },
     usdc: {
       enabled: process.env.BILLING_USDC_ENABLED === 'true',
       treasuryAddresses: {
@@ -62,12 +72,12 @@ export default () => ({
     },
   },
   /**
-   * Explicit per-chain HTTPS RPCs for debt-gate asset-flow evidence simulation.
-   * Never fall back to public `http()` — missing chain entries fail closed at runtime
-   * as BILLING_ASSET_FLOW_UNVERIFIABLE. Configure via SIMULATION_RPC_URLS__<chainId>.
+   * Per-chain HTTPS RPCs shared by simulation and on-chain verification.
+   * Registry defaults apply only when no explicit RPC_URLS__<chainId> is set.
+   * Provider failures remain fail-closed; explicit overrides never fail over.
    */
-  simulation: {
-    rpcUrls: loadSimulationRpcUrls() as Record<string, string>,
+  rpc: {
+    urls: loadRpcUrls(),
   },
   security: {
     trustProxy: process.env.TRUST_PROXY,

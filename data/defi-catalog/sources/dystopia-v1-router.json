@@ -1,0 +1,2548 @@
+{
+  "schemaVersion": 1,
+  "chainId": 137,
+  "address": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+  "protocol": "dystopia-v1",
+  "website": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md",
+  "websiteEvidence": {
+    "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md",
+    "verifiedAt": "2026-10-18",
+    "evidence": "Reachable official contract documentation attributes the exact router separately from controller/factory/gauges. Directory uses this informational source, not an assertion of operating trading frontend or current incentives."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md",
+    "verifiedAt": "2026-10-18",
+    "chainId": 137,
+    "address": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+    "deployment": {
+      "transactionHash": "0x6707034d2ee5eb8658130f140332d88077809469f0502bd3d2ddb566ef9feb20",
+      "blockNumber": "27992480",
+      "transactionIndex": "42",
+      "deployer": "0xbbbbb8C4364eC2ce52c59D2Ed3E56F307E529a94"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "constructorArguments": {
+      "constructorArguments": "0x0000000000000000000000001d21db6cde1b18c7e47b0f7f42f4b3f68b9beec90000000000000000000000000d500b1d8e8ef31e21c99d1db9a6444d3adf1270"
+    },
+    "immutableBindings": {
+      "immutables": {
+        "20": "0x0000000000000000000000001d21db6cde1b18c7e47b0f7f42f4b3f68b9beec9",
+        "23": "0x0000000000000000000000000d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+        "30": "0x009bce6d7eb00d3d075e5bd9851068137f44bba159f1cde806a268e20baaf2e8"
+      }
+    },
+    "evidence": "Official contracts page maps DystRouter01.sol to exact Polygon explorer address. Exact-chain/address source-service record identifies direct DystRouter01 non-proxy deployment. Constructor reads pairCodeHash once from immutable factory; immutable transformations bind factory 0x1d21Db6cde1b18c7E47B0F7F42f4b3F68b9beeC9, wrapped native 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270 and hash 0x009bce6d7eb00d3d075e5bd9851068137f44bba159f1cde806a268e20baaf2e8. No live RPC check."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+    "verifiedAt": "2026-10-18",
+    "chainId": 137,
+    "address": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.13+commit.abaa5c0e",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "london",
+        "remappings": []
+      },
+      "name": "DystRouter01",
+      "fullyQualifiedName": "contracts/base/periphery/DystRouter01.sol:DystRouter01"
+    },
+    "matchId": "5264624",
+    "sourceServiceVerifiedAt": "2024-09-03T14:41:54Z",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "sourceFile": "contracts/base/periphery/DystRouter01.sol",
+    "sourceSha256": "ddc41d5fd053769ecb55dd8930f56a6c742cace04e61e6bfb762f4bd03fa7b84",
+    "officialSourceRef": "https://github.com/dystopia-exchange/dystopia-contracts/blob/72767f4d239fc5b931e4095ff3980f4e846d0f3a/contracts/base/periphery/DystRouter01.sol",
+    "officialSourceSha256": "4040a7437ad996a8e17b8716b8ecd85fa47454ca5e6be5fe5d7a7c9efb594350",
+    "officialComparison": "Pinned official router equals deployed source after removing whitespace, not byte-for-byte. Deployed source remains authoritative; no whole-repository or dependency byte identity is claimed.",
+    "dependencySourceHashes": {
+      "contracts/lib/Math.sol": "8726a3e687fc2ba2028af5d8bddb78940138d6e6949a8b08309cb59a5c22e749",
+      "contracts/lib/Address.sol": "71aaf5c18f2459500cd76af3630ebba944d059e098ccccac4d9922e8227e9455",
+      "contracts/lib/SafeERC20.sol": "be05194cd10bd950c9e36931aeb80a00824f7dd3bf9c30736a8999e7ee69cfe6",
+      "contracts/interface/IPair.sol": "fde73c106a5767a2ec92848bf5f530c143d8edb7d8123259a7383e04cfdea6fd",
+      "contracts/interface/IERC20.sol": "716e0dc7eb13b2889c3781d792110e27268824b45866779d767f644a7fcea863",
+      "contracts/interface/IWMATIC.sol": "134039acf8b6a45b939ca3e99420addf51b6df3da4af4f982d349a262743415b",
+      "contracts/interface/IFactory.sol": "0f1753144a41c8e5823a76ec7366dfddc9889fa515d6f297a8729b73766ba8d2",
+      "contracts/base/periphery/DystRouter01.sol": "ddc41d5fd053769ecb55dd8930f56a6c742cace04e61e6bfb762f4bd03fa7b84"
+    },
+    "evidence": "Full deployment-bound ABI retained unchanged; selected fragments are unchanged references from this ABI. Reviewed all router methods plus SafeERC20 transfer encoding. Constructor-bound pair factory and cached hash constrain pair calls; source-service exact_match labels are preserved and do not constitute fresh runtime/dependency attestation. No generic Solidly ABI substitution."
+  },
+  "sourceSemantics": {
+    "routing": "Route[] consists only of from/to/stable, not arbitrary calldata. Both loops derive pairs and send empty callback bytes. Fee-supporting loop calls selected pair.getAmountOut directly; does not choose a different pool type for its quote.",
+    "liquidity": "Both desired amounts must be >= corresponding minima before empty/existing-reserve branches. Empty reserves use desired amounts; optimized existing-reserve side additionally checked. No min LP output. Removals use caller LP allowance and pair-burn amounts.",
+    "native": "MATIC ABI names denote Polygon native currency, now POL; immutable wrapped address is legacy WMATIC/WPOL. Three payable functions: token/native add and two native-input swap variants. add refunds dust to caller; native-output methods unwrap and send to recipient via empty calldata.",
+    "feeSupporting": "Native removal transfers whole router token balance. Token/native swap checks and unwraps whole router wrapped balance. Token-output variants check recipient balance delta. Pair quote/fee/reserve and external-token code are not live-attested.",
+    "excluded": "Three permits, UNSAFE caller-supplied per-hop amounts and twelve read-only helpers excluded. Constructor/receive create no capability. No gauges, staking, emissions or controller operations included.",
+    "lifecycle": "Official docs describe historical swaps and incentives, not current fee/incentive or frontend availability proof. No specific shutdown/pause or renewed-live-operation claim is made."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_wmatic",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "UNSAFE_swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct DystRouter01.Route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidityMATIC",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "amountTokenDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountMATICMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountMATIC",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct DystRouter01.Route[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getExactAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getReserves",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isPair",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "pair",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pairFor",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pair",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quoteAddLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quoteLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "quoteRemoveLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityMATIC",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountMATICMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountMATIC",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityMATICSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountFTMMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountFTM",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityMATICWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountMATICMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountMATIC",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityMATICWithPermitSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountFTMMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountFTM",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "sortTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "token0",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "token1",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "swapExactMATICForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct DystRouter01.Route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactMATICForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct DystRouter01.Route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactTokensForMATIC",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct DystRouter01.Route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForMATICSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct DystRouter01.Route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct DystRouter01.Route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSimple",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenFrom",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenTo",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "stable",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "routes",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "from",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stable",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ],
+          "internalType": "struct DystRouter01.Route[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "wmatic",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IWMATIC"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "UNSAFE_swapExactTokensForTokens",
+      "signature": "UNSAFE_swapExactTokensForTokens(uint256[],(address,address,bool)[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "UNSAFE caller-supplied per-hop amounts bypass router quote and final-minimum computation; specialized unsafe surface excluded."
+    },
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,bool,uint256,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit stable/volatile token-pair liquidity provision funded by caller allowances; factory may create a missing pair and LP is minted to chosen recipient. Desired amounts must meet both minima before reserve optimization; optimized side has an additional minimum check; no minimum LP-output parameter."
+    },
+    {
+      "functionName": "addLiquidityMATIC",
+      "signature": "addLiquidityMATIC(address,bool,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit token/native liquidity provision using constructor-bound wrapped native currency; desired amounts and optimized side minima checked, LP minted to recipient and unused native value refunded to caller. MATIC ABI naming denotes Polygon native currency."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(uint256,address,address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "getAmountsOut",
+      "signature": "getAmountsOut(uint256,(address,address,bool)[])",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "getExactAmountOut",
+      "signature": "getExactAmountOut(uint256,address,address,bool)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "getReserves",
+      "signature": "getReserves(address,address,bool)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "isPair",
+      "signature": "isPair(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "pairFor",
+      "signature": "pairFor(address,address,bool)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "quoteAddLiquidity",
+      "signature": "quoteAddLiquidity(address,address,bool,uint256,uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "quoteLiquidity",
+      "signature": "quoteLiquidity(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "quoteRemoveLiquidity",
+      "signature": "quoteRemoveLiquidity(address,address,bool,uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,bool,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary non-permit caller-LP removal using LP allowance; pair burns to chosen recipient and both burn-accounting minimums/deadline are checked, not post-tax net receipts."
+    },
+    {
+      "functionName": "removeLiquidityMATIC",
+      "signature": "removeLiquidityMATIC(address,bool,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary non-permit caller-LP removal through router custody; calculated token output transferred, wrapped native output unwrapped and paid to chosen recipient; pair-burn minimums and deadline checked."
+    },
+    {
+      "functionName": "removeLiquidityMATICSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityMATICSupportingFeeOnTransferTokens(address,bool,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary non-permit fee-supporting caller-LP removal; checks pair-burn minimums/deadline, forwards entire router token balance, unwraps calculated wrapped-native output. Net taxed-token output is not guaranteed."
+    },
+    {
+      "functionName": "removeLiquidityMATICWithPermit",
+      "signature": "removeLiquidityMATICWithPermit(address,bool,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Signature-bearing LP permit and allowance authority excluded; ordinary non-permit removals independently selected."
+    },
+    {
+      "functionName": "removeLiquidityMATICWithPermitSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityMATICWithPermitSupportingFeeOnTransferTokens(address,bool,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Signature-bearing LP permit and allowance authority excluded; ordinary non-permit removals independently selected."
+    },
+    {
+      "functionName": "removeLiquidityWithPermit",
+      "signature": "removeLiquidityWithPermit(address,address,bool,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Signature-bearing LP permit and allowance authority excluded; ordinary non-permit removals independently selected."
+    },
+    {
+      "functionName": "sortTokens",
+      "signature": "sortTokens(address,address)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    },
+    {
+      "functionName": "swapExactMATICForTokens",
+      "signature": "swapExactMATICForTokens(uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input native/token swap; path must start with constructor-bound wrapped native currency, wraps msg.value and checks calculated final output minimum/deadline."
+    },
+    {
+      "functionName": "swapExactMATICForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactMATICForTokensSupportingFeeOnTransferTokens(uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit native/token fee-supporting swap; wraps msg.value through fixed wrapped native token, uses selected stable/volatile pair quote at each hop and checks recipient output-token balance increase/deadline."
+    },
+    {
+      "functionName": "swapExactTokensForMATIC",
+      "signature": "swapExactTokensForMATIC(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/native swap; path must end with constructor-bound wrapped native currency, pulls caller input, checks calculated output minimum/deadline and unwraps calculated output to recipient."
+    },
+    {
+      "functionName": "swapExactTokensForMATICSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForMATICSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit token/native fee-supporting swap; caller funds selected path ending in wrapped native token. Checks minimum against entire router wrapped-native balance, unwraps all and pays recipient; deadline checked."
+    },
+    {
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit tuple-route exact-input token swap; pair-specific getAmountOut for chosen stable flags, caller input transfer and calculated final output minimum/deadline; empty callback bytes, not opaque executor data."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSimple",
+      "signature": "swapExactTokensForTokensSimple(uint256,uint256,address,address,bool,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "One explicit stable/volatile pair exact-input swap; constructs one route, derives pair from immutable factory/hash, pulls caller amount and checks calculated output minimum/deadline; empty pair callback data."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit tuple-route exact-input fee-supporting swap; caller funds first pair, per-hop pair-specific quote uses actual balance minus reserve and recipient balance increase must meet final minimum; deadline checked."
+    },
+    {
+      "functionName": "wmatic",
+      "signature": "wmatic()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getter/quote/helper excluded; no transaction capability or read API."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:add-liquidity",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,bool,uint256,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "amountADesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia addLiquidity",
+      "operation": "add-liquidity",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    },
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:add-liquidity-matic",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "addLiquidityMATIC",
+      "signature": "addLiquidityMATIC(address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidityMATIC",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "amountTokenDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountMATICMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountMATIC",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia addLiquidityMATIC",
+      "operation": "add-liquidity-matic",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    },
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia removeLiquidity",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    },
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:remove-liquidity-matic",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "removeLiquidityMATIC",
+      "signature": "removeLiquidityMATIC(address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityMATIC",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountMATICMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountMATIC",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia removeLiquidityMATIC",
+      "operation": "remove-liquidity-matic",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    },
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:remove-liquidity-matic-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "removeLiquidityMATICSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityMATICSupportingFeeOnTransferTokens(address,bool,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityMATICSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountFTMMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountFTM",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia removeLiquidityMATICSupportingFeeOnTransferTokens",
+      "operation": "remove-liquidity-matic-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    },
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:swap-exact-matic-for-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "swapExactMATICForTokens",
+      "signature": "swapExactMATICForTokens(uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactMATICForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct DystRouter01.Route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia swapExactMATICForTokens",
+      "operation": "swap-exact-matic-for-tokens",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    },
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:swap-exact-matic-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "swapExactMATICForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactMATICForTokensSupportingFeeOnTransferTokens(uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactMATICForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct DystRouter01.Route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia swapExactMATICForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-matic-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    },
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:swap-exact-tokens-for-matic",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "swapExactTokensForMATIC",
+      "signature": "swapExactTokensForMATIC(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForMATIC",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct DystRouter01.Route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia swapExactTokensForMATIC",
+      "operation": "swap-exact-tokens-for-matic",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    },
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:swap-exact-tokens-for-matic-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "swapExactTokensForMATICSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForMATICSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForMATICSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct DystRouter01.Route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia swapExactTokensForMATICSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-matic-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    },
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:swap-exact-tokens-for-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct DystRouter01.Route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia swapExactTokensForTokens",
+      "operation": "swap-exact-tokens-for-tokens",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    },
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:swap-exact-tokens-for-tokens-simple",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "swapExactTokensForTokensSimple",
+      "signature": "swapExactTokensForTokensSimple(uint256,uint256,address,address,bool,address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSimple",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "tokenFrom",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenTo",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "stable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia swapExactTokensForTokensSimple",
+      "operation": "swap-exact-tokens-for-tokens-simple",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    },
+    {
+      "capabilityId": "dystopia-v1:v1:137:0xbe75dd16d029c6b32b7ad57a0fd9c1c20dd2862e:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 137,
+      "contract": "0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e",
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,(address,address,bool)[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "routes",
+            "type": "tuple[]",
+            "components": [
+              {
+                "name": "from",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "to",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "stable",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ],
+            "internalType": "struct DystRouter01.Route[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.dystopia.exchange/dystopia-1/security/contracts.md ; https://sourcify.dev/server/v2/contract/137/0xbE75Dd16D029c6B32B7aD57A0FD9C1c20Dd2862e?fields=all",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "dystopia-v1",
+      "label": "Dystopia swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, stable/volatile routes, amounts, minimums, recipient and deadline; token/LP balances and allowances remain required under independent policies. No current fee, price, liquidity or financial-safety assurance.",
+        "MATIC-named payable methods spend Polygon native currency (POL today) through constructor-bound WMATIC/WPOL 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; nonpayable calls require zero value. Native refund/recipient incompatibility can revert.",
+        "Liquidity adds check both desired-amount minima before reserve optimization and optimized-side minimum afterward, but have no minimum LP-output parameter. Removal minimums reflect pair-burn accounting, not post-tax net receipt.",
+        "Fee-supporting native removal forwards the entire router token balance; supporting token/native swaps unwrap its entire wrapped-native balance. Nonstandard/rebasing tokens and route continuity can affect or revert execution.",
+        "Explicit routes derive pairs from immutable factory and constructor-cached pair-code hash; both swap loops pass empty callback data. No unsafe per-hop amounts, permit, opaque executor, governance, gauge or staking authority is admitted. Source-service exact_match is not a fresh runtime/dependency identity, funding or execution attestation."
+      ]
+    }
+  ]
+}

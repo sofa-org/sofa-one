@@ -8,27 +8,26 @@ import {
   Logger,
   Optional,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Openfort from '@openfort/openfort-node';
 import { createClient, getAddress, http, padHex, type Address, type Hex } from 'viem';
 import { createBundlerClient, createPaymasterClient } from 'viem/account-abstraction';
-import { getBlock, getCode, getTransactionReceipt } from 'viem/actions';
+import { getBlock, getBlockNumber, getCode, getTransactionReceipt } from 'viem/actions';
 import { toAccount } from 'viem/accounts';
 import { RequestContextService } from '../../common/request-context/request-context.service';
 import { getSupportedChain, isMonadChain } from '../../common/chains/supported-chains';
 import { API_ERROR_CODES } from '../../common/errors/api-error-codes';
 import { sanitizeErrorMessage } from '../../common/utils/sanitize';
 import {
-  CALIBUR_ADDRESSES,
   createCaliburSessionAccount,
   getAgentKeyUsabilityFailure,
   getCaliburKeySettings,
   hasCaliburDelegation,
-  hashKey,
   isCaliburKeyRegistered,
-  KeyType,
 } from '../../common/calibur/calibur';
+import { CALIBUR_ADDRESSES, hashKey, KeyType } from '../../common/calibur/calibur-primitives';
 
 @Injectable()
 export class OpenfortService {
@@ -83,7 +82,10 @@ export class OpenfortService {
         'getOpenfortIamSession',
       )) as any;
       const openfortUserId = session?.user?.id ?? session?.id;
-      if (!openfortUserId) throw new ForbiddenException('Invalid Openfort session');
+      if (!openfortUserId) throw new UnauthorizedException({
+        code: API_ERROR_CODES.AUTH_PROVIDER_INVALID,
+        message: 'Invalid Openfort session',
+      });
 
       const email =
         session?.user?.email ??
@@ -93,10 +95,23 @@ export class OpenfortService {
         undefined;
 
       return { openfortUserId, email, session };
-    } catch (error: any) {
-      if (error instanceof ForbiddenException) throw error;
-      this.logOpenfortError('verifyIamSession', error);
-      throw new BadGatewayException('Wallet service temporarily unavailable');
+    } catch (error: unknown) {
+      if (error instanceof UnauthorizedException) throw error;
+      if (error && typeof error === 'object' && 'statusCode' in error && error.statusCode === HttpStatus.UNAUTHORIZED) {
+        throw new UnauthorizedException({
+          code: API_ERROR_CODES.AUTH_PROVIDER_INVALID,
+          message: 'Invalid or expired Openfort session',
+        });
+      }
+      this.logger.error(this.logContext({
+        message: 'Openfort IAM unavailable',
+        operation: 'verifyIamSession',
+        failureCategory: this.isTimeoutError(error) ? 'timeout' : 'provider_error',
+      }));
+      throw new BadGatewayException({
+        code: API_ERROR_CODES.AUTH_PROVIDER_UNAVAILABLE,
+        message: 'Authentication provider temporarily unavailable',
+      });
     }
   }
 
@@ -151,7 +166,7 @@ export class OpenfortService {
       }
       return { openfortUserId, accountId: account.id, address: normalizedAddress };
     } catch (error: any) {
-      if (error instanceof ForbiddenException) throw error;
+      if (error instanceof ForbiddenException || error instanceof UnauthorizedException || error instanceof BadGatewayException) throw error;
       this.logOpenfortError('authorizeEmbeddedAddress', error);
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
@@ -233,7 +248,11 @@ export class OpenfortService {
    * lookup returns a retryable result (never a fabricated success). A legal
    * empty `logs: []` array still yields a normal success/reverted view.
    */
-  async getTransactionReceipt(chainId: number, txHash: string): Promise<TransactionReceiptResult> {
+  async getTransactionReceipt(
+    chainId: number,
+    txHash: string,
+    options: { requiredConfirmations?: number } = {},
+  ): Promise<TransactionReceiptResult> {
     try {
       const { chain } = getSupportedChain(chainId);
       const client = createClient({ chain, transport: http() });
@@ -247,6 +266,24 @@ export class OpenfortService {
       let blockTimestamp: bigint;
       try {
         const block = await getBlock(client, { blockNumber: receipt.blockNumber });
+        if (
+          !block.hash ||
+          !receipt.blockHash ||
+          block.hash.toLowerCase() !== receipt.blockHash.toLowerCase() ||
+          block.number !== receipt.blockNumber
+        ) {
+          return { status: 'error', message: 'receipt block does not match canonical block' };
+        }
+        if (options.requiredConfirmations !== undefined) {
+          const required = options.requiredConfirmations;
+          if (!Number.isInteger(required) || required < 1 || required > 100) {
+            return { status: 'error', message: 'invalid required confirmations' };
+          }
+          const head = await getBlockNumber(client, { cacheTime: 0 });
+          if (head < receipt.blockNumber || head - receipt.blockNumber + 1n < BigInt(required)) {
+            return { status: 'error', message: 'receipt awaiting required confirmations' };
+          }
+        }
         blockTimestamp = block.timestamp;
       } catch (error: any) {
         this.logOpenfortError('getTransactionReceipt', error, {
@@ -334,12 +371,11 @@ export class OpenfortService {
       const rpc = this.getUserOperationRpc(params.chainId, publishableKey);
       await this.assertCaliburContractAvailable(client, params.chainId);
       const gasPrice = await this.estimateUserOperationFees(rpc);
-      const bundlerTransport = http(
-        rpc.url,
-        rpc.authorizationHeader
-          ? { fetchOptions: { headers: { Authorization: rpc.authorizationHeader } } }
-          : undefined,
-      );
+      const bundlerTransport = http(rpc.url, {
+        fetchOptions: {
+          ...(rpc.authorizationHeader ? { headers: { Authorization: rpc.authorizationHeader } } : {}),
+        },
+      } as any);
       const submission = await this.sendUserOperationWithSponsorship({
         account: sessionAccount,
         chain,
@@ -656,39 +692,6 @@ export class OpenfortService {
     );
   }
 
-  /** Execute calls directly from a backend EOA through Openfort. */
-  async sendBackendTransaction(params: {
-    accountId: string;
-    chainId: number;
-    interactions: Array<{ to: string; data: string; value?: string }>;
-  }): Promise<{ transactionHash: string | null }> {
-    try {
-      const account = await this.withTimeout(
-        this.client.accounts.evm.backend.get({ id: params.accountId }),
-        'getBackendWallet',
-      );
-      const result = (await this.withTimeout(
-        (this.client.accounts.evm.backend as any).sendTransaction({
-          account,
-          chainId: params.chainId,
-          interactions: params.interactions,
-        }),
-        'sendBackendTransaction',
-      )) as any;
-
-      return {
-        transactionHash:
-          result?.response?.transactionHash ?? result?.transactionHash ?? result?.hash ?? null,
-      };
-    } catch (error: any) {
-      this.logOpenfortError('sendBackendTransaction', error, {
-        chainId: params.chainId,
-        interactionCount: params.interactions.length,
-      });
-      throw this.createOpenfortApiException('sendBackendTransaction', error);
-    }
-  }
-
   /** Sign hex-encoded data with a backend wallet (no transaction broadcast). */
   async signData(accountId: string, data: string): Promise<string> {
     try {
@@ -697,7 +700,11 @@ export class OpenfortService {
         'signData',
       );
     } catch (error: any) {
-      this.logOpenfortError('signData', error);
+      this.logger.error(this.logContext({
+        message: 'Openfort signing failed',
+        operation: 'signData',
+        failureCategory: this.isTimeoutError(error) ? 'timeout' : 'provider_error',
+      }));
       throw new BadGatewayException('Wallet service temporarily unavailable');
     }
   }
@@ -731,19 +738,6 @@ export class OpenfortService {
 
     if (operation === 'sendUserOperation') {
       return this.createUserOperationException(error);
-    }
-
-    if (operation === 'sendBackendTransaction') {
-      return new HttpException(
-        {
-          code: API_ERROR_CODES.BACKEND_TRANSACTION_FAILED,
-          message: this.withSafeReason(
-            'Backend EOA transaction failed. Check chainId, target contract calldata, value, and wallet balance.',
-            error,
-          ),
-        },
-        HttpStatus.BAD_GATEWAY,
-      );
     }
 
     return new HttpException(

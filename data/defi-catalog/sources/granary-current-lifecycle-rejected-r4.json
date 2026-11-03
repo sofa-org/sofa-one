@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Granary",
+  "observedAt": "2026-10-23",
+  "admission": "rejected-current-lifecycle-and-deployment-unbound",
+  "reason": "Not admitted: no current primary maintained allowed-chain Granary lending deployment could be bound. Canonical site/app DNS and docs TLS failures, historical lending source and a 2024 token-merger announcement do not establish current maintenance or shutdown. Do not backfill historical Aave-fork ABIs or count successor/team products as Granary.",
+  "sourceRefs": [
+    "https://granary.finance/",
+    "https://app.granary.finance/",
+    "https://docs.granary.finance/",
+    "https://medium.com/@granarydefi",
+    "https://medium.com/@granarydefi/a-checklist-for-the-new-year-dda3d124075e",
+    "https://medium.com/@granarydefi/road-to-v2-af1458125228",
+    "https://github.com/The-Granary/Granary-Protocol-v1"
+  ],
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://granary.finance/",
+      "observedAt": "2026-10-23",
+      "observation": "urllib DNS failure: nodename nor servname provided, or not known"
+    },
+    {
+      "sourceRef": "https://app.granary.finance/",
+      "observedAt": "2026-10-23",
+      "observation": "urllib DNS failure: nodename nor servname provided, or not known"
+    },
+    {
+      "sourceRef": "https://docs.granary.finance/",
+      "observedAt": "2026-10-23",
+      "observation": "urllib SSLV3_ALERT_HANDSHAKE_FAILURE"
+    },
+    {
+      "sourceRef": "https://medium.com/@granarydefi",
+      "observedAt": "2026-10-23",
+      "excerpt": "Pinned Jul 29, 2024: Transitioning GRAIN and OATH to CDX; earlier Mar 26, 2024 proposal to unify GRAIN/OATH.",
+      "interpretation": "Token transition is not an adopted lending shutdown and is not evidence of current original deployment maintenance."
+    },
+    {
+      "sourceRef": "https://medium.com/@granarydefi/a-checklist-for-the-new-year-dda3d124075e",
+      "publishedAt": "2024-02-01",
+      "observedAt": "2026-10-23",
+      "excerpt": "Granary V1.5 UX/UI upgrade; V2 Audit; V2 User testing; V2 Production release are checklist tasks.",
+      "interpretation": "Historical plan not evidence these releases happened or of current maintained supported deployment."
+    }
+  ],
+  "repositoryEvidence": {
+    "sourceRef": "https://api.github.com/repos/The-Granary/Granary-Protocol-v1",
+    "commit": "bab30a81ebd7e23422e1ae9b5f6b62654cbcf693",
+    "pushedAt": "2022-03-03T00:28:02Z",
+    "readmeSnapshot": "# Granary-Protocol-v1\nGranary Finance is a decentralized, user-driven borrowing and lending liquidity market inspired by AAVE.\n\nDocumentation: https://docs.granary.finance\n"
+  },
+  "deploymentEvidence": {
+    "status": "unbound",
+    "reason": "Official current allowed-chain target not selected because lifecycle prerequisite missing; no borrowed Aave ABI used."
+  },
+  "abiEvidence": {
+    "status": "unknown",
+    "reason": "No admission target or current proxy implementation selected; no full deployment-bound ABI claim."
+  },
+  "functionInventory": [],
+  "selectedFunctions": [],
+  "limitations": [
+    "Availability failures and dated code are not treated as definitive shutdown/disbandment; no exit-only exception is used."
+  ]
+}

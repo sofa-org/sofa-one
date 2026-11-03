@@ -1,0 +1,6765 @@
+{
+  "schemaVersion": 1,
+  "auditKind": "independent-offline-source-and-authority-audit-v2",
+  "auditedCatalogVersion": "v4",
+  "auditAsOf": "2026-10-04T00:26:00Z",
+  "currentEvidenceStatus": "BLOCKED_CURRENT_EVIDENCE",
+  "auditedCatalogBaseline": {
+    "catalogVersion": "v4",
+    "functionCount": 368,
+    "finiteExecutionScopeCount": 14,
+    "exactProfileCount": 12,
+    "frozenBaselineOnly": false,
+    "currentVersionInputIncluded": true,
+    "finalM4GatePassed": false
+  },
+  "independentSourceAndAuthorityChecksValid": true,
+  "objectiveTargetBasisPoints": 9000,
+  "objectiveEstablished": false,
+  "goal": {
+    "targetBasisPoints": 9000,
+    "marketDenominator": null,
+    "marketDenominatorUnit": "distinct-canonical-active-products",
+    "rawCanonicalDeduplicationDocumented": false,
+    "observedActiveProducts": 3,
+    "fullySupportedProducts": 0,
+    "blockers": [
+      "unresolved_identity_proxy_universe",
+      "unmatched_identity_records",
+      "raw_canonical_population_equivalence_not_documented",
+      "chain_enumeration_incomplete",
+      "activity_evidence_incomplete",
+      "core_workflow_requirements_incomplete",
+      "product_instance_enumeration_incomplete",
+      "market_denominator_not_independently_closed"
+    ],
+    "objectiveEstablished": false
+  },
+  "captureTimeInterpretation": {
+    "frozenM1RosterCaptureUtc": null,
+    "currentM2ActivityCaptureUtc": "2026-10-03T19:11:22Z",
+    "auditAsOf": "2026-10-04T00:26:00Z",
+    "currentActivityCaptureKnownAndFresh": true,
+    "auditAsOfIsProviderCaptureTime": false,
+    "auditAsOfMeaning": "Deterministic verifier cutoff only; source capture timestamps are reported independently and date-only metadata remains date-only."
+  },
+  "functionCatalog": {
+    "m1FunctionCount": 202,
+    "m2FunctionCount": 315,
+    "v3FunctionCount": 349,
+    "m1BaselineCompletelyRetained": true,
+    "m2AuthorityCompletelyRetained": true,
+    "v3AdditionCount": 34,
+    "exactV3AdditionsSourceBound": true,
+    "v3CatalogManifestHash": "0xe5952f4fc56d535009416ae7049069a7d49314102b2e0704039e2abfdfaeb93f",
+    "publishedV3ManifestHash": "0xe5952f4fc56d535009416ae7049069a7d49314102b2e0704039e2abfdfaeb93f",
+    "scopeCount": 13,
+    "wrapperScopeCount": 7,
+    "callbackScopeCount": 6,
+    "finiteScopeBindingsValid": true,
+    "admission": {
+      "snapshots": 1,
+      "snapshotsSourceHashValid": true,
+      "admissionBindingCount": 69,
+      "uniqueSnapshotSourcePaths": true,
+      "uniqueAdmissionBindingIdentities": true,
+      "bindingBijectionValid": true,
+      "sourceAdmissionCatalogBijectionValid": true,
+      "admissionClosureValid": true,
+      "everyAdmissionBindingMatchesCatalogAbiAndScope": true,
+      "unadmittedAdditions": 0
+    },
+    "sourceFunctionRows": 69,
+    "repeatedNpmSourceRows": 35,
+    "activeFunctionCount": 349,
+    "inactiveCandidateCount": 0
+  },
+  "frozenV3Baseline": {
+    "functionCount": 349,
+    "scopeCount": 13,
+    "profileCount": 9,
+    "profileReferenceCount": 75,
+    "profileFixtureSha256": "f5f06ce93f46bf2ddf8554da6b9efb7db9b1a8175cd19b40dc69c454f873a607",
+    "profileFixtureValid": true
+  },
+  "currentCatalogVerification": {
+    "catalogVersion": "v4",
+    "functionCount": 368,
+    "v3FunctionCountPreserved": 349,
+    "v3FunctionsCompletelyUnchanged": true,
+    "activeFunctionCount": 368,
+    "addedFunctionCount": 19,
+    "functionsByType": {
+      "contract_call": 368
+    },
+    "generatedCatalogKeccak256": "0xcd89b7a18328b6a43be924b9cecb45082ddc796cd39e727d7765e8fb33bd6346",
+    "sourceSnapshotCount": 2,
+    "sourceSnapshots": [
+      {
+        "sourcePath": "data/defi-catalog/v4/sources/ordinary-protocols.json",
+        "rawSha256": "17c000ae88effc6ed0a25d88198cc306172cd5d784bd4bec90e956b28bc33b52",
+        "canonicalJsonSha256": "23f5d33c1b0dffa5b9c533be3be905fdacaa9c45b12a5a669b4ddbb36b36cc12",
+        "sourceRecordCount": 6,
+        "unresolvedRecords": 0,
+        "retrievedAtUtc": [
+          "2026-10-04",
+          "2026-10-04",
+          "2026-10-04",
+          "2026-10-04",
+          "2026-10-04",
+          "2026-10-04"
+        ],
+        "exactCaptureTimeAvailable": false
+      },
+      {
+        "sourcePath": "data/defi-catalog/v4/sources/yearn.json",
+        "rawSha256": "71f979731f231c839c10d149e91a5a5dd2c522a851b475c0a2210d218c43df08",
+        "canonicalJsonSha256": "428b7e337d4772d8112069611813ebe8c83783578c043407be297fba2d33f5ed",
+        "sourceRecordCount": 3,
+        "unresolvedRecords": 0,
+        "retrievedAtUtc": [
+          "2026-10-04",
+          "2026-10-04",
+          "2026-10-04"
+        ],
+        "exactCaptureTimeAvailable": false
+      }
+    ],
+    "sourceFunctionRows": 19,
+    "sourceRowsHaveUniqueFamilyChainTargetSignature": true,
+    "allSourceAbisMatchExactlyOneActiveCatalogFunction": true,
+    "everyNewCatalogFunctionBoundExactlyOnce": true,
+    "admissions": {
+      "snapshots": 2,
+      "uniqueSourcePaths": true,
+      "digestBoundToExactSources": true,
+      "bindings": 19,
+      "uniqueBindingIdentities": true,
+      "sourceAdmissionCatalogBijectionValid": true,
+      "everyBindingMatchesFamilyChainTargetSignatureAbiCapabilityAndConditionalScope": true
+    },
+    "additionsByFamily": [
+      {
+        "familyId": "curve-3pool-stableswap",
+        "chainId": 1,
+        "target": "0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7",
+        "sourceFunctionCount": 4,
+        "requiredFunctionCount": 4,
+        "sourceRefsCount": 2,
+        "requiredSourceRefsCount": 2,
+        "exactSignatureSet": true,
+        "mutabilityValid": true,
+        "curveOutputsEmpty": true
+      },
+      {
+        "familyId": "pancakeswap-v3-position-manager",
+        "chainId": 56,
+        "target": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+        "sourceFunctionCount": 9,
+        "requiredFunctionCount": 9,
+        "sourceRefsCount": 4,
+        "requiredSourceRefsCount": 4,
+        "exactSignatureSet": true,
+        "mutabilityValid": true,
+        "curveOutputsEmpty": true
+      },
+      {
+        "familyId": "yearn-tokenized-strategy",
+        "chainId": 1,
+        "target": "0x074134a2784f4f66b6ced6f68849382990ff3215",
+        "sourceFunctionCount": 6,
+        "requiredFunctionCount": 6,
+        "sourceRefsCount": 3,
+        "requiredSourceRefsCount": 3,
+        "exactSignatureSet": true,
+        "mutabilityValid": true,
+        "curveOutputsEmpty": true
+      }
+    ],
+    "executionScopes": {
+      "total": 14,
+      "sameTargetMulticall": 8,
+      "emptyCallbackData": 6,
+      "exactlyOneNewCakeScopeAndAllEightChildrenBound": true
+    },
+    "v3ProfileFixture": {
+      "rawSha256": "f5f06ce93f46bf2ddf8554da6b9efb7db9b1a8175cd19b40dc69c454f873a607",
+      "pinnedFixtureSha256": "f5f06ce93f46bf2ddf8554da6b9efb7db9b1a8175cd19b40dc69c454f873a607",
+      "provenanceCommit": "e453acde073554d31d4e1ceb46f429c2191e1dfa",
+      "pinnedSourceBytesSha256": "8655bc24a6ce3f9605716e718c7bb30750c6531a0d8091f2d8762b457eab05d9",
+      "exactV3Profiles": true
+    },
+    "profileAuthority": {
+      "currentProfileCount": 12,
+      "currentProfileReferences": 94,
+      "currentUniqueProfileMemberIds": 94,
+      "maximumCurrentProfileSize": 9,
+      "exactBaselineNineFullMetadataAndMembershipUnchanged": true,
+      "allTwelveCurrentProfilesFingerprintAndCatalogBound": true,
+      "currentProfilesMatchRawStaticModule": true,
+      "newProfileSetsExactlyCoverTheirFamilyFunctions": true,
+      "details": [
+        {
+          "bundleId": "uniswap-v3-positions-1",
+          "chainIds": [
+            1
+          ],
+          "exactMemberCount": 9,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        },
+        {
+          "bundleId": "uniswap-v3-positions-10",
+          "chainIds": [
+            10
+          ],
+          "exactMemberCount": 9,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        },
+        {
+          "bundleId": "uniswap-v3-positions-56",
+          "chainIds": [
+            56
+          ],
+          "exactMemberCount": 9,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        },
+        {
+          "bundleId": "uniswap-v3-positions-137",
+          "chainIds": [
+            137
+          ],
+          "exactMemberCount": 9,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        },
+        {
+          "bundleId": "uniswap-v3-positions-143",
+          "chainIds": [
+            143
+          ],
+          "exactMemberCount": 9,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        },
+        {
+          "bundleId": "uniswap-v3-positions-8453",
+          "chainIds": [
+            8453
+          ],
+          "exactMemberCount": 9,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        },
+        {
+          "bundleId": "uniswap-v3-positions-42161",
+          "chainIds": [
+            42161
+          ],
+          "exactMemberCount": 9,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        },
+        {
+          "bundleId": "morpho-blue-1",
+          "chainIds": [
+            1
+          ],
+          "exactMemberCount": 6,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        },
+        {
+          "bundleId": "morpho-blue-8453",
+          "chainIds": [
+            8453
+          ],
+          "exactMemberCount": 6,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        },
+        {
+          "bundleId": "curve-3pool-1",
+          "chainIds": [
+            1
+          ],
+          "exactMemberCount": 4,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        },
+        {
+          "bundleId": "pancakeswap-v3-positions-56",
+          "chainIds": [
+            56
+          ],
+          "exactMemberCount": 9,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        },
+        {
+          "bundleId": "yearn-tokenized-strategy-1",
+          "chainIds": [
+            1
+          ],
+          "exactMemberCount": 6,
+          "sortedUnique": true,
+          "chainBoundActiveMembers": true,
+          "fingerprintValid": true,
+          "membershipValid": true
+        }
+      ]
+    },
+    "targetScopedFunctionAvailabilityOnly": [
+      {
+        "familyId": "curve-3pool-stableswap",
+        "chainId": 1,
+        "target": "0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7",
+        "availableFunctions": [
+          {
+            "capabilityId": "curve-3pool-stableswap:v1-3pool:1:0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7:add-liquidity",
+            "signature": "add_liquidity(uint256[3],uint256)",
+            "abiHash": "0x28fc04b9808a14494342fc749252abd3ee6a1e9aef6c6a47979a9b37c8581f06"
+          },
+          {
+            "capabilityId": "curve-3pool-stableswap:v1-3pool:1:0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7:exchange",
+            "signature": "exchange(int128,int128,uint256,uint256)",
+            "abiHash": "0x6251c3c57cf8cadc37791c7196fdd1862cbc30057ffe544101040028883a14d6"
+          },
+          {
+            "capabilityId": "curve-3pool-stableswap:v1-3pool:1:0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7:remove-liquidity",
+            "signature": "remove_liquidity(uint256,uint256[3])",
+            "abiHash": "0xd83090dcad5d665101ba0e4478e4fa3470b3117308bf2a157395b6014818bae6"
+          },
+          {
+            "capabilityId": "curve-3pool-stableswap:v1-3pool:1:0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7:remove-liquidity-one-coin",
+            "signature": "remove_liquidity_one_coin(uint256,int128,uint256)",
+            "abiHash": "0xb0f017a5525ec25356c36ea09a3efd2b3b0b0d6bbf43eebba2378f3cff692da9"
+          }
+        ],
+        "marketIdentity": "unverified",
+        "marketActivity": "unknown",
+        "wholeProductWorkflow": "not-established"
+      },
+      {
+        "familyId": "pancakeswap-v3-position-manager",
+        "chainId": 56,
+        "target": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+        "availableFunctions": [
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:burn",
+            "signature": "burn(uint256)",
+            "abiHash": "0x99a11506f24a01115f6d3a3b251ac1df07c992300c02faa292bfc9d08d245384"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:collect",
+            "signature": "collect((uint256,address,uint128,uint128))",
+            "abiHash": "0x3e7b6be204a2f8697e2d59260b7f15f1ecba884c80034387a84c61327d00e81d"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:decrease-liquidity",
+            "signature": "decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))",
+            "abiHash": "0x37adc7f2e33bc1cd56ae7e8d75e30fa6c284a76188830c01942bccabe208e104"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:increase-liquidity",
+            "signature": "increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256))",
+            "abiHash": "0x2b434cd1915a365e0b4f7e7e4a7d5fe7274245a8d00b2b0d7fc04b4842acf78e"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:mint",
+            "signature": "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))",
+            "abiHash": "0x16710f7bea2c432a5e982e9377a678be08e6dc2a14f579baa99843ec1ce69a5d"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:multicall",
+            "signature": "multicall(bytes[])",
+            "abiHash": "0xc55261f34d154b00000dd955ab9226cee90bab24a00660cb84ffd9e2a657897a",
+            "executionScopeHash": "0x1529246fc421b49de27f00596378fe8300d7ee564d5b3cf8ccde5fd44a846496"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:refund-eth",
+            "signature": "refundETH()",
+            "abiHash": "0x92fb6e0be5b9ef3a9b2a93d0879db721cc5e75d63d1e0e136d1851823e82612c"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:sweep-token",
+            "signature": "sweepToken(address,uint256,address)",
+            "abiHash": "0x26646f5e9c19af40c2c7f4ea7c5ab280d78dc2f42d383326236dbdf027c0e3a4"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:v3-npm-bounded:56:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:unwrap-weth9",
+            "signature": "unwrapWETH9(uint256,address)",
+            "abiHash": "0x828cb2dd7bb8957cba6cd10334a09dbf08bbe3dd0421bb513eb4865c9f42cf1c"
+          }
+        ],
+        "marketIdentity": "unverified",
+        "marketActivity": "unknown",
+        "wholeProductWorkflow": "not-established"
+      },
+      {
+        "familyId": "yearn-tokenized-strategy",
+        "chainId": 1,
+        "target": "0x074134a2784f4f66b6ced6f68849382990ff3215",
+        "availableFunctions": [
+          {
+            "capabilityId": "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:6e553f65",
+            "signature": "deposit(uint256,address)",
+            "abiHash": "0x66fa48417436bae03415c2b0aed93282c79c25d69888344f8a71682737e5f396"
+          },
+          {
+            "capabilityId": "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:94bf804d",
+            "signature": "mint(uint256,address)",
+            "abiHash": "0x98579d58ee857905b66f6177bf280dfe7577552b0d2bcbdd905c9e19b2702c92"
+          },
+          {
+            "capabilityId": "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:9f40a7b3",
+            "signature": "redeem(uint256,address,address,uint256)",
+            "abiHash": "0xa6578a73567859771d38e00d0cafc35607bdb78dee51b7a1ca275d6963d83ce1"
+          },
+          {
+            "capabilityId": "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:a318c1a4",
+            "signature": "withdraw(uint256,address,address,uint256)",
+            "abiHash": "0x8500b5262abb8e780041e906f64ad61afb573952805d288fec14f23148ef96be"
+          },
+          {
+            "capabilityId": "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:b460af94",
+            "signature": "withdraw(uint256,address,address)",
+            "abiHash": "0x21b092f8bf79d7d7fd93cb5eb8d81852654360caa4af0bc09191936acdbedce1"
+          },
+          {
+            "capabilityId": "yearn-tokenized-strategy:v3.0.4:1:0x074134a2784f4f66b6ced6f68849382990ff3215:ba087652",
+            "signature": "redeem(uint256,address,address)",
+            "abiHash": "0xd60414f7ba04a5c9e9903a18e4a0d3269b33a47cf86f13a55a7f141e3125aaa4"
+          }
+        ],
+        "marketIdentity": "unverified",
+        "marketActivity": "unknown",
+        "wholeProductWorkflow": "not-established"
+      }
+    ],
+    "marketIdentityOrActivityPromoted": false,
+    "currentProfileRowsAreNotGrantAssignments": true,
+    "noRuntimeOrFinancialArgumentSafetyClaim": true,
+    "inputSourcesHashRecorded": true,
+    "rawContentsMatchRecordedDigests": true,
+    "sourceRetrievalDatesOnlyNotUtcCaptureTimes": [
+      {
+        "sourcePath": "data/defi-catalog/v4/sources/ordinary-protocols.json",
+        "retrievedAtUtc": [
+          "2026-10-04",
+          "2026-10-04",
+          "2026-10-04",
+          "2026-10-04",
+          "2026-10-04",
+          "2026-10-04"
+        ],
+        "exactCaptureTimeAvailable": false
+      },
+      {
+        "sourcePath": "data/defi-catalog/v4/sources/yearn.json",
+        "retrievedAtUtc": [
+          "2026-10-04",
+          "2026-10-04",
+          "2026-10-04"
+        ],
+        "exactCaptureTimeAvailable": false
+      }
+    ],
+    "verifierValid": true,
+    "historicalV3ClosureValid": true
+  },
+  "identityAndActivity": {
+    "rawUniverseRows": 8476,
+    "rawUniverseCompactJsonSha256": "7fc3a4de44a3eebc1354aa57736cb72b48b21321c766d3c9a31e9eeea47c9b24",
+    "expectedFrozenUniverseSha256": "7fc3a4de44a3eebc1354aa57736cb72b48b21321c766d3c9a31e9eeea47c9b24",
+    "rawUniverseDigestValid": true,
+    "identityLedgerRows": 8476,
+    "identityLedgerMatchesRosterOrder": true,
+    "crosswalkMappingsAgreeWithLedger": true,
+    "identityDispositionCounts": {
+      "unresolved": 8471,
+      "partial": 1,
+      "mapped": 4
+    },
+    "canonicalMappings": 4,
+    "rawCanonicalDeduplicationDocumented": false,
+    "partialMappings": 1,
+    "unresolvedIdentityLedgerRows": 8471,
+    "unresolvedProxyRowsIncludingPartial": 8472,
+    "unresolvedProxyRecordsConservedAgainstLedger": true,
+    "unmatchedMetricRecords": 7,
+    "unmatchedMetricRecordsAreAdditionalRosterRows": false,
+    "canonicalActiveProductCount": 3,
+    "canonicalActiveSourceIds": [
+      "119",
+      "2198",
+      "2611"
+    ],
+    "positiveDexObservationCount": 603,
+    "positiveDexSourceIdCount": 349,
+    "positiveDexSourceIds": [
+      "1053",
+      "1074",
+      "116",
+      "119",
+      "1296",
+      "1347",
+      "1447",
+      "146",
+      "1461",
+      "1616",
+      "162",
+      "1632",
+      "1643",
+      "1664",
+      "1700",
+      "1726",
+      "1732",
+      "1750",
+      "1756",
+      "1777",
+      "1799",
+      "1883",
+      "1884",
+      "1892",
+      "194",
+      "1950",
+      "1970",
+      "199",
+      "1992",
+      "1995",
+      "2015",
+      "202",
+      "2090",
+      "2102",
+      "2104",
+      "2116",
+      "2117",
+      "2118",
+      "2121",
+      "2158",
+      "2167",
+      "2169",
+      "2195",
+      "2196",
+      "2197",
+      "2198",
+      "221",
+      "2239",
+      "2283",
+      "2307",
+      "2350",
+      "238",
+      "2383",
+      "2393",
+      "2400",
+      "2414",
+      "2417",
+      "2467",
+      "2504",
+      "2528",
+      "2529",
+      "2530",
+      "2589",
+      "2602",
+      "2603",
+      "261",
+      "2611",
+      "2644",
+      "2675",
+      "2685",
+      "2695",
+      "271",
+      "2754",
+      "2769",
+      "2776",
+      "2792",
+      "2803",
+      "2837",
+      "2864",
+      "2890",
+      "2906",
+      "2907",
+      "292",
+      "2926",
+      "3",
+      "301",
+      "306",
+      "3095",
+      "3096",
+      "3104",
+      "3121",
+      "317",
+      "318",
+      "3218",
+      "3234",
+      "324",
+      "3246",
+      "3255",
+      "3302",
+      "3308",
+      "3311",
+      "3315",
+      "3328",
+      "3333",
+      "3336",
+      "334",
+      "3345",
+      "3361",
+      "3377",
+      "3409",
+      "3450",
+      "3481",
+      "3499",
+      "3507",
+      "351",
+      "3515",
+      "3534",
+      "3575",
+      "364",
+      "367",
+      "373",
+      "3743",
+      "382",
+      "3878",
+      "392",
+      "3940",
+      "397",
+      "398",
+      "4009",
+      "404",
+      "405",
+      "4062",
+      "4196",
+      "4197",
+      "420",
+      "4222",
+      "4223",
+      "4249",
+      "4294",
+      "4321",
+      "4524",
+      "4605",
+      "468",
+      "4703",
+      "471",
+      "4725",
+      "4752",
+      "4764",
+      "4794",
+      "4834",
+      "4983",
+      "499",
+      "5070",
+      "5129",
+      "5174",
+      "5181",
+      "5221",
+      "5251",
+      "5317",
+      "534",
+      "5350",
+      "5392",
+      "5408",
+      "5416",
+      "5417",
+      "5458",
+      "5491",
+      "5531",
+      "5575",
+      "561",
+      "5659",
+      "5690",
+      "5806",
+      "5895",
+      "5917",
+      "5919",
+      "5921",
+      "597",
+      "6049",
+      "6060",
+      "6069",
+      "6075",
+      "6133",
+      "6179",
+      "6184",
+      "622",
+      "6238",
+      "6246",
+      "6358",
+      "6373",
+      "6390",
+      "644",
+      "6466",
+      "6483",
+      "6506",
+      "6539",
+      "654",
+      "6557",
+      "6576",
+      "6586",
+      "659",
+      "6620",
+      "6625",
+      "6643",
+      "6649",
+      "6650",
+      "6660",
+      "6694",
+      "6738",
+      "6764",
+      "6771",
+      "6784",
+      "6815",
+      "6924",
+      "6926",
+      "693",
+      "6947",
+      "695",
+      "6983",
+      "7021",
+      "7029",
+      "7034",
+      "7037",
+      "7038",
+      "7058",
+      "7059",
+      "707",
+      "7074",
+      "7076",
+      "7077",
+      "711",
+      "7123",
+      "7124",
+      "7125",
+      "7126",
+      "7127",
+      "7133",
+      "7139",
+      "7213",
+      "7214",
+      "7230",
+      "7260",
+      "728",
+      "7304",
+      "7328",
+      "7363",
+      "7378",
+      "7379",
+      "7381",
+      "7382",
+      "7401",
+      "7436",
+      "7447",
+      "7462",
+      "7508",
+      "7519",
+      "7520",
+      "7521",
+      "7522",
+      "7523",
+      "7546",
+      "7547",
+      "7559",
+      "7572",
+      "7575",
+      "7587",
+      "7599",
+      "7601",
+      "7622",
+      "7626",
+      "7648",
+      "7665",
+      "7752",
+      "7767",
+      "7768",
+      "7834",
+      "7853",
+      "7854",
+      "7855",
+      "7882",
+      "7886",
+      "7887",
+      "7902",
+      "7918",
+      "7935",
+      "7945",
+      "7955",
+      "7979",
+      "7982",
+      "7984",
+      "7986",
+      "799",
+      "7998",
+      "7999",
+      "8000",
+      "8001",
+      "8002",
+      "8023",
+      "8034",
+      "8058",
+      "8064",
+      "8072",
+      "8099",
+      "8104",
+      "812",
+      "8126",
+      "8127",
+      "8131",
+      "8166",
+      "8179",
+      "8180",
+      "8209",
+      "8211",
+      "8223",
+      "8228",
+      "8269",
+      "8278",
+      "8292",
+      "8306",
+      "8322",
+      "8334",
+      "8337",
+      "8380",
+      "8386",
+      "8433",
+      "8439",
+      "8440",
+      "8449",
+      "8464",
+      "8512",
+      "8513",
+      "8530",
+      "8531",
+      "8582",
+      "8619",
+      "8621",
+      "863",
+      "8640",
+      "8664",
+      "8722",
+      "8762",
+      "8767",
+      "8823",
+      "883",
+      "8849",
+      "8858",
+      "8868",
+      "923",
+      "942"
+    ],
+    "positiveDexChainsBySourceId": {
+      "3": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "monad",
+        "optimism",
+        "polygon"
+      ],
+      "116": [
+        "ethereum"
+      ],
+      "119": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "146": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "162": [
+        "ethereum"
+      ],
+      "194": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum"
+      ],
+      "199": [
+        "ethereum"
+      ],
+      "202": [
+        "arbitrum"
+      ],
+      "221": [
+        "ethereum"
+      ],
+      "238": [
+        "bsc"
+      ],
+      "261": [
+        "polygon"
+      ],
+      "271": [
+        "polygon"
+      ],
+      "292": [
+        "arbitrum",
+        "ethereum"
+      ],
+      "301": [
+        "bsc"
+      ],
+      "306": [
+        "base",
+        "polygon"
+      ],
+      "317": [
+        "bsc"
+      ],
+      "318": [
+        "polygon"
+      ],
+      "324": [
+        "ethereum"
+      ],
+      "334": [
+        "bsc"
+      ],
+      "351": [
+        "polygon"
+      ],
+      "364": [
+        "arbitrum"
+      ],
+      "367": [
+        "bsc"
+      ],
+      "373": [
+        "bsc"
+      ],
+      "382": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "monad"
+      ],
+      "392": [
+        "bsc"
+      ],
+      "397": [
+        "ethereum"
+      ],
+      "398": [
+        "arbitrum",
+        "bsc",
+        "polygon"
+      ],
+      "404": [
+        "ethereum"
+      ],
+      "405": [
+        "ethereum"
+      ],
+      "420": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "468": [
+        "bsc"
+      ],
+      "471": [
+        "bsc"
+      ],
+      "499": [
+        "polygon"
+      ],
+      "534": [
+        "arbitrum",
+        "base",
+        "optimism",
+        "polygon"
+      ],
+      "561": [
+        "bsc"
+      ],
+      "597": [
+        "bsc"
+      ],
+      "622": [
+        "polygon"
+      ],
+      "644": [
+        "bsc"
+      ],
+      "654": [
+        "optimism"
+      ],
+      "659": [
+        "bsc",
+        "polygon"
+      ],
+      "693": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "695": [
+        "bsc"
+      ],
+      "707": [
+        "ethereum"
+      ],
+      "711": [
+        "polygon"
+      ],
+      "728": [
+        "ethereum"
+      ],
+      "799": [
+        "base",
+        "ethereum"
+      ],
+      "812": [
+        "bsc",
+        "ethereum"
+      ],
+      "863": [
+        "bsc"
+      ],
+      "883": [
+        "polygon"
+      ],
+      "923": [
+        "bsc"
+      ],
+      "942": [
+        "bsc"
+      ],
+      "1053": [
+        "ethereum"
+      ],
+      "1074": [
+        "bsc"
+      ],
+      "1296": [
+        "arbitrum"
+      ],
+      "1347": [
+        "bsc"
+      ],
+      "1447": [
+        "bsc",
+        "ethereum",
+        "polygon"
+      ],
+      "1461": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "monad",
+        "optimism",
+        "polygon"
+      ],
+      "1616": [
+        "bsc",
+        "polygon"
+      ],
+      "1632": [
+        "bsc"
+      ],
+      "1643": [
+        "bsc"
+      ],
+      "1664": [
+        "arbitrum",
+        "base",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "1700": [
+        "arbitrum",
+        "bsc",
+        "ethereum",
+        "optimism"
+      ],
+      "1726": [
+        "polygon"
+      ],
+      "1732": [
+        "ethereum"
+      ],
+      "1750": [
+        "bsc"
+      ],
+      "1756": [
+        "polygon"
+      ],
+      "1777": [
+        "bsc"
+      ],
+      "1799": [
+        "optimism"
+      ],
+      "1883": [
+        "base",
+        "bsc"
+      ],
+      "1884": [
+        "bsc"
+      ],
+      "1892": [
+        "base",
+        "polygon"
+      ],
+      "1950": [
+        "bsc"
+      ],
+      "1970": [
+        "bsc"
+      ],
+      "1992": [
+        "bsc"
+      ],
+      "1995": [
+        "ethereum"
+      ],
+      "2015": [
+        "polygon"
+      ],
+      "2090": [
+        "bsc"
+      ],
+      "2102": [
+        "bsc"
+      ],
+      "2104": [
+        "polygon"
+      ],
+      "2116": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "polygon"
+      ],
+      "2117": [
+        "bsc",
+        "polygon"
+      ],
+      "2118": [
+        "bsc"
+      ],
+      "2121": [
+        "arbitrum",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "2158": [
+        "bsc"
+      ],
+      "2167": [
+        "bsc"
+      ],
+      "2169": [
+        "bsc"
+      ],
+      "2195": [
+        "bsc",
+        "polygon"
+      ],
+      "2196": [
+        "ethereum"
+      ],
+      "2197": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "monad",
+        "optimism",
+        "polygon"
+      ],
+      "2198": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "monad",
+        "optimism",
+        "polygon"
+      ],
+      "2239": [
+        "polygon"
+      ],
+      "2283": [
+        "arbitrum"
+      ],
+      "2307": [
+        "arbitrum"
+      ],
+      "2350": [
+        "bsc"
+      ],
+      "2383": [
+        "bsc"
+      ],
+      "2393": [
+        "arbitrum",
+        "bsc"
+      ],
+      "2400": [
+        "ethereum"
+      ],
+      "2414": [
+        "ethereum"
+      ],
+      "2417": [
+        "bsc"
+      ],
+      "2467": [
+        "arbitrum"
+      ],
+      "2504": [
+        "ethereum",
+        "polygon"
+      ],
+      "2528": [
+        "arbitrum"
+      ],
+      "2529": [
+        "arbitrum",
+        "bsc"
+      ],
+      "2530": [
+        "arbitrum"
+      ],
+      "2589": [
+        "arbitrum",
+        "base",
+        "bsc"
+      ],
+      "2602": [
+        "arbitrum"
+      ],
+      "2603": [
+        "arbitrum"
+      ],
+      "2611": [
+        "arbitrum",
+        "base",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "2644": [
+        "base",
+        "bsc",
+        "ethereum"
+      ],
+      "2675": [
+        "arbitrum"
+      ],
+      "2685": [
+        "arbitrum"
+      ],
+      "2695": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "polygon"
+      ],
+      "2754": [
+        "arbitrum"
+      ],
+      "2769": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "monad"
+      ],
+      "2776": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "2792": [
+        "arbitrum"
+      ],
+      "2803": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum"
+      ],
+      "2837": [
+        "base",
+        "ethereum"
+      ],
+      "2864": [
+        "bsc"
+      ],
+      "2890": [
+        "ethereum"
+      ],
+      "2906": [
+        "arbitrum",
+        "bsc",
+        "ethereum"
+      ],
+      "2907": [
+        "arbitrum"
+      ],
+      "2926": [
+        "arbitrum",
+        "base"
+      ],
+      "3095": [
+        "arbitrum",
+        "base",
+        "ethereum"
+      ],
+      "3096": [
+        "arbitrum"
+      ],
+      "3104": [
+        "ethereum"
+      ],
+      "3121": [
+        "polygon"
+      ],
+      "3218": [
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "3234": [
+        "base"
+      ],
+      "3246": [
+        "base"
+      ],
+      "3255": [
+        "base"
+      ],
+      "3302": [
+        "optimism"
+      ],
+      "3308": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "monad",
+        "optimism",
+        "polygon"
+      ],
+      "3311": [
+        "polygon"
+      ],
+      "3315": [
+        "arbitrum"
+      ],
+      "3328": [
+        "base"
+      ],
+      "3333": [
+        "base"
+      ],
+      "3336": [
+        "base",
+        "bsc",
+        "ethereum"
+      ],
+      "3345": [
+        "base"
+      ],
+      "3361": [
+        "base"
+      ],
+      "3377": [
+        "base"
+      ],
+      "3409": [
+        "base"
+      ],
+      "3450": [
+        "base"
+      ],
+      "3481": [
+        "arbitrum",
+        "base",
+        "ethereum",
+        "optimism"
+      ],
+      "3499": [
+        "ethereum"
+      ],
+      "3507": [
+        "base"
+      ],
+      "3515": [
+        "base"
+      ],
+      "3534": [
+        "base"
+      ],
+      "3575": [
+        "base"
+      ],
+      "3743": [
+        "polygon"
+      ],
+      "3878": [
+        "arbitrum",
+        "base"
+      ],
+      "3940": [
+        "base"
+      ],
+      "4009": [
+        "bsc"
+      ],
+      "4062": [
+        "arbitrum",
+        "base"
+      ],
+      "4196": [
+        "arbitrum",
+        "base",
+        "ethereum"
+      ],
+      "4197": [
+        "arbitrum",
+        "ethereum"
+      ],
+      "4222": [
+        "bsc",
+        "ethereum"
+      ],
+      "4223": [
+        "ethereum"
+      ],
+      "4249": [
+        "optimism"
+      ],
+      "4294": [
+        "base"
+      ],
+      "4321": [
+        "arbitrum",
+        "ethereum",
+        "optimism"
+      ],
+      "4524": [
+        "base"
+      ],
+      "4605": [
+        "base"
+      ],
+      "4703": [
+        "arbitrum"
+      ],
+      "4725": [
+        "base",
+        "bsc",
+        "ethereum"
+      ],
+      "4752": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum"
+      ],
+      "4764": [
+        "base",
+        "monad"
+      ],
+      "4794": [
+        "arbitrum",
+        "monad"
+      ],
+      "4834": [
+        "base"
+      ],
+      "4983": [
+        "bsc",
+        "monad"
+      ],
+      "5070": [
+        "arbitrum"
+      ],
+      "5129": [
+        "bsc"
+      ],
+      "5174": [
+        "bsc"
+      ],
+      "5181": [
+        "base"
+      ],
+      "5221": [
+        "base",
+        "ethereum",
+        "polygon"
+      ],
+      "5251": [
+        "base"
+      ],
+      "5317": [
+        "arbitrum",
+        "base",
+        "ethereum",
+        "polygon"
+      ],
+      "5350": [
+        "bsc",
+        "polygon"
+      ],
+      "5392": [
+        "monad"
+      ],
+      "5408": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "monad"
+      ],
+      "5416": [
+        "base"
+      ],
+      "5417": [
+        "base"
+      ],
+      "5458": [
+        "base"
+      ],
+      "5491": [
+        "arbitrum",
+        "base",
+        "ethereum",
+        "monad",
+        "optimism"
+      ],
+      "5531": [
+        "base",
+        "bsc"
+      ],
+      "5575": [
+        "base"
+      ],
+      "5659": [
+        "base"
+      ],
+      "5690": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "monad",
+        "optimism",
+        "polygon"
+      ],
+      "5806": [
+        "base",
+        "bsc"
+      ],
+      "5895": [
+        "bsc"
+      ],
+      "5917": [
+        "bsc"
+      ],
+      "5919": [
+        "base",
+        "monad"
+      ],
+      "5921": [
+        "bsc"
+      ],
+      "6049": [
+        "bsc"
+      ],
+      "6060": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism"
+      ],
+      "6069": [
+        "base"
+      ],
+      "6075": [
+        "base"
+      ],
+      "6133": [
+        "base",
+        "bsc"
+      ],
+      "6179": [
+        "bsc"
+      ],
+      "6184": [
+        "polygon"
+      ],
+      "6238": [
+        "ethereum"
+      ],
+      "6246": [
+        "bsc",
+        "ethereum"
+      ],
+      "6358": [
+        "ethereum"
+      ],
+      "6373": [
+        "optimism"
+      ],
+      "6390": [
+        "base"
+      ],
+      "6466": [
+        "monad"
+      ],
+      "6483": [
+        "ethereum"
+      ],
+      "6506": [
+        "base",
+        "bsc"
+      ],
+      "6539": [
+        "arbitrum",
+        "base"
+      ],
+      "6557": [
+        "base",
+        "bsc"
+      ],
+      "6576": [
+        "base",
+        "polygon"
+      ],
+      "6586": [
+        "ethereum"
+      ],
+      "6620": [
+        "base"
+      ],
+      "6625": [
+        "base"
+      ],
+      "6643": [
+        "bsc"
+      ],
+      "6649": [
+        "bsc"
+      ],
+      "6650": [
+        "bsc",
+        "ethereum"
+      ],
+      "6660": [
+        "polygon"
+      ],
+      "6694": [
+        "bsc"
+      ],
+      "6738": [
+        "bsc"
+      ],
+      "6764": [
+        "polygon"
+      ],
+      "6771": [
+        "ethereum"
+      ],
+      "6784": [
+        "ethereum"
+      ],
+      "6815": [
+        "ethereum"
+      ],
+      "6924": [
+        "arbitrum"
+      ],
+      "6926": [
+        "bsc"
+      ],
+      "6947": [
+        "base"
+      ],
+      "6983": [
+        "bsc"
+      ],
+      "7021": [
+        "monad"
+      ],
+      "7029": [
+        "monad"
+      ],
+      "7034": [
+        "monad"
+      ],
+      "7037": [
+        "ethereum"
+      ],
+      "7038": [
+        "ethereum"
+      ],
+      "7058": [
+        "monad"
+      ],
+      "7059": [
+        "monad"
+      ],
+      "7074": [
+        "monad"
+      ],
+      "7076": [
+        "monad"
+      ],
+      "7077": [
+        "base",
+        "ethereum",
+        "polygon"
+      ],
+      "7123": [
+        "polygon"
+      ],
+      "7124": [
+        "polygon"
+      ],
+      "7125": [
+        "polygon"
+      ],
+      "7126": [
+        "polygon"
+      ],
+      "7127": [
+        "polygon"
+      ],
+      "7133": [
+        "arbitrum",
+        "base",
+        "ethereum"
+      ],
+      "7139": [
+        "bsc"
+      ],
+      "7213": [
+        "bsc"
+      ],
+      "7214": [
+        "base",
+        "bsc",
+        "ethereum",
+        "monad"
+      ],
+      "7230": [
+        "ethereum"
+      ],
+      "7260": [
+        "base",
+        "bsc"
+      ],
+      "7304": [
+        "base"
+      ],
+      "7328": [
+        "polygon"
+      ],
+      "7363": [
+        "base",
+        "monad"
+      ],
+      "7378": [
+        "base",
+        "optimism"
+      ],
+      "7379": [
+        "arbitrum"
+      ],
+      "7381": [
+        "ethereum"
+      ],
+      "7382": [
+        "ethereum"
+      ],
+      "7401": [
+        "monad"
+      ],
+      "7436": [
+        "arbitrum",
+        "base"
+      ],
+      "7447": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "monad"
+      ],
+      "7462": [
+        "ethereum"
+      ],
+      "7508": [
+        "base",
+        "bsc"
+      ],
+      "7519": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "7520": [
+        "base"
+      ],
+      "7521": [
+        "arbitrum",
+        "base",
+        "ethereum",
+        "polygon"
+      ],
+      "7522": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "7523": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "7546": [
+        "monad"
+      ],
+      "7547": [
+        "polygon"
+      ],
+      "7559": [
+        "polygon"
+      ],
+      "7572": [
+        "bsc"
+      ],
+      "7575": [
+        "base"
+      ],
+      "7587": [
+        "base"
+      ],
+      "7599": [
+        "bsc",
+        "ethereum"
+      ],
+      "7601": [
+        "base",
+        "bsc"
+      ],
+      "7622": [
+        "bsc"
+      ],
+      "7626": [
+        "base",
+        "bsc",
+        "ethereum"
+      ],
+      "7648": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "monad",
+        "polygon"
+      ],
+      "7665": [
+        "base"
+      ],
+      "7752": [
+        "polygon"
+      ],
+      "7767": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "optimism",
+        "polygon"
+      ],
+      "7768": [
+        "bsc"
+      ],
+      "7834": [
+        "base"
+      ],
+      "7853": [
+        "polygon"
+      ],
+      "7854": [
+        "polygon"
+      ],
+      "7855": [
+        "polygon"
+      ],
+      "7882": [
+        "base",
+        "bsc",
+        "ethereum"
+      ],
+      "7886": [
+        "polygon"
+      ],
+      "7887": [
+        "polygon"
+      ],
+      "7902": [
+        "base"
+      ],
+      "7918": [
+        "ethereum"
+      ],
+      "7935": [
+        "base",
+        "bsc"
+      ],
+      "7945": [
+        "base"
+      ],
+      "7955": [
+        "bsc"
+      ],
+      "7979": [
+        "ethereum"
+      ],
+      "7982": [
+        "ethereum"
+      ],
+      "7984": [
+        "ethereum"
+      ],
+      "7986": [
+        "arbitrum",
+        "base",
+        "ethereum"
+      ],
+      "7998": [
+        "polygon"
+      ],
+      "7999": [
+        "polygon"
+      ],
+      "8000": [
+        "polygon"
+      ],
+      "8001": [
+        "polygon"
+      ],
+      "8002": [
+        "polygon"
+      ],
+      "8023": [
+        "arbitrum"
+      ],
+      "8034": [
+        "ethereum"
+      ],
+      "8058": [
+        "arbitrum",
+        "polygon"
+      ],
+      "8064": [
+        "base"
+      ],
+      "8072": [
+        "bsc"
+      ],
+      "8099": [
+        "base"
+      ],
+      "8104": [
+        "arbitrum"
+      ],
+      "8126": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "8127": [
+        "bsc"
+      ],
+      "8131": [
+        "arbitrum",
+        "polygon"
+      ],
+      "8166": [
+        "polygon"
+      ],
+      "8179": [
+        "base"
+      ],
+      "8180": [
+        "base"
+      ],
+      "8209": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum",
+        "optimism",
+        "polygon"
+      ],
+      "8211": [
+        "monad"
+      ],
+      "8223": [
+        "polygon"
+      ],
+      "8228": [
+        "polygon"
+      ],
+      "8269": [
+        "arbitrum"
+      ],
+      "8278": [
+        "ethereum"
+      ],
+      "8292": [
+        "ethereum"
+      ],
+      "8306": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum"
+      ],
+      "8322": [
+        "base",
+        "bsc",
+        "ethereum"
+      ],
+      "8334": [
+        "polygon"
+      ],
+      "8337": [
+        "base"
+      ],
+      "8380": [
+        "monad"
+      ],
+      "8386": [
+        "monad"
+      ],
+      "8433": [
+        "polygon"
+      ],
+      "8439": [
+        "polygon"
+      ],
+      "8440": [
+        "bsc"
+      ],
+      "8449": [
+        "ethereum"
+      ],
+      "8464": [
+        "ethereum"
+      ],
+      "8512": [
+        "base"
+      ],
+      "8513": [
+        "base"
+      ],
+      "8530": [
+        "base"
+      ],
+      "8531": [
+        "ethereum"
+      ],
+      "8582": [
+        "base"
+      ],
+      "8619": [
+        "base"
+      ],
+      "8621": [
+        "base"
+      ],
+      "8640": [
+        "base"
+      ],
+      "8664": [
+        "base",
+        "bsc"
+      ],
+      "8722": [
+        "bsc"
+      ],
+      "8762": [
+        "ethereum"
+      ],
+      "8767": [
+        "ethereum"
+      ],
+      "8823": [
+        "arbitrum",
+        "base",
+        "bsc",
+        "ethereum"
+      ],
+      "8849": [
+        "base",
+        "polygon"
+      ],
+      "8858": [
+        "ethereum"
+      ],
+      "8868": [
+        "polygon"
+      ]
+    },
+    "positiveDexObservationEvidenceComplete": true,
+    "unmatchedPositiveDexObservationCount": 0,
+    "eligiblePositive30dDexEvidence": [
+      {
+        "sourceId": "2198",
+        "productLabel": "Uniswap V3",
+        "chain": "arbitrum",
+        "metric": "dexs",
+        "valueUsd": 3762452612,
+        "windowDays": 30,
+        "sourceRowMatched": true,
+        "methodologyRuleId": "dex-volume-30d-positive-occurrence-v1"
+      },
+      {
+        "sourceId": "119",
+        "productLabel": "SushiSwap Classic V2",
+        "chain": "arbitrum",
+        "metric": "dexs",
+        "valueUsd": 6105527,
+        "windowDays": 30,
+        "sourceRowMatched": true,
+        "methodologyRuleId": "dex-volume-30d-positive-occurrence-v1"
+      },
+      {
+        "sourceId": "2611",
+        "productLabel": "Balancer V2 Vault",
+        "chain": "arbitrum",
+        "metric": "dexs",
+        "valueUsd": 4394384,
+        "windowDays": 30,
+        "sourceRowMatched": true,
+        "methodologyRuleId": "dex-volume-30d-positive-occurrence-v1"
+      }
+    ],
+    "activitySourceCount": 14,
+    "http200ActivitySources": 14,
+    "responseCanonicalHashMatchesBody": 8,
+    "responseCanonicalHashMismatches": [
+      "arbitrum_fees",
+      "base_fees",
+      "bsc_fees",
+      "ethereum_fees",
+      "optimism_fees",
+      "polygon_fees"
+    ],
+    "allDeclaredResponseBodyHashesReconciled": false,
+    "eligibleDexResponseBodyHashesReconciled": true,
+    "activityMethodRulesValid": true,
+    "activityCaptureTimestampUtc": "2026-10-03T19:11:22Z",
+    "auditAsOf": "2026-10-04T00:26:00Z",
+    "activityCaptureWithin90Days": true,
+    "activityWindowRuleValid": true,
+    "compoundV2Source114FeeMethods": [
+      {
+        "id": "compound-v2-borrow-interest-fees-unqualified-v1",
+        "unit": "USD",
+        "window": "30d provider fee observation; activity interpretation unresolved",
+        "qualifiesAsUserActivity": false
+      }
+    ],
+    "compoundV2FeesQualify": false,
+    "compoundV2FeeMethodPreservedUnqualified": true
+  },
+  "workflows": {
+    "m2WorkflowDefinitions": 144,
+    "m2RequiredCapabilityReferences": 59,
+    "m2DefinitionsPreservedExactlyInV3": true,
+    "workflowDefinitionIdsUnique": true,
+    "exactM2CapabilityBindingsFoundInCatalog": 59,
+    "resolvedWorkflowRequirementsNonemptyAndExact": true,
+    "targetScopedWorkflowBundles": 9,
+    "targetBundleCapabilityReferences": 69,
+    "exactTargetBindingsIndependentlyRevalidated": 69,
+    "allTargetBundlesRemainNarrowScopeOnly": true,
+    "targetIdentityDispositionValid": true,
+    "wholeProductObservationRows": 24,
+    "countableProducts": 4,
+    "coverageProductAuthorityPreservedFromM2": true,
+    "observationSetAccounting": {
+      "countingUnit": "distinct normalized coverage-unit productId, not observation rows or unmatched metric IDs",
+      "coverageUnitProductCount": 4,
+      "activeObservationRowCount": 18,
+      "unresolvedObservationRowCount": 4,
+      "ignoredLineageOnlyObservationRowCount": 2,
+      "unclassifiedCoverageObservationRowCount": 0,
+      "activeProductCount": 3,
+      "activeProductIds": [
+        "raw-provider:119",
+        "raw-provider:2198",
+        "raw-provider:2611"
+      ],
+      "unresolvedProductCount": 3,
+      "unresolvedProductIds": [
+        "raw-provider:114",
+        "raw-provider:119",
+        "raw-provider:2611"
+      ],
+      "activeUnresolvedIntersectionCount": 2,
+      "activeUnresolvedIntersectionProductIds": [
+        "raw-provider:119",
+        "raw-provider:2611"
+      ],
+      "activeUnresolvedUnionCount": 4,
+      "activeUnresolvedUnionProductIds": [
+        "raw-provider:114",
+        "raw-provider:119",
+        "raw-provider:2198",
+        "raw-provider:2611"
+      ],
+      "activeOnlyCount": 1,
+      "activeOnlyProductIds": [
+        "raw-provider:2198"
+      ],
+      "unresolvedOnlyCount": 1,
+      "unresolvedOnlyProductIds": [
+        "raw-provider:114"
+      ],
+      "activeUnresolvedRosterAccounting": {
+        "countingUnit": "unique sourceId in frozen roster; unresolved source-row proxies plus unresolved coverage-unit observations; lineage-only excluded",
+        "rosterSourceRowCount": 8476,
+        "unresolvedProxyRosterRows": 8472,
+        "activeSourceIds": [
+          "1053",
+          "1074",
+          "116",
+          "119",
+          "1296",
+          "1347",
+          "1447",
+          "146",
+          "1461",
+          "1616",
+          "162",
+          "1632",
+          "1643",
+          "1664",
+          "1700",
+          "1726",
+          "1732",
+          "1750",
+          "1756",
+          "1777",
+          "1799",
+          "1883",
+          "1884",
+          "1892",
+          "194",
+          "1950",
+          "1970",
+          "199",
+          "1992",
+          "1995",
+          "2015",
+          "202",
+          "2090",
+          "2102",
+          "2104",
+          "2116",
+          "2117",
+          "2118",
+          "2121",
+          "2158",
+          "2167",
+          "2169",
+          "2195",
+          "2196",
+          "2197",
+          "2198",
+          "221",
+          "2239",
+          "2283",
+          "2307",
+          "2350",
+          "238",
+          "2383",
+          "2393",
+          "2400",
+          "2414",
+          "2417",
+          "2467",
+          "2504",
+          "2528",
+          "2529",
+          "2530",
+          "2589",
+          "2602",
+          "2603",
+          "261",
+          "2611",
+          "2644",
+          "2675",
+          "2685",
+          "2695",
+          "271",
+          "2754",
+          "2769",
+          "2776",
+          "2792",
+          "2803",
+          "2837",
+          "2864",
+          "2890",
+          "2906",
+          "2907",
+          "292",
+          "2926",
+          "3",
+          "301",
+          "306",
+          "3095",
+          "3096",
+          "3104",
+          "3121",
+          "317",
+          "318",
+          "3218",
+          "3234",
+          "324",
+          "3246",
+          "3255",
+          "3302",
+          "3308",
+          "3311",
+          "3315",
+          "3328",
+          "3333",
+          "3336",
+          "334",
+          "3345",
+          "3361",
+          "3377",
+          "3409",
+          "3450",
+          "3481",
+          "3499",
+          "3507",
+          "351",
+          "3515",
+          "3534",
+          "3575",
+          "364",
+          "367",
+          "373",
+          "3743",
+          "382",
+          "3878",
+          "392",
+          "3940",
+          "397",
+          "398",
+          "4009",
+          "404",
+          "405",
+          "4062",
+          "4196",
+          "4197",
+          "420",
+          "4222",
+          "4223",
+          "4249",
+          "4294",
+          "4321",
+          "4524",
+          "4605",
+          "468",
+          "4703",
+          "471",
+          "4725",
+          "4752",
+          "4764",
+          "4794",
+          "4834",
+          "4983",
+          "499",
+          "5070",
+          "5129",
+          "5174",
+          "5181",
+          "5221",
+          "5251",
+          "5317",
+          "534",
+          "5350",
+          "5392",
+          "5408",
+          "5416",
+          "5417",
+          "5458",
+          "5491",
+          "5531",
+          "5575",
+          "561",
+          "5659",
+          "5690",
+          "5806",
+          "5895",
+          "5917",
+          "5919",
+          "5921",
+          "597",
+          "6049",
+          "6060",
+          "6069",
+          "6075",
+          "6133",
+          "6179",
+          "6184",
+          "622",
+          "6238",
+          "6246",
+          "6358",
+          "6373",
+          "6390",
+          "644",
+          "6466",
+          "6483",
+          "6506",
+          "6539",
+          "654",
+          "6557",
+          "6576",
+          "6586",
+          "659",
+          "6620",
+          "6625",
+          "6643",
+          "6649",
+          "6650",
+          "6660",
+          "6694",
+          "6738",
+          "6764",
+          "6771",
+          "6784",
+          "6815",
+          "6924",
+          "6926",
+          "693",
+          "6947",
+          "695",
+          "6983",
+          "7021",
+          "7029",
+          "7034",
+          "7037",
+          "7038",
+          "7058",
+          "7059",
+          "707",
+          "7074",
+          "7076",
+          "7077",
+          "711",
+          "7123",
+          "7124",
+          "7125",
+          "7126",
+          "7127",
+          "7133",
+          "7139",
+          "7213",
+          "7214",
+          "7230",
+          "7260",
+          "728",
+          "7304",
+          "7328",
+          "7363",
+          "7378",
+          "7379",
+          "7381",
+          "7382",
+          "7401",
+          "7436",
+          "7447",
+          "7462",
+          "7508",
+          "7519",
+          "7520",
+          "7521",
+          "7522",
+          "7523",
+          "7546",
+          "7547",
+          "7559",
+          "7572",
+          "7575",
+          "7587",
+          "7599",
+          "7601",
+          "7622",
+          "7626",
+          "7648",
+          "7665",
+          "7752",
+          "7767",
+          "7768",
+          "7834",
+          "7853",
+          "7854",
+          "7855",
+          "7882",
+          "7886",
+          "7887",
+          "7902",
+          "7918",
+          "7935",
+          "7945",
+          "7955",
+          "7979",
+          "7982",
+          "7984",
+          "7986",
+          "799",
+          "7998",
+          "7999",
+          "8000",
+          "8001",
+          "8002",
+          "8023",
+          "8034",
+          "8058",
+          "8064",
+          "8072",
+          "8099",
+          "8104",
+          "812",
+          "8126",
+          "8127",
+          "8131",
+          "8166",
+          "8179",
+          "8180",
+          "8209",
+          "8211",
+          "8223",
+          "8228",
+          "8269",
+          "8278",
+          "8292",
+          "8306",
+          "8322",
+          "8334",
+          "8337",
+          "8380",
+          "8386",
+          "8433",
+          "8439",
+          "8440",
+          "8449",
+          "8464",
+          "8512",
+          "8513",
+          "8530",
+          "8531",
+          "8582",
+          "8619",
+          "8621",
+          "863",
+          "8640",
+          "8664",
+          "8722",
+          "8762",
+          "8767",
+          "8823",
+          "883",
+          "8849",
+          "8858",
+          "8868",
+          "923",
+          "942"
+        ],
+        "activeSourceIdCount": 349,
+        "activeEvidenceObservationCount": 603,
+        "activePositiveDexObservationChainsBySourceId": {
+          "3": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "116": [
+            "ethereum"
+          ],
+          "119": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "146": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "162": [
+            "ethereum"
+          ],
+          "194": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "199": [
+            "ethereum"
+          ],
+          "202": [
+            "arbitrum"
+          ],
+          "221": [
+            "ethereum"
+          ],
+          "238": [
+            "bsc"
+          ],
+          "261": [
+            "polygon"
+          ],
+          "271": [
+            "polygon"
+          ],
+          "292": [
+            "arbitrum",
+            "ethereum"
+          ],
+          "301": [
+            "bsc"
+          ],
+          "306": [
+            "base",
+            "polygon"
+          ],
+          "317": [
+            "bsc"
+          ],
+          "318": [
+            "polygon"
+          ],
+          "324": [
+            "ethereum"
+          ],
+          "334": [
+            "bsc"
+          ],
+          "351": [
+            "polygon"
+          ],
+          "364": [
+            "arbitrum"
+          ],
+          "367": [
+            "bsc"
+          ],
+          "373": [
+            "bsc"
+          ],
+          "382": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad"
+          ],
+          "392": [
+            "bsc"
+          ],
+          "397": [
+            "ethereum"
+          ],
+          "398": [
+            "arbitrum",
+            "bsc",
+            "polygon"
+          ],
+          "404": [
+            "ethereum"
+          ],
+          "405": [
+            "ethereum"
+          ],
+          "420": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "468": [
+            "bsc"
+          ],
+          "471": [
+            "bsc"
+          ],
+          "499": [
+            "polygon"
+          ],
+          "534": [
+            "arbitrum",
+            "base",
+            "optimism",
+            "polygon"
+          ],
+          "561": [
+            "bsc"
+          ],
+          "597": [
+            "bsc"
+          ],
+          "622": [
+            "polygon"
+          ],
+          "644": [
+            "bsc"
+          ],
+          "654": [
+            "optimism"
+          ],
+          "659": [
+            "bsc",
+            "polygon"
+          ],
+          "693": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "695": [
+            "bsc"
+          ],
+          "707": [
+            "ethereum"
+          ],
+          "711": [
+            "polygon"
+          ],
+          "728": [
+            "ethereum"
+          ],
+          "799": [
+            "base",
+            "ethereum"
+          ],
+          "812": [
+            "bsc",
+            "ethereum"
+          ],
+          "863": [
+            "bsc"
+          ],
+          "883": [
+            "polygon"
+          ],
+          "923": [
+            "bsc"
+          ],
+          "942": [
+            "bsc"
+          ],
+          "1053": [
+            "ethereum"
+          ],
+          "1074": [
+            "bsc"
+          ],
+          "1296": [
+            "arbitrum"
+          ],
+          "1347": [
+            "bsc"
+          ],
+          "1447": [
+            "bsc",
+            "ethereum",
+            "polygon"
+          ],
+          "1461": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "1616": [
+            "bsc",
+            "polygon"
+          ],
+          "1632": [
+            "bsc"
+          ],
+          "1643": [
+            "bsc"
+          ],
+          "1664": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "1700": [
+            "arbitrum",
+            "bsc",
+            "ethereum",
+            "optimism"
+          ],
+          "1726": [
+            "polygon"
+          ],
+          "1732": [
+            "ethereum"
+          ],
+          "1750": [
+            "bsc"
+          ],
+          "1756": [
+            "polygon"
+          ],
+          "1777": [
+            "bsc"
+          ],
+          "1799": [
+            "optimism"
+          ],
+          "1883": [
+            "base",
+            "bsc"
+          ],
+          "1884": [
+            "bsc"
+          ],
+          "1892": [
+            "base",
+            "polygon"
+          ],
+          "1950": [
+            "bsc"
+          ],
+          "1970": [
+            "bsc"
+          ],
+          "1992": [
+            "bsc"
+          ],
+          "1995": [
+            "ethereum"
+          ],
+          "2015": [
+            "polygon"
+          ],
+          "2090": [
+            "bsc"
+          ],
+          "2102": [
+            "bsc"
+          ],
+          "2104": [
+            "polygon"
+          ],
+          "2116": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "polygon"
+          ],
+          "2117": [
+            "bsc",
+            "polygon"
+          ],
+          "2118": [
+            "bsc"
+          ],
+          "2121": [
+            "arbitrum",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "2158": [
+            "bsc"
+          ],
+          "2167": [
+            "bsc"
+          ],
+          "2169": [
+            "bsc"
+          ],
+          "2195": [
+            "bsc",
+            "polygon"
+          ],
+          "2196": [
+            "ethereum"
+          ],
+          "2197": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "2198": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "2239": [
+            "polygon"
+          ],
+          "2283": [
+            "arbitrum"
+          ],
+          "2307": [
+            "arbitrum"
+          ],
+          "2350": [
+            "bsc"
+          ],
+          "2383": [
+            "bsc"
+          ],
+          "2393": [
+            "arbitrum",
+            "bsc"
+          ],
+          "2400": [
+            "ethereum"
+          ],
+          "2414": [
+            "ethereum"
+          ],
+          "2417": [
+            "bsc"
+          ],
+          "2467": [
+            "arbitrum"
+          ],
+          "2504": [
+            "ethereum",
+            "polygon"
+          ],
+          "2528": [
+            "arbitrum"
+          ],
+          "2529": [
+            "arbitrum",
+            "bsc"
+          ],
+          "2530": [
+            "arbitrum"
+          ],
+          "2589": [
+            "arbitrum",
+            "base",
+            "bsc"
+          ],
+          "2602": [
+            "arbitrum"
+          ],
+          "2603": [
+            "arbitrum"
+          ],
+          "2611": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "2644": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "2675": [
+            "arbitrum"
+          ],
+          "2685": [
+            "arbitrum"
+          ],
+          "2695": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "polygon"
+          ],
+          "2754": [
+            "arbitrum"
+          ],
+          "2769": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad"
+          ],
+          "2776": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "2792": [
+            "arbitrum"
+          ],
+          "2803": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "2837": [
+            "base",
+            "ethereum"
+          ],
+          "2864": [
+            "bsc"
+          ],
+          "2890": [
+            "ethereum"
+          ],
+          "2906": [
+            "arbitrum",
+            "bsc",
+            "ethereum"
+          ],
+          "2907": [
+            "arbitrum"
+          ],
+          "2926": [
+            "arbitrum",
+            "base"
+          ],
+          "3095": [
+            "arbitrum",
+            "base",
+            "ethereum"
+          ],
+          "3096": [
+            "arbitrum"
+          ],
+          "3104": [
+            "ethereum"
+          ],
+          "3121": [
+            "polygon"
+          ],
+          "3218": [
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "3234": [
+            "base"
+          ],
+          "3246": [
+            "base"
+          ],
+          "3255": [
+            "base"
+          ],
+          "3302": [
+            "optimism"
+          ],
+          "3308": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "3311": [
+            "polygon"
+          ],
+          "3315": [
+            "arbitrum"
+          ],
+          "3328": [
+            "base"
+          ],
+          "3333": [
+            "base"
+          ],
+          "3336": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "3345": [
+            "base"
+          ],
+          "3361": [
+            "base"
+          ],
+          "3377": [
+            "base"
+          ],
+          "3409": [
+            "base"
+          ],
+          "3450": [
+            "base"
+          ],
+          "3481": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "optimism"
+          ],
+          "3499": [
+            "ethereum"
+          ],
+          "3507": [
+            "base"
+          ],
+          "3515": [
+            "base"
+          ],
+          "3534": [
+            "base"
+          ],
+          "3575": [
+            "base"
+          ],
+          "3743": [
+            "polygon"
+          ],
+          "3878": [
+            "arbitrum",
+            "base"
+          ],
+          "3940": [
+            "base"
+          ],
+          "4009": [
+            "bsc"
+          ],
+          "4062": [
+            "arbitrum",
+            "base"
+          ],
+          "4196": [
+            "arbitrum",
+            "base",
+            "ethereum"
+          ],
+          "4197": [
+            "arbitrum",
+            "ethereum"
+          ],
+          "4222": [
+            "bsc",
+            "ethereum"
+          ],
+          "4223": [
+            "ethereum"
+          ],
+          "4249": [
+            "optimism"
+          ],
+          "4294": [
+            "base"
+          ],
+          "4321": [
+            "arbitrum",
+            "ethereum",
+            "optimism"
+          ],
+          "4524": [
+            "base"
+          ],
+          "4605": [
+            "base"
+          ],
+          "4703": [
+            "arbitrum"
+          ],
+          "4725": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "4752": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "4764": [
+            "base",
+            "monad"
+          ],
+          "4794": [
+            "arbitrum",
+            "monad"
+          ],
+          "4834": [
+            "base"
+          ],
+          "4983": [
+            "bsc",
+            "monad"
+          ],
+          "5070": [
+            "arbitrum"
+          ],
+          "5129": [
+            "bsc"
+          ],
+          "5174": [
+            "bsc"
+          ],
+          "5181": [
+            "base"
+          ],
+          "5221": [
+            "base",
+            "ethereum",
+            "polygon"
+          ],
+          "5251": [
+            "base"
+          ],
+          "5317": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "polygon"
+          ],
+          "5350": [
+            "bsc",
+            "polygon"
+          ],
+          "5392": [
+            "monad"
+          ],
+          "5408": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad"
+          ],
+          "5416": [
+            "base"
+          ],
+          "5417": [
+            "base"
+          ],
+          "5458": [
+            "base"
+          ],
+          "5491": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "monad",
+            "optimism"
+          ],
+          "5531": [
+            "base",
+            "bsc"
+          ],
+          "5575": [
+            "base"
+          ],
+          "5659": [
+            "base"
+          ],
+          "5690": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "5806": [
+            "base",
+            "bsc"
+          ],
+          "5895": [
+            "bsc"
+          ],
+          "5917": [
+            "bsc"
+          ],
+          "5919": [
+            "base",
+            "monad"
+          ],
+          "5921": [
+            "bsc"
+          ],
+          "6049": [
+            "bsc"
+          ],
+          "6060": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism"
+          ],
+          "6069": [
+            "base"
+          ],
+          "6075": [
+            "base"
+          ],
+          "6133": [
+            "base",
+            "bsc"
+          ],
+          "6179": [
+            "bsc"
+          ],
+          "6184": [
+            "polygon"
+          ],
+          "6238": [
+            "ethereum"
+          ],
+          "6246": [
+            "bsc",
+            "ethereum"
+          ],
+          "6358": [
+            "ethereum"
+          ],
+          "6373": [
+            "optimism"
+          ],
+          "6390": [
+            "base"
+          ],
+          "6466": [
+            "monad"
+          ],
+          "6483": [
+            "ethereum"
+          ],
+          "6506": [
+            "base",
+            "bsc"
+          ],
+          "6539": [
+            "arbitrum",
+            "base"
+          ],
+          "6557": [
+            "base",
+            "bsc"
+          ],
+          "6576": [
+            "base",
+            "polygon"
+          ],
+          "6586": [
+            "ethereum"
+          ],
+          "6620": [
+            "base"
+          ],
+          "6625": [
+            "base"
+          ],
+          "6643": [
+            "bsc"
+          ],
+          "6649": [
+            "bsc"
+          ],
+          "6650": [
+            "bsc",
+            "ethereum"
+          ],
+          "6660": [
+            "polygon"
+          ],
+          "6694": [
+            "bsc"
+          ],
+          "6738": [
+            "bsc"
+          ],
+          "6764": [
+            "polygon"
+          ],
+          "6771": [
+            "ethereum"
+          ],
+          "6784": [
+            "ethereum"
+          ],
+          "6815": [
+            "ethereum"
+          ],
+          "6924": [
+            "arbitrum"
+          ],
+          "6926": [
+            "bsc"
+          ],
+          "6947": [
+            "base"
+          ],
+          "6983": [
+            "bsc"
+          ],
+          "7021": [
+            "monad"
+          ],
+          "7029": [
+            "monad"
+          ],
+          "7034": [
+            "monad"
+          ],
+          "7037": [
+            "ethereum"
+          ],
+          "7038": [
+            "ethereum"
+          ],
+          "7058": [
+            "monad"
+          ],
+          "7059": [
+            "monad"
+          ],
+          "7074": [
+            "monad"
+          ],
+          "7076": [
+            "monad"
+          ],
+          "7077": [
+            "base",
+            "ethereum",
+            "polygon"
+          ],
+          "7123": [
+            "polygon"
+          ],
+          "7124": [
+            "polygon"
+          ],
+          "7125": [
+            "polygon"
+          ],
+          "7126": [
+            "polygon"
+          ],
+          "7127": [
+            "polygon"
+          ],
+          "7133": [
+            "arbitrum",
+            "base",
+            "ethereum"
+          ],
+          "7139": [
+            "bsc"
+          ],
+          "7213": [
+            "bsc"
+          ],
+          "7214": [
+            "base",
+            "bsc",
+            "ethereum",
+            "monad"
+          ],
+          "7230": [
+            "ethereum"
+          ],
+          "7260": [
+            "base",
+            "bsc"
+          ],
+          "7304": [
+            "base"
+          ],
+          "7328": [
+            "polygon"
+          ],
+          "7363": [
+            "base",
+            "monad"
+          ],
+          "7378": [
+            "base",
+            "optimism"
+          ],
+          "7379": [
+            "arbitrum"
+          ],
+          "7381": [
+            "ethereum"
+          ],
+          "7382": [
+            "ethereum"
+          ],
+          "7401": [
+            "monad"
+          ],
+          "7436": [
+            "arbitrum",
+            "base"
+          ],
+          "7447": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad"
+          ],
+          "7462": [
+            "ethereum"
+          ],
+          "7508": [
+            "base",
+            "bsc"
+          ],
+          "7519": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "7520": [
+            "base"
+          ],
+          "7521": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "polygon"
+          ],
+          "7522": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "7523": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "7546": [
+            "monad"
+          ],
+          "7547": [
+            "polygon"
+          ],
+          "7559": [
+            "polygon"
+          ],
+          "7572": [
+            "bsc"
+          ],
+          "7575": [
+            "base"
+          ],
+          "7587": [
+            "base"
+          ],
+          "7599": [
+            "bsc",
+            "ethereum"
+          ],
+          "7601": [
+            "base",
+            "bsc"
+          ],
+          "7622": [
+            "bsc"
+          ],
+          "7626": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "7648": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "polygon"
+          ],
+          "7665": [
+            "base"
+          ],
+          "7752": [
+            "polygon"
+          ],
+          "7767": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "optimism",
+            "polygon"
+          ],
+          "7768": [
+            "bsc"
+          ],
+          "7834": [
+            "base"
+          ],
+          "7853": [
+            "polygon"
+          ],
+          "7854": [
+            "polygon"
+          ],
+          "7855": [
+            "polygon"
+          ],
+          "7882": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "7886": [
+            "polygon"
+          ],
+          "7887": [
+            "polygon"
+          ],
+          "7902": [
+            "base"
+          ],
+          "7918": [
+            "ethereum"
+          ],
+          "7935": [
+            "base",
+            "bsc"
+          ],
+          "7945": [
+            "base"
+          ],
+          "7955": [
+            "bsc"
+          ],
+          "7979": [
+            "ethereum"
+          ],
+          "7982": [
+            "ethereum"
+          ],
+          "7984": [
+            "ethereum"
+          ],
+          "7986": [
+            "arbitrum",
+            "base",
+            "ethereum"
+          ],
+          "7998": [
+            "polygon"
+          ],
+          "7999": [
+            "polygon"
+          ],
+          "8000": [
+            "polygon"
+          ],
+          "8001": [
+            "polygon"
+          ],
+          "8002": [
+            "polygon"
+          ],
+          "8023": [
+            "arbitrum"
+          ],
+          "8034": [
+            "ethereum"
+          ],
+          "8058": [
+            "arbitrum",
+            "polygon"
+          ],
+          "8064": [
+            "base"
+          ],
+          "8072": [
+            "bsc"
+          ],
+          "8099": [
+            "base"
+          ],
+          "8104": [
+            "arbitrum"
+          ],
+          "8126": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "8127": [
+            "bsc"
+          ],
+          "8131": [
+            "arbitrum",
+            "polygon"
+          ],
+          "8166": [
+            "polygon"
+          ],
+          "8179": [
+            "base"
+          ],
+          "8180": [
+            "base"
+          ],
+          "8209": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "8211": [
+            "monad"
+          ],
+          "8223": [
+            "polygon"
+          ],
+          "8228": [
+            "polygon"
+          ],
+          "8269": [
+            "arbitrum"
+          ],
+          "8278": [
+            "ethereum"
+          ],
+          "8292": [
+            "ethereum"
+          ],
+          "8306": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "8322": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "8334": [
+            "polygon"
+          ],
+          "8337": [
+            "base"
+          ],
+          "8380": [
+            "monad"
+          ],
+          "8386": [
+            "monad"
+          ],
+          "8433": [
+            "polygon"
+          ],
+          "8439": [
+            "polygon"
+          ],
+          "8440": [
+            "bsc"
+          ],
+          "8449": [
+            "ethereum"
+          ],
+          "8464": [
+            "ethereum"
+          ],
+          "8512": [
+            "base"
+          ],
+          "8513": [
+            "base"
+          ],
+          "8530": [
+            "base"
+          ],
+          "8531": [
+            "ethereum"
+          ],
+          "8582": [
+            "base"
+          ],
+          "8619": [
+            "base"
+          ],
+          "8621": [
+            "base"
+          ],
+          "8640": [
+            "base"
+          ],
+          "8664": [
+            "base",
+            "bsc"
+          ],
+          "8722": [
+            "bsc"
+          ],
+          "8762": [
+            "ethereum"
+          ],
+          "8767": [
+            "ethereum"
+          ],
+          "8823": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "8849": [
+            "base",
+            "polygon"
+          ],
+          "8858": [
+            "ethereum"
+          ],
+          "8868": [
+            "polygon"
+          ]
+        },
+        "unresolvedSourceIdCount": 8475,
+        "unresolvedObservationSourceIds": [
+          "114",
+          "119",
+          "2611"
+        ],
+        "unresolvedObservationChainsBySourceId": {
+          "114": [
+            1
+          ],
+          "119": [
+            143
+          ],
+          "2611": [
+            56,
+            143
+          ]
+        },
+        "activeUnresolvedIntersectionCount": 348,
+        "activeUnresolvedIntersectionSourceIds": [
+          "1053",
+          "1074",
+          "116",
+          "119",
+          "1296",
+          "1347",
+          "1447",
+          "146",
+          "1461",
+          "1616",
+          "162",
+          "1632",
+          "1643",
+          "1664",
+          "1700",
+          "1726",
+          "1732",
+          "1750",
+          "1756",
+          "1777",
+          "1799",
+          "1883",
+          "1884",
+          "1892",
+          "194",
+          "1950",
+          "1970",
+          "199",
+          "1992",
+          "1995",
+          "2015",
+          "202",
+          "2090",
+          "2102",
+          "2104",
+          "2116",
+          "2117",
+          "2118",
+          "2121",
+          "2158",
+          "2167",
+          "2169",
+          "2195",
+          "2196",
+          "2197",
+          "221",
+          "2239",
+          "2283",
+          "2307",
+          "2350",
+          "238",
+          "2383",
+          "2393",
+          "2400",
+          "2414",
+          "2417",
+          "2467",
+          "2504",
+          "2528",
+          "2529",
+          "2530",
+          "2589",
+          "2602",
+          "2603",
+          "261",
+          "2611",
+          "2644",
+          "2675",
+          "2685",
+          "2695",
+          "271",
+          "2754",
+          "2769",
+          "2776",
+          "2792",
+          "2803",
+          "2837",
+          "2864",
+          "2890",
+          "2906",
+          "2907",
+          "292",
+          "2926",
+          "3",
+          "301",
+          "306",
+          "3095",
+          "3096",
+          "3104",
+          "3121",
+          "317",
+          "318",
+          "3218",
+          "3234",
+          "324",
+          "3246",
+          "3255",
+          "3302",
+          "3308",
+          "3311",
+          "3315",
+          "3328",
+          "3333",
+          "3336",
+          "334",
+          "3345",
+          "3361",
+          "3377",
+          "3409",
+          "3450",
+          "3481",
+          "3499",
+          "3507",
+          "351",
+          "3515",
+          "3534",
+          "3575",
+          "364",
+          "367",
+          "373",
+          "3743",
+          "382",
+          "3878",
+          "392",
+          "3940",
+          "397",
+          "398",
+          "4009",
+          "404",
+          "405",
+          "4062",
+          "4196",
+          "4197",
+          "420",
+          "4222",
+          "4223",
+          "4249",
+          "4294",
+          "4321",
+          "4524",
+          "4605",
+          "468",
+          "4703",
+          "471",
+          "4725",
+          "4752",
+          "4764",
+          "4794",
+          "4834",
+          "4983",
+          "499",
+          "5070",
+          "5129",
+          "5174",
+          "5181",
+          "5221",
+          "5251",
+          "5317",
+          "534",
+          "5350",
+          "5392",
+          "5408",
+          "5416",
+          "5417",
+          "5458",
+          "5491",
+          "5531",
+          "5575",
+          "561",
+          "5659",
+          "5690",
+          "5806",
+          "5895",
+          "5917",
+          "5919",
+          "5921",
+          "597",
+          "6049",
+          "6060",
+          "6069",
+          "6075",
+          "6133",
+          "6179",
+          "6184",
+          "622",
+          "6238",
+          "6246",
+          "6358",
+          "6373",
+          "6390",
+          "644",
+          "6466",
+          "6483",
+          "6506",
+          "6539",
+          "654",
+          "6557",
+          "6576",
+          "6586",
+          "659",
+          "6620",
+          "6625",
+          "6643",
+          "6649",
+          "6650",
+          "6660",
+          "6694",
+          "6738",
+          "6764",
+          "6771",
+          "6784",
+          "6815",
+          "6924",
+          "6926",
+          "693",
+          "6947",
+          "695",
+          "6983",
+          "7021",
+          "7029",
+          "7034",
+          "7037",
+          "7038",
+          "7058",
+          "7059",
+          "707",
+          "7074",
+          "7076",
+          "7077",
+          "711",
+          "7123",
+          "7124",
+          "7125",
+          "7126",
+          "7127",
+          "7133",
+          "7139",
+          "7213",
+          "7214",
+          "7230",
+          "7260",
+          "728",
+          "7304",
+          "7328",
+          "7363",
+          "7378",
+          "7379",
+          "7381",
+          "7382",
+          "7401",
+          "7436",
+          "7447",
+          "7462",
+          "7508",
+          "7519",
+          "7520",
+          "7521",
+          "7522",
+          "7523",
+          "7546",
+          "7547",
+          "7559",
+          "7572",
+          "7575",
+          "7587",
+          "7599",
+          "7601",
+          "7622",
+          "7626",
+          "7648",
+          "7665",
+          "7752",
+          "7767",
+          "7768",
+          "7834",
+          "7853",
+          "7854",
+          "7855",
+          "7882",
+          "7886",
+          "7887",
+          "7902",
+          "7918",
+          "7935",
+          "7945",
+          "7955",
+          "7979",
+          "7982",
+          "7984",
+          "7986",
+          "799",
+          "7998",
+          "7999",
+          "8000",
+          "8001",
+          "8002",
+          "8023",
+          "8034",
+          "8058",
+          "8064",
+          "8072",
+          "8099",
+          "8104",
+          "812",
+          "8126",
+          "8127",
+          "8131",
+          "8166",
+          "8179",
+          "8180",
+          "8209",
+          "8211",
+          "8223",
+          "8228",
+          "8269",
+          "8278",
+          "8292",
+          "8306",
+          "8322",
+          "8334",
+          "8337",
+          "8380",
+          "8386",
+          "8433",
+          "8439",
+          "8440",
+          "8449",
+          "8464",
+          "8512",
+          "8513",
+          "8530",
+          "8531",
+          "8582",
+          "8619",
+          "8621",
+          "863",
+          "8640",
+          "8664",
+          "8722",
+          "8762",
+          "8767",
+          "8823",
+          "883",
+          "8849",
+          "8858",
+          "8868",
+          "923",
+          "942"
+        ],
+        "activeUnresolvedUnionCount": 8476,
+        "activeOnlyCount": 1,
+        "activeOnlySourceIds": [
+          "2198"
+        ],
+        "unresolvedOnlyCount": 8127,
+        "unresolvedOnlyProxyRosterRowCount": 8126,
+        "unresolvedOnlyObservedSourceIds": [
+          "114"
+        ],
+        "inclusionExclusionUnionCount": 8476,
+        "unionEqualsFrozenRoster": true,
+        "proxyRowsConservedAgainstM2": true,
+        "unmatchedMetricRecordsCount": 7,
+        "unmatchedMetricRecordsAreExtraRosterRows": false
+      },
+      "unmatchedMetricRecordsAreRosterRows": false
+    },
+    "missingExpectedProductChainObservations": 0,
+    "completeInstanceAndWorkflowObservationRows": 0,
+    "completeDistinctCanonicalActiveProductCount": 0,
+    "completeCanonicalActiveProductIds": [],
+    "productWorkflowEvidenceChecks": [
+      {
+        "productId": "raw-provider:2198",
+        "sourceId": "2198",
+        "canonicalActiveProduct": true,
+        "expectedChainCount": 7,
+        "allExpectedChainsComplete": false,
+        "chains": [
+          {
+            "chainId": 1,
+            "observationCount": 1,
+            "expectedWorkflowCount": 7,
+            "enumeratedInstanceCount": 2,
+            "complete": false
+          },
+          {
+            "chainId": 8453,
+            "observationCount": 1,
+            "expectedWorkflowCount": 7,
+            "enumeratedInstanceCount": 2,
+            "complete": false
+          },
+          {
+            "chainId": 10,
+            "observationCount": 1,
+            "expectedWorkflowCount": 7,
+            "enumeratedInstanceCount": 2,
+            "complete": false
+          },
+          {
+            "chainId": 42161,
+            "observationCount": 1,
+            "expectedWorkflowCount": 7,
+            "enumeratedInstanceCount": 2,
+            "complete": false
+          },
+          {
+            "chainId": 137,
+            "observationCount": 1,
+            "expectedWorkflowCount": 7,
+            "enumeratedInstanceCount": 2,
+            "complete": false
+          },
+          {
+            "chainId": 56,
+            "observationCount": 1,
+            "expectedWorkflowCount": 7,
+            "enumeratedInstanceCount": 2,
+            "complete": false
+          },
+          {
+            "chainId": 143,
+            "observationCount": 1,
+            "expectedWorkflowCount": 7,
+            "enumeratedInstanceCount": 2,
+            "complete": false
+          }
+        ]
+      },
+      {
+        "productId": "raw-provider:119",
+        "sourceId": "119",
+        "canonicalActiveProduct": true,
+        "expectedChainCount": 7,
+        "allExpectedChainsComplete": false,
+        "chains": [
+          {
+            "chainId": 1,
+            "observationCount": 1,
+            "expectedWorkflowCount": 11,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 8453,
+            "observationCount": 1,
+            "expectedWorkflowCount": 11,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 10,
+            "observationCount": 1,
+            "expectedWorkflowCount": 11,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 42161,
+            "observationCount": 1,
+            "expectedWorkflowCount": 11,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 137,
+            "observationCount": 1,
+            "expectedWorkflowCount": 11,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 56,
+            "observationCount": 1,
+            "expectedWorkflowCount": 11,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 143,
+            "observationCount": 1,
+            "expectedWorkflowCount": 1,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          }
+        ]
+      },
+      {
+        "productId": "raw-provider:2611",
+        "sourceId": "2611",
+        "canonicalActiveProduct": true,
+        "expectedChainCount": 7,
+        "allExpectedChainsComplete": false,
+        "chains": [
+          {
+            "chainId": 1,
+            "observationCount": 1,
+            "expectedWorkflowCount": 5,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 8453,
+            "observationCount": 1,
+            "expectedWorkflowCount": 5,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 10,
+            "observationCount": 1,
+            "expectedWorkflowCount": 5,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 42161,
+            "observationCount": 1,
+            "expectedWorkflowCount": 5,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 137,
+            "observationCount": 1,
+            "expectedWorkflowCount": 5,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 56,
+            "observationCount": 1,
+            "expectedWorkflowCount": 5,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          },
+          {
+            "chainId": 143,
+            "observationCount": 1,
+            "expectedWorkflowCount": 1,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          }
+        ]
+      },
+      {
+        "productId": "raw-provider:114",
+        "sourceId": "114",
+        "canonicalActiveProduct": false,
+        "expectedChainCount": 1,
+        "allExpectedChainsComplete": false,
+        "chains": [
+          {
+            "chainId": 1,
+            "observationCount": 1,
+            "expectedWorkflowCount": 4,
+            "enumeratedInstanceCount": 1,
+            "complete": false
+          }
+        ]
+      }
+    ],
+    "duplicateProductChainObservationPairs": false,
+    "wholeProductWorkflowCompletionEstablished": false,
+    "sourceWorkflowSeedProducts": 5,
+    "sourceWorkflowSeedRows": 26
+  },
+  "profiles": {
+    "profileCount": 9,
+    "profileReferenceCount": 75,
+    "uniqueProfileMemberIds": 75,
+    "maximumProfileSize": 9,
+    "expectedBundleIdsPresent": true,
+    "allLiteralProfilesValid": true,
+    "allNineLiteralProfilesValid": true,
+    "profiles": [
+      {
+        "bundleId": "uniswap-v3-positions-1",
+        "chainIds": [
+          1
+        ],
+        "exactMemberCount": 9,
+        "sortedUnique": true,
+        "chainBoundActiveMembers": true,
+        "fingerprintValid": true,
+        "membershipValid": true
+      },
+      {
+        "bundleId": "uniswap-v3-positions-10",
+        "chainIds": [
+          10
+        ],
+        "exactMemberCount": 9,
+        "sortedUnique": true,
+        "chainBoundActiveMembers": true,
+        "fingerprintValid": true,
+        "membershipValid": true
+      },
+      {
+        "bundleId": "uniswap-v3-positions-56",
+        "chainIds": [
+          56
+        ],
+        "exactMemberCount": 9,
+        "sortedUnique": true,
+        "chainBoundActiveMembers": true,
+        "fingerprintValid": true,
+        "membershipValid": true
+      },
+      {
+        "bundleId": "uniswap-v3-positions-137",
+        "chainIds": [
+          137
+        ],
+        "exactMemberCount": 9,
+        "sortedUnique": true,
+        "chainBoundActiveMembers": true,
+        "fingerprintValid": true,
+        "membershipValid": true
+      },
+      {
+        "bundleId": "uniswap-v3-positions-143",
+        "chainIds": [
+          143
+        ],
+        "exactMemberCount": 9,
+        "sortedUnique": true,
+        "chainBoundActiveMembers": true,
+        "fingerprintValid": true,
+        "membershipValid": true
+      },
+      {
+        "bundleId": "uniswap-v3-positions-8453",
+        "chainIds": [
+          8453
+        ],
+        "exactMemberCount": 9,
+        "sortedUnique": true,
+        "chainBoundActiveMembers": true,
+        "fingerprintValid": true,
+        "membershipValid": true
+      },
+      {
+        "bundleId": "uniswap-v3-positions-42161",
+        "chainIds": [
+          42161
+        ],
+        "exactMemberCount": 9,
+        "sortedUnique": true,
+        "chainBoundActiveMembers": true,
+        "fingerprintValid": true,
+        "membershipValid": true
+      },
+      {
+        "bundleId": "morpho-blue-1",
+        "chainIds": [
+          1
+        ],
+        "exactMemberCount": 6,
+        "sortedUnique": true,
+        "chainBoundActiveMembers": true,
+        "fingerprintValid": true,
+        "membershipValid": true
+      },
+      {
+        "bundleId": "morpho-blue-8453",
+        "chainIds": [
+          8453
+        ],
+        "exactMemberCount": 6,
+        "sortedUnique": true,
+        "chainBoundActiveMembers": true,
+        "fingerprintValid": true,
+        "membershipValid": true
+      }
+    ]
+  },
+  "inputSourceDigestsVerified": true,
+  "legacyM3ReportComparison": {
+    "comparedOnlyForDiscrepancies": true,
+    "comparisonCatalogVersion": "v3",
+    "legacyComparisonMatchesIndependentSetCardinalities": true,
+    "m3ReportedActiveProducts": 3,
+    "m3ReportedUnresolvedProducts": 8475,
+    "m3ReportedConservativeDenominator": 8476,
+    "reportUnresolvedCountIsObservationSetCount": false,
+    "reportCountsAssumedDisjoint": false,
+    "reportCountFormulaReconstructed": false,
+    "reportActiveCountMatchesObservationSetCardinality": true,
+    "reportUnresolvedCountMatchesIndependentRosterSetCardinality": true,
+    "reportConservativeDenominatorMatchesIndependentSetUnion": true,
+    "independentlyDerivedInclusionExclusionUnion": 8476,
+    "independentUnionEqualsRawRosterRows": true,
+    "observationSetAccounting": {
+      "countingUnit": "distinct normalized coverage-unit productId, not observation rows or unmatched metric IDs",
+      "coverageUnitProductCount": 4,
+      "activeObservationRowCount": 18,
+      "unresolvedObservationRowCount": 4,
+      "ignoredLineageOnlyObservationRowCount": 2,
+      "unclassifiedCoverageObservationRowCount": 0,
+      "activeProductCount": 3,
+      "activeProductIds": [
+        "raw-provider:119",
+        "raw-provider:2198",
+        "raw-provider:2611"
+      ],
+      "unresolvedProductCount": 3,
+      "unresolvedProductIds": [
+        "raw-provider:114",
+        "raw-provider:119",
+        "raw-provider:2611"
+      ],
+      "activeUnresolvedIntersectionCount": 2,
+      "activeUnresolvedIntersectionProductIds": [
+        "raw-provider:119",
+        "raw-provider:2611"
+      ],
+      "activeUnresolvedUnionCount": 4,
+      "activeUnresolvedUnionProductIds": [
+        "raw-provider:114",
+        "raw-provider:119",
+        "raw-provider:2198",
+        "raw-provider:2611"
+      ],
+      "activeOnlyCount": 1,
+      "activeOnlyProductIds": [
+        "raw-provider:2198"
+      ],
+      "unresolvedOnlyCount": 1,
+      "unresolvedOnlyProductIds": [
+        "raw-provider:114"
+      ],
+      "activeUnresolvedRosterAccounting": {
+        "countingUnit": "unique sourceId in frozen roster; unresolved source-row proxies plus unresolved coverage-unit observations; lineage-only excluded",
+        "rosterSourceRowCount": 8476,
+        "unresolvedProxyRosterRows": 8472,
+        "activeSourceIds": [
+          "1053",
+          "1074",
+          "116",
+          "119",
+          "1296",
+          "1347",
+          "1447",
+          "146",
+          "1461",
+          "1616",
+          "162",
+          "1632",
+          "1643",
+          "1664",
+          "1700",
+          "1726",
+          "1732",
+          "1750",
+          "1756",
+          "1777",
+          "1799",
+          "1883",
+          "1884",
+          "1892",
+          "194",
+          "1950",
+          "1970",
+          "199",
+          "1992",
+          "1995",
+          "2015",
+          "202",
+          "2090",
+          "2102",
+          "2104",
+          "2116",
+          "2117",
+          "2118",
+          "2121",
+          "2158",
+          "2167",
+          "2169",
+          "2195",
+          "2196",
+          "2197",
+          "2198",
+          "221",
+          "2239",
+          "2283",
+          "2307",
+          "2350",
+          "238",
+          "2383",
+          "2393",
+          "2400",
+          "2414",
+          "2417",
+          "2467",
+          "2504",
+          "2528",
+          "2529",
+          "2530",
+          "2589",
+          "2602",
+          "2603",
+          "261",
+          "2611",
+          "2644",
+          "2675",
+          "2685",
+          "2695",
+          "271",
+          "2754",
+          "2769",
+          "2776",
+          "2792",
+          "2803",
+          "2837",
+          "2864",
+          "2890",
+          "2906",
+          "2907",
+          "292",
+          "2926",
+          "3",
+          "301",
+          "306",
+          "3095",
+          "3096",
+          "3104",
+          "3121",
+          "317",
+          "318",
+          "3218",
+          "3234",
+          "324",
+          "3246",
+          "3255",
+          "3302",
+          "3308",
+          "3311",
+          "3315",
+          "3328",
+          "3333",
+          "3336",
+          "334",
+          "3345",
+          "3361",
+          "3377",
+          "3409",
+          "3450",
+          "3481",
+          "3499",
+          "3507",
+          "351",
+          "3515",
+          "3534",
+          "3575",
+          "364",
+          "367",
+          "373",
+          "3743",
+          "382",
+          "3878",
+          "392",
+          "3940",
+          "397",
+          "398",
+          "4009",
+          "404",
+          "405",
+          "4062",
+          "4196",
+          "4197",
+          "420",
+          "4222",
+          "4223",
+          "4249",
+          "4294",
+          "4321",
+          "4524",
+          "4605",
+          "468",
+          "4703",
+          "471",
+          "4725",
+          "4752",
+          "4764",
+          "4794",
+          "4834",
+          "4983",
+          "499",
+          "5070",
+          "5129",
+          "5174",
+          "5181",
+          "5221",
+          "5251",
+          "5317",
+          "534",
+          "5350",
+          "5392",
+          "5408",
+          "5416",
+          "5417",
+          "5458",
+          "5491",
+          "5531",
+          "5575",
+          "561",
+          "5659",
+          "5690",
+          "5806",
+          "5895",
+          "5917",
+          "5919",
+          "5921",
+          "597",
+          "6049",
+          "6060",
+          "6069",
+          "6075",
+          "6133",
+          "6179",
+          "6184",
+          "622",
+          "6238",
+          "6246",
+          "6358",
+          "6373",
+          "6390",
+          "644",
+          "6466",
+          "6483",
+          "6506",
+          "6539",
+          "654",
+          "6557",
+          "6576",
+          "6586",
+          "659",
+          "6620",
+          "6625",
+          "6643",
+          "6649",
+          "6650",
+          "6660",
+          "6694",
+          "6738",
+          "6764",
+          "6771",
+          "6784",
+          "6815",
+          "6924",
+          "6926",
+          "693",
+          "6947",
+          "695",
+          "6983",
+          "7021",
+          "7029",
+          "7034",
+          "7037",
+          "7038",
+          "7058",
+          "7059",
+          "707",
+          "7074",
+          "7076",
+          "7077",
+          "711",
+          "7123",
+          "7124",
+          "7125",
+          "7126",
+          "7127",
+          "7133",
+          "7139",
+          "7213",
+          "7214",
+          "7230",
+          "7260",
+          "728",
+          "7304",
+          "7328",
+          "7363",
+          "7378",
+          "7379",
+          "7381",
+          "7382",
+          "7401",
+          "7436",
+          "7447",
+          "7462",
+          "7508",
+          "7519",
+          "7520",
+          "7521",
+          "7522",
+          "7523",
+          "7546",
+          "7547",
+          "7559",
+          "7572",
+          "7575",
+          "7587",
+          "7599",
+          "7601",
+          "7622",
+          "7626",
+          "7648",
+          "7665",
+          "7752",
+          "7767",
+          "7768",
+          "7834",
+          "7853",
+          "7854",
+          "7855",
+          "7882",
+          "7886",
+          "7887",
+          "7902",
+          "7918",
+          "7935",
+          "7945",
+          "7955",
+          "7979",
+          "7982",
+          "7984",
+          "7986",
+          "799",
+          "7998",
+          "7999",
+          "8000",
+          "8001",
+          "8002",
+          "8023",
+          "8034",
+          "8058",
+          "8064",
+          "8072",
+          "8099",
+          "8104",
+          "812",
+          "8126",
+          "8127",
+          "8131",
+          "8166",
+          "8179",
+          "8180",
+          "8209",
+          "8211",
+          "8223",
+          "8228",
+          "8269",
+          "8278",
+          "8292",
+          "8306",
+          "8322",
+          "8334",
+          "8337",
+          "8380",
+          "8386",
+          "8433",
+          "8439",
+          "8440",
+          "8449",
+          "8464",
+          "8512",
+          "8513",
+          "8530",
+          "8531",
+          "8582",
+          "8619",
+          "8621",
+          "863",
+          "8640",
+          "8664",
+          "8722",
+          "8762",
+          "8767",
+          "8823",
+          "883",
+          "8849",
+          "8858",
+          "8868",
+          "923",
+          "942"
+        ],
+        "activeSourceIdCount": 349,
+        "activeEvidenceObservationCount": 603,
+        "activePositiveDexObservationChainsBySourceId": {
+          "3": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "116": [
+            "ethereum"
+          ],
+          "119": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "146": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "162": [
+            "ethereum"
+          ],
+          "194": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "199": [
+            "ethereum"
+          ],
+          "202": [
+            "arbitrum"
+          ],
+          "221": [
+            "ethereum"
+          ],
+          "238": [
+            "bsc"
+          ],
+          "261": [
+            "polygon"
+          ],
+          "271": [
+            "polygon"
+          ],
+          "292": [
+            "arbitrum",
+            "ethereum"
+          ],
+          "301": [
+            "bsc"
+          ],
+          "306": [
+            "base",
+            "polygon"
+          ],
+          "317": [
+            "bsc"
+          ],
+          "318": [
+            "polygon"
+          ],
+          "324": [
+            "ethereum"
+          ],
+          "334": [
+            "bsc"
+          ],
+          "351": [
+            "polygon"
+          ],
+          "364": [
+            "arbitrum"
+          ],
+          "367": [
+            "bsc"
+          ],
+          "373": [
+            "bsc"
+          ],
+          "382": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad"
+          ],
+          "392": [
+            "bsc"
+          ],
+          "397": [
+            "ethereum"
+          ],
+          "398": [
+            "arbitrum",
+            "bsc",
+            "polygon"
+          ],
+          "404": [
+            "ethereum"
+          ],
+          "405": [
+            "ethereum"
+          ],
+          "420": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "468": [
+            "bsc"
+          ],
+          "471": [
+            "bsc"
+          ],
+          "499": [
+            "polygon"
+          ],
+          "534": [
+            "arbitrum",
+            "base",
+            "optimism",
+            "polygon"
+          ],
+          "561": [
+            "bsc"
+          ],
+          "597": [
+            "bsc"
+          ],
+          "622": [
+            "polygon"
+          ],
+          "644": [
+            "bsc"
+          ],
+          "654": [
+            "optimism"
+          ],
+          "659": [
+            "bsc",
+            "polygon"
+          ],
+          "693": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "695": [
+            "bsc"
+          ],
+          "707": [
+            "ethereum"
+          ],
+          "711": [
+            "polygon"
+          ],
+          "728": [
+            "ethereum"
+          ],
+          "799": [
+            "base",
+            "ethereum"
+          ],
+          "812": [
+            "bsc",
+            "ethereum"
+          ],
+          "863": [
+            "bsc"
+          ],
+          "883": [
+            "polygon"
+          ],
+          "923": [
+            "bsc"
+          ],
+          "942": [
+            "bsc"
+          ],
+          "1053": [
+            "ethereum"
+          ],
+          "1074": [
+            "bsc"
+          ],
+          "1296": [
+            "arbitrum"
+          ],
+          "1347": [
+            "bsc"
+          ],
+          "1447": [
+            "bsc",
+            "ethereum",
+            "polygon"
+          ],
+          "1461": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "1616": [
+            "bsc",
+            "polygon"
+          ],
+          "1632": [
+            "bsc"
+          ],
+          "1643": [
+            "bsc"
+          ],
+          "1664": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "1700": [
+            "arbitrum",
+            "bsc",
+            "ethereum",
+            "optimism"
+          ],
+          "1726": [
+            "polygon"
+          ],
+          "1732": [
+            "ethereum"
+          ],
+          "1750": [
+            "bsc"
+          ],
+          "1756": [
+            "polygon"
+          ],
+          "1777": [
+            "bsc"
+          ],
+          "1799": [
+            "optimism"
+          ],
+          "1883": [
+            "base",
+            "bsc"
+          ],
+          "1884": [
+            "bsc"
+          ],
+          "1892": [
+            "base",
+            "polygon"
+          ],
+          "1950": [
+            "bsc"
+          ],
+          "1970": [
+            "bsc"
+          ],
+          "1992": [
+            "bsc"
+          ],
+          "1995": [
+            "ethereum"
+          ],
+          "2015": [
+            "polygon"
+          ],
+          "2090": [
+            "bsc"
+          ],
+          "2102": [
+            "bsc"
+          ],
+          "2104": [
+            "polygon"
+          ],
+          "2116": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "polygon"
+          ],
+          "2117": [
+            "bsc",
+            "polygon"
+          ],
+          "2118": [
+            "bsc"
+          ],
+          "2121": [
+            "arbitrum",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "2158": [
+            "bsc"
+          ],
+          "2167": [
+            "bsc"
+          ],
+          "2169": [
+            "bsc"
+          ],
+          "2195": [
+            "bsc",
+            "polygon"
+          ],
+          "2196": [
+            "ethereum"
+          ],
+          "2197": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "2198": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "2239": [
+            "polygon"
+          ],
+          "2283": [
+            "arbitrum"
+          ],
+          "2307": [
+            "arbitrum"
+          ],
+          "2350": [
+            "bsc"
+          ],
+          "2383": [
+            "bsc"
+          ],
+          "2393": [
+            "arbitrum",
+            "bsc"
+          ],
+          "2400": [
+            "ethereum"
+          ],
+          "2414": [
+            "ethereum"
+          ],
+          "2417": [
+            "bsc"
+          ],
+          "2467": [
+            "arbitrum"
+          ],
+          "2504": [
+            "ethereum",
+            "polygon"
+          ],
+          "2528": [
+            "arbitrum"
+          ],
+          "2529": [
+            "arbitrum",
+            "bsc"
+          ],
+          "2530": [
+            "arbitrum"
+          ],
+          "2589": [
+            "arbitrum",
+            "base",
+            "bsc"
+          ],
+          "2602": [
+            "arbitrum"
+          ],
+          "2603": [
+            "arbitrum"
+          ],
+          "2611": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "2644": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "2675": [
+            "arbitrum"
+          ],
+          "2685": [
+            "arbitrum"
+          ],
+          "2695": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "polygon"
+          ],
+          "2754": [
+            "arbitrum"
+          ],
+          "2769": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad"
+          ],
+          "2776": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "2792": [
+            "arbitrum"
+          ],
+          "2803": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "2837": [
+            "base",
+            "ethereum"
+          ],
+          "2864": [
+            "bsc"
+          ],
+          "2890": [
+            "ethereum"
+          ],
+          "2906": [
+            "arbitrum",
+            "bsc",
+            "ethereum"
+          ],
+          "2907": [
+            "arbitrum"
+          ],
+          "2926": [
+            "arbitrum",
+            "base"
+          ],
+          "3095": [
+            "arbitrum",
+            "base",
+            "ethereum"
+          ],
+          "3096": [
+            "arbitrum"
+          ],
+          "3104": [
+            "ethereum"
+          ],
+          "3121": [
+            "polygon"
+          ],
+          "3218": [
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "3234": [
+            "base"
+          ],
+          "3246": [
+            "base"
+          ],
+          "3255": [
+            "base"
+          ],
+          "3302": [
+            "optimism"
+          ],
+          "3308": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "3311": [
+            "polygon"
+          ],
+          "3315": [
+            "arbitrum"
+          ],
+          "3328": [
+            "base"
+          ],
+          "3333": [
+            "base"
+          ],
+          "3336": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "3345": [
+            "base"
+          ],
+          "3361": [
+            "base"
+          ],
+          "3377": [
+            "base"
+          ],
+          "3409": [
+            "base"
+          ],
+          "3450": [
+            "base"
+          ],
+          "3481": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "optimism"
+          ],
+          "3499": [
+            "ethereum"
+          ],
+          "3507": [
+            "base"
+          ],
+          "3515": [
+            "base"
+          ],
+          "3534": [
+            "base"
+          ],
+          "3575": [
+            "base"
+          ],
+          "3743": [
+            "polygon"
+          ],
+          "3878": [
+            "arbitrum",
+            "base"
+          ],
+          "3940": [
+            "base"
+          ],
+          "4009": [
+            "bsc"
+          ],
+          "4062": [
+            "arbitrum",
+            "base"
+          ],
+          "4196": [
+            "arbitrum",
+            "base",
+            "ethereum"
+          ],
+          "4197": [
+            "arbitrum",
+            "ethereum"
+          ],
+          "4222": [
+            "bsc",
+            "ethereum"
+          ],
+          "4223": [
+            "ethereum"
+          ],
+          "4249": [
+            "optimism"
+          ],
+          "4294": [
+            "base"
+          ],
+          "4321": [
+            "arbitrum",
+            "ethereum",
+            "optimism"
+          ],
+          "4524": [
+            "base"
+          ],
+          "4605": [
+            "base"
+          ],
+          "4703": [
+            "arbitrum"
+          ],
+          "4725": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "4752": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "4764": [
+            "base",
+            "monad"
+          ],
+          "4794": [
+            "arbitrum",
+            "monad"
+          ],
+          "4834": [
+            "base"
+          ],
+          "4983": [
+            "bsc",
+            "monad"
+          ],
+          "5070": [
+            "arbitrum"
+          ],
+          "5129": [
+            "bsc"
+          ],
+          "5174": [
+            "bsc"
+          ],
+          "5181": [
+            "base"
+          ],
+          "5221": [
+            "base",
+            "ethereum",
+            "polygon"
+          ],
+          "5251": [
+            "base"
+          ],
+          "5317": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "polygon"
+          ],
+          "5350": [
+            "bsc",
+            "polygon"
+          ],
+          "5392": [
+            "monad"
+          ],
+          "5408": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad"
+          ],
+          "5416": [
+            "base"
+          ],
+          "5417": [
+            "base"
+          ],
+          "5458": [
+            "base"
+          ],
+          "5491": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "monad",
+            "optimism"
+          ],
+          "5531": [
+            "base",
+            "bsc"
+          ],
+          "5575": [
+            "base"
+          ],
+          "5659": [
+            "base"
+          ],
+          "5690": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "optimism",
+            "polygon"
+          ],
+          "5806": [
+            "base",
+            "bsc"
+          ],
+          "5895": [
+            "bsc"
+          ],
+          "5917": [
+            "bsc"
+          ],
+          "5919": [
+            "base",
+            "monad"
+          ],
+          "5921": [
+            "bsc"
+          ],
+          "6049": [
+            "bsc"
+          ],
+          "6060": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism"
+          ],
+          "6069": [
+            "base"
+          ],
+          "6075": [
+            "base"
+          ],
+          "6133": [
+            "base",
+            "bsc"
+          ],
+          "6179": [
+            "bsc"
+          ],
+          "6184": [
+            "polygon"
+          ],
+          "6238": [
+            "ethereum"
+          ],
+          "6246": [
+            "bsc",
+            "ethereum"
+          ],
+          "6358": [
+            "ethereum"
+          ],
+          "6373": [
+            "optimism"
+          ],
+          "6390": [
+            "base"
+          ],
+          "6466": [
+            "monad"
+          ],
+          "6483": [
+            "ethereum"
+          ],
+          "6506": [
+            "base",
+            "bsc"
+          ],
+          "6539": [
+            "arbitrum",
+            "base"
+          ],
+          "6557": [
+            "base",
+            "bsc"
+          ],
+          "6576": [
+            "base",
+            "polygon"
+          ],
+          "6586": [
+            "ethereum"
+          ],
+          "6620": [
+            "base"
+          ],
+          "6625": [
+            "base"
+          ],
+          "6643": [
+            "bsc"
+          ],
+          "6649": [
+            "bsc"
+          ],
+          "6650": [
+            "bsc",
+            "ethereum"
+          ],
+          "6660": [
+            "polygon"
+          ],
+          "6694": [
+            "bsc"
+          ],
+          "6738": [
+            "bsc"
+          ],
+          "6764": [
+            "polygon"
+          ],
+          "6771": [
+            "ethereum"
+          ],
+          "6784": [
+            "ethereum"
+          ],
+          "6815": [
+            "ethereum"
+          ],
+          "6924": [
+            "arbitrum"
+          ],
+          "6926": [
+            "bsc"
+          ],
+          "6947": [
+            "base"
+          ],
+          "6983": [
+            "bsc"
+          ],
+          "7021": [
+            "monad"
+          ],
+          "7029": [
+            "monad"
+          ],
+          "7034": [
+            "monad"
+          ],
+          "7037": [
+            "ethereum"
+          ],
+          "7038": [
+            "ethereum"
+          ],
+          "7058": [
+            "monad"
+          ],
+          "7059": [
+            "monad"
+          ],
+          "7074": [
+            "monad"
+          ],
+          "7076": [
+            "monad"
+          ],
+          "7077": [
+            "base",
+            "ethereum",
+            "polygon"
+          ],
+          "7123": [
+            "polygon"
+          ],
+          "7124": [
+            "polygon"
+          ],
+          "7125": [
+            "polygon"
+          ],
+          "7126": [
+            "polygon"
+          ],
+          "7127": [
+            "polygon"
+          ],
+          "7133": [
+            "arbitrum",
+            "base",
+            "ethereum"
+          ],
+          "7139": [
+            "bsc"
+          ],
+          "7213": [
+            "bsc"
+          ],
+          "7214": [
+            "base",
+            "bsc",
+            "ethereum",
+            "monad"
+          ],
+          "7230": [
+            "ethereum"
+          ],
+          "7260": [
+            "base",
+            "bsc"
+          ],
+          "7304": [
+            "base"
+          ],
+          "7328": [
+            "polygon"
+          ],
+          "7363": [
+            "base",
+            "monad"
+          ],
+          "7378": [
+            "base",
+            "optimism"
+          ],
+          "7379": [
+            "arbitrum"
+          ],
+          "7381": [
+            "ethereum"
+          ],
+          "7382": [
+            "ethereum"
+          ],
+          "7401": [
+            "monad"
+          ],
+          "7436": [
+            "arbitrum",
+            "base"
+          ],
+          "7447": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad"
+          ],
+          "7462": [
+            "ethereum"
+          ],
+          "7508": [
+            "base",
+            "bsc"
+          ],
+          "7519": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "7520": [
+            "base"
+          ],
+          "7521": [
+            "arbitrum",
+            "base",
+            "ethereum",
+            "polygon"
+          ],
+          "7522": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "7523": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "7546": [
+            "monad"
+          ],
+          "7547": [
+            "polygon"
+          ],
+          "7559": [
+            "polygon"
+          ],
+          "7572": [
+            "bsc"
+          ],
+          "7575": [
+            "base"
+          ],
+          "7587": [
+            "base"
+          ],
+          "7599": [
+            "bsc",
+            "ethereum"
+          ],
+          "7601": [
+            "base",
+            "bsc"
+          ],
+          "7622": [
+            "bsc"
+          ],
+          "7626": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "7648": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "monad",
+            "polygon"
+          ],
+          "7665": [
+            "base"
+          ],
+          "7752": [
+            "polygon"
+          ],
+          "7767": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "optimism",
+            "polygon"
+          ],
+          "7768": [
+            "bsc"
+          ],
+          "7834": [
+            "base"
+          ],
+          "7853": [
+            "polygon"
+          ],
+          "7854": [
+            "polygon"
+          ],
+          "7855": [
+            "polygon"
+          ],
+          "7882": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "7886": [
+            "polygon"
+          ],
+          "7887": [
+            "polygon"
+          ],
+          "7902": [
+            "base"
+          ],
+          "7918": [
+            "ethereum"
+          ],
+          "7935": [
+            "base",
+            "bsc"
+          ],
+          "7945": [
+            "base"
+          ],
+          "7955": [
+            "bsc"
+          ],
+          "7979": [
+            "ethereum"
+          ],
+          "7982": [
+            "ethereum"
+          ],
+          "7984": [
+            "ethereum"
+          ],
+          "7986": [
+            "arbitrum",
+            "base",
+            "ethereum"
+          ],
+          "7998": [
+            "polygon"
+          ],
+          "7999": [
+            "polygon"
+          ],
+          "8000": [
+            "polygon"
+          ],
+          "8001": [
+            "polygon"
+          ],
+          "8002": [
+            "polygon"
+          ],
+          "8023": [
+            "arbitrum"
+          ],
+          "8034": [
+            "ethereum"
+          ],
+          "8058": [
+            "arbitrum",
+            "polygon"
+          ],
+          "8064": [
+            "base"
+          ],
+          "8072": [
+            "bsc"
+          ],
+          "8099": [
+            "base"
+          ],
+          "8104": [
+            "arbitrum"
+          ],
+          "8126": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "8127": [
+            "bsc"
+          ],
+          "8131": [
+            "arbitrum",
+            "polygon"
+          ],
+          "8166": [
+            "polygon"
+          ],
+          "8179": [
+            "base"
+          ],
+          "8180": [
+            "base"
+          ],
+          "8209": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum",
+            "optimism",
+            "polygon"
+          ],
+          "8211": [
+            "monad"
+          ],
+          "8223": [
+            "polygon"
+          ],
+          "8228": [
+            "polygon"
+          ],
+          "8269": [
+            "arbitrum"
+          ],
+          "8278": [
+            "ethereum"
+          ],
+          "8292": [
+            "ethereum"
+          ],
+          "8306": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "8322": [
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "8334": [
+            "polygon"
+          ],
+          "8337": [
+            "base"
+          ],
+          "8380": [
+            "monad"
+          ],
+          "8386": [
+            "monad"
+          ],
+          "8433": [
+            "polygon"
+          ],
+          "8439": [
+            "polygon"
+          ],
+          "8440": [
+            "bsc"
+          ],
+          "8449": [
+            "ethereum"
+          ],
+          "8464": [
+            "ethereum"
+          ],
+          "8512": [
+            "base"
+          ],
+          "8513": [
+            "base"
+          ],
+          "8530": [
+            "base"
+          ],
+          "8531": [
+            "ethereum"
+          ],
+          "8582": [
+            "base"
+          ],
+          "8619": [
+            "base"
+          ],
+          "8621": [
+            "base"
+          ],
+          "8640": [
+            "base"
+          ],
+          "8664": [
+            "base",
+            "bsc"
+          ],
+          "8722": [
+            "bsc"
+          ],
+          "8762": [
+            "ethereum"
+          ],
+          "8767": [
+            "ethereum"
+          ],
+          "8823": [
+            "arbitrum",
+            "base",
+            "bsc",
+            "ethereum"
+          ],
+          "8849": [
+            "base",
+            "polygon"
+          ],
+          "8858": [
+            "ethereum"
+          ],
+          "8868": [
+            "polygon"
+          ]
+        },
+        "unresolvedSourceIdCount": 8475,
+        "unresolvedObservationSourceIds": [
+          "114",
+          "119",
+          "2611"
+        ],
+        "unresolvedObservationChainsBySourceId": {
+          "114": [
+            1
+          ],
+          "119": [
+            143
+          ],
+          "2611": [
+            56,
+            143
+          ]
+        },
+        "activeUnresolvedIntersectionCount": 348,
+        "activeUnresolvedIntersectionSourceIds": [
+          "1053",
+          "1074",
+          "116",
+          "119",
+          "1296",
+          "1347",
+          "1447",
+          "146",
+          "1461",
+          "1616",
+          "162",
+          "1632",
+          "1643",
+          "1664",
+          "1700",
+          "1726",
+          "1732",
+          "1750",
+          "1756",
+          "1777",
+          "1799",
+          "1883",
+          "1884",
+          "1892",
+          "194",
+          "1950",
+          "1970",
+          "199",
+          "1992",
+          "1995",
+          "2015",
+          "202",
+          "2090",
+          "2102",
+          "2104",
+          "2116",
+          "2117",
+          "2118",
+          "2121",
+          "2158",
+          "2167",
+          "2169",
+          "2195",
+          "2196",
+          "2197",
+          "221",
+          "2239",
+          "2283",
+          "2307",
+          "2350",
+          "238",
+          "2383",
+          "2393",
+          "2400",
+          "2414",
+          "2417",
+          "2467",
+          "2504",
+          "2528",
+          "2529",
+          "2530",
+          "2589",
+          "2602",
+          "2603",
+          "261",
+          "2611",
+          "2644",
+          "2675",
+          "2685",
+          "2695",
+          "271",
+          "2754",
+          "2769",
+          "2776",
+          "2792",
+          "2803",
+          "2837",
+          "2864",
+          "2890",
+          "2906",
+          "2907",
+          "292",
+          "2926",
+          "3",
+          "301",
+          "306",
+          "3095",
+          "3096",
+          "3104",
+          "3121",
+          "317",
+          "318",
+          "3218",
+          "3234",
+          "324",
+          "3246",
+          "3255",
+          "3302",
+          "3308",
+          "3311",
+          "3315",
+          "3328",
+          "3333",
+          "3336",
+          "334",
+          "3345",
+          "3361",
+          "3377",
+          "3409",
+          "3450",
+          "3481",
+          "3499",
+          "3507",
+          "351",
+          "3515",
+          "3534",
+          "3575",
+          "364",
+          "367",
+          "373",
+          "3743",
+          "382",
+          "3878",
+          "392",
+          "3940",
+          "397",
+          "398",
+          "4009",
+          "404",
+          "405",
+          "4062",
+          "4196",
+          "4197",
+          "420",
+          "4222",
+          "4223",
+          "4249",
+          "4294",
+          "4321",
+          "4524",
+          "4605",
+          "468",
+          "4703",
+          "471",
+          "4725",
+          "4752",
+          "4764",
+          "4794",
+          "4834",
+          "4983",
+          "499",
+          "5070",
+          "5129",
+          "5174",
+          "5181",
+          "5221",
+          "5251",
+          "5317",
+          "534",
+          "5350",
+          "5392",
+          "5408",
+          "5416",
+          "5417",
+          "5458",
+          "5491",
+          "5531",
+          "5575",
+          "561",
+          "5659",
+          "5690",
+          "5806",
+          "5895",
+          "5917",
+          "5919",
+          "5921",
+          "597",
+          "6049",
+          "6060",
+          "6069",
+          "6075",
+          "6133",
+          "6179",
+          "6184",
+          "622",
+          "6238",
+          "6246",
+          "6358",
+          "6373",
+          "6390",
+          "644",
+          "6466",
+          "6483",
+          "6506",
+          "6539",
+          "654",
+          "6557",
+          "6576",
+          "6586",
+          "659",
+          "6620",
+          "6625",
+          "6643",
+          "6649",
+          "6650",
+          "6660",
+          "6694",
+          "6738",
+          "6764",
+          "6771",
+          "6784",
+          "6815",
+          "6924",
+          "6926",
+          "693",
+          "6947",
+          "695",
+          "6983",
+          "7021",
+          "7029",
+          "7034",
+          "7037",
+          "7038",
+          "7058",
+          "7059",
+          "707",
+          "7074",
+          "7076",
+          "7077",
+          "711",
+          "7123",
+          "7124",
+          "7125",
+          "7126",
+          "7127",
+          "7133",
+          "7139",
+          "7213",
+          "7214",
+          "7230",
+          "7260",
+          "728",
+          "7304",
+          "7328",
+          "7363",
+          "7378",
+          "7379",
+          "7381",
+          "7382",
+          "7401",
+          "7436",
+          "7447",
+          "7462",
+          "7508",
+          "7519",
+          "7520",
+          "7521",
+          "7522",
+          "7523",
+          "7546",
+          "7547",
+          "7559",
+          "7572",
+          "7575",
+          "7587",
+          "7599",
+          "7601",
+          "7622",
+          "7626",
+          "7648",
+          "7665",
+          "7752",
+          "7767",
+          "7768",
+          "7834",
+          "7853",
+          "7854",
+          "7855",
+          "7882",
+          "7886",
+          "7887",
+          "7902",
+          "7918",
+          "7935",
+          "7945",
+          "7955",
+          "7979",
+          "7982",
+          "7984",
+          "7986",
+          "799",
+          "7998",
+          "7999",
+          "8000",
+          "8001",
+          "8002",
+          "8023",
+          "8034",
+          "8058",
+          "8064",
+          "8072",
+          "8099",
+          "8104",
+          "812",
+          "8126",
+          "8127",
+          "8131",
+          "8166",
+          "8179",
+          "8180",
+          "8209",
+          "8211",
+          "8223",
+          "8228",
+          "8269",
+          "8278",
+          "8292",
+          "8306",
+          "8322",
+          "8334",
+          "8337",
+          "8380",
+          "8386",
+          "8433",
+          "8439",
+          "8440",
+          "8449",
+          "8464",
+          "8512",
+          "8513",
+          "8530",
+          "8531",
+          "8582",
+          "8619",
+          "8621",
+          "863",
+          "8640",
+          "8664",
+          "8722",
+          "8762",
+          "8767",
+          "8823",
+          "883",
+          "8849",
+          "8858",
+          "8868",
+          "923",
+          "942"
+        ],
+        "activeUnresolvedUnionCount": 8476,
+        "activeOnlyCount": 1,
+        "activeOnlySourceIds": [
+          "2198"
+        ],
+        "unresolvedOnlyCount": 8127,
+        "unresolvedOnlyProxyRosterRowCount": 8126,
+        "unresolvedOnlyObservedSourceIds": [
+          "114"
+        ],
+        "inclusionExclusionUnionCount": 8476,
+        "unionEqualsFrozenRoster": true,
+        "proxyRowsConservedAgainstM2": true,
+        "unmatchedMetricRecordsCount": 7,
+        "unmatchedMetricRecordsAreExtraRosterRows": false
+      },
+      "unmatchedMetricRecordsAreRosterRows": false
+    },
+    "reportIsNotAuthorityForThisAudit": true
+  },
+  "limitations": [
+    "8,476 raw protocol rows remain a source-row universe, not 8,476 independently verified distinct products; 8,472 source identities remain unresolved/partial proxy rows and seven metric IDs remain unmatched.",
+    "Identity dispositions (four canonical mappings, one partial mapping, 8,471 unresolved ledger identities), proxy accounting (8,472), observation status sets, and legacy report fields are distinct evidence sets. Excluding lineage-only observations, status rows yield three active IDs and three unresolved IDs among four coverage units; their intersection is two and union is four. For the frozen-roster sets, the 8,472 unresolved proxy rows are unioned with the observed unresolved canonical IDs; two active IDs overlap unresolved, yielding active=3, unresolved=8,475, intersection=2, union=8,476 by inclusion-exclusion. This independently matches the legacy report cardinalities without treating its counts as disjoint or reconstructing its calculation formula. Seven unmatched metric IDs are not extra roster rows.",
+    "Current known capture UTC is 2026-10-03T19:11:22Z; the older M1 roster capture time remains unknown and is not propagated over M2/M3 evidence.",
+    "Positive eligible activity is a 30-day DEX volume observation proving occurrence within an enclosing 90-day window, not a 90-day total. Zero/missing/unqualified fees are not inactivity.",
+    "Function-scope bundles prove only fixed target/function role progress; they do not prove complete core workflows, product-instance populations, chain coverage, live execution, liquidity, or market completeness.",
+    "Compound V2 source ID 114 has identity mapping only; BORROW_INTEREST fee values remain unqualified as user activity."
+  ]
+}

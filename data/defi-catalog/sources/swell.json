@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "swell",
+      "familyVersion": "v3-core@5827c4f1",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xf951E335afb289353dc249e82926178EaC7DEd78",
+          "status": "inactive",
+          "contractName": "Swell swETH",
+          "sourceRefs": [
+            "swell-official-deployments",
+            "swell-sweth-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "payable",
+              "inputs": [],
+              "outputs": [],
+              "sourceId": "swell-sweth-interface"
+            },
+            {
+              "type": "function",
+              "name": "depositWithReferral",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "referral",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "swell-sweth-interface"
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0xfAe103DC9cf190eD75350761e95403b7b8aFa6c0",
+          "status": "inactive",
+          "contractName": "Swell rswETH",
+          "sourceRefs": [
+            "swell-official-deployments",
+            "swell-rsweth-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "payable",
+              "inputs": [],
+              "outputs": [],
+              "sourceId": "swell-rsweth-interface"
+            },
+            {
+              "type": "function",
+              "name": "depositWithReferral",
+              "stateMutability": "payable",
+              "inputs": [
+                {
+                  "name": "referral",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "outputs": [],
+              "sourceId": "swell-rsweth-interface"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "swell-official-deployments",
+      "url": "https://docs.swellnetwork.io/developers/deployed-addresses.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official Swell deployed-address documentation is the deployment reference for Ethereum swETH 0xf951E335afb289353dc249e82926178EaC7DEd78 and rswETH 0xfAe103DC9cf190eD75350761e95403b7b8aFa6c0. This source binding is not runtime-code or funded-execution evidence."
+    },
+    {
+      "sourceId": "swell-sweth-interface",
+      "url": "https://github.com/SwellNetwork/v3-core-public/blob/5827c4f1294b00f2939e582b1d3ac448f87fa218/contracts/lst/contracts/interfaces/IswETH.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned SwellNetwork/v3-core-public commit 5827c4f1294b00f2939e582b1d3ac448f87fa218 IswETH.sol declares payable deposit() and depositWithReferral(address referral), both with no return values. Other selectors, including burn, are excluded."
+    },
+    {
+      "sourceId": "swell-rsweth-interface",
+      "url": "https://github.com/SwellNetwork/v3-core-public/blob/5827c4f1294b00f2939e582b1d3ac448f87fa218/contracts/lrt/contracts/interfaces/IrswETH.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned SwellNetwork/v3-core-public commit 5827c4f1294b00f2939e582b1d3ac448f87fa218 IrswETH.sol declares payable deposit() and depositWithReferral(address referral), both with no return values. This is not proof of the rswETH withdrawal flow."
+    }
+  ]
+}

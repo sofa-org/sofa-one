@@ -11,6 +11,12 @@ enum BillingUsageMetric {
   api_call
 }
 
+enum ApiKeyCapabilityMode {
+  all
+  custom
+  @@map("api_key_capability_mode")
+}
+
 enum BillingInvoiceStatus {
   open
   finalized
@@ -144,6 +150,7 @@ model User {
   transactions          Transaction[]
   signingRequests       SigningRequest[]
   stepUpChallenges      StepUpChallenge[]
+  appSessions           AppSession[]
   mfaTotpCredential     UserMfaTotpCredential?
   knownIps              UserKnownIp[]
   billingAccount        BillingAccount?
@@ -159,7 +166,7 @@ model UserWallet {
   walletAddress          String?   @unique @map("wallet_address") @db.VarChar(42)
   status                 String    @default("active") @db.VarChar(30)
   agentOpenfortAccountId String?   @unique @map("agent_openfort_account_id") @db.VarChar(255)
-  agentWalletAddress     String?   @unique @map("agent_wallet_address") @db.VarChar(42)
+  signerAddress          String?   @unique @map("signer_address") @db.VarChar(42)
   agentKeyHash           String?   @map("agent_key_hash") @db.VarChar(66)
   frozenAt               DateTime? @map("frozen_at") @db.Timestamptz()
   frozenReason           String?   @map("frozen_reason") @db.VarChar(255)
@@ -167,11 +174,13 @@ model UserWallet {
 
   user                User                       @relation(fields: [userId], references: [id])
   chainAuthorizations WalletChainAuthorization[]
+  apiKeys             ApiKey[]
   securityEvents      SecurityEvent[]
   provisioningIntent  WalletProvisioningIntent?
 
   @@index([userId, frozenAt])
   @@index([userId])
+  @@unique([id, userId])
   @@map("user_wallets")
 }
 
@@ -192,6 +201,7 @@ model WalletChainAuthorization {
 model ApiKey {
   id                           String    @id @default(uuid()) @db.Uuid
   userId                       String    @map("user_id") @db.Uuid
+  walletId                     String?   @map("wallet_id") @db.Uuid
   apiKeyHash                   String    @map("api_key_hash") @db.Text
   keyPrefix                    String    @map("key_prefix") @db.VarChar(32)
   name                         String?   @db.VarChar(100)
@@ -204,8 +214,8 @@ model ApiKey {
   canReadTransactionStatus     Boolean   @default(true) @map("can_read_transaction_status")
   canUseEoaExecution           Boolean   @default(false) @map("can_use_eoa_execution")
   allowedIps                   String[]  @map("allowed_ips")
-  allowedContracts             String[]  @default([]) @map("allowed_contracts")
-  allowedFunctionSelectors     String[]  @default([]) @map("allowed_function_selectors")
+  allowedCapabilityIds         String[]  @default([]) @map("allowed_capability_ids")
+  capabilityMode               ApiKeyCapabilityMode @default(all) @map("capability_mode")
   dailySpendLimit              String?   @map("daily_spend_limit") @db.VarChar(40)
   monthlySpendLimit            String?   @map("monthly_spend_limit") @db.VarChar(40)
   // BILL-016: operator ack that API-key sends honor the user's withdrawal
@@ -218,6 +228,7 @@ model ApiKey {
   lastUsedUserAgent            String?   @map("last_used_user_agent") @db.VarChar(255)
 
   user            User             @relation(fields: [userId], references: [id])
+  wallet          UserWallet?      @relation(fields: [walletId, userId], references: [id, userId], onDelete: Restrict)
   signingRequests SigningRequest[]
   transactions    Transaction[]
   events          ApiKeyEvent[]
@@ -275,6 +286,14 @@ model SecurityEvent {
   @@index([eventType, createdAt])
   @@index([riskLevel, createdAt])
   @@map("security_events")
+}
+
+model DefiPolicyState {
+  id             String   @id @default("global") @db.VarChar(16)
+  pausedScopeKeys String[] @default([]) @map("paused_scope_keys")
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@map("defi_policy_state")
 }
 
 model SecurityNotification {
@@ -413,22 +432,42 @@ model UserKnownIp {
   @@map("user_known_ips")
 }
 
+model AppSession {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  tokenHash      String    @unique @map("token_hash") @db.VarChar(64)
+  mfaVerified    Boolean   @default(false) @map("mfa_verified")
+  mfaPendingUntil DateTime @map("mfa_pending_until") @db.Timestamptz()
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz()
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stepUpChallenges StepUpChallenge[]
+
+  @@unique([id, userId])
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+  @@map("app_sessions")
+}
+
 model StepUpChallenge {
   id                String    @id @default(uuid()) @db.Uuid
   userId            String    @map("user_id") @db.Uuid
+  sessionId         String    @map("session_id") @db.Uuid
   type              String    @db.VarChar(20)
-  challengeCodeHash String    @map("challenge_code_hash") @db.Text
   proofToken        String?   @map("proof_token") @db.VarChar(64)
   verified          Boolean   @default(false)
-  attempts          Int       @default(0)
   expiresAt         DateTime  @map("expires_at") @db.Timestamptz()
   verifiedAt        DateTime? @map("verified_at") @db.Timestamptz()
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session AppSession @relation(fields: [sessionId, userId], references: [id, userId], onDelete: Cascade)
 
   @@index([proofToken])
   @@index([userId, createdAt])
+  @@index([sessionId])
   @@map("step_up_challenges")
 }
 
@@ -512,7 +551,7 @@ model WalletProvisioningIntent {
   dispatchToken          String?                        @unique @map("dispatch_token") @db.VarChar(120)
   dispatchedAt           DateTime?                      @map("dispatched_at") @db.Timestamptz()
   agentOpenfortAccountId String?                        @unique(map: "wallet_provisioning_intents_agent_openfort_account_id_key") @map("agent_openfort_account_id") @db.VarChar(255)
-  agentWalletAddress     String?                        @map("agent_wallet_address") @db.VarChar(42)
+  signerAddress          String?                        @map("signer_address") @db.VarChar(42)
   agentKeyHash           String?                        @map("agent_key_hash") @db.VarChar(66)
   resolution             String?                        @db.VarChar(40)
   resolutionDetails      String?                        @map("resolution_details") @db.VarChar(1000)

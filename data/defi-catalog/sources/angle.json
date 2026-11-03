@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "angle",
+      "familyVersion": "ageur-savings-v1@c3667da6",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x004626A008B1aCdC4c74ab51644093b155e59A23",
+          "status": "inactive",
+          "contractName": "Angle Ethereum agEUR Savings",
+          "sourceRefs": [
+            "angle-official-sdk-mainnet-addresses",
+            "angle-official-sdk-savings-abi",
+            "angle-savings-implementation-source"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "angle-official-sdk-savings-abi"
+            },
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "angle-official-sdk-savings-abi"
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" },
+                { "name": "owner", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "angle-official-sdk-savings-abi"
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" },
+                { "name": "owner", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "angle-official-sdk-savings-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "angle-official-sdk-mainnet-addresses",
+      "url": "https://github.com/AngleProtocol/public-sdk/blob/c3667da61df62d074c927b3395166a1f8018dbea/src/constants/contracts_addresses/mainnet.ts",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official SDK mainnet registry maps agEUR to token 0x1a7e4e63778B4f12a199C062f3eFdD288afCBce8 and Savings to 0x004626A008B1aCdC4c74ab51644093b155e59A23. This is a dated agEUR Savings product snapshot, not evidence of current stEUR/EURA or a rename."
+    },
+    {
+      "sourceId": "angle-official-sdk-savings-abi",
+      "url": "https://github.com/AngleProtocol/public-sdk/blob/c3667da61df62d074c927b3395166a1f8018dbea/src/constants/abis/Savings.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official SDK Savings ABI declares the four selected nonpayable ERC4626 user methods with exact names, primitive argument/return types, and names. Administrative, allowance, view, and other token functions are not selected."
+    },
+    {
+      "sourceId": "angle-savings-implementation-source",
+      "url": "https://github.com/AngleProtocol/angle-transmuter/blob/2fa74b73a3f5aa921e619e55744d73228cd2fe71/contracts/savings/Savings.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned AngleProtocol implementation source Savings.sol and inherited BaseSavings.sol declares ordinary public deposit/mint/withdraw/redeem paths with whenNotPaused. Implementation source confirms the methods are ordinary savings actions; it does not prove this dated SDK target's current implementation, runtime state, liquidity, or funded behavior."
+    }
+  ]
+}

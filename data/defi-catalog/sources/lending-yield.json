@@ -1,0 +1,1445 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "aave-v3",
+      "familyVersion": "ethereum-pool-markets@f648e5dd",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x4e033931ad43597d96D6bcc25c280717730B58B1",
+          "contractName": "Pool",
+          "sourceRefs": [
+            "aave-v3-ethereum-lido-pool",
+            "aave-v3-ipool-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "borrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "interestRateMode",
+                  "type": "uint256"
+                },
+                {
+                  "name": "referralCode",
+                  "type": "uint16"
+                },
+                {
+                  "name": "onBehalfOf",
+                  "type": "address"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "repay",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "interestRateMode",
+                  "type": "uint256"
+                },
+                {
+                  "name": "onBehalfOf",
+                  "type": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "onBehalfOf",
+                  "type": "address"
+                },
+                {
+                  "name": "referralCode",
+                  "type": "uint16"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "to",
+                  "type": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0x0AA97c284e98396202b6A04024F5E2c65026F3c0",
+          "contractName": "Pool",
+          "sourceRefs": [
+            "aave-v3-ethereum-etherfi-pool",
+            "aave-v3-ipool-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "borrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "interestRateMode",
+                  "type": "uint256"
+                },
+                {
+                  "name": "referralCode",
+                  "type": "uint16"
+                },
+                {
+                  "name": "onBehalfOf",
+                  "type": "address"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "repay",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "interestRateMode",
+                  "type": "uint256"
+                },
+                {
+                  "name": "onBehalfOf",
+                  "type": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "onBehalfOf",
+                  "type": "address"
+                },
+                {
+                  "name": "referralCode",
+                  "type": "uint16"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "to",
+                  "type": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0xAe05Cd22df81871bc7cC2a04BeCfb516bFe332C8",
+          "contractName": "Pool",
+          "sourceRefs": [
+            "aave-v3-ethereum-horizon-pool",
+            "aave-v3-ipool-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "borrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "interestRateMode",
+                  "type": "uint256"
+                },
+                {
+                  "name": "referralCode",
+                  "type": "uint16"
+                },
+                {
+                  "name": "onBehalfOf",
+                  "type": "address"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "repay",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "interestRateMode",
+                  "type": "uint256"
+                },
+                {
+                  "name": "onBehalfOf",
+                  "type": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "onBehalfOf",
+                  "type": "address"
+                },
+                {
+                  "name": "referralCode",
+                  "type": "uint16"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "name": "to",
+                  "type": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "familyId": "compound-iii",
+      "familyVersion": "deployments@f766f515",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x3Afdc9BCA9213A35503b077a6072F3D0d5AB0840",
+          "contractName": "Comet",
+          "sourceRefs": [
+            "compound-iii-mainnet-usdt-roots",
+            "compound-iii-mainnet-usdt-configuration",
+            "compound-iii-comet-main-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0xA17581A9E3356d9A858b789D68B4d866e593aE94",
+          "contractName": "Comet",
+          "sourceRefs": [
+            "compound-iii-mainnet-weth-roots",
+            "compound-iii-mainnet-weth-configuration",
+            "compound-iii-comet-main-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            }
+          ]
+        },
+        {
+          "chainId": 8453,
+          "address": "0x46e6b214b524310239732D51387075E0e70970bf",
+          "contractName": "Comet",
+          "sourceRefs": [
+            "compound-iii-base-weth-roots",
+            "compound-iii-base-weth-configuration",
+            "compound-iii-comet-main-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            }
+          ]
+        },
+        {
+          "chainId": 42161,
+          "address": "0xd98Be00b5D27fc98112BdE293e487f8D4cA57d07",
+          "contractName": "Comet",
+          "sourceRefs": [
+            "compound-iii-arbitrum-usdt-roots",
+            "compound-iii-arbitrum-usdt-configuration",
+            "compound-iii-comet-main-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            }
+          ]
+        },
+        {
+          "chainId": 42161,
+          "address": "0x6f7D514bbD4aFf3BcD1140B7344b32f063dEe486",
+          "contractName": "Comet",
+          "sourceRefs": [
+            "compound-iii-arbitrum-weth-roots",
+            "compound-iii-arbitrum-weth-configuration",
+            "compound-iii-comet-main-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            }
+          ]
+        },
+        {
+          "chainId": 10,
+          "address": "0x2e44e174f7D53F0212823acC11C01A11d58c5bCB",
+          "contractName": "Comet",
+          "sourceRefs": [
+            "compound-iii-optimism-usdc-roots",
+            "compound-iii-optimism-usdc-configuration",
+            "compound-iii-comet-main-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            }
+          ]
+        },
+        {
+          "chainId": 10,
+          "address": "0x995E394b8B2437aC8Ce61Ee0bC610D617962B214",
+          "contractName": "Comet",
+          "sourceRefs": [
+            "compound-iii-optimism-usdt-roots",
+            "compound-iii-optimism-usdt-configuration",
+            "compound-iii-comet-main-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            }
+          ]
+        },
+        {
+          "chainId": 10,
+          "address": "0xE36A30D249f7761327fd973001A32010b521b6Fd",
+          "contractName": "Comet",
+          "sourceRefs": [
+            "compound-iii-optimism-weth-roots",
+            "compound-iii-optimism-weth-configuration",
+            "compound-iii-comet-main-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            }
+          ]
+        },
+        {
+          "chainId": 137,
+          "address": "0xF25212E676D1F7F89Cd72fFEe66158f541246445",
+          "contractName": "Comet",
+          "sourceRefs": [
+            "compound-iii-polygon-usdc-roots",
+            "compound-iii-polygon-usdc-configuration",
+            "compound-iii-comet-main-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            }
+          ]
+        },
+        {
+          "chainId": 137,
+          "address": "0xaeB318360f27748Acb200CE616E389A6C9409a07",
+          "contractName": "Comet",
+          "sourceRefs": [
+            "compound-iii-polygon-usdt-roots",
+            "compound-iii-polygon-usdt-configuration",
+            "compound-iii-comet-main-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "supply",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "asset",
+                  "type": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "familyId": "compound-v2",
+      "familyVersion": "mainnet@a3214f67",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643",
+          "contractName": "CErc20Delegator",
+          "sourceRefs": [
+            "compound-v2-mainnet-network",
+            "compound-v2-mainnet-abi",
+            "compound-v2-ctoken-interfaces"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "mintAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "redeemTokens",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "redeemUnderlying",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "redeemAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "borrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "borrowAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "repayBorrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "repayAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0x39AA39c021dfbaE8faC545936693aC917d5E7563",
+          "contractName": "CErc20",
+          "sourceRefs": [
+            "compound-v2-mainnet-network",
+            "compound-v2-mainnet-abi",
+            "compound-v2-ctoken-interfaces"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "mintAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "redeemTokens",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "redeemUnderlying",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "redeemAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "borrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "borrowAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "repayBorrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "repayAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9",
+          "contractName": "CErc20Delegator",
+          "sourceRefs": [
+            "compound-v2-mainnet-network",
+            "compound-v2-mainnet-abi",
+            "compound-v2-ctoken-interfaces"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "mintAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "redeemTokens",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "redeemUnderlying",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "redeemAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "borrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "borrowAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "repayBorrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "repayAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5",
+          "contractName": "CEther",
+          "sourceRefs": [
+            "compound-v2-mainnet-network",
+            "compound-v2-mainnet-abi",
+            "compound-v2-ctoken-interfaces",
+            "compound-v2-cether"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "payable",
+              "inputs": [],
+              "outputs": []
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "redeemTokens",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "redeemUnderlying",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "redeemAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "borrow",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "borrowAmount",
+                  "type": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "repayBorrow",
+              "stateMutability": "payable",
+              "inputs": [],
+              "outputs": []
+            }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B",
+          "contractName": "Unitroller",
+          "sourceRefs": [
+            "compound-v2-mainnet-network",
+            "compound-v2-mainnet-abi",
+            "compound-v2-comptroller-interface"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "enterMarkets",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "cTokens",
+                  "type": "address[]"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256[]"
+                }
+              ]
+            },
+            {
+              "type": "function",
+              "name": "exitMarket",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                {
+                  "name": "cTokenAddress",
+                  "type": "address"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "familyId": "aave-v3",
+      "chainIds": [
+        10,
+        56,
+        137,
+        143,
+        8453,
+        42161
+      ],
+      "reason": "This source fragment admits only the three pinned Ethereum Pool targets; it makes no deployment or absence claim for other chains."
+    },
+    {
+      "familyId": "compound-iii",
+      "chainIds": [
+        56,
+        143
+      ],
+      "reason": "No BNB Chain or Monad target was admitted in this source fragment; no deployment or absence claim and no cross-chain address propagation."
+    },
+    {
+      "familyId": "compound-v2",
+      "chainIds": [
+        10,
+        56,
+        137,
+        143,
+        8453,
+        42161
+      ],
+      "reason": "This source fragment admits only the pinned Ethereum CToken/Unitroller targets; it makes no deployment or absence claim for other chains."
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "compound-v2-mainnet-network",
+      "url": "https://raw.githubusercontent.com/compound-finance/compound-protocol/a3214f67b73310d547e00fc578e8355911c9d376/networks/mainnet.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 b76118f81f29eaad0081fe39850d68eb364b562854c40c68b678ac17f42a5f56. Official Ethereum market/address map; exact CToken and Unitroller addresses checked."
+    },
+    {
+      "sourceId": "compound-v2-mainnet-abi",
+      "url": "https://raw.githubusercontent.com/compound-finance/compound-protocol/a3214f67b73310d547e00fc578e8355911c9d376/networks/mainnet-abi.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 2447605fa43dd5050e804f730a920aa5a1085ec11ed1fd5a760b375011ea7c17. Official ABI bundle; only the fixed lifecycle and market-entry functions were selected."
+    },
+    {
+      "sourceId": "compound-v2-ctoken-interfaces",
+      "url": "https://raw.githubusercontent.com/compound-finance/compound-protocol/a3214f67b73310d547e00fc578e8355911c9d376/contracts/CTokenInterfaces.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 0246c7789d36fca84a7861ab39693f02dfb7bde904011f4efda654d4286fe93a. Official CToken interface signatures checked for mint, redeem, redeemUnderlying, borrow and repayBorrow."
+    },
+    {
+      "sourceId": "compound-v2-cether",
+      "url": "https://raw.githubusercontent.com/compound-finance/compound-protocol/a3214f67b73310d547e00fc578e8355911c9d376/contracts/CEther.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 e8eb334bc2832497a54c9a129e8f4d536257ad976b258eb2faa4baab956689a1. Official CEther implementation checked for payable mint() and repayBorrow()."
+    },
+    {
+      "sourceId": "compound-v2-comptroller-interface",
+      "url": "https://raw.githubusercontent.com/compound-finance/compound-protocol/a3214f67b73310d547e00fc578e8355911c9d376/contracts/ComptrollerInterface.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 d7c526660047c315749808bd9fa1b43ea21a3ab4712016b58aea9dfe7924bc9c. Official Comptroller interface checked for enterMarkets(address[]) and exitMarket(address)."
+    },
+    {
+      "sourceId": "compound-iii-comet-main-interface",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/contracts/CometMainInterface.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 8dab837c9ef1d3805413b2d5c948d8c1f5b009da4e4f9505795b2a1535ec0d1b. Pinned CometMainInterface declares supply(address,uint) and withdraw(address,uint), nonpayable with no outputs."
+    },
+    {
+      "sourceId": "compound-iii-mainnet-usdt-roots",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/mainnet/usdt/roots.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 f9bdf169737ca52454101128f6f637779e89564ef78b0ac8b7384cf4494c3dde. Pinned official roots for mainnet/usdt; Comet address checked."
+    },
+    {
+      "sourceId": "compound-iii-mainnet-usdt-configuration",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/mainnet/usdt/configuration.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 2a1b3215ed24f50405f4e0817629f7bfc597482015b57ca7581ffb3fe6c49d71. Pinned official mainnet/usdt market configuration checked; market is identified by its official configuration record."
+    },
+    {
+      "sourceId": "compound-iii-mainnet-weth-roots",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/mainnet/weth/roots.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 9ddf2ad2ad3b50683aa4f5017eaf26f50f257f7b9fa80d27da892585a8a1e5d6. Pinned official roots for mainnet/weth; Comet address checked."
+    },
+    {
+      "sourceId": "compound-iii-mainnet-weth-configuration",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/mainnet/weth/configuration.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 09be60277f5d4a39a99ca33b7934d4fd57cdd0f1e4c1ec622a85b623ff48f782. Pinned official mainnet/weth market configuration checked; market is identified by its official configuration record."
+    },
+    {
+      "sourceId": "compound-iii-base-weth-roots",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/base/weth/roots.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 9302589dc529ed9e17ff4c7e3cd7dcda3ce6a483356c766c4943002123ce6000. Pinned official roots for base/weth; Comet address checked."
+    },
+    {
+      "sourceId": "compound-iii-base-weth-configuration",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/base/weth/configuration.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 72f1c519f085d2a29e9aa19ae0976e9abe1763db9e23461a9fc355660ea13bcf. Pinned official base/weth market configuration checked; market is identified by its official configuration record."
+    },
+    {
+      "sourceId": "compound-iii-arbitrum-usdt-roots",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/arbitrum/usdt/roots.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 157c8ce98076968dd352e98d6ad6cc921d1c7938cf269bbe928bc8a5ae95cac5. Pinned official roots for arbitrum/usdt; Comet address checked."
+    },
+    {
+      "sourceId": "compound-iii-arbitrum-usdt-configuration",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/arbitrum/usdt/configuration.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 849a7ff205a7d3d14449c6a9bacdeaf5d56311044479cb87924706a337aa1820. Pinned official arbitrum/usdt market configuration checked; market is identified by its official configuration record."
+    },
+    {
+      "sourceId": "compound-iii-arbitrum-weth-roots",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/arbitrum/weth/roots.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 796ce8d5395e7898d18db2d758d27d0df0d94043cbd90676ba2433cf4a1a7351. Pinned official roots for arbitrum/weth; Comet address checked."
+    },
+    {
+      "sourceId": "compound-iii-arbitrum-weth-configuration",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/arbitrum/weth/configuration.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 79254541badb0d8c2ab869bdaa97881abffe7f97073662d1cacf73db267c2b6a. Pinned official arbitrum/weth market configuration checked; market is identified by its official configuration record."
+    },
+    {
+      "sourceId": "compound-iii-optimism-usdc-roots",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/optimism/usdc/roots.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 bb3a67484ca3b5e49c3e3c4beb29b2fe3a59cf558a9c0be93dd1b0693f562b3a. Pinned official roots for optimism/usdc; Comet address checked."
+    },
+    {
+      "sourceId": "compound-iii-optimism-usdc-configuration",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/optimism/usdc/configuration.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 92ae5265f8772cbdfaac2a4b9b8a6cdabcc6e033def98a81775eef1e027775e8. Pinned official optimism/usdc market configuration checked; market is identified by its official configuration record."
+    },
+    {
+      "sourceId": "compound-iii-optimism-usdt-roots",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/optimism/usdt/roots.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 df0439e4483bd74d60c224e6a63cc7b7b18c481733adfd4fe89bb46e3ea15554. Pinned official roots for optimism/usdt; Comet address checked."
+    },
+    {
+      "sourceId": "compound-iii-optimism-usdt-configuration",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/optimism/usdt/configuration.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 c611d46e2077cf69ba35113563ce00fb8c922e1bb348dcb23cc2f295b09d8907. Pinned official optimism/usdt market configuration checked; market is identified by its official configuration record."
+    },
+    {
+      "sourceId": "compound-iii-optimism-weth-roots",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/optimism/weth/roots.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 c96d3ddbeb16e7531d1e84115baa1b31854081048686de1a605efb8c5849901a. Pinned official roots for optimism/weth; Comet address checked."
+    },
+    {
+      "sourceId": "compound-iii-optimism-weth-configuration",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/optimism/weth/configuration.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 60c278fe8953cbd681b6259ff05cade7e41d65ac5bd215878eee857f231caf49. Pinned official optimism/weth market configuration checked; market is identified by its official configuration record."
+    },
+    {
+      "sourceId": "compound-iii-polygon-usdc-roots",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/polygon/usdc/roots.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 7ad397213a90c62ea641e9f48acfb0b0535ffabd697bdcdd0f1e41f1b21e2703. Pinned official roots for polygon/usdc; Comet address checked."
+    },
+    {
+      "sourceId": "compound-iii-polygon-usdc-configuration",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/polygon/usdc/configuration.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 d0780883021c0ac2caa9863844217a86921cc88bdd63cb66af86e977e62911cc. Pinned official polygon/usdc market configuration checked; market is identified by its official configuration record."
+    },
+    {
+      "sourceId": "compound-iii-polygon-usdt-roots",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/polygon/usdt/roots.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 e5a4c5f8114e8901b2d61565140e140255cd7d5fe2974dc5bb956d3408fbbfee. Pinned official roots for polygon/usdt; Comet address checked."
+    },
+    {
+      "sourceId": "compound-iii-polygon-usdt-configuration",
+      "url": "https://raw.githubusercontent.com/compound-finance/comet/f766f51583c23acc33b2a7824654ef2029a96804/deployments/polygon/usdt/configuration.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 eb3fb2bea7ac2027a9d86820b3e0ab361766a12eea293d7b02d1a2e2859c656c. Pinned official polygon/usdt market configuration checked; market is identified by its official configuration record."
+    },
+    {
+      "sourceId": "aave-v3-ethereum-lido-pool",
+      "url": "https://raw.githubusercontent.com/aave-dao/aave-address-book/f648e5dd3763467b836dfa35484ffe7024e6572a/src/ts/AaveV3EthereumLido.ts",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 039734f0eb84a5ffc6f2103ef316bd8185d7ec426ffba6a54e12ee33d5a89458. Pinned official Ethereum address-book record; Pool verified as 0x4e033931ad43597d96D6bcc25c280717730B58B1; not Pool implementation."
+    },
+    {
+      "sourceId": "aave-v3-ethereum-etherfi-pool",
+      "url": "https://raw.githubusercontent.com/aave-dao/aave-address-book/f648e5dd3763467b836dfa35484ffe7024e6572a/src/ts/AaveV3EthereumEtherFi.ts",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 1cd51f6c887095b81d34703f0e8610b4fc796f3220ad44e8d42c30ce8d6b1f5a. Pinned official Ethereum address-book record; Pool verified as 0x0AA97c284e98396202b6A04024F5E2c65026F3c0; not Pool implementation."
+    },
+    {
+      "sourceId": "aave-v3-ethereum-horizon-pool",
+      "url": "https://raw.githubusercontent.com/aave-dao/aave-address-book/f648e5dd3763467b836dfa35484ffe7024e6572a/src/ts/AaveV3EthereumHorizon.ts",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 0a661c3c459eac2ae9faaada2d5b177a0b8327d053075ba4e328766c8507a166. Pinned official Ethereum address-book record; Pool verified as 0xAe05Cd22df81871bc7cC2a04BeCfb516bFe332C8; not Pool implementation."
+    },
+    {
+      "sourceId": "aave-v3-ipool-interface",
+      "url": "https://raw.githubusercontent.com/aave-dao/aave-v3-origin/8305565ae342f1773c42cd2e4593f175fe5968a0/src/contracts/interfaces/IPool.sol",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "HTTP 200 pinned official source; raw response SHA-256 ee58bacafc0b033adeaf673da3b08130d9f3a9a3eb563f7f19a03240e488eba7. Pinned official IPool declarations checked; four generic fixed Pool function ABIs reused byte-for-byte from v1 catalog definitions."
+    }
+  ]
+}

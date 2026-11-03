@@ -1,0 +1,2287 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Decentralized Euro",
+  "slug": "decentralized-euro-savings-ethereum",
+  "observedAt": "2026-10-24",
+  "chainId": 1,
+  "address": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+  "contractName": "Savings",
+  "status": "active",
+  "scope": "Independent dEURO system own savings accounting; bounded deposits, principal withdrawals and interest collection.",
+  "sourceRefs": [
+    "https://deuro.com/",
+    "https://docs.deuro.com/smart-contracts",
+    "https://docs.deuro.com/overview.html",
+    "https://github.com/d-EURO/smartContracts",
+    "https://app.deuro.com/savings",
+    "https://etherscan.io/address/0x760233b90e45d186A9A98E911B115F7F4B90d3D9#code",
+    "https://etherscan.io/readContract?m=normal&a=0x760233b90e45d186A9A98E911B115F7F4B90d3D9&v=0x760233b90e45d186A9A98E911B115F7F4B90d3D9"
+  ],
+  "independenceEvidence": {
+    "assessment": "Independent friendly fork, not Frankencoin rebrand or token-only variant: separate Ethereum dEURO issuer at 0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea, own nDEPS reserve/governance at 0xc71104001A3CCDA1BEf1177d765831Bd1bfE8eE6, own CDP/savings roots and fee/loss accounting. Current Savings immutable getters bind specifically to these roots. Frankencoin admitted savings uses ZCHF 0xB58E61C3098d85632Df34EecfB899A1Ed80921cB and different reserve/root. Fork README documents independent interest, reserve/valuation, gateway and authorization changes; deployed savings has no 3-day lock and adds non-compounding claims/equity cap. Governance of these roots is separate, not a curator name on an existing vault.",
+    "sourceRefs": [
+      "https://github.com/d-EURO/smartContracts",
+      "https://docs.deuro.com/overview.html",
+      "https://docs.deuro.com/smart-contracts",
+      "https://etherscan.io/readContract?m=normal&a=0x760233b90e45d186A9A98E911B115F7F4B90d3D9&v=0x760233b90e45d186A9A98E911B115F7F4B90d3D9"
+    ],
+    "repositorySnapshot": {
+      "sourceRef": "https://raw.githubusercontent.com/d-EURO/smartContracts/develop/README.md",
+      "observedAt": "2026-10-24",
+      "snapshot": "# dEURO\n\nThis repository is a friendly fork of Frankencoin-ZCHF.\n\nThis is the source code repository for the smart contracts of the oracle-free, collateralized stablecoin dEURO.\n\nThere also is a [public frontend](https://app.dEURO.com) and a [documentation page](https://docs.dEURO.com).\n\n### Source Code\n\nThe source code can be found in the [contracts](contracts) folder. The following are the most important contracts.\n\n| Contract              | Description                                                                       |\n|-----------------------|-----------------------------------------------------------------------------------|\n| DecentralizedEURO.sol | The DecentralizedEURO (dEURO) ERC20 token                                         |\n| Equity.sol            | The Native Decentralized Euro Protocol Share (nDEPS) ERC20 token                  |\n| MintingHub.sol        | Plugin for oracle-free collateralized minting                                     |\n| Position.sol          | A borrowed minting position holding collateral                                    |\n| PositionRoller.sol    | A module to roll positions into new ones                                          |\n| StablecoinBridge.sol  | Plugin for 1:1 swaps with other EUR stablecoins                                   |\n| BridgedToken.sol      | Generic bridged token contract for L2 deployments, e.g. dEURO on [Optimism](https://optimistic.etherscan.io/address/0x1B5F7fA46ED0F487F049C42f374cA4827d65A264) & [Base](https://basescan.org/address/0x1B5F7fA46ED0F487F049C42f374cA4827d65A264), DEPS on [Base](https://basescan.org/address/0x5F674bF6d559229bDd29D642d2e0978f1E282722) |\n| Savings.sol           | A module to pay out interest to ZCHF holders                                      |\n| Leadrate.sol          | A module that can provide a leading interest rate for the system                  |\n| PositionFactory.sol   | Create a completely new position in a newly deployed contract                     |\n| DEPSWrapper.sol       | Enables nDEPS to be wrapped in DEPS                                               |\n| FrontendGateway.sol    | A module that rewards frontend providers for referrals into the dEURO Ecosystem   |\n| MintingHubGateway.sol  | Plugin for oracle-free collateralized minting with rewards for frontend providers |\n| SavingsGateway.sol     | A module to pay out interest to ZCHF holders and reward frontend providers        |\n| SavingsVaultDEURO.sol  | ERC-4626 vault wrapper for the Savings module                                     |\n\n# Code basis and changes after the fork\n\nThe last status adopted by Frankencoin was Commit [a2ce625c554bbd3465a31e7d8b7360a054339dd2](https://github.com/Frankencoin-ZCHF/FrankenCoin/commit/a2ce625c554bbd3465a31e7d8b7360a054339dd2) on December 2, 2024. The following things were built on it as a fork.\n\n## DecentralizedEURO Core module\n1. ZCHF was renamed to dEURO  \n2. Frankencoin was renamed to DecentralizedEURO  \n3. FPS was renamed to nDEPS (native Decentralized Protocol Share)  \n4. nDEPS now cost 10_000 times less than the FPS for Frankencoin\n5. In the Equity SmartContract, the valuation factor was adjusted from 3 to 5. \n6. ERC20 token has been completely converted to standard Open Zeppelin V5  \n7. ERC165 token standard has been added  \n8. ERC3009 added  \n9. SmartContract internal exchange fee (can also be called issuance fee) increased from 0.3% to 2%\n10. Minters are no longer authorized to execute SendFrom and BurnFrom from any address. https://github.com/d-EURO/smartContracts/pull/108\n\n## Savings\nThe lock-up of 3 days has been removed without replacement. \n\n## DEPS Wrapper\n1. FPS has been renamed to nDEPS  \n2. WFPS has been renamed DEPS  \n(so “w” is no longer used for “wrapped” but the non-wrapped version is now called “native”)  \n\n## Bridges\nFrankencoin had a single bridge to XCHF from Bitcoin Suisse  \ndEURO has 4 bridges to   \n1. Tether EUR  \n2. Circle EUR  \n3. VNX EUR  \n4. Stasis EUR  \nThe new tokens in the bridges have different decimal places. \n\n\n## Minting module v1\nIn contrast to Frankencoin, dEURO does not use the minting module v1 at all  \n\n## Minting module v2\n\nInterest is no longer paid when a position is opened but is credited as a debt on an ongoing basis and only has to be paid when a position is closed or modified.\n\n## Minting module v3\n\nNative ETH/WETH support across MintingHub, Position, and PositionRoller. Leadrate integrated directly into MintingHub. Interest is now charged only on the usable mint (excluding reserve contribution). A reference position mechanism allows cooldown-free price increases.\n\n## Front-end gateway\nIt is possible to use the SmartContracts through a gateway and thus obtain a refferal commission. This module is completely new. \n\n# Audit Reports\n2023-02-10 [Blockbite](https://github.com/Frankencoin-ZCHF/FrankenCoin/blob/main/audits/blockbite-audit.pdf)  \n2023-06-09 [code4rena](https://code4rena.com/reports/2023-04-frankencoin)  \n2023-10-30 [chainsecurity Report 1](https://github.com/Frankencoin-ZCHF/FrankenCoin/blob/main/audits/V1/blockbite-audit.pdf)  \n2024-09-25 [Decurity](https://github.com/Decurity/audits/blob/master/Frankencoin/frankencoin-audit-report-2024-1.1.pdf)  \n2024-11-28 [ChainSecurity Report 2](https://cdn.prod.website-files.com/65d35b01a4034b72499019e8/674873bff5163fea0b1d9faa_ChainSecurity_Frankencoin_Frankencoin_v2024_audit.pdf)  \n\n# Development\n\n### Yarn Package Scripts\n\n```json\n// yarn run <command> args...\n\n\"wallet\": \"npx ts-node helper/wallet.info.ts\",\n\n\"compile\": \"npx hardhat compile\",\n\"test\": \"npx hardhat test\",\n\"coverage\": \"npx hardhat coverage\",\n\n\"deploy\": \"npx hardhat run scripts/deployment/deploy/<script>.ts --network <network>\",\n\"verify\": \"npx hardhat verify\",\n\n\"build\": \"tsup\",\n\"publish\": \"npm publish --access public\"\n```\n\n### 1. Install dependencies\n\n`yarn install`\n\n### 2. Set Environment\n\n> See .env.example\n\n```JSON\nfile: .env\n\nALCHEMY_RPC_KEY=...\nDEPLOYER_SEED=\"test test test test test test test test test test test junk\"\nDEPLOYER_SEED_INDEX=1 // optional, select deployer\nDEPLOYER_PRIVATE_KEY=... // optional, replaces deployer seed\nETHERSCAN_API_KEY=...\nUSE_FORK=false\nCONFIRM_DEPLOYMENT=false\n```\n\n> Create new session or re-navigate to the current directory, to make sure environment is loaded from `.env`\n\n### 3. Develop Smart Contracts\n\n> Develop your contracts in the `/contracts` directory and compile with:\n\n```Bash\nyarn run compile\t\t\t\t\t# Compiles all contracts\n```\n\n### 4. Testing\n\n> All test files are located in /test directory. Run tests using:\n\n```Bash\nyarn run test                    \t# Run all tests\nyarn run test test/TESTSCRIPT.ts \t# Run specific test file\nyarn run coverage               \t# Generate test coverage report\n```\n\nWith tsc-watch (auto refresh commands)\n\n```shell\nnpx tsc-watch --onCompilationComplete \"npx hardhat test ./test/RollerTests.ts\"\n```\n\n### 5.0 Deploy Contract (manual)\n\nThen run a deployment script with tags and network params (e.g., `sepolia` that specifies the network)\n\n```shell\nhh deploy --network sepolia --tags MockTokens\nhh deploy --network sepolia --tags DecentralizedEURO\nhh deploy --network sepolia --tags PositionFactory\nhh deploy --network sepolia --tags MintingHub\nhh deploy --network sepolia --tags MockEURToken\nhh deploy --network sepolia --tags XEURBridge\nhh deploy --network sepolia --tags positions\n```\n\n> Recommanded commands for `sepolia` network.\n> Test deployments on a local Mainnet fork using `npx hardhat node` with `USE_FORK=true` in `.env`.\n> The networks are configured in `hardhat.config.ts`, including the Mainnet fork.\n> Set `CONFIRM_DEPLOYMENT=true` to enable confirmation prompts before each deployment.\n\n#### Deploy Stablecoin Bridges\n\nDeploy bridges for EUR stablecoins using the dedicated deployment script:\n\n```shell\n# Deploy bridge for specific stablecoin, e.g. EUROP\nBRIDGE_KEY=EUROP npx hardhat run scripts/deployment/deploy/deployBridge.ts --network mainnet\n\n# Test on forked mainnet\nUSE_FORK=true BRIDGE_KEY=EUROP npx hardhat run scripts/deployment/deploy/deployBridge.ts --network hardhat\n```\n\nBridge keys and configurations are defined in `scripts/deployment/config/stablecoinBridgeConfig.ts`\n\n### 5.1 Manual Verify\n\n`npx hardhat verify --network polygon --constructor-args $CONSTRUCTOR_ARGS_FILE $ADDRESS`\n\n### 6 Prepare NPM Package Support\n\n- [x] Export ready to use TypeScript ABIs\n- [x] Export ready to use TypeScript deployed address config\n- [ ] ...\n\n### 6.1 TypeScript ABIs\n\nExport contract ABIs for npm package usage by copying the JSON into dedicated TypeScript files:\n\n```TS\nfile: exports/abis/...\n\nexport const StorageABI = [\n...\nJSON\n...\n] as const;\n```\n\n### 6.2 TypeScript Address Config\n\nProvides a mapping of contract addresses for the Membership and Storage contracts deployed on different blockchain networks.\n\nThe `ADDRESS` object contains the contract addresses for the `mainnet` and `polygon` networks, with the network ID as the key.\nThe `zeroAddress` is used as a placeholder for the `mainnet` network, as the contracts have not been deployed there yet.\n\n```TS\nfile: exports/address.config.ts\n\nimport { mainnet, polygon } from 'viem/chains';\nimport { Address, zeroAddress } from 'viem';\n\nexport interface ChainAddress {\n\tmembership: Address;\n\tstorage: Address;\n}\n\nexport const ADDRESS: Record<number, ChainAddress> = {\n\t[mainnet.id]: {\n\t\tmembership: zeroAddress, // if not available\n\t\tstorage: zeroAddress,\n\t},\n\t[polygon.id]: {\n\t\tmembership: '0x72950A0A9689fCA941Ddc9E1a58dcD3fb792E3D2',\n\t\tstorage: '0x8A7e8091e71cCB7D1EbDd773C26AD82AAd323328',\n\t},\n};\n```\n\n# 7. TSUP and npm package\n\n### 7.1 TSUP\n\n> Config: /tsup.config.ts\n\nTSUP bundles TypeScript code into optimized JavaScript packages. This package uses TSUP to create production-ready builds.\n\n`yarn run build`\n\n### 7.2 NPM Package\n\n> **Increase Version:** Update version number in package.json using semantic versioning (e.g. 0.0.1 -> 0.0.2) before publishing new changes.\n\n```\nfile: /package.json\n\n\"name\": \"@frankencoin/zchf\",\n\"version\": \"0.2.16\", <-- HERE\n```\n\nLogin to your NPM account\n\n`npm login`\n\nThis will publish your package to NPM with public access, making it **available for anyone to install and use**.\n\n`yarn run publish`\n\nTo publish new version. `publish: \"npm publish --access public\"`\n\n> **Note**: During npm package publishing, the command may execute twice. The second execution will fail with a version conflict since the package is already published. This is expected behavior and the first publish will have succeeded.\n\n### 7.3 How to transpile package into bundled apps\n\n(not needed, since its already a true JS bundled module)\n\nE.g. for `NextJs` using the `next.config.js` in root of project.\n\n```js\n/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  reactStrictMode: true,\n  transpilePackages: [\"@.../core\", \"@.../api\"],\n};\n\nmodule.exports = nextConfig;\n```\n\n# 8. Updates (January 2025)\n\n### DecentralizedEURO.sol\n\n- `allowance`: Added `address(reserve))` to the spender addresses with unlimited dEURO allowance.\n- `burnWithReserve`: Removed unused function.\n- `burnFromWithReserve`: Use `_spendAllowance` to control spending power of `minters` based on `allowance`.\n- `burnFromWithReserveNet`: Renamed from `burnWithReserve`.\n- `distributeProfits`: New function to distinguish between reserve withdrawals due to losses vs interest payouts (e.g. to savings) -> `Loss` vs `ProfitDistributed` event.\n- `_withdrawFromReserve`: New helper function used by `coverLoss` and `distributeProfits`.\n- `supportsInterface`: Added `IDecentralizedEURO` support.\n\n### Equity.sol\n\n- `BelowMinimumHoldingPeriod`: New custom error for failed `!canRedeem(owner)` check.\n\n### MintingHub.sol\n\n- `_finishChallenge`: The `Position.notifyChallengeSucceeded` call now returns both the required principal `repayment` amount and `interest` payment amount. The bidder pays only the `offer` (unit price × collateral): `DEURO.transferFrom(msg.sender, address(this), offer)`. After deducting the challenger reward, the remaining funds cover both `repayment` and `interest` from the same pool. If `fundsAvailable > repayment + interest`, the surplus is split between reserve profits and the position owner. If insufficient, `coverLoss` draws from the reserve. Interest is collected at the end via `DEURO.collectProfits(address(this), interest)`.\n- `buyExpiredCollateral`: The buyer pays `forceSalePrice * amount`. The `proceeds` are passed to `Position.forceSale(buyer, amount, proceeds)` which handles interest repayment and principal repayment from the same pool internally.\n\n### Position.sol\n\n- `fixedAnnualRatePPM`: The interest rate for a position is synced with the lead rate (`Leadrate.currentRatePPM`) at creation time (in the `constructor` or, in the case of cloning, in the `initialize` function) using the `_fixRateToLeadrate` function. From this point onwards, the interest rate for a particular position instance is fixed unless new tokens are minted (the loan is increased), at which point it is re-synced with the lead rate. It is expected that in the case of lowered interest rates, position owners will roll their current positions into new ones (for free) to benefit from it.\n- `availableForClones`: This function now only considers the `principal` amount in its calculations. This is because the (accrued) `interest` does not belong to the minted dEURO tokens of a position and therefore do not belong in this calculation.\n- `adjust`: The `newDebt` parameter was changed to `newPrincipal`. Consequently, owners are able to control their `principal` amount without having the outstanding interest amount tied to it. Naturally, if they wish to reduce their principal, they must first pay any outstanding interest. This is handled automatically by the `adjust` function.\n- `MintingUpdate`: The last paramter of this `event` now only reports the new `principal` amount and not the entire `debt` amount which would include the outstanding `interest`. This is more in line with the overall purpose of this event.\n- `_adjustPrice`: The accrued `interest` is removed from the `bounds` paramter passed to `_setPrice`. This is because the `interest` does not belong in the collateral \"sanity check\" logic.\n- `_accrueInterest`: Refactored\n- `_calculateInterest`: Renamed and refactored from `getDebtAtTime`.\n- `getDebt`: Refactored\n- `getInterest`: New public function to get the currently outstanding (unpaid) interest on the position.\n- `_mint`: Updated to manage interest accrual and the syncing of the interest rate to the lead rate.\n- `_notifyRepaid`: Refactored, including sanity check.\n- `_notifyInterestPaid`: Refactored, including sanity check.\n- `forceSale`: The function signature is `forceSale(address buyer, uint256 colAmount, uint256 proceeds)`. Interest repayment and principal repayment are handled from the `proceeds` pool. Interest is repaid first, then the principal is repaid using `_repayPrincipalNet`. If `proceeds` exceed what's needed, the surplus goes to the position owner. If no collateral remains after the sale, any outstanding principal is covered by the system via `coverLoss`.\n- `_payDownDebt`: Refactored\n- `_repayInterest`: New helper function to pay off outstanding interest by some `amount`. Returns the remainder in the case that `amount` exceeds the outstanding `interest`.\n- `_repayPrincipal`: New helper function to repay principal by some _exact_ `amount` using `burnFromWithReserve`. Returns the remaining funds.\n- `_repayPrincipalNet`: New function to repay principal by some `amount`, where `amount` specifies the amount to be burned from the `payer`. This is done using the `DecentralizedEURO.burnFromWithReserveNet` function. As `_repayPrincipalNet` is used by the `forceSale` function, `repayPrincipalNet(buyer, proceeds);`, where `proceeds` may exceed `getUsableMint(principal)` amount (the maximum amount claimable by a particular position) we cap `repayWithReserve` at said maximal claimable amount. If funds remain thereafter, they are burned directly in order to pay of any remaining principal. The final remainder is returned.\n- `notifyChallengeSucceeded`: Now computes and returns the proportional amount of interest that must be paid in order to successfully challenge a position.\n\n### PositionRoller.sol\n\n- `rollFullyWithExpiration`: Fix logic to compute the amount to mint in the target Position.\n- `roll`: Refactor and send any remaining flash loan from the debt repayment (reserve portion returned by `source.repay(totRepayment)` > `Position._repayPrincipal > DecentralizedEURO.burnFromWithReserve`) to `msg.sender` for the flash loan repayment.\n- `_cloneTargetPosition`: New helper function used to clone the target position. Used only by `PositionRoller.roll`.\n\n### Savings.sol\n\n- `refresh`: Replace the use of `DecentralizedEURO.coverLoss` with `DecentralizedEURO.distributeProfits`. This replaces the `Loss` event with the `ProfitDistributed` event.\n\n### StablecoinBridge.sol\n\n- `mintTo`: Replace standard `transfer` functions with OppenZeppelin's `SafeERC20` variants for the source stablecoin.\n\n### Gateway Contracts\n\nThe gateway contracts (FrontendGateway.sol, SavingsGateway.sol, MintingHubGateway.sol) provide a way to generously reward frontend providers or referrer, paid for by DEPS Holder. These Contracts are not present in the Frankencoin Ecosystem. \n\n\n# Invariant/Stateful Fuzzing Tests with Foundry:\n\nThe _fuzzing_ tests are written in Solidity and made of two main contracts located in the `foundry-test/invariant` folder: `Invariants.t.sol` which contains the _invariants_ and `Handler.t.sol` which contains the _actions_ of the fuzzing test. During each _run_ the functions in `Handler.t.sol` are called by the fuzzing engine in a random order and with random inputs starting with the initial state of the system as defined by `Invariants.setUp()`. After each run the invariants defined in `Invariants.t.sol` are checked to ensure that the system is still in a valid state. \n\n### Running the Fuzzing Tests:\n\nAfter installing [foundry](https://book.getfoundry.sh/) on your machine and running `forge install` to install the required dependencies, you can use the following command to run the fuzzing tests:\n\n```shell\n# remove build artifacts & cache\nforge clean\n\n# run the fuzzing tests\nforge test\n\n# more verbose output (with grep to omit some logs)\nforge test -vvv | grep -v \"Bound result\"\n\n# show progress\nforge test --show-progress\n\n# re-run a failed test\n# Tip: Set .profile.logging.snapshot=true in foundry.toml to log snapshots\nforge test --rerun\n```\n\nThe configuration for the fuzzing tests can be found in the `foundry.toml` file. Furthermore, the `remappings.txt` file contains the remappings for the fuzzing test contracts. In order to debug handler reverts, you can set `.invariant.fail_on_revert=true` in the `foundry.toml` file.",
+      "responseSha256": "a1b77df980342b183eb9bf062bac9e748ef2c320bea52095bc6ce38528e2a8f4",
+      "snapshotSha256": "a1b77df980342b183eb9bf062bac9e748ef2c320bea52095bc6ce38528e2a8f4",
+      "hashEncoding": "SHA256 UTF-8; responseSha256 is fetched response text, snapshotSha256 is stored snapshot (HTML pages text-extracted)."
+    },
+    "caveat": "Main landing page contains a stale Launch Web App link to app.frankencoin.com alongside correct app.deuro.com financial links. Product identity is grounded in own documentation, current separate deployed getters and own maintained repository; shared fork ancestry is explicit."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.deuro.com/smart-contracts",
+    "verifiedAt": "2026-10-24",
+    "chainId": 1,
+    "address": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+    "excerpt": "Savings V3 active permanent: 0x760233b90e45d186A9A98E911B115F7F4B90d3D9; V2 and V3 are coexisting modules, new savings deposits can use either. V3 routes directly through Savings.",
+    "primarySnapshot": {
+      "sourceRef": "https://docs.deuro.com/smart-contracts",
+      "observedAt": "2026-10-24",
+      "snapshot": "Smart Contracts | dEURO\ndEURO\ndEuro.com\n(opens new window)\nGitHub\n(opens new window)\ndEuro.com\n(opens new window)\nGitHub\n(opens new window)\nOverview\nStablecoin Bridges\nCollateralized Minting\nReserve\nGovernance\nSmart Contracts\nContract Architecture\nProtocol Modules: V2 and V3\nCore Contracts\nMintingHub Contracts\nSavings Contracts\nBridge Contracts\nGateway Contracts\nContract Summary\nSecurity Properties\nSource Code\nTelegram API Bot\nDisclaimer\nPrivacy\nImprint\nFAQ\n#\nSmart Contracts\nA technical overview of all smart contracts powering the Decentralized Euro protocol.\nThe Decentralized Euro protocol consists of multiple smart contracts that work together to create a trustless, oracle-free stablecoin system. All contracts are deployed on Ethereum mainnet and are fully immutable - no admin keys, no upgrades, no central control.\n#\nContract Architecture\nThe contracts are organized into the following categories:\nCategory\nPurpose\nCore\nToken contracts and reserve management\nMintingHub\nPosition management and collateralized minting\nSavings\nInterest-bearing dEURO deposits\nBridges\n1:1 conversion with trusted external EUR stablecoins\nGateways\nFrontend rewards and enhanced functionality (V2 only)\n#\nProtocol Modules: V2 and V3\nThe dEURO contracts are immutable and cannot be replaced. Instead of upgrading via proxies, the protocol evolves by adding\nnew modules\nthrough the standard\nsuggestMinter()\ngovernance flow. The protocol currently runs\ntwo coexisting MintingHub and Savings module sets\non Ethereum mainnet:\nModule\nStatus\nFrontend Rewards\nNotes\nV2\nActive, permanent\nYes (via Gateways)\nOriginal launch modules; positions and savings opened here remain fully usable. Cannot be deactivated. Includes the CoinLendingGateway for native ETH lending.\nV3\nActive, permanent\nNo\nAdditional module set approved by nDEPS governance. Adds an updated savings/vault design and a price reference system. Routes do not pass through\nFrontendGateway\n.\nBoth module sets share the same\ndEURO\ntoken, the same nDEPS / DEPSwrapper governance pair, and the same Bridge contracts. New positions and savings deposits can be opened in either module; existing V2 positions are not migrated and continue to live under V2.\nTIP\nV3 is\nnot a replacement\nfor V2. It is an additional, parallel set of minter contracts that nDEPS holders approved through the standard governance application period. V2 remains the only home for positions and savings that were opened before V3 went live.\n#\nCore Contracts\n#\nDecentralized Euro (dEURO)\nThe main stablecoin token contract - an ERC-20 token designed to track the value of the Euro.\nKey Features:\nImplements ERC-20 and ERC-2612 (Permit)\nOpen to arbitrary minting plugins with veto-based governance\nCreates the Equity contract during deployment\nManages the minter registry and position registry\nHandles reserve accounting and loss coverage\nKey Functions:\nsuggestMinter()\n- Propose a new minting contract (requires fee and application period)\ndenyMinter()\n- Qualified shareholders can veto minting proposals\nmintWithReserve()\n- Mint dEURO with reserve contribution (minters only)\nburnFromWithReserve()\n- Burn dEURO and reclaim proportional reserve\nProperty\nValue\nSymbol\ndEURO\nDecimals\n18\nMin Application Period\n14 days\nMin Application Fee\n1,000 dEURO\nAddress\n0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea\n(opens new window)\n#\nEquity (nDEPS)\nThe native equity token representing shares in the dEURO reserve pool. Holding nDEPS is similar to being a shareholder of a bank.\nKey Features:\nERC-20 token with time-weighted voting power\n2% quorum required for governance veto\nPrice determined by proportional capital valuation (3x equity)\n2% fee on minting and redemption\nFlash loan protection (same-block redemption blocked)\nKey Functions:\ninvest()\n- Mint nDEPS by depositing dEURO into the reserve\nredeem()\n- Burn nDEPS to withdraw dEURO from the reserve\ncheckQualified()\n- Verify if an address has sufficient voting power (2%)\ndelegateVoteTo()\n- Delegate voting power to another address\nkamikaze()\n- Sacrifice own votes to reduce malicious actor's votes\nVoting Mechanics:\nVotes accumulate over time:\nvotes = balance * holdingDuration\nLonger holding = more voting power\nDelegation adds to delegate's power without removing own votes\nProperty\nValue\nSymbol\nnDEPS\nDecimals\n18\nQuorum\n2%\nAddress\n0xc71104001A3CCDA1BEf1177d765831Bd1bfE8eE6\n(opens new window)\n#\nDEPSwrapper (DEPS)\nERC-20 wrapper around nDEPS. Wrapping strips the time-weighted voting state, which makes the wrapped DEPS suitable for AMM liquidity, custodial holdings, and other contexts where the voting mechanics of native nDEPS would be lost or distorted.\nKey Functions:\nwrap()\n/\nwrapFor()\n- Convert nDEPS to DEPS\nunwrap()\n/\nunwrapAndSell()\n- Convert DEPS back to nDEPS\nProperty\nValue\nSymbol\nDEPS\nDecimals\n18\nAddress\n0x103747924E74708139a9400e4Ab4BEA79FFFA380\n(opens new window)\n#\nMintingHub Contracts\n#\nMintingHub\nThe central hub for creating, cloning, and challenging collateralized dEURO positions.\nKey Features:\nCreates new position contracts via PositionFactory\nManages Dutch auctions for liquidations\nHandles forced sales of expired positions\nKey Functions:\nopenPosition()\n- Create a new collateralized position (1,000 dEURO fee)\nclone()\n- Clone an existing position with new parameters\nchallenge()\n- Start a Dutch auction to challenge undercollateralized positions\nbid()\n- Place a bid in an ongoing challenge auction\nbuyExpiredCollateral()\n- Purchase collateral from expired positions\nChallenge Process:\nPhase 1 (Aversion):\nPosition owner can avert by buying challenger's collateral at liquidation price\nPhase 2 (Auction):\nDutch auction where price decreases linearly to zero\nProperty\nValue\nOpening Fee\n1,000 dEURO\nChallenger Reward\n2%\nMin Challenge Period\n1 day\nThe protocol exposes two MintingHub modules. V2 is wrapped by\nMintingHubGateway\nfor frontend-code tracking; V3 routes directly through\nMintingHub\nand adds an updated savings/vault design.\nModule\nAddress\nV2\n(\nMintingHubGateway\n)\n0x8B3c41c649B9c7085C171CbB82337889b3604618\n(opens new window)\nV3\n(\nMintingHub\n)\n0x66AcC54a0C64255137b8993CB4972B0901684f7B\n(opens new window)\n#\nPosition\nIndividual collateralized debt position contract. Each position is a separate contract holding the user's collateral.\nKey Features:\nImmutable parameters set at creation (collateral type, reserve ratio, etc.)\nContinuous interest accrual based on Leadrate + risk premium\nCooldown periods on price increases (3 days) for security\nCan be denied by governance during initialization period\nKey Functions:\nmint()\n- Mint dEURO against deposited collateral\nrepay()\n- Repay debt (interest first, then principal)\nadjust()\n- All-in-one function to modify position parameters\nadjustPrice()\n- Change the liquidation price\nwithdrawCollateral()\n- Withdraw excess collateral\ndeny()\n- Governance can deny positions during init period\nInterest Model:\nInterest charged on usable mint amount (principal minus reserve)\nRate = Leadrate + Risk Premium (set at position creation)\nInterest must be overcollateralized by the same ratio as principal\nProperty\nValue\nDeployment\nVia PositionFactory (ERC-1167 clones)\nCooldown on Price Increase\n3 days\n#\nPositionFactory\nFactory contract for deploying new Position contracts using the ERC-1167 minimal proxy pattern.\nKey Features:\nCreates new positions with full parameter set\nClones existing positions efficiently using minimal proxy\nValidates position parameters before cloning\nKey Functions:\ncreateNewPosition()\n- Deploy a completely new position contract\nclonePosition()\n- Create a minimal proxy clone of an existing position\nEach MintingHub module owns its own PositionFactory.\nModule\nAddress\nV2\n0x167144d66AC1D02EAAFCa3649ef3305ea31Ee5A8\n(opens new window)\nV3\n0x3a3985a96b1B51E6d914bc7C9e89fD6Ba6dEfE81\n(opens new window)\n#\nPositionRoller\nHelper contract for rolling over debt from one position to another using flash loans.\nKey Features:\nAtomically moves debt and collateral between positions\nUses flash loans to avoid needing upfront capital\nPreserves frontend codes when rolling through gateways\nKey Functions:\nroll()\n- Roll debt from source to target position with custom parameters\nrollFully()\n- Roll entire position automatically\nA PositionRoller can only roll between positions inside the same MintingHub module.\nModule\nAddress\nV2\n0x4CE0AB2FC21Bd27a47A64F594Fdf7654Ea57Dc79\n(opens new window)\nV3\n0x5C22d5b752b2121faE7F6f0069252B03B2F7c5CD\n(opens new window)\n#\nSavings Contracts\n#\nSavings\nBase savings module that enables interest-bearing dEURO deposits based on the Leadrate.\nKey Features:\nInterest accrues continuously based on Leadrate\nNo lockup period - withdraw anytime\nInterest paid from system equity (profits)\nDisabled when interest rate is zero\nKey Functions:\nsave()\n- Deposit dEURO into savings\nwithdraw()\n- Withdraw dEURO and accrued interest\nrefreshBalance()\n- Collect accrued interest into balance\nadjust()\n- Adjust savings to target amount\nThe protocol exposes two Savings modules. V2 is wrapped by\nSavingsGateway\nfor frontend-code tracking; V3 routes directly through\nSavings\nand skips the FrontendGateway layer.\nModule\nAddress\nV2\n(\nSavingsGateway\n)\n0x073493d73258C4BEb6542e8dd3e1b2891C972303\n(opens new window)\nV3\n(\nSavings\n)\n0x760233b90e45d186A9A98E911B115F7F4B90d3D9\n(opens new window)\n#\nSavingsVault (svDEURO)\nERC-4626 compatible vault adapter for the Savings module.\nKey Features:\nStandard vault interface for DeFi composability\nAutomatic interest accrual on deposits/withdrawals\nProtected against inflation attacks via virtual shares\nTracks total claimed interest\nKey Functions:\ndeposit()\n- Deposit dEURO and receive vault shares\nwithdraw()\n- Burn shares and receive dEURO with interest\nprice()\n- Current price per share\ntotalAssets()\n- Total dEURO including accrued interest\nProperty\nValue\nSymbol\nsvDEURO\nStandard\nERC-4626\nEach Savings module ships with its own SavingsVault adapter.\nModule\nAddress\nV2\n0x1e9f008B1C538bE32F190516735bF1C634B4FA40\n(opens new window)\nV3\n0x75Beb37A3C86eE4c38931E2a9319E078da612979\n(opens new window)\n#\nLeadrate\nA governance-controlled interest rate module that provides the base interest rate for the entire system. The Leadrate is implemented inside\nSavings\n(V3) and\nSavingsGateway\n(V2) - it is not a standalone deployable contract.\nKey Features:\nQualified nDEPS holders can propose rate changes\n7-day timelock on all rate changes\nTracks accumulated \"ticks\" for interest calculations\nUsed by both Savings and Position contracts\nKey Functions:\nproposeChange()\n- Propose a new interest rate (requires 2% voting power)\napplyChange()\n- Execute a pending rate change after 7 days\ncurrentTicks()\n- Get accumulated interest ticks since deployment\nProperty\nValue\nRate Format\nPPM (parts per million) per year\nTimelock\n7 days\n#\nBridge Contracts\n#\nStablecoinBridge\nEnables 1:1 conversion between trusted external EUR stablecoins and dEURO.\nKey Features:\nMints dEURO by depositing source stablecoins\nBurns dEURO to retrieve source stablecoins\nHas maximum limit and expiration horizon\nEmergency stop available with 10% governance power\nKey Functions:\nmint()\n- Convert source stablecoin to dEURO\nburn()\n- Convert dEURO back to source stablecoin\nemergencyStop()\n- Permanently stop bridge (requires 10% votes)\nProperty\nValue\nEmergency Quorum\n10%\n#\nActive EUR Stablecoin Bridges\nSource\nBridge Address\nUnderlying Token\nEURT\n0x2353D16869F717BFCD22DaBc0ADbf4Dca62C609f\n(opens new window)\n0xC581b735A1688071A1746c968e0798D642EDE491\n(opens new window)\nEURS\n0x73f38ca06b27eaefb1612d062d885f58924f5897\n(opens new window)\n0xdb25f211ab05b1c97d595516f45794528a807ad8\n(opens new window)\nVEUR\n0x76d8f514554a4a8e5d6103875f2dd7a67543692b\n(opens new window)\n0x6ba75d640bebfe5da1197bb5a2aff3327789b5d3\n(opens new window)\nEURC\n0xB4fF7412f08C22d7381885e8BdA9EE9825092fd1\n(opens new window)\n0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c\n(opens new window)\nEURR\n0x20B0a153fF16c7B1e962FD3D3352A00cf019f1a7\n(opens new window)\n0x50753CfAf86c094925Bf976f218D043f8791e408\n(opens new window)\nEUROP\n0x3EF3d03EFCc1338d6210946f8cF5Fb1a8b630341\n(opens new window)\n0x888883b5F5D21fb10Dfeb70e8f9722B9FB0E5E51\n(opens new window)\nEURI\n0xb66A40934a996373fA7602de9820C6bf3e8c9afE\n(opens new window)\n0x9d1A7A3191102e9F900Faa10540837ba84dCBAE7\n(opens new window)\nEURE\n0x4dfd460d54854087af195906a2f260aa483a13b1\n(opens new window)\n0x3231Cb76718CDeF2155FC47b5286d82e6eDA273f\n(opens new window)\nEURA\n0x05620F4bB92246b4e067EBC0B6f5c7FF6B771702\n(opens new window)\n0x1a7e4e63778b4f12a199c062f3efdd288afcbce8\n(opens new window)\n#\nGateway Contracts\nV2 ONLY\nThe Gateway layer only exists in V2. V3 modules (\nMintingHub\n,\nSavings\n) bypass the Gateway pattern entirely and do not emit frontend rewards. Frontend operators only earn rewards on V2 activity.\n#\nFrontendGateway\nManages frontend referral codes and distributes rewards to frontend operators.\nKey Features:\nFrontend operators register unique codes\nRewards distributed based on user activity\nCovers investments, savings, and minting\nGovernance-controlled fee rates with 7-day timelock\nKey Functions:\nregisterFrontendCode()\n- Register a new frontend code\ninvest()\n- Invest in nDEPS with frontend reward\nredeem()\n- Redeem nDEPS with frontend reward\nwithdrawRewards()\n- Claim accumulated frontend rewards\nproposeChanges()\n- Propose new fee rates (requires 2% votes)\nActivity\nRate\nInvestment / Redemption\n1% of volume\nSavings interest\n5% of interest earned\nMinting interest\n5% of interest paid\nProperty\nAddress\nMainnet\n0x5c49C00f897bD970d964BFB8c3065ae65a180994\n(opens new window)\n#\nCoinLendingGateway\nLets users lend native ETH against dEURO without first wrapping to WETH. Routes through the V2 MintingHub and exposes the same position lifecycle as ERC-20 collateral, but accepts and returns native ETH.\nProperty\nAddress\nMainnet\n0x1DA37D613FB590eeD37520b72e9c6F0F6eee89D2\n(opens new window)\n#\nContract Summary\n#\nShared\nContract\nAddress\nPurpose\ndEURO\n0xbA3f...3ea\n(opens new window)\nMain stablecoin token\nnDEPS (Equity)\n0xc711...EE6\n(opens new window)\nReserve pool shares with voting\nDEPS (Wrapper)\n0x1037...380\n(opens new window)\nTransferable wrapper for nDEPS\n#\nV2 Module (active, with frontend rewards)\nContract\nAddress\nPurpose\nMintingHubGateway\n0x8B3c...618\n(opens new window)\nPosition management hub (V2)\nPositionFactory\n0x1671...5A8\n(opens new window)\nPosition deployment factory (V2)\nPositionRoller\n0x4CE0...c79\n(opens new window)\nPosition rollover helper (V2)\nSavingsGateway\n0x0734...303\n(opens new window)\nSavings with frontend rewards\nSavingsVault\n0x1e9f...A40\n(opens new window)\nERC-4626 savings vault (V2)\nFrontendGateway\n0x5c49...994\n(opens new window)\nFrontend reward system (V2 only)\nCoinLendingGateway\n0x1DA3...9D2\n(opens new window)\nNative ETH lending gateway (V2 only)\n#\nV3 Module (active, no frontend rewards)\nContract\nAddress\nPurpose\nMintingHub\n0x66Ac...4f7B\n(opens new window)\nPosition management hub (V3)\nPositionFactory\n0x3a39...FE81\n(opens new window)\nPosition deployment factory (V3)\nPositionRoller\n0x5C22...c5CD\n(opens new window)\nPosition rollover helper (V3)\nSavings\n0x7602...d3D9\n(opens new window)\nSavings module (V3)\nSavingsVault\n0x75Be...2979\n(opens new window)\nERC-4626 savings vault (V3)\n#\nSecurity Properties\nThe dEURO smart contracts are designed with the following security properties:\nProperty\nImplementation\nImmutability\nNo admin keys, no proxy upgrades\nOracle-free\nNo reliance on external price feeds\nFlash loan protection\nSame-block redemption blocked\nGovernance timelocks\n7-14 day delays on critical changes\nMinority protection\n2% veto threshold\nEmergency stops\n10% quorum can halt bridges\nInflation attack mitigation\nERC-4626 virtual shares pattern\n#\nSource Code\nAll smart contract source code is available on GitHub:\nRepository:\ngithub.com/d-EURO/smartContracts\n(opens new window)\nNetwork\nChain ID\nExplorer\nEthereum Mainnet\n1\netherscan.io\n(opens new window)\nEdit this page on Github\n(opens new window)\nLast Updated:\n5/26/2026, 8:20:31 PM\n←\nGovernance\nTelegram API Bot\n→",
+      "responseSha256": "11242188d657319d77bc0000676077b19fd1b147f829b6a6df715321faf08896",
+      "snapshotSha256": "64b86625ff821c4885409737fb9749ab5bf97e4e914a825a5cdcb35a84b7c639",
+      "hashEncoding": "SHA256 UTF-8; responseSha256 is fetched response text, snapshotSha256 is stored snapshot (HTML pages text-extracted)."
+    }
+  },
+  "abiEvidence": {
+    "sourceRef": "https://etherscan.io/address/0x760233b90e45d186A9A98E911B115F7F4B90d3D9#code",
+    "observedAt": "2026-10-24",
+    "chainId": 1,
+    "address": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+    "match": "exact_match",
+    "creationMatch": null,
+    "runtimeMatch": "exact_match",
+    "matchBasis": "Etherscan Source Code Verified Exact Match label; no independent runtime recompilation/attestation claimed.",
+    "compilerVersion": "0.8.26+commit.8a97fa7a",
+    "compilerSettings": {
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "*": [
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "devdoc",
+            "userdoc",
+            "metadata",
+            "abi"
+          ]
+        }
+      },
+      "evmVersion": "paris",
+      "metadata": {
+        "useLiteralContent": true
+      }
+    },
+    "contractName": "Savings",
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": [],
+      "currentImplementation": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+      "basis": "Direct constructor immutable source Savings+Leadrate; no proxy, beacon, clone, upgrade or delegatecall dispatch in full applicable source. Primary docs describe immutable modules."
+    },
+    "constructorArguments": [
+      {
+        "name": "deuro_",
+        "value": "0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea"
+      },
+      {
+        "name": "initialRatePPM",
+        "value": 80000
+      }
+    ],
+    "fullOriginalAbi": [
+      {
+        "inputs": [
+          {
+            "internalType": "contract IDecentralizedEURO",
+            "name": "deuro_",
+            "type": "address"
+          },
+          {
+            "internalType": "uint24",
+            "name": "initialRatePPM",
+            "type": "uint24"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [],
+        "name": "ChangeNotReady",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ModuleDisabled",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NoPendingChange",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint192",
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "name": "InterestClaimed",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "interest",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "compounded",
+            "type": "bool"
+          }
+        ],
+        "name": "InterestCollected",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint24",
+            "name": "newRate",
+            "type": "uint24"
+          }
+        ],
+        "name": "RateChanged",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "who",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint24",
+            "name": "nextRate",
+            "type": "uint24"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint40",
+            "name": "nextChange",
+            "type": "uint40"
+          }
+        ],
+        "name": "RateProposed",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint192",
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "name": "Saved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint192",
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "name": "Withdrawn",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "accountOwner",
+            "type": "address"
+          }
+        ],
+        "name": "accruedInterest",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "accountOwner",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "name": "accruedInterest",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint192",
+            "name": "targetAmount",
+            "type": "uint192"
+          }
+        ],
+        "name": "adjust",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "applyChange",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint192",
+                "name": "saved",
+                "type": "uint192"
+              },
+              {
+                "internalType": "uint64",
+                "name": "ticks",
+                "type": "uint64"
+              }
+            ],
+            "internalType": "struct Savings.Account",
+            "name": "account",
+            "type": "tuple"
+          },
+          {
+            "internalType": "uint64",
+            "name": "ticks",
+            "type": "uint64"
+          }
+        ],
+        "name": "calculateInterest",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "target",
+            "type": "address"
+          }
+        ],
+        "name": "claimInterest",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "claimableInterest",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "currentRatePPM",
+        "outputs": [
+          {
+            "internalType": "uint24",
+            "name": "",
+            "type": "uint24"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "currentTicks",
+        "outputs": [
+          {
+            "internalType": "uint64",
+            "name": "",
+            "type": "uint64"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "deuro",
+        "outputs": [
+          {
+            "internalType": "contract IERC20",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "equity",
+        "outputs": [
+          {
+            "internalType": "contract IReserve",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "nextChange",
+        "outputs": [
+          {
+            "internalType": "uint40",
+            "name": "",
+            "type": "uint40"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "nextRatePPM",
+        "outputs": [
+          {
+            "internalType": "uint24",
+            "name": "",
+            "type": "uint24"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "nonCompounding",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint24",
+            "name": "newRatePPM_",
+            "type": "uint24"
+          },
+          {
+            "internalType": "address[]",
+            "name": "helpers",
+            "type": "address[]"
+          }
+        ],
+        "name": "proposeChange",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          }
+        ],
+        "name": "refreshBalance",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "refreshMyBalance",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint192",
+            "name": "amount",
+            "type": "uint192"
+          },
+          {
+            "internalType": "bool",
+            "name": "compound",
+            "type": "bool"
+          }
+        ],
+        "name": "save",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "uint192",
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "name": "save",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint192",
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "name": "save",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "savings",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "saved",
+            "type": "uint192"
+          },
+          {
+            "internalType": "uint64",
+            "name": "ticks",
+            "type": "uint64"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "name": "ticks",
+        "outputs": [
+          {
+            "internalType": "uint64",
+            "name": "",
+            "type": "uint64"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "target",
+            "type": "address"
+          },
+          {
+            "internalType": "uint192",
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "name": "withdraw",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "abiSha256": "216121afde8468d1d3ccea11113aae5c4d81460639d3dabddf58c3ff6c9c0707",
+    "verifiedSources": {
+      "@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+        "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.1.0) (token/ERC20/IERC20.sol)\n\npragma solidity ^0.8.20;\n\n/**\n * @dev Interface of the ERC-20 standard as defined in the ERC.\n */\ninterface IERC20 {\n    /**\n     * @dev Emitted when `value` tokens are moved from one account (`from`) to\n     * another (`to`).\n     *\n     * Note that `value` may be zero.\n     */\n    event Transfer(address indexed from, address indexed to, uint256 value);\n\n    /**\n     * @dev Emitted when the allowance of a `spender` for an `owner` is set by\n     * a call to {approve}. `value` is the new allowance.\n     */\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n\n    /**\n     * @dev Returns the value of tokens in existence.\n     */\n    function totalSupply() external view returns (uint256);\n\n    /**\n     * @dev Returns the value of tokens owned by `account`.\n     */\n    function balanceOf(address account) external view returns (uint256);\n\n    /**\n     * @dev Moves a `value` amount of tokens from the caller's account to `to`.\n     *\n     * Returns a boolean value indicating whether the operation succeeded.\n     *\n     * Emits a {Transfer} event.\n     */\n    function transfer(address to, uint256 value) external returns (bool);\n\n    /**\n     * @dev Returns the remaining number of tokens that `spender` will be\n     * allowed to spend on behalf of `owner` through {transferFrom}. This is\n     * zero by default.\n     *\n     * This value changes when {approve} or {transferFrom} are called.\n     */\n    function allowance(address owner, address spender) external view returns (uint256);\n\n    /**\n     * @dev Sets a `value` amount of tokens as the allowance of `spender` over the\n     * caller's tokens.\n     *\n     * Returns a boolean value indicating whether the operation succeeded.\n     *\n     * IMPORTANT: Beware that changing an allowance with this method brings the risk\n     * that someone may use both the old and the new allowance by unfortunate\n     * transaction ordering. One possible solution to mitigate this race\n     * condition is to first reduce the spender's allowance to 0 and set the\n     * desired value afterwards:\n     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\n     *\n     * Emits an {Approval} event.\n     */\n    function approve(address spender, uint256 value) external returns (bool);\n\n    /**\n     * @dev Moves a `value` amount of tokens from `from` to `to` using the\n     * allowance mechanism. `value` is then deducted from the caller's\n     * allowance.\n     *\n     * Returns a boolean value indicating whether the operation succeeded.\n     *\n     * Emits a {Transfer} event.\n     */\n    function transferFrom(address from, address to, uint256 value) external returns (bool);\n}\n",
+        "sha256": "30edf7394bab78d48b7db3a059248e1ea7c2c77d2ec0e37a13bb91415aafbe5a"
+      },
+      "contracts/interface/IDecentralizedEURO.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport {IReserve} from \"./IReserve.sol\";\nimport {IERC20} from \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\n\ninterface IDecentralizedEURO is IERC20 {\n    function suggestMinter(\n        address _minter,\n        uint256 _applicationPeriod,\n        uint256 _applicationFee,\n        string calldata _message\n    ) external;\n\n    function registerPosition(address position) external;\n\n    function denyMinter(address minter, address[] calldata helpers, string calldata message) external;\n\n    function reserve() external view returns (IReserve);\n\n    function minterReserve() external view returns (uint256);\n\n    function calculateAssignedReserve(uint256 mintedAmount, uint32 _reservePPM) external view returns (uint256);\n\n    function calculateFreedAmount(uint256 amountExcludingReserve, uint32 _reservePPM) external view returns (uint256);\n\n    function equity() external view returns (uint256);\n\n    function isMinter(address minter) external view returns (bool);\n\n    function getPositionParent(address position) external view returns (address);\n\n    function mint(address target, uint256 amount) external;\n\n    function mintWithReserve(address target, uint256 amount, uint32 reservePPM) external;\n\n    function burn(uint256 amount) external;\n\n    function burnFrom(address target, uint256 amount) external;\n\n    function burnWithoutReserve(uint256 amount, uint32 reservePPM) external;\n\n    function burnFromWithReserve(\n        address payer,\n        uint256 targetTotalBurnAmount,\n        uint32 reservePPM\n    ) external returns (uint256);\n\n    function coverLoss(address source, uint256 amount) external;\n\n    function distributeProfits(address recipient, uint256 amount) external;\n\n    function collectProfits(address source, uint256 _amount) external;\n}\n",
+        "sha256": "d7b386f7cb1b8969a2f5d65dcd391c497e1a306e80eee24f891c50b89cccbf35"
+      },
+      "contracts/interface/IReserve.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport {IERC20} from \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\n\ninterface IReserve is IERC20 {\n    function invest(uint256 amount, uint256 expected) external returns (uint256);\n    function checkQualified(address sender, address[] calldata helpers) external view;\n    function votesDelegated(address sender, address[] calldata helpers) external view returns (uint256);\n    function totalVotes() external view returns (uint256);\n}\n",
+        "sha256": "ffc7a9936e942c349582537fe6405b17f61ab044ee0cab2cd5f2486ceeb04324"
+      },
+      "contracts/Leadrate.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport {IReserve} from \"./interface/IReserve.sol\";\n\n/**\n * @title Leadrate (attempt at translating the concise German term 'Leitzins')\n *\n * A module that can provide other modules with the leading interest rate for the system.\n *\n **/\ncontract Leadrate {\n    IReserve public immutable equity;\n\n    // The following five variables are less than 256 bits, so they should be stored\n    // in the same slot, making them cheaper to access together, right?\n\n    uint24 public currentRatePPM; // 24 bits allows rates of up to ~1670% per year\n    uint24 public nextRatePPM;\n    uint40 public nextChange;\n\n    uint40 private anchorTime; // 40 bits for time in seconds spans up to 1000 human generations\n    uint64 private ticksAnchor; // in bips * seconds\n\n    event RateProposed(address who, uint24 nextRate, uint40 nextChange);\n    event RateChanged(uint24 newRate);\n\n    error NoPendingChange();\n    error ChangeNotReady();\n\n    constructor(IReserve equity_, uint24 initialRatePPM) {\n        equity = equity_;\n        nextRatePPM = initialRatePPM;\n        currentRatePPM = initialRatePPM;\n        nextChange = uint40(block.timestamp);\n        anchorTime = nextChange;\n        ticksAnchor = 0;\n        emit RateChanged(initialRatePPM); // emit for initialization indexing, if desired\n    }\n\n    /**\n     * Proposes a new interest rate that will automatically be applied after seven days.\n     * To cancel a proposal, just overwrite it with a new one proposing the current rate.\n     */\n    function proposeChange(uint24 newRatePPM_, address[] calldata helpers) external {\n        equity.checkQualified(msg.sender, helpers);\n        nextRatePPM = newRatePPM_;\n        nextChange = uint40(block.timestamp + 7 days);\n        emit RateProposed(msg.sender, nextRatePPM, nextChange);\n    }\n\n    /**\n     * Setting a previously proposed interest rate change into force.\n     */\n    function applyChange() external {\n        if (currentRatePPM == nextRatePPM) revert NoPendingChange();\n        uint40 timeNow = uint40(block.timestamp);\n        if (timeNow < nextChange) revert ChangeNotReady();\n        ticksAnchor += uint64(timeNow - anchorTime) * currentRatePPM;\n        anchorTime = timeNow;\n        currentRatePPM = nextRatePPM;\n        emit RateChanged(currentRatePPM);\n    }\n\n    /**\n     * Total accumulated 'interest ticks' since this contract was deployed.\n     * One 'tick' is a ppm-second, so one month of 12% annual interest is\n     *   120000*30*24*3600 = 311040000000 ticks.\n     * Two months of 6% annual interest would result in the same number of\n     * ticks. For simplicity, this is linear, so there is no \"interest on interest\".\n     */\n    function currentTicks() public view returns (uint64) {\n        return ticks(block.timestamp);\n    }\n\n    function ticks(uint256 timestamp) public view returns (uint64) {\n        return ticksAnchor + (uint64(timestamp) - anchorTime) * currentRatePPM;\n    }\n}\n",
+        "sha256": "acd1f205cd46b4775829463426127db0831aaeb700282471de42f1b8a1e308d3"
+      },
+      "contracts/Savings.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport {IERC20} from \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\nimport {IDecentralizedEURO} from \"./interface/IDecentralizedEURO.sol\";\nimport {IReserve} from \"./interface/IReserve.sol\";\nimport {Leadrate} from \"./Leadrate.sol\";\n\n/**\n * @title Savings\n *\n * Module to enable savings based on a Leadrate (\"Leitzins\") module.\n *\n * As the interest rate changes, the speed at which 'ticks' are accumulated is\n * adjusted. The ticks counter serves as the basis for calculating the interest\n * due for the individual accounts.\n */\ncontract Savings is Leadrate {\n    IERC20 public immutable deuro;\n\n    mapping(address => Account) public savings;\n    mapping(address => bool) public nonCompounding;\n    mapping(address => uint192) public claimableInterest;\n\n    struct Account {\n        uint192 saved;\n        uint64 ticks;\n    }\n\n    event Saved(address indexed account, uint192 amount);\n    event InterestCollected(address indexed account, uint256 interest, bool compounded);\n    event Withdrawn(address indexed account, uint192 amount);\n    event InterestClaimed(address indexed account, uint192 amount);\n\n    // The module is considered disabled if the interest is zero or about to become zero within three days.\n    error ModuleDisabled();\n\n    constructor(IDecentralizedEURO deuro_, uint24 initialRatePPM) Leadrate(IReserve(deuro_.reserve()), initialRatePPM) {\n        deuro = IERC20(deuro_);\n    }\n\n    /**\n     * Shortcut for refreshBalance(msg.sender)\n     */\n    function refreshMyBalance() public returns (uint192) {\n        return refreshBalance(msg.sender);\n    }\n\n    /**\n     * Collects the accrued interest and adds it to the account.\n     *\n     * It can be beneficial to do so every now and then in order to start collecting\n     * interest on the accrued interest.\n     */\n    function refreshBalance(address owner) public returns (uint192) {\n        return refresh(owner).saved;\n    }\n\n    function refresh(address accountOwner) internal returns (Account storage) {\n        Account storage account = savings[accountOwner];\n        uint64 ticks = currentTicks();\n        if (ticks > account.ticks) {\n            uint192 earnedInterest = calculateInterest(account, ticks);\n            if (earnedInterest > 0) {\n                (IDecentralizedEURO(address(deuro))).distributeProfits(address(this), earnedInterest);\n                bool compounded = !nonCompounding[accountOwner];\n                if (compounded) {\n                    account.saved += earnedInterest;\n                } else {\n                    claimableInterest[accountOwner] += earnedInterest;\n                }\n                emit InterestCollected(accountOwner, earnedInterest, compounded);\n            }\n            account.ticks = ticks;\n        }\n        return account;\n    }\n\n    function accruedInterest(address accountOwner) public view returns (uint192) {\n        return accruedInterest(accountOwner, block.timestamp);\n    }\n\n    function accruedInterest(address accountOwner, uint256 timestamp) public view returns (uint192) {\n        Account memory account = savings[accountOwner];\n        return calculateInterest(account, ticks(timestamp));\n    }\n\n    function calculateInterest(Account memory account, uint64 ticks) public view returns (uint192) {\n        if (ticks <= account.ticks || account.ticks == 0) {\n            return 0;\n        } else {\n            uint192 earnedInterest = uint192((uint256(ticks - account.ticks) * account.saved) / 1_000_000 / 365 days);\n            uint256 equity = IDecentralizedEURO(address(deuro)).equity();\n            if (earnedInterest > equity) {\n                return uint192(equity); // safe conversion as equity is smaller than uint192 earnedInterest\n            } else {\n                return earnedInterest;\n            }\n        }\n    }\n\n    /**\n     * Save 'amount'.\n     */\n    function save(uint192 amount) public {\n        save(msg.sender, amount);\n    }\n\n    /**\n     * Save 'amount' and set the compounding preference.\n     * Pending interest is settled under the OLD mode before applying the new preference.\n     */\n    function save(uint192 amount, bool compound) public {\n        save(msg.sender, amount);\n        nonCompounding[msg.sender] = !compound;\n    }\n\n    function adjust(uint192 targetAmount) public {\n        Account storage balance = refresh(msg.sender);\n        if (balance.saved < targetAmount) {\n            save(targetAmount - balance.saved);\n        } else if (balance.saved > targetAmount) {\n            withdraw(msg.sender, balance.saved - targetAmount);\n        }\n    }\n\n    /**\n     * Send 'amount' to the account of the provided owner.\n     */\n    function save(address owner, uint192 amount) public {\n        if (currentRatePPM == 0) revert ModuleDisabled();\n        if (nextRatePPM == 0 && (nextChange <= block.timestamp)) revert ModuleDisabled();\n        Account storage balance = refresh(owner);\n        deuro.transferFrom(msg.sender, address(this), amount);\n        assert(balance.ticks >= currentTicks()); // @dev: should not differ, since there is no shift of interests\n        balance.saved += amount;\n        emit Saved(owner, amount);\n    }\n\n    /**\n     * Withdraw up to 'amount' to the target address.\n     * When trying to withdraw more than available, all that is available is withdrawn.\n     * Returns the actually transferred amount.\n     */\n    function withdraw(address target, uint192 amount) public returns (uint256) {\n        Account storage account = refresh(msg.sender);\n        if (amount >= account.saved) {\n            amount = account.saved;\n            delete savings[msg.sender];\n        } else {\n            account.saved -= amount;\n        }\n        deuro.transfer(target, amount);\n        emit Withdrawn(msg.sender, amount);\n        return amount;\n    }\n\n    function claimInterest(address target) public returns (uint192) {\n        refresh(msg.sender);\n        uint192 interest = claimableInterest[msg.sender];\n        if (interest > 0) {\n            claimableInterest[msg.sender] = 0;\n            deuro.transfer(target, interest);\n            emit InterestClaimed(msg.sender, interest);\n        }\n        return interest;\n    }\n}\n",
+        "sha256": "69732b9c7dafb0a64abe376303820eb77a9d0f673e407ec8fc800ff4d84ffe39"
+      },
+      "settings.json": {
+        "content": "{\"optimizer\":{\"enabled\":true,\"runs\":200},\"outputSelection\":{\"*\":{\"*\":[\"evm.bytecode\",\"evm.deployedBytecode\",\"devdoc\",\"userdoc\",\"metadata\",\"abi\"]}},\"evmVersion\":\"paris\",\"metadata\":{\"useLiteralContent\":true}}",
+        "sha256": "8d4a5690273333d29664beb891080a588c87d4ddb864991eddd52386770b708f"
+      }
+    },
+    "explorerSourceFilesSnapshot": {
+      "language": "Solidity",
+      "sources": {
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+          "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.1.0) (token/ERC20/IERC20.sol)\n\npragma solidity ^0.8.20;\n\n/**\n * @dev Interface of the ERC-20 standard as defined in the ERC.\n */\ninterface IERC20 {\n    /**\n     * @dev Emitted when `value` tokens are moved from one account (`from`) to\n     * another (`to`).\n     *\n     * Note that `value` may be zero.\n     */\n    event Transfer(address indexed from, address indexed to, uint256 value);\n\n    /**\n     * @dev Emitted when the allowance of a `spender` for an `owner` is set by\n     * a call to {approve}. `value` is the new allowance.\n     */\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n\n    /**\n     * @dev Returns the value of tokens in existence.\n     */\n    function totalSupply() external view returns (uint256);\n\n    /**\n     * @dev Returns the value of tokens owned by `account`.\n     */\n    function balanceOf(address account) external view returns (uint256);\n\n    /**\n     * @dev Moves a `value` amount of tokens from the caller's account to `to`.\n     *\n     * Returns a boolean value indicating whether the operation succeeded.\n     *\n     * Emits a {Transfer} event.\n     */\n    function transfer(address to, uint256 value) external returns (bool);\n\n    /**\n     * @dev Returns the remaining number of tokens that `spender` will be\n     * allowed to spend on behalf of `owner` through {transferFrom}. This is\n     * zero by default.\n     *\n     * This value changes when {approve} or {transferFrom} are called.\n     */\n    function allowance(address owner, address spender) external view returns (uint256);\n\n    /**\n     * @dev Sets a `value` amount of tokens as the allowance of `spender` over the\n     * caller's tokens.\n     *\n     * Returns a boolean value indicating whether the operation succeeded.\n     *\n     * IMPORTANT: Beware that changing an allowance with this method brings the risk\n     * that someone may use both the old and the new allowance by unfortunate\n     * transaction ordering. One possible solution to mitigate this race\n     * condition is to first reduce the spender's allowance to 0 and set the\n     * desired value afterwards:\n     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\n     *\n     * Emits an {Approval} event.\n     */\n    function approve(address spender, uint256 value) external returns (bool);\n\n    /**\n     * @dev Moves a `value` amount of tokens from `from` to `to` using the\n     * allowance mechanism. `value` is then deducted from the caller's\n     * allowance.\n     *\n     * Returns a boolean value indicating whether the operation succeeded.\n     *\n     * Emits a {Transfer} event.\n     */\n    function transferFrom(address from, address to, uint256 value) external returns (bool);\n}\n"
+        },
+        "contracts/interface/IDecentralizedEURO.sol": {
+          "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport {IReserve} from \"./IReserve.sol\";\nimport {IERC20} from \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\n\ninterface IDecentralizedEURO is IERC20 {\n    function suggestMinter(\n        address _minter,\n        uint256 _applicationPeriod,\n        uint256 _applicationFee,\n        string calldata _message\n    ) external;\n\n    function registerPosition(address position) external;\n\n    function denyMinter(address minter, address[] calldata helpers, string calldata message) external;\n\n    function reserve() external view returns (IReserve);\n\n    function minterReserve() external view returns (uint256);\n\n    function calculateAssignedReserve(uint256 mintedAmount, uint32 _reservePPM) external view returns (uint256);\n\n    function calculateFreedAmount(uint256 amountExcludingReserve, uint32 _reservePPM) external view returns (uint256);\n\n    function equity() external view returns (uint256);\n\n    function isMinter(address minter) external view returns (bool);\n\n    function getPositionParent(address position) external view returns (address);\n\n    function mint(address target, uint256 amount) external;\n\n    function mintWithReserve(address target, uint256 amount, uint32 reservePPM) external;\n\n    function burn(uint256 amount) external;\n\n    function burnFrom(address target, uint256 amount) external;\n\n    function burnWithoutReserve(uint256 amount, uint32 reservePPM) external;\n\n    function burnFromWithReserve(\n        address payer,\n        uint256 targetTotalBurnAmount,\n        uint32 reservePPM\n    ) external returns (uint256);\n\n    function coverLoss(address source, uint256 amount) external;\n\n    function distributeProfits(address recipient, uint256 amount) external;\n\n    function collectProfits(address source, uint256 _amount) external;\n}\n"
+        },
+        "contracts/interface/IReserve.sol": {
+          "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport {IERC20} from \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\n\ninterface IReserve is IERC20 {\n    function invest(uint256 amount, uint256 expected) external returns (uint256);\n    function checkQualified(address sender, address[] calldata helpers) external view;\n    function votesDelegated(address sender, address[] calldata helpers) external view returns (uint256);\n    function totalVotes() external view returns (uint256);\n}\n"
+        },
+        "contracts/Leadrate.sol": {
+          "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport {IReserve} from \"./interface/IReserve.sol\";\n\n/**\n * @title Leadrate (attempt at translating the concise German term 'Leitzins')\n *\n * A module that can provide other modules with the leading interest rate for the system.\n *\n **/\ncontract Leadrate {\n    IReserve public immutable equity;\n\n    // The following five variables are less than 256 bits, so they should be stored\n    // in the same slot, making them cheaper to access together, right?\n\n    uint24 public currentRatePPM; // 24 bits allows rates of up to ~1670% per year\n    uint24 public nextRatePPM;\n    uint40 public nextChange;\n\n    uint40 private anchorTime; // 40 bits for time in seconds spans up to 1000 human generations\n    uint64 private ticksAnchor; // in bips * seconds\n\n    event RateProposed(address who, uint24 nextRate, uint40 nextChange);\n    event RateChanged(uint24 newRate);\n\n    error NoPendingChange();\n    error ChangeNotReady();\n\n    constructor(IReserve equity_, uint24 initialRatePPM) {\n        equity = equity_;\n        nextRatePPM = initialRatePPM;\n        currentRatePPM = initialRatePPM;\n        nextChange = uint40(block.timestamp);\n        anchorTime = nextChange;\n        ticksAnchor = 0;\n        emit RateChanged(initialRatePPM); // emit for initialization indexing, if desired\n    }\n\n    /**\n     * Proposes a new interest rate that will automatically be applied after seven days.\n     * To cancel a proposal, just overwrite it with a new one proposing the current rate.\n     */\n    function proposeChange(uint24 newRatePPM_, address[] calldata helpers) external {\n        equity.checkQualified(msg.sender, helpers);\n        nextRatePPM = newRatePPM_;\n        nextChange = uint40(block.timestamp + 7 days);\n        emit RateProposed(msg.sender, nextRatePPM, nextChange);\n    }\n\n    /**\n     * Setting a previously proposed interest rate change into force.\n     */\n    function applyChange() external {\n        if (currentRatePPM == nextRatePPM) revert NoPendingChange();\n        uint40 timeNow = uint40(block.timestamp);\n        if (timeNow < nextChange) revert ChangeNotReady();\n        ticksAnchor += uint64(timeNow - anchorTime) * currentRatePPM;\n        anchorTime = timeNow;\n        currentRatePPM = nextRatePPM;\n        emit RateChanged(currentRatePPM);\n    }\n\n    /**\n     * Total accumulated 'interest ticks' since this contract was deployed.\n     * One 'tick' is a ppm-second, so one month of 12% annual interest is\n     *   120000*30*24*3600 = 311040000000 ticks.\n     * Two months of 6% annual interest would result in the same number of\n     * ticks. For simplicity, this is linear, so there is no \"interest on interest\".\n     */\n    function currentTicks() public view returns (uint64) {\n        return ticks(block.timestamp);\n    }\n\n    function ticks(uint256 timestamp) public view returns (uint64) {\n        return ticksAnchor + (uint64(timestamp) - anchorTime) * currentRatePPM;\n    }\n}\n"
+        },
+        "contracts/Savings.sol": {
+          "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport {IERC20} from \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\nimport {IDecentralizedEURO} from \"./interface/IDecentralizedEURO.sol\";\nimport {IReserve} from \"./interface/IReserve.sol\";\nimport {Leadrate} from \"./Leadrate.sol\";\n\n/**\n * @title Savings\n *\n * Module to enable savings based on a Leadrate (\"Leitzins\") module.\n *\n * As the interest rate changes, the speed at which 'ticks' are accumulated is\n * adjusted. The ticks counter serves as the basis for calculating the interest\n * due for the individual accounts.\n */\ncontract Savings is Leadrate {\n    IERC20 public immutable deuro;\n\n    mapping(address => Account) public savings;\n    mapping(address => bool) public nonCompounding;\n    mapping(address => uint192) public claimableInterest;\n\n    struct Account {\n        uint192 saved;\n        uint64 ticks;\n    }\n\n    event Saved(address indexed account, uint192 amount);\n    event InterestCollected(address indexed account, uint256 interest, bool compounded);\n    event Withdrawn(address indexed account, uint192 amount);\n    event InterestClaimed(address indexed account, uint192 amount);\n\n    // The module is considered disabled if the interest is zero or about to become zero within three days.\n    error ModuleDisabled();\n\n    constructor(IDecentralizedEURO deuro_, uint24 initialRatePPM) Leadrate(IReserve(deuro_.reserve()), initialRatePPM) {\n        deuro = IERC20(deuro_);\n    }\n\n    /**\n     * Shortcut for refreshBalance(msg.sender)\n     */\n    function refreshMyBalance() public returns (uint192) {\n        return refreshBalance(msg.sender);\n    }\n\n    /**\n     * Collects the accrued interest and adds it to the account.\n     *\n     * It can be beneficial to do so every now and then in order to start collecting\n     * interest on the accrued interest.\n     */\n    function refreshBalance(address owner) public returns (uint192) {\n        return refresh(owner).saved;\n    }\n\n    function refresh(address accountOwner) internal returns (Account storage) {\n        Account storage account = savings[accountOwner];\n        uint64 ticks = currentTicks();\n        if (ticks > account.ticks) {\n            uint192 earnedInterest = calculateInterest(account, ticks);\n            if (earnedInterest > 0) {\n                (IDecentralizedEURO(address(deuro))).distributeProfits(address(this), earnedInterest);\n                bool compounded = !nonCompounding[accountOwner];\n                if (compounded) {\n                    account.saved += earnedInterest;\n                } else {\n                    claimableInterest[accountOwner] += earnedInterest;\n                }\n                emit InterestCollected(accountOwner, earnedInterest, compounded);\n            }\n            account.ticks = ticks;\n        }\n        return account;\n    }\n\n    function accruedInterest(address accountOwner) public view returns (uint192) {\n        return accruedInterest(accountOwner, block.timestamp);\n    }\n\n    function accruedInterest(address accountOwner, uint256 timestamp) public view returns (uint192) {\n        Account memory account = savings[accountOwner];\n        return calculateInterest(account, ticks(timestamp));\n    }\n\n    function calculateInterest(Account memory account, uint64 ticks) public view returns (uint192) {\n        if (ticks <= account.ticks || account.ticks == 0) {\n            return 0;\n        } else {\n            uint192 earnedInterest = uint192((uint256(ticks - account.ticks) * account.saved) / 1_000_000 / 365 days);\n            uint256 equity = IDecentralizedEURO(address(deuro)).equity();\n            if (earnedInterest > equity) {\n                return uint192(equity); // safe conversion as equity is smaller than uint192 earnedInterest\n            } else {\n                return earnedInterest;\n            }\n        }\n    }\n\n    /**\n     * Save 'amount'.\n     */\n    function save(uint192 amount) public {\n        save(msg.sender, amount);\n    }\n\n    /**\n     * Save 'amount' and set the compounding preference.\n     * Pending interest is settled under the OLD mode before applying the new preference.\n     */\n    function save(uint192 amount, bool compound) public {\n        save(msg.sender, amount);\n        nonCompounding[msg.sender] = !compound;\n    }\n\n    function adjust(uint192 targetAmount) public {\n        Account storage balance = refresh(msg.sender);\n        if (balance.saved < targetAmount) {\n            save(targetAmount - balance.saved);\n        } else if (balance.saved > targetAmount) {\n            withdraw(msg.sender, balance.saved - targetAmount);\n        }\n    }\n\n    /**\n     * Send 'amount' to the account of the provided owner.\n     */\n    function save(address owner, uint192 amount) public {\n        if (currentRatePPM == 0) revert ModuleDisabled();\n        if (nextRatePPM == 0 && (nextChange <= block.timestamp)) revert ModuleDisabled();\n        Account storage balance = refresh(owner);\n        deuro.transferFrom(msg.sender, address(this), amount);\n        assert(balance.ticks >= currentTicks()); // @dev: should not differ, since there is no shift of interests\n        balance.saved += amount;\n        emit Saved(owner, amount);\n    }\n\n    /**\n     * Withdraw up to 'amount' to the target address.\n     * When trying to withdraw more than available, all that is available is withdrawn.\n     * Returns the actually transferred amount.\n     */\n    function withdraw(address target, uint192 amount) public returns (uint256) {\n        Account storage account = refresh(msg.sender);\n        if (amount >= account.saved) {\n            amount = account.saved;\n            delete savings[msg.sender];\n        } else {\n            account.saved -= amount;\n        }\n        deuro.transfer(target, amount);\n        emit Withdrawn(msg.sender, amount);\n        return amount;\n    }\n\n    function claimInterest(address target) public returns (uint192) {\n        refresh(msg.sender);\n        uint192 interest = claimableInterest[msg.sender];\n        if (interest > 0) {\n            claimableInterest[msg.sender] = 0;\n            deuro.transfer(target, interest);\n            emit InterestClaimed(msg.sender, interest);\n        }\n        return interest;\n    }\n}\n"
+        },
+        "settings.json": {
+          "content": "{\"optimizer\":{\"enabled\":true,\"runs\":200},\"outputSelection\":{\"*\":{\"*\":[\"evm.bytecode\",\"evm.deployedBytecode\",\"devdoc\",\"userdoc\",\"metadata\",\"abi\"]}},\"evmVersion\":\"paris\",\"metadata\":{\"useLiteralContent\":true}}"
+        }
+      }
+    },
+    "sourceSnapshotSha256": "9257823b2e6bd19d4be9ab5d9fd4f59d2fb24206398f9b2a11fead061647330e",
+    "sourceSnapshotHashEncoding": "SHA256 compact JSON of the complete extracted EtherEditor source-files JSON; all source text preserved after JavaScript string decoding."
+  },
+  "currentStateEvidence": [
+    {
+      "sourceRef": "https://etherscan.io/readContract?m=normal&a=0x760233b90e45d186A9A98E911B115F7F4B90d3D9&v=0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+      "observedAt": "2026-10-24",
+      "values": {
+        "currentRatePPM": 70000,
+        "nextRatePPM": 70000,
+        "nextChange": 1787920619,
+        "deuro": "0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea",
+        "equity": "0xc71104001A3CCDA1BEf1177d765831Bd1bfE8eE6"
+      },
+      "limitation": "Explorer read-page point observation; no ongoing rate, equity, liquidity or execution guarantee."
+    }
+  ],
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://docs.deuro.com/smart-contracts",
+      "observedAt": "2026-10-24",
+      "snapshot": "Smart Contracts | dEURO\ndEURO\ndEuro.com\n(opens new window)\nGitHub\n(opens new window)\ndEuro.com\n(opens new window)\nGitHub\n(opens new window)\nOverview\nStablecoin Bridges\nCollateralized Minting\nReserve\nGovernance\nSmart Contracts\nContract Architecture\nProtocol Modules: V2 and V3\nCore Contracts\nMintingHub Contracts\nSavings Contracts\nBridge Contracts\nGateway Contracts\nContract Summary\nSecurity Properties\nSource Code\nTelegram API Bot\nDisclaimer\nPrivacy\nImprint\nFAQ\n#\nSmart Contracts\nA technical overview of all smart contracts powering the Decentralized Euro protocol.\nThe Decentralized Euro protocol consists of multiple smart contracts that work together to create a trustless, oracle-free stablecoin system. All contracts are deployed on Ethereum mainnet and are fully immutable - no admin keys, no upgrades, no central control.\n#\nContract Architecture\nThe contracts are organized into the following categories:\nCategory\nPurpose\nCore\nToken contracts and reserve management\nMintingHub\nPosition management and collateralized minting\nSavings\nInterest-bearing dEURO deposits\nBridges\n1:1 conversion with trusted external EUR stablecoins\nGateways\nFrontend rewards and enhanced functionality (V2 only)\n#\nProtocol Modules: V2 and V3\nThe dEURO contracts are immutable and cannot be replaced. Instead of upgrading via proxies, the protocol evolves by adding\nnew modules\nthrough the standard\nsuggestMinter()\ngovernance flow. The protocol currently runs\ntwo coexisting MintingHub and Savings module sets\non Ethereum mainnet:\nModule\nStatus\nFrontend Rewards\nNotes\nV2\nActive, permanent\nYes (via Gateways)\nOriginal launch modules; positions and savings opened here remain fully usable. Cannot be deactivated. Includes the CoinLendingGateway for native ETH lending.\nV3\nActive, permanent\nNo\nAdditional module set approved by nDEPS governance. Adds an updated savings/vault design and a price reference system. Routes do not pass through\nFrontendGateway\n.\nBoth module sets share the same\ndEURO\ntoken, the same nDEPS / DEPSwrapper governance pair, and the same Bridge contracts. New positions and savings deposits can be opened in either module; existing V2 positions are not migrated and continue to live under V2.\nTIP\nV3 is\nnot a replacement\nfor V2. It is an additional, parallel set of minter contracts that nDEPS holders approved through the standard governance application period. V2 remains the only home for positions and savings that were opened before V3 went live.\n#\nCore Contracts\n#\nDecentralized Euro (dEURO)\nThe main stablecoin token contract - an ERC-20 token designed to track the value of the Euro.\nKey Features:\nImplements ERC-20 and ERC-2612 (Permit)\nOpen to arbitrary minting plugins with veto-based governance\nCreates the Equity contract during deployment\nManages the minter registry and position registry\nHandles reserve accounting and loss coverage\nKey Functions:\nsuggestMinter()\n- Propose a new minting contract (requires fee and application period)\ndenyMinter()\n- Qualified shareholders can veto minting proposals\nmintWithReserve()\n- Mint dEURO with reserve contribution (minters only)\nburnFromWithReserve()\n- Burn dEURO and reclaim proportional reserve\nProperty\nValue\nSymbol\ndEURO\nDecimals\n18\nMin Application Period\n14 days\nMin Application Fee\n1,000 dEURO\nAddress\n0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea\n(opens new window)\n#\nEquity (nDEPS)\nThe native equity token representing shares in the dEURO reserve pool. Holding nDEPS is similar to being a shareholder of a bank.\nKey Features:\nERC-20 token with time-weighted voting power\n2% quorum required for governance veto\nPrice determined by proportional capital valuation (3x equity)\n2% fee on minting and redemption\nFlash loan protection (same-block redemption blocked)\nKey Functions:\ninvest()\n- Mint nDEPS by depositing dEURO into the reserve\nredeem()\n- Burn nDEPS to withdraw dEURO from the reserve\ncheckQualified()\n- Verify if an address has sufficient voting power (2%)\ndelegateVoteTo()\n- Delegate voting power to another address\nkamikaze()\n- Sacrifice own votes to reduce malicious actor's votes\nVoting Mechanics:\nVotes accumulate over time:\nvotes = balance * holdingDuration\nLonger holding = more voting power\nDelegation adds to delegate's power without removing own votes\nProperty\nValue\nSymbol\nnDEPS\nDecimals\n18\nQuorum\n2%\nAddress\n0xc71104001A3CCDA1BEf1177d765831Bd1bfE8eE6\n(opens new window)\n#\nDEPSwrapper (DEPS)\nERC-20 wrapper around nDEPS. Wrapping strips the time-weighted voting state, which makes the wrapped DEPS suitable for AMM liquidity, custodial holdings, and other contexts where the voting mechanics of native nDEPS would be lost or distorted.\nKey Functions:\nwrap()\n/\nwrapFor()\n- Convert nDEPS to DEPS\nunwrap()\n/\nunwrapAndSell()\n- Convert DEPS back to nDEPS\nProperty\nValue\nSymbol\nDEPS\nDecimals\n18\nAddress\n0x103747924E74708139a9400e4Ab4BEA79FFFA380\n(opens new window)\n#\nMintingHub Contracts\n#\nMintingHub\nThe central hub for creating, cloning, and challenging collateralized dEURO positions.\nKey Features:\nCreates new position contracts via PositionFactory\nManages Dutch auctions for liquidations\nHandles forced sales of expired positions\nKey Functions:\nopenPosition()\n- Create a new collateralized position (1,000 dEURO fee)\nclone()\n- Clone an existing position with new parameters\nchallenge()\n- Start a Dutch auction to challenge undercollateralized positions\nbid()\n- Place a bid in an ongoing challenge auction\nbuyExpiredCollateral()\n- Purchase collateral from expired positions\nChallenge Process:\nPhase 1 (Aversion):\nPosition owner can avert by buying challenger's collateral at liquidation price\nPhase 2 (Auction):\nDutch auction where price decreases linearly to zero\nProperty\nValue\nOpening Fee\n1,000 dEURO\nChallenger Reward\n2%\nMin Challenge Period\n1 day\nThe protocol exposes two MintingHub modules. V2 is wrapped by\nMintingHubGateway\nfor frontend-code tracking; V3 routes directly through\nMintingHub\nand adds an updated savings/vault design.\nModule\nAddress\nV2\n(\nMintingHubGateway\n)\n0x8B3c41c649B9c7085C171CbB82337889b3604618\n(opens new window)\nV3\n(\nMintingHub\n)\n0x66AcC54a0C64255137b8993CB4972B0901684f7B\n(opens new window)\n#\nPosition\nIndividual collateralized debt position contract. Each position is a separate contract holding the user's collateral.\nKey Features:\nImmutable parameters set at creation (collateral type, reserve ratio, etc.)\nContinuous interest accrual based on Leadrate + risk premium\nCooldown periods on price increases (3 days) for security\nCan be denied by governance during initialization period\nKey Functions:\nmint()\n- Mint dEURO against deposited collateral\nrepay()\n- Repay debt (interest first, then principal)\nadjust()\n- All-in-one function to modify position parameters\nadjustPrice()\n- Change the liquidation price\nwithdrawCollateral()\n- Withdraw excess collateral\ndeny()\n- Governance can deny positions during init period\nInterest Model:\nInterest charged on usable mint amount (principal minus reserve)\nRate = Leadrate + Risk Premium (set at position creation)\nInterest must be overcollateralized by the same ratio as principal\nProperty\nValue\nDeployment\nVia PositionFactory (ERC-1167 clones)\nCooldown on Price Increase\n3 days\n#\nPositionFactory\nFactory contract for deploying new Position contracts using the ERC-1167 minimal proxy pattern.\nKey Features:\nCreates new positions with full parameter set\nClones existing positions efficiently using minimal proxy\nValidates position parameters before cloning\nKey Functions:\ncreateNewPosition()\n- Deploy a completely new position contract\nclonePosition()\n- Create a minimal proxy clone of an existing position\nEach MintingHub module owns its own PositionFactory.\nModule\nAddress\nV2\n0x167144d66AC1D02EAAFCa3649ef3305ea31Ee5A8\n(opens new window)\nV3\n0x3a3985a96b1B51E6d914bc7C9e89fD6Ba6dEfE81\n(opens new window)\n#\nPositionRoller\nHelper contract for rolling over debt from one position to another using flash loans.\nKey Features:\nAtomically moves debt and collateral between positions\nUses flash loans to avoid needing upfront capital\nPreserves frontend codes when rolling through gateways\nKey Functions:\nroll()\n- Roll debt from source to target position with custom parameters\nrollFully()\n- Roll entire position automatically\nA PositionRoller can only roll between positions inside the same MintingHub module.\nModule\nAddress\nV2\n0x4CE0AB2FC21Bd27a47A64F594Fdf7654Ea57Dc79\n(opens new window)\nV3\n0x5C22d5b752b2121faE7F6f0069252B03B2F7c5CD\n(opens new window)\n#\nSavings Contracts\n#\nSavings\nBase savings module that enables interest-bearing dEURO deposits based on the Leadrate.\nKey Features:\nInterest accrues continuously based on Leadrate\nNo lockup period - withdraw anytime\nInterest paid from system equity (profits)\nDisabled when interest rate is zero\nKey Functions:\nsave()\n- Deposit dEURO into savings\nwithdraw()\n- Withdraw dEURO and accrued interest\nrefreshBalance()\n- Collect accrued interest into balance\nadjust()\n- Adjust savings to target amount\nThe protocol exposes two Savings modules. V2 is wrapped by\nSavingsGateway\nfor frontend-code tracking; V3 routes directly through\nSavings\nand skips the FrontendGateway layer.\nModule\nAddress\nV2\n(\nSavingsGateway\n)\n0x073493d73258C4BEb6542e8dd3e1b2891C972303\n(opens new window)\nV3\n(\nSavings\n)\n0x760233b90e45d186A9A98E911B115F7F4B90d3D9\n(opens new window)\n#\nSavingsVault (svDEURO)\nERC-4626 compatible vault adapter for the Savings module.\nKey Features:\nStandard vault interface for DeFi composability\nAutomatic interest accrual on deposits/withdrawals\nProtected against inflation attacks via virtual shares\nTracks total claimed interest\nKey Functions:\ndeposit()\n- Deposit dEURO and receive vault shares\nwithdraw()\n- Burn shares and receive dEURO with interest\nprice()\n- Current price per share\ntotalAssets()\n- Total dEURO including accrued interest\nProperty\nValue\nSymbol\nsvDEURO\nStandard\nERC-4626\nEach Savings module ships with its own SavingsVault adapter.\nModule\nAddress\nV2\n0x1e9f008B1C538bE32F190516735bF1C634B4FA40\n(opens new window)\nV3\n0x75Beb37A3C86eE4c38931E2a9319E078da612979\n(opens new window)\n#\nLeadrate\nA governance-controlled interest rate module that provides the base interest rate for the entire system. The Leadrate is implemented inside\nSavings\n(V3) and\nSavingsGateway\n(V2) - it is not a standalone deployable contract.\nKey Features:\nQualified nDEPS holders can propose rate changes\n7-day timelock on all rate changes\nTracks accumulated \"ticks\" for interest calculations\nUsed by both Savings and Position contracts\nKey Functions:\nproposeChange()\n- Propose a new interest rate (requires 2% voting power)\napplyChange()\n- Execute a pending rate change after 7 days\ncurrentTicks()\n- Get accumulated interest ticks since deployment\nProperty\nValue\nRate Format\nPPM (parts per million) per year\nTimelock\n7 days\n#\nBridge Contracts\n#\nStablecoinBridge\nEnables 1:1 conversion between trusted external EUR stablecoins and dEURO.\nKey Features:\nMints dEURO by depositing source stablecoins\nBurns dEURO to retrieve source stablecoins\nHas maximum limit and expiration horizon\nEmergency stop available with 10% governance power\nKey Functions:\nmint()\n- Convert source stablecoin to dEURO\nburn()\n- Convert dEURO back to source stablecoin\nemergencyStop()\n- Permanently stop bridge (requires 10% votes)\nProperty\nValue\nEmergency Quorum\n10%\n#\nActive EUR Stablecoin Bridges\nSource\nBridge Address\nUnderlying Token\nEURT\n0x2353D16869F717BFCD22DaBc0ADbf4Dca62C609f\n(opens new window)\n0xC581b735A1688071A1746c968e0798D642EDE491\n(opens new window)\nEURS\n0x73f38ca06b27eaefb1612d062d885f58924f5897\n(opens new window)\n0xdb25f211ab05b1c97d595516f45794528a807ad8\n(opens new window)\nVEUR\n0x76d8f514554a4a8e5d6103875f2dd7a67543692b\n(opens new window)\n0x6ba75d640bebfe5da1197bb5a2aff3327789b5d3\n(opens new window)\nEURC\n0xB4fF7412f08C22d7381885e8BdA9EE9825092fd1\n(opens new window)\n0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c\n(opens new window)\nEURR\n0x20B0a153fF16c7B1e962FD3D3352A00cf019f1a7\n(opens new window)\n0x50753CfAf86c094925Bf976f218D043f8791e408\n(opens new window)\nEUROP\n0x3EF3d03EFCc1338d6210946f8cF5Fb1a8b630341\n(opens new window)\n0x888883b5F5D21fb10Dfeb70e8f9722B9FB0E5E51\n(opens new window)\nEURI\n0xb66A40934a996373fA7602de9820C6bf3e8c9afE\n(opens new window)\n0x9d1A7A3191102e9F900Faa10540837ba84dCBAE7\n(opens new window)\nEURE\n0x4dfd460d54854087af195906a2f260aa483a13b1\n(opens new window)\n0x3231Cb76718CDeF2155FC47b5286d82e6eDA273f\n(opens new window)\nEURA\n0x05620F4bB92246b4e067EBC0B6f5c7FF6B771702\n(opens new window)\n0x1a7e4e63778b4f12a199c062f3efdd288afcbce8\n(opens new window)\n#\nGateway Contracts\nV2 ONLY\nThe Gateway layer only exists in V2. V3 modules (\nMintingHub\n,\nSavings\n) bypass the Gateway pattern entirely and do not emit frontend rewards. Frontend operators only earn rewards on V2 activity.\n#\nFrontendGateway\nManages frontend referral codes and distributes rewards to frontend operators.\nKey Features:\nFrontend operators register unique codes\nRewards distributed based on user activity\nCovers investments, savings, and minting\nGovernance-controlled fee rates with 7-day timelock\nKey Functions:\nregisterFrontendCode()\n- Register a new frontend code\ninvest()\n- Invest in nDEPS with frontend reward\nredeem()\n- Redeem nDEPS with frontend reward\nwithdrawRewards()\n- Claim accumulated frontend rewards\nproposeChanges()\n- Propose new fee rates (requires 2% votes)\nActivity\nRate\nInvestment / Redemption\n1% of volume\nSavings interest\n5% of interest earned\nMinting interest\n5% of interest paid\nProperty\nAddress\nMainnet\n0x5c49C00f897bD970d964BFB8c3065ae65a180994\n(opens new window)\n#\nCoinLendingGateway\nLets users lend native ETH against dEURO without first wrapping to WETH. Routes through the V2 MintingHub and exposes the same position lifecycle as ERC-20 collateral, but accepts and returns native ETH.\nProperty\nAddress\nMainnet\n0x1DA37D613FB590eeD37520b72e9c6F0F6eee89D2\n(opens new window)\n#\nContract Summary\n#\nShared\nContract\nAddress\nPurpose\ndEURO\n0xbA3f...3ea\n(opens new window)\nMain stablecoin token\nnDEPS (Equity)\n0xc711...EE6\n(opens new window)\nReserve pool shares with voting\nDEPS (Wrapper)\n0x1037...380\n(opens new window)\nTransferable wrapper for nDEPS\n#\nV2 Module (active, with frontend rewards)\nContract\nAddress\nPurpose\nMintingHubGateway\n0x8B3c...618\n(opens new window)\nPosition management hub (V2)\nPositionFactory\n0x1671...5A8\n(opens new window)\nPosition deployment factory (V2)\nPositionRoller\n0x4CE0...c79\n(opens new window)\nPosition rollover helper (V2)\nSavingsGateway\n0x0734...303\n(opens new window)\nSavings with frontend rewards\nSavingsVault\n0x1e9f...A40\n(opens new window)\nERC-4626 savings vault (V2)\nFrontendGateway\n0x5c49...994\n(opens new window)\nFrontend reward system (V2 only)\nCoinLendingGateway\n0x1DA3...9D2\n(opens new window)\nNative ETH lending gateway (V2 only)\n#\nV3 Module (active, no frontend rewards)\nContract\nAddress\nPurpose\nMintingHub\n0x66Ac...4f7B\n(opens new window)\nPosition management hub (V3)\nPositionFactory\n0x3a39...FE81\n(opens new window)\nPosition deployment factory (V3)\nPositionRoller\n0x5C22...c5CD\n(opens new window)\nPosition rollover helper (V3)\nSavings\n0x7602...d3D9\n(opens new window)\nSavings module (V3)\nSavingsVault\n0x75Be...2979\n(opens new window)\nERC-4626 savings vault (V3)\n#\nSecurity Properties\nThe dEURO smart contracts are designed with the following security properties:\nProperty\nImplementation\nImmutability\nNo admin keys, no proxy upgrades\nOracle-free\nNo reliance on external price feeds\nFlash loan protection\nSame-block redemption blocked\nGovernance timelocks\n7-14 day delays on critical changes\nMinority protection\n2% veto threshold\nEmergency stops\n10% quorum can halt bridges\nInflation attack mitigation\nERC-4626 virtual shares pattern\n#\nSource Code\nAll smart contract source code is available on GitHub:\nRepository:\ngithub.com/d-EURO/smartContracts\n(opens new window)\nNetwork\nChain ID\nExplorer\nEthereum Mainnet\n1\netherscan.io\n(opens new window)\nEdit this page on Github\n(opens new window)\nLast Updated:\n5/26/2026, 8:20:31 PM\n←\nGovernance\nTelegram API Bot\n→",
+      "responseSha256": "11242188d657319d77bc0000676077b19fd1b147f829b6a6df715321faf08896",
+      "snapshotSha256": "64b86625ff821c4885409737fb9749ab5bf97e4e914a825a5cdcb35a84b7c639",
+      "hashEncoding": "SHA256 UTF-8; responseSha256 is fetched response text, snapshotSha256 is stored snapshot (HTML pages text-extracted)."
+    },
+    {
+      "sourceRef": "https://docs.deuro.com/overview.html",
+      "observedAt": "2026-10-24",
+      "snapshot": "Overview | dEURO\ndEURO\ndEuro.com\n(opens new window)\nGitHub\n(opens new window)\ndEuro.com\n(opens new window)\nGitHub\n(opens new window)\nOverview\nStructure and Purpose\nDecentralized Euro and Decentralized Euro Pool Shares (nDEPS)\nUse Cases\nTechnical Architecture\nStablecoin Bridges\nCollateralized Minting\nReserve\nGovernance\nSmart Contracts\nTelegram API Bot\nDisclaimer\nPrivacy\nImprint\nFAQ\n#\nOverview\nIntroducing the two tokens and the overall structure of the system\n#\nStructure and Purpose\nThe purpose of this page is to provide potential users of the Decentralized Euro system with everything they need to know to meaningfully interact with it. For actually interacting with the system, there is a standard\nfrontend\n(opens new window)\n. The name Decentralized Euro hints at its self-governing nature, but also the risks associated with releasing an artificial machinery into the wild. If you encounter errors or if things are not clear to you, you can\nreach out to us in the Telegram group\n(opens new window)\nor\nfile a suggestion for improving this page on GitHub\n(opens new window)\n.\n#\nDecentralized Euro and Decentralized Euro Pool Shares (nDEPS)\nThe Decentralized Euro system comes with two ERC-20 tokens, a stablecoin called\nDecentralized Euro (dEURO)\n(opens new window)\nand a governance token called\nNative Decentralized EURO Protocol Share (nDEPS)\n(opens new window)\n. Unlike other collateralized stablecoins, Decentralized Euro does not depend on external oracles, making it less susceptible to certain attacks and also more versatile with regards to the used collateral. The disadvantage of that approach is its speed, performing liquidations over the course of days whereas oracle-based systems might react within minutes.\nFor trading on DEXes, nDEPS can be wrapped into\nDEPS\n(opens new window)\nvia the\nwrap()\n/\nunwrap()\nfunctions of the DEPSWrapper contract. The wrapper exposes the same value but strips the time-weighted governance state, which keeps liquidity-pool holdings out of the voting calculation.\nThe Decentralized Euro is a collateralized stablecoin that tracks the value of the Euro. There is no hard peg to the Euro, but a set of economic constraints that incentivizes the market to softly push it towards parity from two sides. Most importantly, the system is\nover-collateralized\n: for each Decentralized Euro in circulation, there must other tokens worth at least one Decentralized Euro backing it. Furthermore, nDEPS holders have a number of ways to influence the long term price of the Decentralized Euro by making it more or less expensive to mint Decentralized Euros, similarly to how a central bank keeps the exchange rate of its own currency in balance. The underlying assumption here is that the nDEPS holders recognize that the system (and therefore also their tokens) is the most valuable when the Decentralized Euro tracks the Euro as reliably a possible, and that they use their power to govern the system accordingly.\nDecentralized Euro Pool Shares are the\ngovernance\ntoken of the system. Anyone can obtain newly minted nDEPS by providing equity capital to the system (or later return them again to get their share of capital back). The nDEPS holders benefit from the earned fees and liquidation profits, but they are also the ones that carry the residual risk of liquidations, similar to the shareholders of a bank. Therefore, nDEPS holders have an incentive to grow the system and ensure its stability. The governance process is veto-based: anyone can propose new types of collateral or even completely new methods to bring Decentralized Euro into circulation, but already 2% of the voting power suffices to veto such proposals.\n#\nUse Cases\nLike other stablecoins, the Decentralized Euro primarily serves three use-cases. The only use-case described extensively in this documentation is that of borrowing as it is embedded in the system. To fully leverage the other use-cases, further tools and services such as exchanges and wallets are necessary that are not described herein.\n#\nPayments\nThe Decentralized Euro can be used to make payments in Euros. Please consult the\nlanding page\n(opens new window)\nfor a list of apps and services that help in using the Decentralized Euro as a means of payment, as well as a list of bridged Decentralized Euro token on other networks than Ethereum mainnet. Payments typically concern small amounts and therefore a layer two instance of the token might be preferred over the mainnet instance.\n#\nStore of Wealth\nThe Euro has an excellent track record of stability relative to other fiat currencies and is often considered a safe haven when the world is in turmoil. So far, crypto investors could not get significant Euro exposure without going off-chain. For this use-case, it is important to be able to trade the Decentralized Euro in high volumes at narrow spreads.\n#\nBorrowing / Seignorage\nAnyone can mint new Decentralized Euros against a collateral using the built-in borrowing mechanism. All borrowing is based on what we refer to as\npositions\n. In Liquity, these are called\ntroves\nand in the Maker system\nvaults\n. They all refer to the account of a user within the system that holds a positive balance of a collateral asset and a negative balane of Decentralized Euros that must be repaid in order to get the collateral back. The Decentralized Euro system charges a non-refundable interest rate up front when minting new Decentralized Euros. Some of the minted Decentralized Euros are also held back as a reserve in case the position has to be liquidated.\n#\nTechnical Architecture\nThe Decentralized Euro system consists of a set of smart contracts on Ethereum mainnet. The two token contracts serves as a foundation for everything else. The Decentralized Euro can have an arbitrary number of contracts that have the power to mint and burn Decentralized Euro. Anyone can propose new such contracts and once they passed the governance process, they can start minting and burning Decentralized Euro. Today, there are two such contracts. One is a simple bridge to bootstrap the Decentralized Euro based on the existing CryptoEuro (xEURO). The other is a contract named minting hub that serves as the central point to manage all debt positions. The nDEPS token has built-in governance features and holds the equity capital of the system.\nTechnical Architecture\nEdit this page on Github\n(opens new window)\nLast Updated:\n5/26/2026, 8:20:31 PM\nStablecoin Bridges\n→",
+      "responseSha256": "aa5194d49b142bc74e4abcb4988ba5dff234a88f531da2583402f3350be7283c",
+      "snapshotSha256": "65d910482ee3b870563e1828c739a5fb7e0d7b6025f35d49666905fafdb39eba",
+      "hashEncoding": "SHA256 UTF-8; responseSha256 is fetched response text, snapshotSha256 is stored snapshot (HTML pages text-extracted)."
+    }
+  ],
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "contract IDecentralizedEURO",
+          "name": "deuro_",
+          "type": "address"
+        },
+        {
+          "internalType": "uint24",
+          "name": "initialRatePPM",
+          "type": "uint24"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "ChangeNotReady",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ModuleDisabled",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NoPendingChange",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint192",
+          "name": "amount",
+          "type": "uint192"
+        }
+      ],
+      "name": "InterestClaimed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "interest",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "compounded",
+          "type": "bool"
+        }
+      ],
+      "name": "InterestCollected",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint24",
+          "name": "newRate",
+          "type": "uint24"
+        }
+      ],
+      "name": "RateChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "who",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint24",
+          "name": "nextRate",
+          "type": "uint24"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint40",
+          "name": "nextChange",
+          "type": "uint40"
+        }
+      ],
+      "name": "RateProposed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint192",
+          "name": "amount",
+          "type": "uint192"
+        }
+      ],
+      "name": "Saved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint192",
+          "name": "amount",
+          "type": "uint192"
+        }
+      ],
+      "name": "Withdrawn",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "accountOwner",
+          "type": "address"
+        }
+      ],
+      "name": "accruedInterest",
+      "outputs": [
+        {
+          "internalType": "uint192",
+          "name": "",
+          "type": "uint192"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "accountOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "accruedInterest",
+      "outputs": [
+        {
+          "internalType": "uint192",
+          "name": "",
+          "type": "uint192"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint192",
+          "name": "targetAmount",
+          "type": "uint192"
+        }
+      ],
+      "name": "adjust",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "applyChange",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint192",
+              "name": "saved",
+              "type": "uint192"
+            },
+            {
+              "internalType": "uint64",
+              "name": "ticks",
+              "type": "uint64"
+            }
+          ],
+          "internalType": "struct Savings.Account",
+          "name": "account",
+          "type": "tuple"
+        },
+        {
+          "internalType": "uint64",
+          "name": "ticks",
+          "type": "uint64"
+        }
+      ],
+      "name": "calculateInterest",
+      "outputs": [
+        {
+          "internalType": "uint192",
+          "name": "",
+          "type": "uint192"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "claimInterest",
+      "outputs": [
+        {
+          "internalType": "uint192",
+          "name": "",
+          "type": "uint192"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "claimableInterest",
+      "outputs": [
+        {
+          "internalType": "uint192",
+          "name": "",
+          "type": "uint192"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "currentRatePPM",
+      "outputs": [
+        {
+          "internalType": "uint24",
+          "name": "",
+          "type": "uint24"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "currentTicks",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "deuro",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "equity",
+      "outputs": [
+        {
+          "internalType": "contract IReserve",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nextChange",
+      "outputs": [
+        {
+          "internalType": "uint40",
+          "name": "",
+          "type": "uint40"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nextRatePPM",
+      "outputs": [
+        {
+          "internalType": "uint24",
+          "name": "",
+          "type": "uint24"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "nonCompounding",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint24",
+          "name": "newRatePPM_",
+          "type": "uint24"
+        },
+        {
+          "internalType": "address[]",
+          "name": "helpers",
+          "type": "address[]"
+        }
+      ],
+      "name": "proposeChange",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "refreshBalance",
+      "outputs": [
+        {
+          "internalType": "uint192",
+          "name": "",
+          "type": "uint192"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "refreshMyBalance",
+      "outputs": [
+        {
+          "internalType": "uint192",
+          "name": "",
+          "type": "uint192"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint192",
+          "name": "amount",
+          "type": "uint192"
+        },
+        {
+          "internalType": "bool",
+          "name": "compound",
+          "type": "bool"
+        }
+      ],
+      "name": "save",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "uint192",
+          "name": "amount",
+          "type": "uint192"
+        }
+      ],
+      "name": "save",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint192",
+          "name": "amount",
+          "type": "uint192"
+        }
+      ],
+      "name": "save",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "savings",
+      "outputs": [
+        {
+          "internalType": "uint192",
+          "name": "saved",
+          "type": "uint192"
+        },
+        {
+          "internalType": "uint64",
+          "name": "ticks",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "ticks",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        },
+        {
+          "internalType": "uint192",
+          "name": "amount",
+          "type": "uint192"
+        }
+      ],
+      "name": "withdraw",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "abiNormalization": "Complete original ABI retained. Selected modern function fragments normalize recursively and omit internalType, legacy flags and unrelated ABI entries.",
+  "functionDecisions": [
+    {
+      "signature": "accruedInterest(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only accruedInterest getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "accountOwner",
+            "type": "address"
+          }
+        ],
+        "name": "accruedInterest",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "accruedInterest(address,uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only accruedInterest getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "accountOwner",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "name": "accruedInterest",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "adjust(uint192)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Refresh caller then deposit the shortfall or withdraw the excess to caller toward an exact saved-balance target.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint192",
+            "name": "targetAmount",
+            "type": "uint192"
+          }
+        ],
+        "name": "adjust",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "applyChange()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Execute a pending governance interest-rate parameter change; protocol administration, not caller savings settlement.",
+      "abi": {
+        "inputs": [],
+        "name": "applyChange",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "calculateInterest((uint192,uint64),uint64)",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only calculateInterest getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint192",
+                "name": "saved",
+                "type": "uint192"
+              },
+              {
+                "internalType": "uint64",
+                "name": "ticks",
+                "type": "uint64"
+              }
+            ],
+            "internalType": "struct Savings.Account",
+            "name": "account",
+            "type": "tuple"
+          },
+          {
+            "internalType": "uint64",
+            "name": "ticks",
+            "type": "uint64"
+          }
+        ],
+        "name": "calculateInterest",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "claimInterest(address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Refresh caller, clear only caller claimableInterest then transfer it to target.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "target",
+            "type": "address"
+          }
+        ],
+        "name": "claimInterest",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "claimableInterest(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only claimableInterest getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "claimableInterest",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "currentRatePPM()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only currentRatePPM getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [],
+        "name": "currentRatePPM",
+        "outputs": [
+          {
+            "internalType": "uint24",
+            "name": "",
+            "type": "uint24"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "currentTicks()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only currentTicks getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [],
+        "name": "currentTicks",
+        "outputs": [
+          {
+            "internalType": "uint64",
+            "name": "",
+            "type": "uint64"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "deuro()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only deuro getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [],
+        "name": "deuro",
+        "outputs": [
+          {
+            "internalType": "contract IERC20",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "equity()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only equity getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [],
+        "name": "equity",
+        "outputs": [
+          {
+            "internalType": "contract IReserve",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "nextChange()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only nextChange getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [],
+        "name": "nextChange",
+        "outputs": [
+          {
+            "internalType": "uint40",
+            "name": "",
+            "type": "uint40"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "nextRatePPM()",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only nextRatePPM getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [],
+        "name": "nextRatePPM",
+        "outputs": [
+          {
+            "internalType": "uint24",
+            "name": "",
+            "type": "uint24"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "nonCompounding(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only nonCompounding getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "nonCompounding",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "proposeChange(uint24,address[])",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Qualified nDEPS governance interest-rate proposal; authority/parameter management excluded.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint24",
+            "name": "newRatePPM_",
+            "type": "uint24"
+          },
+          {
+            "internalType": "address[]",
+            "name": "helpers",
+            "type": "address[]"
+          }
+        ],
+        "name": "proposeChange",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "refreshBalance(address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Public interest accounting refresh credits the named account; no principal redirection.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          }
+        ],
+        "name": "refreshBalance",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "refreshMyBalance()",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Shortcut refreshBalance(msg.sender).",
+      "abi": {
+        "inputs": [],
+        "name": "refreshMyBalance",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "save(uint192,bool)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Settle caller under old mode, deposit then set caller financial interest compounding preference.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint192",
+            "name": "amount",
+            "type": "uint192"
+          },
+          {
+            "internalType": "bool",
+            "name": "compound",
+            "type": "bool"
+          }
+        ],
+        "name": "save",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "save(address,uint192)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Caller pays; specified owner receives savings ledger credit.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "uint192",
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "name": "save",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "save(uint192)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Caller funds and owns the credited savings account.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint192",
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "name": "save",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "savings(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only savings getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "savings",
+        "outputs": [
+          {
+            "internalType": "uint192",
+            "name": "saved",
+            "type": "uint192"
+          },
+          {
+            "internalType": "uint64",
+            "name": "ticks",
+            "type": "uint64"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "ticks(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "decision": "excluded",
+      "reason": "Read-only ticks getter/calculation; no transaction capability or read endpoint admitted.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "name": "ticks",
+        "outputs": [
+          {
+            "internalType": "uint64",
+            "name": "",
+            "type": "uint64"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    },
+    {
+      "signature": "withdraw(address,uint192)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "decision": "selected",
+      "reason": "Refresh and debit only caller saved principal, capped to available balance, then transfer to target.",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "target",
+            "type": "address"
+          },
+          {
+            "internalType": "uint192",
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "name": "withdraw",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "type": "function",
+        "name": "adjust",
+        "inputs": [
+          {
+            "name": "targetAmount",
+            "type": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "decentralized-euro-savings:v1:1:0x760233b90e45d186a9a98e911b115f7f4b90d3d9:adjust",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+      "functionName": "adjust",
+      "signature": "adjust(uint192)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://etherscan.io/address/0x760233b90e45d186A9A98E911B115F7F4B90d3D9#code",
+        "status": "verified",
+        "verifiedAt": "2026-10-24"
+      },
+      "protocol": "Decentralized Euro",
+      "operation": "adjust",
+      "label": "Decentralized Euro Adjust caller savings",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only; no continuing runtime identity, execution, funded workflow, backing, yield or financial-safety assurance. Zero native value and independent exact-function grants, pauses and canonical calldata controls remain required.",
+        "Amounts use dEURO 18-decimal base units (0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea). Deposits transferFrom caller under a preexisting allowance to this exact Savings contract; no token approval, permit or wallet authority capability is included. No native asset is accepted.",
+        "refresh computes floor((tickDelta * saved)/1_000_000/365 days), capped to the dEURO system equity available at that calculation; it calls distributeProfits to this module. Default mode adds interest to saved principal; nonCompounding mode credits a separate claimableInterest ledger. Rate is governance-mutable and returns are not guaranteed. No lockup or interest-delay arithmetic appears in this deployed Savings body.",
+        "save rejects currentRatePPM=0 or a due proposed zero rate. Current explorer snapshot is currentRatePPM=70000, nextRatePPM=70000; this is not a rate promise. It refreshes the account before adding the deposit. save adds an amount; adjust targets the balance after refreshing. Zero amount can still refresh; there is no empty-account weighted-delay division in this implementation.",
+        "A decreasing target withdraws to msg.sender; unchanged target only refreshes. Separate claimableInterest is not included in the saved-balance target."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "claimInterest",
+        "inputs": [
+          {
+            "name": "target",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "decentralized-euro-savings:v1:1:0x760233b90e45d186a9a98e911b115f7f4b90d3d9:claim-interest",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+      "functionName": "claimInterest",
+      "signature": "claimInterest(address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://etherscan.io/address/0x760233b90e45d186A9A98E911B115F7F4B90d3D9#code",
+        "status": "verified",
+        "verifiedAt": "2026-10-24"
+      },
+      "protocol": "Decentralized Euro",
+      "operation": "claim-interest",
+      "label": "Decentralized Euro Claim non-compounding interest",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only; no continuing runtime identity, execution, funded workflow, backing, yield or financial-safety assurance. Zero native value and independent exact-function grants, pauses and canonical calldata controls remain required.",
+        "Amounts use dEURO 18-decimal base units (0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea). Deposits transferFrom caller under a preexisting allowance to this exact Savings contract; no token approval, permit or wallet authority capability is included. No native asset is accepted.",
+        "refresh computes floor((tickDelta * saved)/1_000_000/365 days), capped to the dEURO system equity available at that calculation; it calls distributeProfits to this module. Default mode adds interest to saved principal; nonCompounding mode credits a separate claimableInterest ledger. Rate is governance-mutable and returns are not guaranteed. No lockup or interest-delay arithmetic appears in this deployed Savings body.",
+        "Claims only msg.sender non-compounding interest, not principal or another owner balance; zero claimable amount produces no transfer. The target receives caller-owned dEURO."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "refreshBalance",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "decentralized-euro-savings:v1:1:0x760233b90e45d186a9a98e911b115f7f4b90d3d9:refresh-account",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+      "functionName": "refreshBalance",
+      "signature": "refreshBalance(address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://etherscan.io/address/0x760233b90e45d186A9A98E911B115F7F4B90d3D9#code",
+        "status": "verified",
+        "verifiedAt": "2026-10-24"
+      },
+      "protocol": "Decentralized Euro",
+      "operation": "refresh-account",
+      "label": "Decentralized Euro Refresh account interest",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only; no continuing runtime identity, execution, funded workflow, backing, yield or financial-safety assurance. Zero native value and independent exact-function grants, pauses and canonical calldata controls remain required.",
+        "Amounts use dEURO 18-decimal base units (0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea). Deposits transferFrom caller under a preexisting allowance to this exact Savings contract; no token approval, permit or wallet authority capability is included. No native asset is accepted.",
+        "refresh computes floor((tickDelta * saved)/1_000_000/365 days), capped to the dEURO system equity available at that calculation; it calls distributeProfits to this module. Default mode adds interest to saved principal; nonCompounding mode credits a separate claimableInterest ledger. Rate is governance-mutable and returns are not guaranteed. No lockup or interest-delay arithmetic appears in this deployed Savings body.",
+        "Any caller can settle a named account; this does not grant ownership or redirect its funds. Anyone can advance the account ticks, so the equity cap and collection timing matter."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "refreshMyBalance",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint192"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "decentralized-euro-savings:v1:1:0x760233b90e45d186a9a98e911b115f7f4b90d3d9:refresh",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+      "functionName": "refreshMyBalance",
+      "signature": "refreshMyBalance()",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://etherscan.io/address/0x760233b90e45d186A9A98E911B115F7F4B90d3D9#code",
+        "status": "verified",
+        "verifiedAt": "2026-10-24"
+      },
+      "protocol": "Decentralized Euro",
+      "operation": "refresh",
+      "label": "Decentralized Euro Refresh caller interest",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only; no continuing runtime identity, execution, funded workflow, backing, yield or financial-safety assurance. Zero native value and independent exact-function grants, pauses and canonical calldata controls remain required.",
+        "Amounts use dEURO 18-decimal base units (0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea). Deposits transferFrom caller under a preexisting allowance to this exact Savings contract; no token approval, permit or wallet authority capability is included. No native asset is accepted.",
+        "refresh computes floor((tickDelta * saved)/1_000_000/365 days), capped to the dEURO system equity available at that calculation; it calls distributeProfits to this module. Default mode adds interest to saved principal; nonCompounding mode credits a separate claimableInterest ledger. Rate is governance-mutable and returns are not guaranteed. No lockup or interest-delay arithmetic appears in this deployed Savings body."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "save",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint192"
+          },
+          {
+            "name": "compound",
+            "type": "bool"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "decentralized-euro-savings:v1:1:0x760233b90e45d186a9a98e911b115f7f4b90d3d9:save-compounding",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+      "functionName": "save",
+      "signature": "save(uint192,bool)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://etherscan.io/address/0x760233b90e45d186A9A98E911B115F7F4B90d3D9#code",
+        "status": "verified",
+        "verifiedAt": "2026-10-24"
+      },
+      "protocol": "Decentralized Euro",
+      "operation": "save-compounding",
+      "label": "Decentralized Euro Save with compounding choice",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only; no continuing runtime identity, execution, funded workflow, backing, yield or financial-safety assurance. Zero native value and independent exact-function grants, pauses and canonical calldata controls remain required.",
+        "Amounts use dEURO 18-decimal base units (0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea). Deposits transferFrom caller under a preexisting allowance to this exact Savings contract; no token approval, permit or wallet authority capability is included. No native asset is accepted.",
+        "refresh computes floor((tickDelta * saved)/1_000_000/365 days), capped to the dEURO system equity available at that calculation; it calls distributeProfits to this module. Default mode adds interest to saved principal; nonCompounding mode credits a separate claimableInterest ledger. Rate is governance-mutable and returns are not guaranteed. No lockup or interest-delay arithmetic appears in this deployed Savings body.",
+        "save rejects currentRatePPM=0 or a due proposed zero rate. Current explorer snapshot is currentRatePPM=70000, nextRatePPM=70000; this is not a rate promise. It refreshes the account before adding the deposit. save adds an amount; adjust targets the balance after refreshing. Zero amount can still refresh; there is no empty-account weighted-delay division in this implementation.",
+        "compound=true sets nonCompounding=false only after prior earned interest is settled under the old preference. Changing mode does not move already separately claimable interest into principal. This setting is financial accounting, not a wallet permission."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "save",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "decentralized-euro-savings:v1:1:0x760233b90e45d186a9a98e911b115f7f4b90d3d9:save-for-account",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+      "functionName": "save",
+      "signature": "save(address,uint192)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://etherscan.io/address/0x760233b90e45d186A9A98E911B115F7F4B90d3D9#code",
+        "status": "verified",
+        "verifiedAt": "2026-10-24"
+      },
+      "protocol": "Decentralized Euro",
+      "operation": "save-for-account",
+      "label": "Decentralized Euro Save dEURO for account",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only; no continuing runtime identity, execution, funded workflow, backing, yield or financial-safety assurance. Zero native value and independent exact-function grants, pauses and canonical calldata controls remain required.",
+        "Amounts use dEURO 18-decimal base units (0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea). Deposits transferFrom caller under a preexisting allowance to this exact Savings contract; no token approval, permit or wallet authority capability is included. No native asset is accepted.",
+        "refresh computes floor((tickDelta * saved)/1_000_000/365 days), capped to the dEURO system equity available at that calculation; it calls distributeProfits to this module. Default mode adds interest to saved principal; nonCompounding mode credits a separate claimableInterest ledger. Rate is governance-mutable and returns are not guaranteed. No lockup or interest-delay arithmetic appears in this deployed Savings body.",
+        "save rejects currentRatePPM=0 or a due proposed zero rate. Current explorer snapshot is currentRatePPM=70000, nextRatePPM=70000; this is not a rate promise. It refreshes the account before adding the deposit. save adds an amount; adjust targets the balance after refreshing. Zero amount can still refresh; there is no empty-account weighted-delay division in this implementation.",
+        "The specified owner, not necessarily payer, owns the deposit and its withdrawal rights. It preserves that owner compounding preference."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "save",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "decentralized-euro-savings:v1:1:0x760233b90e45d186a9a98e911b115f7f4b90d3d9:save",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+      "functionName": "save",
+      "signature": "save(uint192)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://etherscan.io/address/0x760233b90e45d186A9A98E911B115F7F4B90d3D9#code",
+        "status": "verified",
+        "verifiedAt": "2026-10-24"
+      },
+      "protocol": "Decentralized Euro",
+      "operation": "save",
+      "label": "Decentralized Euro Save dEURO",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only; no continuing runtime identity, execution, funded workflow, backing, yield or financial-safety assurance. Zero native value and independent exact-function grants, pauses and canonical calldata controls remain required.",
+        "Amounts use dEURO 18-decimal base units (0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea). Deposits transferFrom caller under a preexisting allowance to this exact Savings contract; no token approval, permit or wallet authority capability is included. No native asset is accepted.",
+        "refresh computes floor((tickDelta * saved)/1_000_000/365 days), capped to the dEURO system equity available at that calculation; it calls distributeProfits to this module. Default mode adds interest to saved principal; nonCompounding mode credits a separate claimableInterest ledger. Rate is governance-mutable and returns are not guaranteed. No lockup or interest-delay arithmetic appears in this deployed Savings body.",
+        "save rejects currentRatePPM=0 or a due proposed zero rate. Current explorer snapshot is currentRatePPM=70000, nextRatePPM=70000; this is not a rate promise. It refreshes the account before adding the deposit. save adds an amount; adjust targets the balance after refreshing. Zero amount can still refresh; there is no empty-account weighted-delay division in this implementation.",
+        "This overload preserves the existing compounding preference."
+      ]
+    },
+    {
+      "abi": {
+        "type": "function",
+        "name": "withdraw",
+        "inputs": [
+          {
+            "name": "target",
+            "type": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint192"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "decentralized-euro-savings:v1:1:0x760233b90e45d186a9a98e911b115f7f4b90d3d9:withdraw",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x760233b90e45d186A9A98E911B115F7F4B90d3D9",
+      "functionName": "withdraw",
+      "signature": "withdraw(address,uint192)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://etherscan.io/address/0x760233b90e45d186A9A98E911B115F7F4B90d3D9#code",
+        "status": "verified",
+        "verifiedAt": "2026-10-24"
+      },
+      "protocol": "Decentralized Euro",
+      "operation": "withdraw",
+      "label": "Decentralized Euro Withdraw caller savings",
+      "warnings": [
+        "Static deployment-bound source/ABI inventory only; no continuing runtime identity, execution, funded workflow, backing, yield or financial-safety assurance. Zero native value and independent exact-function grants, pauses and canonical calldata controls remain required.",
+        "Amounts use dEURO 18-decimal base units (0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea). Deposits transferFrom caller under a preexisting allowance to this exact Savings contract; no token approval, permit or wallet authority capability is included. No native asset is accepted.",
+        "refresh computes floor((tickDelta * saved)/1_000_000/365 days), capped to the dEURO system equity available at that calculation; it calls distributeProfits to this module. Default mode adds interest to saved principal; nonCompounding mode credits a separate claimableInterest ledger. Rate is governance-mutable and returns are not guaranteed. No lockup or interest-delay arithmetic appears in this deployed Savings body.",
+        "withdraw refreshes only msg.sender savings, caps the requested amount to saved principal and pays the specified target. A full principal exit deletes savings[msg.sender] but does not delete nonCompounding or claimableInterest. claimInterest remains a separate caller-owned claim. No third-party withdrawal delegation, share allowance, minimum received or deadline is provided."
+      ]
+    }
+  ],
+  "nonFunctionEntries": [
+    {
+      "type": "constructor",
+      "name": null,
+      "decision": "not-capability"
+    },
+    {
+      "type": "error",
+      "name": "ChangeNotReady",
+      "decision": "not-capability"
+    },
+    {
+      "type": "error",
+      "name": "ModuleDisabled",
+      "decision": "not-capability"
+    },
+    {
+      "type": "error",
+      "name": "NoPendingChange",
+      "decision": "not-capability"
+    },
+    {
+      "type": "event",
+      "name": "InterestClaimed",
+      "decision": "not-capability"
+    },
+    {
+      "type": "event",
+      "name": "InterestCollected",
+      "decision": "not-capability"
+    },
+    {
+      "type": "event",
+      "name": "RateChanged",
+      "decision": "not-capability"
+    },
+    {
+      "type": "event",
+      "name": "RateProposed",
+      "decision": "not-capability"
+    },
+    {
+      "type": "event",
+      "name": "Saved",
+      "decision": "not-capability"
+    },
+    {
+      "type": "event",
+      "name": "Withdrawn",
+      "decision": "not-capability"
+    }
+  ],
+  "sourceSemantics": {
+    "sourceRef": "https://etherscan.io/address/0x760233b90e45d186A9A98E911B115F7F4B90d3D9#code",
+    "implementationFiles": [
+      "contracts/Savings.sol",
+      "contracts/Leadrate.sol"
+    ],
+    "functions": [
+      {
+        "signature": "adjust(uint192)",
+        "interpretation": "Refresh caller then deposit the shortfall or withdraw the excess to caller toward an exact saved-balance target."
+      },
+      {
+        "signature": "claimInterest(address)",
+        "interpretation": "Refresh caller, clear only caller claimableInterest then transfer it to target."
+      },
+      {
+        "signature": "refreshBalance(address)",
+        "interpretation": "Public interest accounting refresh credits the named account; no principal redirection."
+      },
+      {
+        "signature": "refreshMyBalance()",
+        "interpretation": "Shortcut refreshBalance(msg.sender)."
+      },
+      {
+        "signature": "save(uint192)",
+        "interpretation": "Caller funds and owns the credited savings account."
+      },
+      {
+        "signature": "save(address,uint192)",
+        "interpretation": "Caller pays; specified owner receives savings ledger credit."
+      },
+      {
+        "signature": "save(uint192,bool)",
+        "interpretation": "Settle caller under old mode, deposit then set caller financial interest compounding preference."
+      },
+      {
+        "signature": "withdraw(address,uint192)",
+        "interpretation": "Refresh and debit only caller saved principal, capped to available balance, then transfer to target."
+      }
+    ],
+    "restrictions": [
+      "Static deployment-bound source/ABI inventory only; no continuing runtime identity, execution, funded workflow, backing, yield or financial-safety assurance. Zero native value and independent exact-function grants, pauses and canonical calldata controls remain required.",
+      "Amounts use dEURO 18-decimal base units (0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea). Deposits transferFrom caller under a preexisting allowance to this exact Savings contract; no token approval, permit or wallet authority capability is included. No native asset is accepted.",
+      "refresh computes floor((tickDelta * saved)/1_000_000/365 days), capped to the dEURO system equity available at that calculation; it calls distributeProfits to this module. Default mode adds interest to saved principal; nonCompounding mode credits a separate claimableInterest ledger. Rate is governance-mutable and returns are not guaranteed. No lockup or interest-delay arithmetic appears in this deployed Savings body.",
+      "save rejects currentRatePPM=0 or a due proposed zero rate. Current explorer snapshot is currentRatePPM=70000, nextRatePPM=70000; this is not a rate promise. It refreshes the account before adding the deposit. save adds an amount; adjust targets the balance after refreshing. Zero amount can still refresh; there is no empty-account weighted-delay division in this implementation.",
+      "withdraw refreshes only msg.sender savings, caps the requested amount to saved principal and pays the specified target. A full principal exit deletes savings[msg.sender] but does not delete nonCompounding or claimableInterest. claimInterest remains a separate caller-owned claim. No third-party withdrawal delegation, share allowance, minimum received or deadline is provided.",
+      "The compounding-preference overload settles prior earnings under the old preference; separate claimable interest does not disappear on full principal withdrawal or automatic mode change. Refreshing for someone else credits only their principal/interest ledger and never gives caller withdrawal authority.",
+      "Direct immutable Savings deployment, current implementation equals target, not a proxy or clone. Etherscan explicitly reports Source Code Verified Exact Match; full source files, compiler settings and original ABI are retained. The README is fork/independence evidence only and is not substituted for deployed Savings source.",
+      "Deployed body, rather than the introductory comment saying three days, governs save: due proposed zero rate is checked only when nextChange<=block.timestamp; there is no three-day advance cutoff, principal lock or weighted interest delay. Rate proposals/applyChange are excluded as governance administration. Current rate snapshot is not future availability.",
+      "Savings references its own dEURO token and nDEPS reserve, not Frankencoin ZCHF/FCS. Its source caps earned interest by system equity and calls distributeProfits; system losses, variable equity and rounding can reduce earnings. Full independent runtime/safety attestation of every token/reserve/module is not claimed.",
+      "V2 and V3 are documented as coexisting active permanent modules; V3 is not a wind-down migration. This admission covers one V3 Savings root only, not all CDP, savings-vault, bridges, gateway, equity, approvals, token authorization or governance methods. No new signing scope is added."
+    ]
+  },
+  "limitations": [
+    "Static deployment-bound source/ABI inventory only; no continuing runtime identity, execution, funded workflow, backing, yield or financial-safety assurance. Zero native value and independent exact-function grants, pauses and canonical calldata controls remain required.",
+    "Amounts use dEURO 18-decimal base units (0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea). Deposits transferFrom caller under a preexisting allowance to this exact Savings contract; no token approval, permit or wallet authority capability is included. No native asset is accepted.",
+    "refresh computes floor((tickDelta * saved)/1_000_000/365 days), capped to the dEURO system equity available at that calculation; it calls distributeProfits to this module. Default mode adds interest to saved principal; nonCompounding mode credits a separate claimableInterest ledger. Rate is governance-mutable and returns are not guaranteed. No lockup or interest-delay arithmetic appears in this deployed Savings body.",
+    "save rejects currentRatePPM=0 or a due proposed zero rate. Current explorer snapshot is currentRatePPM=70000, nextRatePPM=70000; this is not a rate promise. It refreshes the account before adding the deposit. save adds an amount; adjust targets the balance after refreshing. Zero amount can still refresh; there is no empty-account weighted-delay division in this implementation.",
+    "withdraw refreshes only msg.sender savings, caps the requested amount to saved principal and pays the specified target. A full principal exit deletes savings[msg.sender] but does not delete nonCompounding or claimableInterest. claimInterest remains a separate caller-owned claim. No third-party withdrawal delegation, share allowance, minimum received or deadline is provided.",
+    "The compounding-preference overload settles prior earnings under the old preference; separate claimable interest does not disappear on full principal withdrawal or automatic mode change. Refreshing for someone else credits only their principal/interest ledger and never gives caller withdrawal authority.",
+    "Direct immutable Savings deployment, current implementation equals target, not a proxy or clone. Etherscan explicitly reports Source Code Verified Exact Match; full source files, compiler settings and original ABI are retained. The README is fork/independence evidence only and is not substituted for deployed Savings source.",
+    "Deployed body, rather than the introductory comment saying three days, governs save: due proposed zero rate is checked only when nextChange<=block.timestamp; there is no three-day advance cutoff, principal lock or weighted interest delay. Rate proposals/applyChange are excluded as governance administration. Current rate snapshot is not future availability.",
+    "Savings references its own dEURO token and nDEPS reserve, not Frankencoin ZCHF/FCS. Its source caps earned interest by system equity and calls distributeProfits; system losses, variable equity and rounding can reduce earnings. Full independent runtime/safety attestation of every token/reserve/module is not claimed.",
+    "V2 and V3 are documented as coexisting active permanent modules; V3 is not a wind-down migration. This admission covers one V3 Savings root only, not all CDP, savings-vault, bridges, gateway, equity, approvals, token authorization or governance methods. No new signing scope is added."
+  ]
+}

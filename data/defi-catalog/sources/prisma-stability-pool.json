@@ -1,0 +1,1506 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "address": "0xed8B26D99834540C5013701bB3715faFD39993Ba",
+  "protocol": "prisma-stability-pool",
+  "website": "https://github.com/prisma-fi/prisma-contracts",
+  "deploymentEvidence": {
+    "sourceRef": "https://web.archive.org/web/20241004013454id_/https://docs.prismafinance.com/additional-documentation/deployment-addresses ; https://etherscan.io/address/0xed8B26D99834540C5013701bB3715faFD39993Ba#code",
+    "verifiedAt": "2026-10-18",
+    "chainId": 1,
+    "address": "0xed8B26D99834540C5013701bB3715faFD39993Ba",
+    "deployment": {
+      "transactionHash": "0x70abbeff7325f6080ae2849fbc0a929e11c3206bd36094868b3f2a249c5ba51a",
+      "blockNumber": "18029851",
+      "transactionIndex": "28",
+      "deployer": "0xd8531a94100f15af7521a7B6E724aC4959E0A025"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "constructorArguments": {
+      "prismaCore": "0x5d17ea085f2ff5da3e6979d5d26f1dbab664ccf8",
+      "debtToken": "0x4591dbff62656e7859afe5e45f6f47d3669fbb28",
+      "vault": "0x06bdf212c290473dcacea9793890c5024c7eb02c",
+      "factory": "0x70b66e20766b775b2e9ce5b718bbd285af59b7e1",
+      "liquidationManager": "0x5de309dfd7f94e9e2a18cb6ba61ca305abf8e9e2"
+    },
+    "evidence": "Archived official Deployment Addresses documentation explicitly states Ethereum mainnet and lists this StabilityPool under mkUSD, separately from ULTRA pool 0x6953504F2f4537D7a7B4024508f321f7816BB6ED. Its mkUSD DebtToken, PrismaCore, factory, liquidation manager and DAO PrismaVault rows match exact deployment constructor arguments. Table values were extracted from archived HTML/hydration content because reader output omitted table cells. Exact-address explorer attributes creator to Prisma Finance: Deployer; source service reports direct non-proxy deployment. No fresh runtime identity claim."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xed8B26D99834540C5013701bB3715faFD39993Ba?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+    "verifiedAt": "2026-10-18",
+    "chainId": 1,
+    "address": "0xed8B26D99834540C5013701bB3715faFD39993Ba",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.19+commit.7dd6d404",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "paris",
+        "remappings": []
+      },
+      "name": "StabilityPool",
+      "fullyQualifiedName": "StabilityPool.sol:StabilityPool"
+    },
+    "reportedCreationMatch": "match",
+    "reportedRuntimeMatch": "match",
+    "sourceFile": "StabilityPool.sol",
+    "sourceSha256": "17bdde2450be423b14ca88c1ad2b48bba5cc264588cbeb02531102c1aeaf5730",
+    "sourceHashes": {
+      "IERC20.sol": "94f23e4af51a18c2269b355b8c7cf4db8003d075c9c541019eb8dcf4122864d5",
+      "IVault.sol": "19d4399c16de355575d1a11452f9dd315aefff8ebe6039a2f9b7f1bd3670ee43",
+      "Address.sol": "8160a4242e8a7d487d940814e5279d934e81f0436689132a4e73394bab084a6d",
+      "SafeERC20.sol": "54f82dd96ef47f95154f8dabfd970a2a1f26cdf14ca8d4e6bfaa816f547b17f5",
+      "IDebtToken.sol": "72b20e42473da7c0eb261356078cda418671f2c49d7fceec36bde95a8e0b9744",
+      "PrismaMath.sol": "20587cd548f52c47dd1381f1b4989a241df4f38618fc0ed503741b5ae2f3f1a9",
+      "IPrismaCore.sol": "ebaac4b4ce98d126d596ac10e4bc31f98d4dba7bd606e019408ee94c6a687834",
+      "SystemStart.sol": "08b36780e077275a88bce65f14cdc7eb57b67d704b100bd271cf8a8ee92ff1f1",
+      "PrismaOwnable.sol": "683e2ea23e7d4be358da0f73911f190ba4c2ba106414656b6770324007d00dc6",
+      "StabilityPool.sol": "17bdde2450be423b14ca88c1ad2b48bba5cc264588cbeb02531102c1aeaf5730",
+      "draft-IERC20Permit.sol": "3e7aa0e0f69eec8f097ad664d525e7b3f0a3fda8dcdd97de5433ddb131db86ef"
+    },
+    "evidence": "Full original exact-address deployment ABI is retained, including constructor and events, with all 41 function entries inventoried. Selected fragments preserve exact input/output names, types and mutability. Address-bound deployed StabilityPool plus SafeERC20/Address, PrismaOwnable, SystemStart and exact immutable debt token/vault sources were inspected; no generic Liquity or ULTRA interface was substituted. Service labels match are not relabeled exact_match."
+  },
+  "operationalEvidence": {
+    "verifiedAt": "2026-10-18",
+    "sourceRef": "https://paragraph.com/@resupply/prisma-shutdown-transition-plan ; https://gov.resupply.finance/t/clear-idle-prisma-psm-funds/82",
+    "scope": "Exit-only legacy principal/checkpoint and stored-collateral claims; neither deposits nor historical PRISMA claims selected. No new per-function financial gate.",
+    "notices": [
+      {
+        "sourceRef": "https://paragraph.com/@resupply/prisma-shutdown-transition-plan",
+        "publishedAt": "2024-12-30",
+        "evidence": "Official successor Resupply article links passed PIP-46 and confirms Prisma shutdown; Phase 1 debt ceilings zero, emissions to cease 2025-01-02; Phase 3 targeted 2025-01-10 boost calculator zero and forfeiture of unclaimed PRISMA. These were announced actions; this review does not attest the implementation/execution of every phase."
+      },
+      {
+        "sourceRef": "https://gov.resupply.finance/t/clear-idle-prisma-psm-funds/82",
+        "publishedAt": "2026-01-22",
+        "evidence": "Official Resupply governance describes Prisma as now-defunct and ownership transferred to Resupply. Proposal aims to deprecate mkUSD/ULTRA PSM liquidity and recover crvUSD; not represented here as proof of proposal execution or as an exit path for pool deposits."
+      },
+      {
+        "sourceRef": "https://wavey.info/posts/2025/decomissioning-prisma-finance",
+        "publishedAt": "2025-01-17",
+        "evidence": "Supplementary shutdown implementer account distinguishes ULTRA StabilityPool repeated-claim bug from mkUSD. It is not used as deployment/ABI binding or a security endorsement."
+      }
+    ],
+    "linkReview": {
+      "frontendReference": "https://github.com/prisma-fi/prisma-contracts",
+      "evidence": "Official repository remains retrievable and links former Prisma docs. Direct former homepage https://www.prismafinance.com/, docs root and deployment path could not connect; governance PIP-46 retrieval also failed. No conclusion of squatting is asserted from network failure. Use attributable surviving official source repository as directory reference, not an unverified or presumed operating historical frontend."
+    }
+  },
+  "dependencyReview": {
+    "fixedPoolDependencies": {
+      "prismaCore": "0x5d17ea085f2ff5da3e6979d5d26f1dbab664ccf8",
+      "debtToken": "0x4591dbff62656e7859afe5e45f6f47d3669fbb28",
+      "vault": "0x06bdf212c290473dcacea9793890c5024c7eb02c",
+      "factory": "0x70b66e20766b775b2e9ce5b718bbd285af59b7e1",
+      "liquidationManager": "0x5de309dfd7f94e9e2a18cb6ba61ca305abf8e9e2"
+    },
+    "debtToken": {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x4591dbff62656e7859afe5e45f6f47d3669fbb28?fields=compilation,proxyResolution,sources",
+      "chainId": 1,
+      "address": "0x4591dbff62656e7859afe5e45f6f47d3669fbb28",
+      "proxyResolution": {
+        "isProxy": false,
+        "proxyType": null,
+        "implementations": []
+      },
+      "reportedCreationMatch": "match",
+      "reportedRuntimeMatch": "match",
+      "sourceFile": "DebtToken.sol",
+      "sourceSha256": "73415470c2bbd5309a4d46319a4c05801c9f69b3f6151ce97ac85951d19d313d",
+      "evidence": "Bound DebtToken source sendToSP permits only immutable stabilityPoolAddress and _transfers specified sender tokens without ERC20 allowance; pool always supplies msg.sender. returnFromPool permits pool/trove managers and pool withdrawal passes address(this), msg.sender, capped amount. ERC20 default decimals is 18; ordinary direct transfer to pool is rejected, so direct mkUSD transfer is not a deposit. No approval/permit capability is added."
+    },
+    "rewardVault": {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x06bdf212c290473dcacea9793890c5024c7eb02c?fields=compilation,proxyResolution,sources,creationBytecode",
+      "chainId": 1,
+      "address": "0x06bdf212c290473dcacea9793890c5024c7eb02c",
+      "proxyResolution": {
+        "isProxy": false,
+        "proxyType": null,
+        "implementations": []
+      },
+      "reportedCreationMatch": "match",
+      "reportedRuntimeMatch": "match",
+      "constructorArguments": {
+        "prismaCore": "0x5d17ea085f2ff5da3e6979d5d26f1dbab664ccf8",
+        "prismaToken": "0xda47862a83dac0c112ba89c6abc2159b95afd71c",
+        "locker": "0x3f78544364c3eccdce4d9c89a630aea26122829d",
+        "voter": "0xfd8df0db401ab7ec7a06a8465134fa32132e850c",
+        "stabilityPool": "0xed8b26d99834540c5013701bb3715fafd39993ba",
+        "deploymentManager": "0xd0efdf01dd8d650bba8992e2c42d0bc6d441a673"
+      },
+      "sourceFile": "Vault.sol",
+      "sourceSha256": "ac457bb0f8db585a1e1551666fb32f082e3c7ab05963b0c100badd1abc7b3189",
+      "evidence": "Fixed vault constructor binds Prisma token, locker, voter and this mkUSD pool as emission ID 0. Pool issuance invokes allocateNewEmissions(0); vault account registration, schedule and active status govern allocation. emissionSchedule and boostCalculator are owner-replaceable; claim transfer uses claimant own boost with address(0) boost delegate, then transfers PRISMA or locks in fixed locker depending mutable lockWeeks. Historical reward claims are excluded and no current emission/boost configuration is asserted."
+    },
+    "collateralRegistry": {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xed8B26D99834540C5013701bB3715faFD39993Ba?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+      "evidence": "No caller-selected collateral contract address or opaque execution payload. claimCollateralGains resolves caller indexes through collateralTokens and uses SafeERC20.safeTransfer; enableCollateral only factory, startCollateralSunset only core owner. Registry is not immutable: after 180-day sunset, factory can overwrite a slot and reset global sums; pending stored gains and token mapping must not be presumed immutable. Current full registry, token code and balances are not attested."
+    }
+  },
+  "sourceReview": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0xed8B26D99834540C5013701bB3715faFD39993Ba?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode",
+    "stabilityPoolExcerpts": [
+      {
+        "lines": "233-258",
+        "content": "    function provideToSP(uint256 _amount) external {\n        require(!PRISMA_CORE.paused(), \"Deposits are paused\");\n        require(_amount > 0, \"StabilityPool: Amount must be non-zero\");\n\n        _triggerRewardIssuance();\n\n        _accrueDepositorCollateralGain(msg.sender);\n\n        uint256 compoundedDebtDeposit = getCompoundedDebtDeposit(msg.sender);\n\n        _accrueRewards(msg.sender);\n\n        debtToken.sendToSP(msg.sender, _amount);\n        uint256 newTotalDebtTokenDeposits = totalDebtTokenDeposits + _amount;\n        totalDebtTokenDeposits = newTotalDebtTokenDeposits;\n        emit StabilityPoolDebtBalanceUpdated(newTotalDebtTokenDeposits);\n\n        uint256 newDeposit = compoundedDebtDeposit + _amount;\n        accountDeposits[msg.sender] = AccountDeposit({\n            amount: uint128(newDeposit),\n            timestamp: uint128(block.timestamp)\n        });\n\n        _updateSnapshots(msg.sender, newDeposit);\n        emit UserDepositChanged(msg.sender, newDeposit);\n    }"
+      },
+      {
+        "lines": "270-296",
+        "content": "    function withdrawFromSP(uint256 _amount) external {\n        uint256 initialDeposit = accountDeposits[msg.sender].amount;\n        uint128 depositTimestamp = accountDeposits[msg.sender].timestamp;\n        require(initialDeposit > 0, \"StabilityPool: User must have a non-zero deposit\");\n        require(depositTimestamp < block.timestamp, \"!Deposit and withdraw same block\");\n\n        _triggerRewardIssuance();\n\n        _accrueDepositorCollateralGain(msg.sender);\n\n        uint256 compoundedDebtDeposit = getCompoundedDebtDeposit(msg.sender);\n        uint256 debtToWithdraw = PrismaMath._min(_amount, compoundedDebtDeposit);\n\n        _accrueRewards(msg.sender);\n\n        if (debtToWithdraw > 0) {\n            debtToken.returnFromPool(address(this), msg.sender, debtToWithdraw);\n            _decreaseDebt(debtToWithdraw);\n        }\n\n        // Update deposit\n        uint256 newDeposit = compoundedDebtDeposit - debtToWithdraw;\n        accountDeposits[msg.sender] = AccountDeposit({ amount: uint128(newDeposit), timestamp: depositTimestamp });\n\n        _updateSnapshots(msg.sender, newDeposit);\n        emit UserDepositChanged(msg.sender, newDeposit);\n    }"
+      },
+      {
+        "lines": "300-319",
+        "content": "    function _triggerRewardIssuance() internal {\n        _updateG(_vestedEmissions());\n\n        uint256 _periodFinish = periodFinish;\n        uint256 lastUpdateWeek = (_periodFinish - startTime) / 1 weeks;\n        // If the last claim was a week earlier we reclaim\n        if (getWeek() >= lastUpdateWeek) {\n            uint256 amount = vault.allocateNewEmissions(emissionId);\n            if (amount > 0) {\n                // If the previous period is not finished we combine new and pending old rewards\n                if (block.timestamp < _periodFinish) {\n                    uint256 remaining = _periodFinish - block.timestamp;\n                    amount += remaining * rewardRate;\n                }\n                rewardRate = uint128(amount / REWARD_DURATION);\n                periodFinish = uint32(block.timestamp + REWARD_DURATION);\n            }\n        }\n        lastUpdate = uint32(block.timestamp);\n    }"
+      },
+      {
+        "lines": "639-695",
+        "content": "    function getCompoundedDebtDeposit(address _depositor) public view returns (uint256) {\n        uint256 initialDeposit = accountDeposits[_depositor].amount;\n        if (initialDeposit == 0) {\n            return 0;\n        }\n\n        Snapshots memory snapshots = depositSnapshots[_depositor];\n\n        uint256 compoundedDeposit = _getCompoundedStakeFromSnapshots(initialDeposit, snapshots);\n        return compoundedDeposit;\n    }\n\n    // Internal function, used to calculcate compounded deposits and compounded front end stakes.\n    function _getCompoundedStakeFromSnapshots(\n        uint256 initialStake,\n        Snapshots memory snapshots\n    ) internal view returns (uint256) {\n        uint256 snapshot_P = snapshots.P;\n        uint128 scaleSnapshot = snapshots.scale;\n        uint128 epochSnapshot = snapshots.epoch;\n\n        // If stake was made before a pool-emptying event, then it has been fully cancelled with debt -- so, return 0\n        if (epochSnapshot < currentEpoch) {\n            return 0;\n        }\n\n        uint256 compoundedStake;\n        uint128 scaleDiff = currentScale - scaleSnapshot;\n\n        /* Compute the compounded stake. If a scale change in P was made during the stake's lifetime,\n         * account for it. If more than one scale change was made, then the stake has decreased by a factor of\n         * at least 1e-9 -- so return 0.\n         */\n        if (scaleDiff == 0) {\n            compoundedStake = (initialStake * P) / snapshot_P;\n        } else if (scaleDiff == 1) {\n            compoundedStake = (initialStake * P) / snapshot_P / SCALE_FACTOR;\n        } else {\n            // if scaleDiff >= 2\n            compoundedStake = 0;\n        }\n\n        /*\n         * If compounded deposit is less than a billionth of the initial deposit, return 0.\n         *\n         * NOTE: originally, this line was in place to stop rounding errors making the deposit too large. However, the error\n         * corrections should ensure the error in P \"favors the Pool\", i.e. any given compounded deposit should slightly less\n         * than it's theoretical value.\n         *\n         * Thus it's unclear whether this line is still really needed.\n         */\n        if (compoundedStake < initialStake / 1e9) {\n            return 0;\n        }\n\n        return compoundedStake;\n    }"
+      },
+      {
+        "lines": "697-720",
+        "content": "    // --- Sender functions for Debt deposit, collateral gains and Prisma gains ---\n    function claimCollateralGains(address recipient, uint256[] calldata collateralIndexes) external virtual {\n        _claimCollateralGains(recipient, collateralIndexes);\n    }\n\n    function _claimCollateralGains(address recipient, uint256[] calldata collateralIndexes) internal {\n        uint256 loopEnd = collateralIndexes.length;\n        uint256[] memory collateralGains = new uint256[](collateralTokens.length);\n\n        uint80[256] storage depositorGains = collateralGainsByDepositor[msg.sender];\n        for (uint256 i; i < loopEnd; ) {\n            uint256 collateralIndex = collateralIndexes[i];\n            uint256 gains = depositorGains[collateralIndex];\n            if (gains > 0) {\n                collateralGains[collateralIndex] = gains;\n                depositorGains[collateralIndex] = 0;\n                collateralTokens[collateralIndex].safeTransfer(recipient, gains);\n            }\n            unchecked {\n                ++i;\n            }\n        }\n        emit CollateralGainWithdrawn(msg.sender, collateralGains);\n    }"
+      },
+      {
+        "lines": "764-805",
+        "content": "    function claimReward(address recipient) external returns (uint256 amount) {\n        amount = _claimReward(msg.sender);\n        if (amount > 0) {\n            vault.transferAllocatedTokens(msg.sender, recipient, amount);\n        }\n        emit RewardClaimed(msg.sender, recipient, amount);\n        return amount;\n    }\n\n    function vaultClaimReward(address claimant, address) external returns (uint256 amount) {\n        require(msg.sender == address(vault));\n\n        return _claimReward(claimant);\n    }\n\n    function _claimReward(address account) internal returns (uint256 amount) {\n        uint256 initialDeposit = accountDeposits[account].amount;\n\n        if (initialDeposit > 0) {\n            uint128 depositTimestamp = accountDeposits[account].timestamp;\n            _triggerRewardIssuance();\n            bool hasGains = _accrueDepositorCollateralGain(account);\n\n            uint256 compoundedDebtDeposit = getCompoundedDebtDeposit(account);\n            uint256 debtLoss = initialDeposit - compoundedDebtDeposit;\n\n            amount = _claimableReward(account);\n            // we update only if the snapshot has changed\n            if (debtLoss > 0 || hasGains || amount > 0) {\n                // Update deposit\n                uint256 newDeposit = compoundedDebtDeposit;\n                accountDeposits[account] = AccountDeposit({ amount: uint128(newDeposit), timestamp: depositTimestamp });\n                _updateSnapshots(account, newDeposit);\n            }\n        }\n        uint256 pending = storedPendingReward[account];\n        if (pending > 0) {\n            amount += pending;\n            storedPendingReward[account] = 0;\n        }\n        return amount;\n    }"
+      }
+    ],
+    "notes": [
+      "Inherited comments mention frontend tags and automatic reward payout, but callable code has no frontend-tag parameter and deposit/withdraw only accrue collateral and PRISMA; ABI and actual code govern this record.",
+      "Stored gains are zeroed before collateral transfer in this mkUSD deployment. No ULTRA-specific bug conclusion or safety assurance is transplanted.",
+      "Loss accounting deliberately rounds loss up and rounds compounded entitlement down; liquidation can deplete principal fully.",
+      "No constructor, event, fallback or receive capability is created. There is no delegated-operator setter, permit/signature entry, arbitrary execute or multicall in this ABI."
+    ]
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_prismaCore",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_debtTokenAddress",
+          "type": "address",
+          "internalType": "contract IDebtToken"
+        },
+        {
+          "name": "_vault",
+          "type": "address",
+          "internalType": "contract IPrismaVault"
+        },
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_liquidationManager",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "CollateralGainWithdrawn",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_depositor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_collateral",
+          "type": "uint256[]",
+          "indexed": false,
+          "internalType": "uint256[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "CollateralOverwritten",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldCollateral",
+          "type": "address",
+          "indexed": false,
+          "internalType": "contract IERC20"
+        },
+        {
+          "name": "newCollateral",
+          "type": "address",
+          "indexed": false,
+          "internalType": "contract IERC20"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DepositSnapshotUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_depositor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_P",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "_G",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "EpochUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_currentEpoch",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "G_Updated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_G",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "_epoch",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        },
+        {
+          "name": "_scale",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "P_Updated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_P",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RewardClaimed",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "claimed",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "S_Updated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "idx",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "_S",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "_epoch",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        },
+        {
+          "name": "_scale",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ScaleUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_currentScale",
+          "type": "uint128",
+          "indexed": false,
+          "internalType": "uint128"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "StabilityPoolDebtBalanceUpdated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_newBalance",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UserDepositChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_depositor",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_newDeposit",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "DECIMAL_PRECISION",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "P",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "PRISMA_CORE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IPrismaCore"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "SCALE_FACTOR",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "SUNSET_DURATION",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "accountDeposits",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amount",
+          "type": "uint128",
+          "internalType": "uint128"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "claimCollateralGains",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "collateralIndexes",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claimReward",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claimableReward",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_depositor",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "collateralGainsByDepositor",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "depositor",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "gains",
+          "type": "uint80",
+          "internalType": "uint80"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "collateralTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IERC20"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "currentEpoch",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "currentScale",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "debtToken",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IDebtToken"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "depositSnapshots",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "P",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "G",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "scale",
+          "type": "uint128",
+          "internalType": "uint128"
+        },
+        {
+          "name": "epoch",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "depositSums",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "emissionId",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "enableCollateral",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_collateral",
+          "type": "address",
+          "internalType": "contract IERC20"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "epochToScaleToG",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint128",
+          "internalType": "uint128"
+        },
+        {
+          "name": "",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "epochToScaleToSums",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint128",
+          "internalType": "uint128"
+        },
+        {
+          "name": "",
+          "type": "uint128",
+          "internalType": "uint128"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getCompoundedDebtDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_depositor",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDepositorCollateralGain",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_depositor",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "collateralGains",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getTotalDebtTokenDeposits",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getWeek",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "week",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "guardian",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "indexByCollateral",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "collateral",
+          "type": "address",
+          "internalType": "contract IERC20"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "index",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "lastCollateralError_Offset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "lastDebtLossError_Offset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "lastPrismaError",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "lastUpdate",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "liquidationManager",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "offset",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "collateral",
+          "type": "address",
+          "internalType": "contract IERC20"
+        },
+        {
+          "name": "_debtToOffset",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_collToAdd",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "periodFinish",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "provideToSP",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "rewardRate",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint128",
+          "internalType": "uint128"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "startCollateralSunset",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "collateral",
+          "type": "address",
+          "internalType": "contract IERC20"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "vault",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IPrismaVault"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "vaultClaimReward",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "claimant",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdrawFromSP",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "DECIMAL_PRECISION",
+      "signature": "DECIMAL_PRECISION()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only DECIMAL_PRECISION getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "P",
+      "signature": "P()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only P getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "PRISMA_CORE",
+      "signature": "PRISMA_CORE()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only PRISMA_CORE getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "SCALE_FACTOR",
+      "signature": "SCALE_FACTOR()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only SCALE_FACTOR getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "SUNSET_DURATION",
+      "signature": "SUNSET_DURATION()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only SUNSET_DURATION getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "accountDeposits",
+      "signature": "accountDeposits(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only accountDeposits getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "claimCollateralGains",
+      "signature": "claimCollateralGains(address,uint256[])",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary caller-entitlement collateral payout to explicit recipient at configured token indexes. Reads only collateralGainsByDepositor[msg.sender], zeros each paid entry before safeTransfer; no arbitrary target/calldata or third-party claimant. It does not checkpoint fresh collateral gains."
+    },
+    {
+      "functionName": "claimReward",
+      "signature": "claimReward(address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Historical ordinary PRISMA claim clears caller reward accounting then calls immutable vault with caller/recipient. Official shutdown notice announces cessation and forfeiture via zero boost; excluded from the legacy collateral/principal exit selection to avoid presenting retired PRISMA emissions as an available yield claim. Not classified as arbitrary execution; current boost/phase execution is not asserted."
+    },
+    {
+      "functionName": "claimableReward",
+      "signature": "claimableReward(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only claimableReward getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "collateralGainsByDepositor",
+      "signature": "collateralGainsByDepositor(address,uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only collateralGainsByDepositor getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "collateralTokens",
+      "signature": "collateralTokens(uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only collateralTokens getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "currentEpoch",
+      "signature": "currentEpoch()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only currentEpoch getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "currentScale",
+      "signature": "currentScale()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only currentScale getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "debtToken",
+      "signature": "debtToken()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only debtToken getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "depositSnapshots",
+      "signature": "depositSnapshots(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only depositSnapshots getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "depositSums",
+      "signature": "depositSums(address,uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only depositSums getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "emissionId",
+      "signature": "emissionId()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only emissionId getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "enableCollateral",
+      "signature": "enableCollateral(address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Immutable factory-only collateral registration; can overwrite an expired sunsetting slot and its global sums. Protocol dependency/asset administration, not an ordinary user action."
+    },
+    {
+      "functionName": "epochToScaleToG",
+      "signature": "epochToScaleToG(uint128,uint128)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only epochToScaleToG getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "epochToScaleToSums",
+      "signature": "epochToScaleToSums(uint128,uint128,uint256)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only epochToScaleToSums getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only factory getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "getCompoundedDebtDeposit",
+      "signature": "getCompoundedDebtDeposit(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getCompoundedDebtDeposit getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "getDepositorCollateralGain",
+      "signature": "getDepositorCollateralGain(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getDepositorCollateralGain getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "getTotalDebtTokenDeposits",
+      "signature": "getTotalDebtTokenDeposits()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getTotalDebtTokenDeposits getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "getWeek",
+      "signature": "getWeek()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only getWeek getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "guardian",
+      "signature": "guardian()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only guardian getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "indexByCollateral",
+      "signature": "indexByCollateral(address)",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only indexByCollateral getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "lastCollateralError_Offset",
+      "signature": "lastCollateralError_Offset()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only lastCollateralError_Offset getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "lastDebtLossError_Offset",
+      "signature": "lastDebtLossError_Offset()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only lastDebtLossError_Offset getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "lastPrismaError",
+      "signature": "lastPrismaError()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only lastPrismaError getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "lastUpdate",
+      "signature": "lastUpdate()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only lastUpdate getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "liquidationManager",
+      "signature": "liquidationManager()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only liquidationManager getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "offset",
+      "signature": "offset(address,uint256,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Immutable liquidationManager-only protocol liquidation accounting; updates collateral sums, deposit-loss product/epochs and total debt deposits. Not a self-owned user deposit/withdrawal or independently admitted liquidation workflow."
+    },
+    {
+      "functionName": "owner",
+      "signature": "owner()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only owner getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "periodFinish",
+      "signature": "periodFinish()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only periodFinish getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "provideToSP",
+      "signature": "provideToSP(uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Historical self-funded mkUSD deposit is a canonical ordinary interface, not an opaque executor: core pause/nonzero checks, sendToSP(msg.sender, amount), caller accounting. Excluded from this exit-only selection because official Prisma shutdown ended the operating deposit/yield offering, not because of a new per-function financial-review gate. Full ABI retained; no current pause state is claimed."
+    },
+    {
+      "functionName": "rewardRate",
+      "signature": "rewardRate()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only rewardRate getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "startCollateralSunset",
+      "signature": "startCollateralSunset(address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "PRISMA_CORE owner-only collateral sunsetting deletes indexByCollateral immediately and queues slot reuse after SUNSET_DURATION (180 days); administrative control over collateral/loss accounting."
+    },
+    {
+      "functionName": "vault",
+      "signature": "vault()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only vault getter/accounting helper; no transaction capability or read API is admitted."
+    },
+    {
+      "functionName": "vaultClaimReward",
+      "signature": "vaultClaimReward(address,address)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Immutable-PrismaVault-only callback can checkpoint/clear another claimant reward accounting; not a direct self-funded user entry. The second address is unused; no delegated reward-control capability is admitted."
+    },
+    {
+      "functionName": "withdrawFromSP",
+      "signature": "withdrawFromSP(uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Ordinary self-owned legacy exit/accounting action. Requires caller recorded deposit and last-deposit timestamp before current timestamp; checkpoints collateral/rewards, returns min(amount, compounded mkUSD deposit) to caller and updates loss-adjusted snapshots. Zero amount checkpoints; no delegated account or pause bypass is introduced."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "prisma-stability-pool:v1:1:0xed8b26d99834540c5013701bb3715fafd39993ba:withdraw",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xed8B26D99834540C5013701bB3715faFD39993Ba",
+      "functionName": "withdrawFromSP",
+      "signature": "withdrawFromSP(uint256)",
+      "abi": {
+        "name": "withdrawFromSP",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://web.archive.org/web/20241004013454id_/https://docs.prismafinance.com/additional-documentation/deployment-addresses ; ABI/source: https://sourcify.dev/server/v2/contract/1/0xed8B26D99834540C5013701bB3715faFD39993Ba?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode ; shutdown: https://paragraph.com/@resupply/prisma-shutdown-transition-plan ; https://gov.resupply.finance/t/clear-idle-prisma-psm-funds/82",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "prisma-stability-pool",
+      "label": "Prisma mkUSD legacy StabilityPool withdraw/checkpoint",
+      "operation": "withdraw",
+      "warnings": [
+        "Legacy Ethereum mkUSD StabilityPool only, not the separate ULTRA pool, a TroveManager, PSM, rewards vault or Resupply product. Official successor notices confirm Prisma shutdown; this is exit/accounting metadata, not an operating yield offering. New deposits and historical PRISMA reward claims are not selected.",
+        "withdrawFromSP uses caller-owned mkUSD deposit units (18 decimals), not transferable shares. It returns min(requested amount, remaining compounded deposit) to msg.sender; liquidation losses can reduce this to zero. An amount at least the compounded deposit requests full exit. Zero amount checkpoints collateral and PRISMA accrual but still requires a recorded nonzero initial deposit and a timestamp later than the last deposit.",
+        "Deposits are consumed pro rata by liquidations across supported collateral types. P/S/G epoch-scale accounting and pool-favoring loss rounding apply; a prior-epoch deposit, two-scale decline or residual below one billionth of initial deposit is treated as zero. No principal, collateral-value or peg guarantee is implied.",
+        "withdrawFromSP accrues collateral gains and PRISMA bookkeeping but transfers neither reward class. claimCollateralGains only transfers caller gains already stored at supplied collateral indexes; it does not accrue/checkpoint fresh gains. When eligible, withdrawFromSP(0) checkpoints without withdrawing principal; a completed exit also leaves stored collateral gains claimable.",
+        "claimCollateralGains pays explicit recipient from caller entitlement using configured collateralTokens[index], not arbitrary caller-supplied contracts or calldata. Choose intended nonzero recipient and valid current indexes. Empty/duplicate indexes do not discover additional rewards; invalid indexes or failing token transfers can revert the call. No automatic redemption of collateral into ETH, mkUSD or crvUSD occurs.",
+        "The collateral array is factory-managed, not an immutable asset whitelist. Owner can sunset a collateral, and factory can reuse its slot after 180 days, reset its global sums and replace its token. Caller must resolve the current index-to-token mapping; historical collateral attribution is not a current mapping, claim-value or token-safety guarantee.",
+        "All selected functions are nonpayable and require zero native ETH. No signature, delegated-account management, arbitrary execution target, callback payload or multicall is admitted. Recipient and financial choices remain caller responsibilities under independent controls; catalog membership grants no additional authority.",
+        "Withdrawal has no PRISMA_CORE.paused check, unlike new deposits, but it triggers reward issuance through immutable PrismaVault. Vault registration, mutable emissions schedule and other dependency state can still cause exits/checkpoints to revert. Collateral transfers depend on configured token behavior. No live pause, configuration, balances, liquidity, backing or successful-execution claim is made.",
+        "The official 2024-12-30 transition notice scheduled emissions cessation for 2025-01-02 and boost-zero forfeiture of unclaimed PRISMA for Phase 3. Do not infer payable rewards from stored accounting or claimableReward: historical pool claimReward clears entitlement before calling vault, whose boost calculator can reduce payout to zero and whose lockWeeks can lock instead of transfer tokens. No current reward entitlement or phase-execution attestation is made.",
+        "A 2025 shutdown account reports an ULTRA-pool repeated-claim bug; that is a different deployment. This reviewed mkUSD source zeros stored collateral gains before safeTransfer. This narrow source observation is not a security audit or assurance about either pool.",
+        "Source-service creation/runtime match labels are preserved as match, not exact_match. Review binds ABI/source evidence to the exact deployment but is not a fresh runtime bytecode/dependency check or financial-safety assertion. Existing exact grants, canonical ABI/value validation, pauses, simulations and signing/execution boundaries remain authoritative."
+      ]
+    },
+    {
+      "capabilityId": "prisma-stability-pool:v1:1:0xed8b26d99834540c5013701bb3715fafd39993ba:claim-collateral",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0xed8B26D99834540C5013701bB3715faFD39993Ba",
+      "functionName": "claimCollateralGains",
+      "signature": "claimCollateralGains(address,uint256[])",
+      "abi": {
+        "name": "claimCollateralGains",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "recipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "collateralIndexes",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://web.archive.org/web/20241004013454id_/https://docs.prismafinance.com/additional-documentation/deployment-addresses ; ABI/source: https://sourcify.dev/server/v2/contract/1/0xed8B26D99834540C5013701bB3715faFD39993Ba?fields=abi,compilation,deployment,proxyResolution,sources,metadata,creationBytecode ; shutdown: https://paragraph.com/@resupply/prisma-shutdown-transition-plan ; https://gov.resupply.finance/t/clear-idle-prisma-psm-funds/82",
+        "verifiedAt": "2026-10-18",
+        "status": "verified"
+      },
+      "protocol": "prisma-stability-pool",
+      "label": "Prisma mkUSD legacy StabilityPool stored collateral claim",
+      "operation": "claim-collateral",
+      "warnings": [
+        "Legacy Ethereum mkUSD StabilityPool only, not the separate ULTRA pool, a TroveManager, PSM, rewards vault or Resupply product. Official successor notices confirm Prisma shutdown; this is exit/accounting metadata, not an operating yield offering. New deposits and historical PRISMA reward claims are not selected.",
+        "withdrawFromSP uses caller-owned mkUSD deposit units (18 decimals), not transferable shares. It returns min(requested amount, remaining compounded deposit) to msg.sender; liquidation losses can reduce this to zero. An amount at least the compounded deposit requests full exit. Zero amount checkpoints collateral and PRISMA accrual but still requires a recorded nonzero initial deposit and a timestamp later than the last deposit.",
+        "Deposits are consumed pro rata by liquidations across supported collateral types. P/S/G epoch-scale accounting and pool-favoring loss rounding apply; a prior-epoch deposit, two-scale decline or residual below one billionth of initial deposit is treated as zero. No principal, collateral-value or peg guarantee is implied.",
+        "withdrawFromSP accrues collateral gains and PRISMA bookkeeping but transfers neither reward class. claimCollateralGains only transfers caller gains already stored at supplied collateral indexes; it does not accrue/checkpoint fresh gains. When eligible, withdrawFromSP(0) checkpoints without withdrawing principal; a completed exit also leaves stored collateral gains claimable.",
+        "claimCollateralGains pays explicit recipient from caller entitlement using configured collateralTokens[index], not arbitrary caller-supplied contracts or calldata. Choose intended nonzero recipient and valid current indexes. Empty/duplicate indexes do not discover additional rewards; invalid indexes or failing token transfers can revert the call. No automatic redemption of collateral into ETH, mkUSD or crvUSD occurs.",
+        "The collateral array is factory-managed, not an immutable asset whitelist. Owner can sunset a collateral, and factory can reuse its slot after 180 days, reset its global sums and replace its token. Caller must resolve the current index-to-token mapping; historical collateral attribution is not a current mapping, claim-value or token-safety guarantee.",
+        "All selected functions are nonpayable and require zero native ETH. No signature, delegated-account management, arbitrary execution target, callback payload or multicall is admitted. Recipient and financial choices remain caller responsibilities under independent controls; catalog membership grants no additional authority.",
+        "Withdrawal has no PRISMA_CORE.paused check, unlike new deposits, but it triggers reward issuance through immutable PrismaVault. Vault registration, mutable emissions schedule and other dependency state can still cause exits/checkpoints to revert. Collateral transfers depend on configured token behavior. No live pause, configuration, balances, liquidity, backing or successful-execution claim is made.",
+        "The official 2024-12-30 transition notice scheduled emissions cessation for 2025-01-02 and boost-zero forfeiture of unclaimed PRISMA for Phase 3. Do not infer payable rewards from stored accounting or claimableReward: historical pool claimReward clears entitlement before calling vault, whose boost calculator can reduce payout to zero and whose lockWeeks can lock instead of transfer tokens. No current reward entitlement or phase-execution attestation is made.",
+        "A 2025 shutdown account reports an ULTRA-pool repeated-claim bug; that is a different deployment. This reviewed mkUSD source zeros stored collateral gains before safeTransfer. This narrow source observation is not a security audit or assurance about either pool.",
+        "Source-service creation/runtime match labels are preserved as match, not exact_match. Review binds ABI/source evidence to the exact deployment but is not a fresh runtime bytecode/dependency check or financial-safety assertion. Existing exact grants, canonical ABI/value validation, pauses, simulations and signing/execution boundaries remain authoritative."
+      ]
+    }
+  ],
+  "warnings": [
+    "Legacy Ethereum mkUSD StabilityPool only, not the separate ULTRA pool, a TroveManager, PSM, rewards vault or Resupply product. Official successor notices confirm Prisma shutdown; this is exit/accounting metadata, not an operating yield offering. New deposits and historical PRISMA reward claims are not selected.",
+    "withdrawFromSP uses caller-owned mkUSD deposit units (18 decimals), not transferable shares. It returns min(requested amount, remaining compounded deposit) to msg.sender; liquidation losses can reduce this to zero. An amount at least the compounded deposit requests full exit. Zero amount checkpoints collateral and PRISMA accrual but still requires a recorded nonzero initial deposit and a timestamp later than the last deposit.",
+    "Deposits are consumed pro rata by liquidations across supported collateral types. P/S/G epoch-scale accounting and pool-favoring loss rounding apply; a prior-epoch deposit, two-scale decline or residual below one billionth of initial deposit is treated as zero. No principal, collateral-value or peg guarantee is implied.",
+    "withdrawFromSP accrues collateral gains and PRISMA bookkeeping but transfers neither reward class. claimCollateralGains only transfers caller gains already stored at supplied collateral indexes; it does not accrue/checkpoint fresh gains. When eligible, withdrawFromSP(0) checkpoints without withdrawing principal; a completed exit also leaves stored collateral gains claimable.",
+    "claimCollateralGains pays explicit recipient from caller entitlement using configured collateralTokens[index], not arbitrary caller-supplied contracts or calldata. Choose intended nonzero recipient and valid current indexes. Empty/duplicate indexes do not discover additional rewards; invalid indexes or failing token transfers can revert the call. No automatic redemption of collateral into ETH, mkUSD or crvUSD occurs.",
+    "The collateral array is factory-managed, not an immutable asset whitelist. Owner can sunset a collateral, and factory can reuse its slot after 180 days, reset its global sums and replace its token. Caller must resolve the current index-to-token mapping; historical collateral attribution is not a current mapping, claim-value or token-safety guarantee.",
+    "All selected functions are nonpayable and require zero native ETH. No signature, delegated-account management, arbitrary execution target, callback payload or multicall is admitted. Recipient and financial choices remain caller responsibilities under independent controls; catalog membership grants no additional authority.",
+    "Withdrawal has no PRISMA_CORE.paused check, unlike new deposits, but it triggers reward issuance through immutable PrismaVault. Vault registration, mutable emissions schedule and other dependency state can still cause exits/checkpoints to revert. Collateral transfers depend on configured token behavior. No live pause, configuration, balances, liquidity, backing or successful-execution claim is made.",
+    "The official 2024-12-30 transition notice scheduled emissions cessation for 2025-01-02 and boost-zero forfeiture of unclaimed PRISMA for Phase 3. Do not infer payable rewards from stored accounting or claimableReward: historical pool claimReward clears entitlement before calling vault, whose boost calculator can reduce payout to zero and whose lockWeeks can lock instead of transfer tokens. No current reward entitlement or phase-execution attestation is made.",
+    "A 2025 shutdown account reports an ULTRA-pool repeated-claim bug; that is a different deployment. This reviewed mkUSD source zeros stored collateral gains before safeTransfer. This narrow source observation is not a security audit or assurance about either pool.",
+    "Source-service creation/runtime match labels are preserved as match, not exact_match. Review binds ABI/source evidence to the exact deployment but is not a fresh runtime bytecode/dependency check or financial-safety assertion. Existing exact grants, canonical ABI/value validation, pauses, simulations and signing/execution boundaries remain authoritative."
+  ]
+}

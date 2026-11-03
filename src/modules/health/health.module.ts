@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { HealthController } from './health.controller';
 import { HealthService } from './health.service';
+import { RateLimitStorageModule } from '../../common/throttler/throttler.module';
 
 @Module({
+  imports: [RateLimitStorageModule],
   controllers: [HealthController],
   providers: [HealthService],
 })

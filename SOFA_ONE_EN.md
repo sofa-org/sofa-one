@@ -13,7 +13,7 @@ SOFA ONE is a secure middleware layer between user asset control and programmati
 It is not a general-purpose wallet or a trading strategy platform. Instead, it is infrastructure that can be integrated by applications, AI Agents, backend jobs, and automation services. The project focuses on three goals:
 
 - **Execute on-chain actions safely on behalf of users**: private keys do not enter the business system, and automation programs only receive limited API Key access.
-- **Make automation manageable**: users can create, revoke, rotate, and restrict API Keys.
+- **Make automation manageable**: users can create, revoke, and restrict API Keys.
 - **Make on-chain operations auditable**: signing requests, transactions, key lifecycle events, and abnormal behavior are recorded for traceability and risk control.
 
 ## 3. Problem Statement
@@ -38,7 +38,7 @@ SOFA ONE turns automated on-chain execution into an operational, integrable, and
 
 - AI Agents execute on-chain actions based on user-defined settings.
 - Backend services submit EVM transactions through API Keys.
-- Users create, revoke, or rotate API Keys from the dashboard.
+- Users create and revoke API Keys from the dashboard; replacement uses create, deploy/verify, then revoke the old key.
 - Users view wallet balances, deposit addresses, and transaction status.
 - Teams audit signing requests, transaction submissions, and API Key usage.
 - Applications integrate a unified on-chain execution API across testnets and mainnets.
@@ -54,8 +54,8 @@ SOFA ONE turns automated on-chain execution into an operational, integrable, and
 
 ### 6.2 API Key Management
 
-- Users can create, view, revoke, and refresh API Keys from the dashboard.
-- Plaintext API Keys are returned only once during creation or rotation.
+- Users can create, view, and revoke API Keys, including emergency revoke-all without a replacement. Bulk rotation is not supported.
+- Plaintext API Keys are returned only once during creation.
 - The service stores only irreversible key digests and lookup prefixes, never plaintext API Keys.
 - Active key limits, unique names, expiration, and IP allowlists are supported.
 - API Key lifecycle events are recorded for auditability.
@@ -83,6 +83,14 @@ SOFA ONE turns automated on-chain execution into an operational, integrable, and
 - API Key lifecycle events, signing requests, transaction submissions, withdrawal policy decisions, and abnormal access are recorded.
 - Basic transaction policy checks reduce high-risk calls.
 - Redacted security events can be exported for monitoring integrations.
+
+### 6.6 DeFi Protocol Catalog
+
+- DeFi integrations are scoped to exact chains, contract addresses and function signatures. The public `/protocols` directory is an index, not support for every feature of a protocol.
+- The catalog includes exact JetSwap/WaultSwap router functions on BNB Smart Chain, Dystopia on Polygon and Ramses V1 on Arbitrum. Deployment and ABI evidence is recorded in the [DeFi catalog workflow](./scripts/defi-catalog/README.md).
+- Prisma Finance is limited to Ethereum mkUSD StabilityPool exits/checkpointing and stored collateral claims after its announced shutdown; new deposits and historical PRISMA reward claims are not admitted. Version, proxy-upgrade and external-dependency constraints remain independently relevant.
+- `all` mode dynamically includes active, unpaused capabilities; `custom` mode requires exact capability IDs. Independent permissions, pauses and execution policies still apply. Catalog membership does not guarantee current liquidity, execution success or financial safety.
+- Legacy entries may link to archived official documentation or source references rather than an operating trading frontend. KyberSwap and Synapse remain excluded pending approved nested-execution scopes; Alpaca remains excluded for missing implementation ABI evidence.
 
 ## 7. Supported Chains
 
@@ -127,7 +135,7 @@ Used by users to manage accounts and wallets from the web dashboard:
 - Session synchronization
 - Wallet binding and authorization status management
 - Wallet balances, deposit information, and withdrawals
-- API Key creation, revocation, rotation, and listing
+- API Key creation, revocation, and listing
 - Security notification review and handling
 
 These interfaces use user-session authentication and include additional browser-origin checks for dashboard-only operations.
@@ -137,7 +145,7 @@ These interfaces use user-session authentication and include additional browser-
 - **Private keys never enter the application**: the business system does not store, log, return, or derive private keys.
 - **Least-privilege automation**: automation programs use API Keys instead of full user sessions.
 - **Separated authentication boundaries**: public API Key endpoints and dashboard endpoints belong to different trust domains.
-- **Plaintext keys appear only once**: API Keys are shown to users only during creation or rotation.
+- **Plaintext keys appear only once**: API Keys are shown to users only during creation.
 - **Revocable and freezable access**: users, wallets, and API Keys can be revoked or frozen.
 - **Audit by default**: critical operations leave traceable records.
 - **Safe public responses**: public status endpoints do not return calldata, internal request hashes, or sensitive identifiers.
@@ -147,7 +155,7 @@ These interfaces use user-session authentication and include additional browser-
 The project already provides a runnable set of core capabilities:
 
 - User session synchronization, wallet binding, and Agent authorization flows are defined.
-- API Key creation, verification, revocation, rotation, and secure storage are implemented.
+- API Key creation, verification, revocation, and secure storage are implemented.
 - Public signing, transaction submission, and transaction status interfaces are defined.
 - Users, wallets, API Keys, signing requests, transactions, and security events are recorded and auditable.
 - Basic security validation, rate limiting, and access boundaries are configured.

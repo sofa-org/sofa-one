@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Summer.fi",
+  "aliases": [
+    "Oasis",
+    "Lazy Summer"
+  ],
+  "status": "rejected",
+  "reviewedAt": "2026-10-24",
+  "selectedFunctions": [],
+  "reason": "Current primary indexed Summer.fi company/protocol sunset announcement and withdrawal-only vault notice; no admission for withdrawal-only hacked/wind-down product.",
+  "evidence": [
+    {
+      "sourceRef": "https://blog.summer.fi/sunsetting-summer-fi-and-the-labs-company",
+      "title": "Sunsetting Summer.fi and the Labs Company",
+      "publishedAt": "2026-07-15",
+      "retrievalGrade": "Primary-domain search-indexed excerpt, NOT successfully fetched page",
+      "observedExcerpt": "we have concluded we have no viable path forward other than to wind down operations.",
+      "fetchAttempts": [
+        {
+          "method": "read",
+          "result": "ERR_TLS_CERT_ALTNAME_INVALID"
+        },
+        {
+          "method": "requests verify=False",
+          "httpStatus": 404,
+          "response": "Domain error Domain error Failed to resolve DNS path for this host"
+        }
+      ]
+    },
+    {
+      "sourceRef": "https://blog.summer.fi/all-lazy-summer-vaults-are-now-available-for-withdrawal",
+      "publishedAt": "2026-07-30",
+      "retrievalGrade": "Primary-domain search-indexed excerpt, NOT successfully fetched page",
+      "observedExcerpt": "Following the July 6 exploit, all Lazy Summer Protocol Vaults were paused as a precaution and their deposit caps set to 0."
+    }
+  ],
+  "limitations": [
+    "No categorical claim based solely on a failed fetch; explicit indexed sunset text is basis and parent approved exclusion.",
+    "No Oasis CDP recipe executor or alias admission.",
+    "No deployed ABI invented or substituted because lifecycle gate failed before admission."
+  ]
+}

@@ -1,0 +1,1778 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-11-01",
+  "scope": "Four new bounded Pancake V3 position-manager multicall roots on Ethereum, Base, Arbitrum and Monad only. Existing BSC root and every existing scope remain untouched. No new execution language, runtime, profiles, grants or child admissions.",
+  "lineage": {
+    "source": "data/defi-catalog/sources/pancake-supported-deployment-parity.json",
+    "reviewedAt": "2026-11-01",
+    "officialMaps": {
+      "v2": {
+        "sourceRef": "https://developer.pancakeswap.finance/contracts/v2/addresses",
+        "mainnetPeriphery": [
+          {
+            "chainName": "Ethereum",
+            "address": "0xeff92a263d31888d860bd50809a8d171709b7b1c",
+            "decision": "reviewed-supported-target"
+          },
+          {
+            "chainName": "BSC",
+            "address": "0x10ed43c718714eb63d5aa57b78b54704e256024e",
+            "decision": "reviewed-supported-target"
+          },
+          {
+            "chainName": "Base",
+            "address": "0x8cfe327cec66d1c090dd72bd0ff11d690c33a2eb",
+            "decision": "reviewed-supported-target"
+          },
+          {
+            "chainName": "Arbitrum",
+            "address": "0x8cfe327cec66d1c090dd72bd0ff11d690c33a2eb",
+            "decision": "reviewed-supported-target"
+          },
+          {
+            "chainName": "Monad",
+            "address": "0xb1bc24c34e88f7d43d5923034e3a14b24daacff9",
+            "decision": "reviewed-supported-target"
+          },
+          {
+            "chainName": "zkSync",
+            "address": "0x5aeaf2883fbf30f3d62471154eda3c0c1b05942d",
+            "decision": "excluded-unsupported-chain"
+          },
+          {
+            "chainName": "Linea",
+            "address": "0x8cfe327cec66d1c090dd72bd0ff11d690c33a2eb",
+            "decision": "excluded-unsupported-chain"
+          },
+          {
+            "chainName": "opBNB",
+            "address": "0x8cfe327cec66d1c090dd72bd0ff11d690c33a2eb",
+            "decision": "excluded-unsupported-chain"
+          },
+          {
+            "chainName": "Robinhood",
+            "address": "0x8cfe327cec66d1c090dd72bd0ff11d690c33a2eb",
+            "decision": "excluded-unsupported-chain"
+          }
+        ],
+        "testnetDecision": "Excluded BSC Testnet router 0xd99d1c33f9fc3444f8101754abc46c52416550d1; testnets and unsupported chains are outside existing-chain production scope."
+      },
+      "v3": {
+        "sourceRef": "https://developer.pancakeswap.finance/contracts/v3/addresses",
+        "mainnetPeriphery": {
+          "SwapRouter": [
+            {
+              "chainName": "Ethereum",
+              "address": "0x1b81d678ffb9c0263b24a97847620c99d213eb14",
+              "decision": "reviewed-supported-target"
+            },
+            {
+              "chainName": "BSC",
+              "address": "0x1b81d678ffb9c0263b24a97847620c99d213eb14",
+              "decision": "reviewed-supported-target"
+            },
+            {
+              "chainName": "Base",
+              "address": "0x1b81d678ffb9c0263b24a97847620c99d213eb14",
+              "decision": "reviewed-supported-target"
+            },
+            {
+              "chainName": "Arbitrum",
+              "address": "0x1b81d678ffb9c0263b24a97847620c99d213eb14",
+              "decision": "reviewed-supported-target"
+            },
+            {
+              "chainName": "Monad",
+              "address": "0x1b81d678ffb9c0263b24a97847620c99d213eb14",
+              "decision": "reviewed-supported-target"
+            },
+            {
+              "chainName": "Linea",
+              "address": "0x1b81d678ffb9c0263b24a97847620c99d213eb14",
+              "decision": "excluded-unsupported-chain"
+            },
+            {
+              "chainName": "opBNB",
+              "address": "0x1b81d678ffb9c0263b24a97847620c99d213eb14",
+              "decision": "excluded-unsupported-chain"
+            },
+            {
+              "chainName": "zkSync",
+              "address": "0xd70c70ad87aa8d45b8d59600342fb3aee76e3c68",
+              "decision": "excluded-unsupported-chain"
+            },
+            {
+              "chainName": "Robinhood",
+              "address": null,
+              "decision": "not-available-in-official-map"
+            }
+          ],
+          "NonfungiblePositionManager": [
+            {
+              "chainName": "Ethereum",
+              "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+              "decision": "reviewed-supported-target"
+            },
+            {
+              "chainName": "BSC",
+              "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+              "decision": "reviewed-supported-target"
+            },
+            {
+              "chainName": "Base",
+              "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+              "decision": "reviewed-supported-target"
+            },
+            {
+              "chainName": "Arbitrum",
+              "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+              "decision": "reviewed-supported-target"
+            },
+            {
+              "chainName": "Monad",
+              "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+              "decision": "reviewed-supported-target"
+            },
+            {
+              "chainName": "Linea",
+              "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+              "decision": "excluded-unsupported-chain"
+            },
+            {
+              "chainName": "opBNB",
+              "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+              "decision": "excluded-unsupported-chain"
+            },
+            {
+              "chainName": "zkSync",
+              "address": "0xa815e2ed7f7d5b0c49fda367f249232a1b9d2883",
+              "decision": "excluded-unsupported-chain"
+            },
+            {
+              "chainName": "Robinhood",
+              "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+              "decision": "excluded-unsupported-chain"
+            }
+          ]
+        },
+        "pinnedCorroboration": {
+          "commit": "986847948755cba528324d41be19480731c36c2a",
+          "sourceRefs": [
+            "https://raw.githubusercontent.com/pancakeswap/pancake-v3-contracts/986847948755cba528324d41be19480731c36c2a/deployments/eth.json",
+            "https://raw.githubusercontent.com/pancakeswap/pancake-v3-contracts/986847948755cba528324d41be19480731c36c2a/deployments/bscMainnet.json"
+          ],
+          "scope": "Pinned repository artifacts corroborate BSC/Ethereum addresses only; other chains use current official map and their own verifier."
+        },
+        "testnetDecision": "BSC TESTNET column is not BSC mainnet: manager 0x427bf5b37357632377ecbec9de3626c71a5396c1 and same-address testnet SwapRouter are excluded."
+      },
+      "excludedExecutorFamilies": {
+        "sourceRefs": [
+          "https://developer.pancakeswap.finance/contracts/v3/addresses",
+          "https://developer.pancakeswap.finance/contracts/universal-router/addresses"
+        ],
+        "decision": "No SmartRouter/UniversalRouter capability, opaque execute or unconstrained multicall admitted. No existing Uniswap executor scope is reused for Pancake.",
+        "supportedChainSmartRouters": [
+          {
+            "chainId": 1,
+            "address": "0x13f4ea83d0bd40e75c8222255bc855a974568dd4"
+          },
+          {
+            "chainId": 56,
+            "address": "0x13f4ea83d0bd40e75c8222255bc855a974568dd4"
+          },
+          {
+            "chainId": 8453,
+            "address": "0x678aa4bf4e210cf2166753e054d5b7c31cc7fa86"
+          },
+          {
+            "chainId": 42161,
+            "address": "0x32226588378236fd0c7c4053999f88ac0e5cac77"
+          },
+          {
+            "chainId": 143,
+            "address": "0x21114915ac6d5a2e156931e20b20b038ded0be7c"
+          }
+        ],
+        "supportedChainV3UniversalRouters": [
+          {
+            "chainId": 1,
+            "address": "0x65b382653f7c31bc0af67f188122035461ec9c76"
+          },
+          {
+            "chainId": 56,
+            "address": "0x1a0a18ac4becddbd6389559687d1a73d8927e416"
+          },
+          {
+            "chainId": 8453,
+            "address": "0xfe6508f0015c778bdcc1fb5465ba5ebe224c9912"
+          },
+          {
+            "chainId": 42161,
+            "address": "0xfe6508f0015c778bdcc1fb5465ba5ebe224c9912"
+          },
+          {
+            "chainId": 143,
+            "address": "0x23682a588cf2601aca977df200938634c9f7d552"
+          }
+        ],
+        "supportedChainInfinityUniversalRouters": [
+          {
+            "chainId": 56,
+            "address": "0xd9c500dff816a1da21a48a732d3498bf09dc9aeb"
+          },
+          {
+            "chainId": 8453,
+            "address": "0xd9c500dff816a1da21a48a732d3498bf09dc9aeb"
+          }
+        ]
+      },
+      "nonEvmDecision": "Aptos is outside this EVM assignment and receives no mapping inference or capabilities."
+    },
+    "hashRecipes": {
+      "documentPool": "SHA-256 of exact HTTP response body bytes; content preserves UTF-8 raw provider JSON/HTML rather than a tool wrapper representation. Raw Sourcify all-fields documents preserve full provider data, verification metadata, source bodies and bytecode; target sourceFiles additionally reference extracted content-addressed sourcePool.",
+      "sourcePool": "SHA-256 of exact UTF-8 Solidity source content with no normalization. Every target sourceFiles map retains its own provider file names, even when content is pooled.",
+      "fullAbiSha256": "SHA-256 of recursively key-sorted JSON full ABI, compact separators, array order preserved.",
+      "abiHash": "Keccak-256 of recursively key-sorted normalized capability ABI JSON, compact separators, array order preserved; normalized fragments omit internalType/legacy redundant fields only.",
+      "selector": "First four Keccak-256 bytes of full canonical signature, including tuples/array suffixes."
+    },
+    "sourceSnapshots": [
+      {
+        "sourceRef": "https://basescan.org/address/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364#code",
+        "retrievedAt": "2026-11-01",
+        "httpStatus": 200,
+        "sha256": "026ae79b06b639b91eb0e543fa451eeac62cf35ad99fe1b4873a0d763d7461b0",
+        "bytes": 1456025
+      },
+      {
+        "sourceRef": "https://developer.pancakeswap.finance/contracts/v3/addresses",
+        "retrievedAt": "2026-11-01",
+        "httpStatus": 200,
+        "sha256": "08901e5b4cb40084443f5ce9dc816768c9bba28e7b130e91eeee03642f2a4080",
+        "bytes": 42148
+      },
+      {
+        "sourceRef": "https://monadscan.com/address/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364#code",
+        "retrievedAt": "2026-11-01",
+        "httpStatus": 200,
+        "sha256": "876c1fce308bc6fa33ab576ea5d7d5d748b1be2f289186218d20d9bc7a525573",
+        "bytes": 1246821
+      },
+      {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364?fields=all",
+        "retrievedAt": "2026-11-01",
+        "httpStatus": 200,
+        "sha256": "9f0cb5fb2292d334b81492be26328e953b7093c503e6cc66f87591e0784c7401",
+        "bytes": 972240
+      },
+      {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364?fields=all",
+        "retrievedAt": "2026-11-01",
+        "httpStatus": 200,
+        "sha256": "adb661d16d6287ecc4b6ccab9bf3cf58d684c8d312fa6d1eb906f80c1ebacfc7",
+        "bytes": 972245
+      },
+      {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364?fields=all",
+        "retrievedAt": "2026-11-01",
+        "httpStatus": 200,
+        "sha256": "4af5a34ed9c840099b72ed1699ac8bfb524a3f41cf39469bb7f11eac56592bd8",
+        "bytes": 971664
+      }
+    ],
+    "retention": "Exact independently bound per-target ABI/deployment/source records retained below; raw verifier/explorer documents and complete ABI inventories remain in the named lineage file. Source pool keys are retained SHA256 content identities, not capability ABI hashes."
+  },
+  "summary": {
+    "newActiveRecords": 4,
+    "newChildRecords": 0,
+    "blockedTargets": [],
+    "existingScopesModified": 0
+  },
+  "executionReview": {
+    "kind": "same-target-multicall-v1",
+    "bytesArrayArgIndex": 0,
+    "childCount": 8,
+    "abiHashRecipe": "Actual src/modules/defi/registry/defi-manifest.ts functionAbiHash on each fresh catalog child: Keccak-256 of recursively key-sorted JSON ABI array, not SHA256.",
+    "warnings": [
+      "Bounded self-delegatecall only: exactly eight independently admitted same-chain/address child identities. No nested multicall, createPool, NFT transfer, approval, permit or standalone callback children.",
+      "Self-delegatecall preserves original msg.sender, msg.value, address(this) and storage. The same outer native value is visible to every child, not a fresh per-child payment or allocated budget.",
+      "Native balance can fund wrapping; otherwise pay uses manager custody or caller ERC20 transferFrom. Send only intended native value and explicitly refund residual native funds; payable does not guarantee automatic refunds.",
+      "unwrapWETH9 and sweepToken transfer entire manager balances, not per-caller escrow; refundETH sends entire native balance to original caller. Zero collect recipient retains manager custody. Ordered child calls may leave assets in public custody.",
+      "NFT authorization, caller-selected recipient, token pair, fee, ticks, minimums, deadline and existing token approvals remain independent responsibilities. increaseLiquidity is third-party fundable.",
+      "Root and each child require independent grants and pause checks. Existing canonical ABI/native-value checks, execution node limits and final authorization rechecks remain unchanged.",
+      "Source admission is not fresh bytecode identity, balances, liquidity, funding, successful execution, financial safety or complete-workflow attestation."
+    ]
+  },
+  "targetDecisions": [
+    {
+      "chainId": 1,
+      "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+      "protocol": "pancakeswap-v3-position-manager",
+      "deploymentEvidence": {
+        "sourceRef": "https://developer.pancakeswap.finance/contracts/v3/addresses",
+        "chainId": 1,
+        "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+        "verifiedAt": "2026-11-01",
+        "rawDocumentSha256": "08901e5b4cb40084443f5ce9dc816768c9bba28e7b130e91eeee03642f2a4080"
+      },
+      "abiEvidence": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364?fields=all",
+        "chainId": 1,
+        "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+        "verifiedAt": "2026-11-01",
+        "independentBinding": "Own exact-chain/address verifier response, never another deployment ABI.",
+        "match": "match",
+        "creationMatch": "match",
+        "runtimeMatch": "match",
+        "proxyResolution": {
+          "isProxy": false,
+          "proxyType": null,
+          "implementations": []
+        },
+        "rawDocumentSha256": "9f0cb5fb2292d334b81492be26328e953b7093c503e6cc66f87591e0784c7401"
+      },
+      "constructorArguments": "0x00000000000000000000000041ff9aa7e16b8b1a8a8dc4f0efacd93d02d071c90000000000000000000000000bfbcf9fa4f9c56b0f40a671ad40e0805a091865000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20000000000000000000000003d00cdb4785f0ef20c903a13596e0b9b2c652227",
+      "constructorAddressOrder": [
+        [
+          "deployer",
+          "0x41ff9aa7e16b8b1a8a8dc4f0efacd93d02d071c9"
+        ],
+        [
+          "factory",
+          "0x0bfbcf9fa4f9c56b0f40a671ad40e0805a091865"
+        ],
+        [
+          "WETH9",
+          "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        ],
+        [
+          "tokenDescriptor",
+          "0x3d00cdb4785f0ef20c903a13596e0b9b2c652227"
+        ]
+      ],
+      "sourceFiles": {
+        "contracts/base/Multicall.sol": {
+          "sha256": "029ad0bcade48ff32da51094a3fb245fd7d8324c4fb4dd20fb4b2614efc9618c"
+        },
+        "contracts/interfaces/IMulticall.sol": {
+          "sha256": "fd259a304bdad5fd198ac0279109c6a97198869a2ae72121c7edd66cee91167f"
+        },
+        "contracts/base/PeripheryPayments.sol": {
+          "sha256": "68cef83e01906a13f4a2bb1c12a9e99fad3e957eea6ddbb54bac30ba3b06a436"
+        },
+        "contracts/base/LiquidityManagement.sol": {
+          "sha256": "ee004c7154a817f4b8899e9ed963351791761bb52c5eed2ee196a6a311382f86"
+        },
+        "contracts/NonfungiblePositionManager.sol": {
+          "sha256": "f49775d339101d0ab836bc68fb283fc87f24ddcb73d9f70a777003b6e82f3e88"
+        },
+        "contracts/base/PeripheryImmutableState.sol": {
+          "sha256": "f4611f54f13d0599648bf88fc5bba7fe8eb3bfc27f898c5cc0e2f27272ebca99"
+        }
+      },
+      "verifierMetadata": {
+        "matchId": "949365",
+        "verifiedAt": "2024-08-08T12:15:47Z",
+        "compilation": {
+          "language": "Solidity",
+          "compiler": "solc",
+          "compilerVersion": "0.7.6+commit.7338295f",
+          "compilerSettings": {
+            "metadata": {
+              "bytecodeHash": "none"
+            },
+            "libraries": {},
+            "optimizer": {
+              "runs": 2000,
+              "enabled": true
+            },
+            "evmVersion": "istanbul",
+            "remappings": []
+          },
+          "name": "NonfungiblePositionManager",
+          "fullyQualifiedName": "contracts/NonfungiblePositionManager.sol:NonfungiblePositionManager"
+        },
+        "deployment": {
+          "transactionHash": "0xcecf613a9fab96304dcede631cbb695971f281dfd2199502c405596d784e4b2e",
+          "blockNumber": "16944786",
+          "transactionIndex": "68",
+          "deployer": "0x3af75af6F056d4D72c1675dA919aebF908A109D6"
+        },
+        "sourceIds": {
+          "contracts/base/Multicall.sol": {
+            "id": 32
+          },
+          "contracts/base/SelfPermit.sol": {
+            "id": 37
+          },
+          "contracts/base/ERC721Permit.sol": {
+            "id": 30
+          },
+          "contracts/libraries/ChainId.sol": {
+            "id": 50
+          },
+          "contracts/base/BlockTimestamp.sol": {
+            "id": 29
+          },
+          "contracts/base/PoolInitializer.sol": {
+            "id": 36
+          },
+          "contracts/interfaces/IMulticall.sol": {
+            "id": 39
+          },
+          "contracts/libraries/PoolAddress.sol": {
+            "id": 52
+          },
+          "contracts/libraries/PositionKey.sol": {
+            "id": 53
+          },
+          "contracts/base/PeripheryPayments.sol": {
+            "id": 34
+          },
+          "contracts/interfaces/ISelfPermit.sol": {
+            "id": 45
+          },
+          "contracts/base/LiquidityManagement.sol": {
+            "id": 31
+          },
+          "contracts/base/PeripheryValidation.sol": {
+            "id": 35
+          },
+          "contracts/interfaces/IERC721Permit.sol": {
+            "id": 38
+          },
+          "contracts/libraries/TransferHelper.sol": {
+            "id": 54
+          },
+          "contracts/NonfungiblePositionManager.sol": {
+            "id": 28
+          },
+          "contracts/interfaces/external/IWETH9.sol": {
+            "id": 48
+          },
+          "contracts/libraries/LiquidityAmounts.sol": {
+            "id": 51
+          },
+          "@openzeppelin/contracts/math/SafeMath.sol": {
+            "id": 3
+          },
+          "@openzeppelin/contracts/utils/Address.sol": {
+            "id": 10
+          },
+          "@openzeppelin/contracts/utils/Context.sol": {
+            "id": 11
+          },
+          "@openzeppelin/contracts/utils/Strings.sol": {
+            "id": 14
+          },
+          "contracts/interfaces/IPoolInitializer.sol": {
+            "id": 44
+          },
+          "contracts/base/PeripheryImmutableState.sol": {
+            "id": 33
+          },
+          "contracts/interfaces/external/IERC1271.sol": {
+            "id": 46
+          },
+          "contracts/libraries/CallbackValidation.sol": {
+            "id": 49
+          },
+          "contracts/interfaces/IPeripheryPayments.sol": {
+            "id": 43
+          },
+          "@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+            "id": 4
+          },
+          "@openzeppelin/contracts/drafts/IERC20Permit.sol": {
+            "id": 0
+          },
+          "@openzeppelin/contracts/token/ERC721/ERC721.sol": {
+            "id": 5
+          },
+          "@openzeppelin/contracts/utils/EnumerableMap.sol": {
+            "id": 12
+          },
+          "@openzeppelin/contracts/utils/EnumerableSet.sol": {
+            "id": 13
+          },
+          "@openzeppelin/contracts/introspection/ERC165.sol": {
+            "id": 1
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721.sol": {
+            "id": 6
+          },
+          "@openzeppelin/contracts/introspection/IERC165.sol": {
+            "id": 2
+          },
+          "contracts/interfaces/IPeripheryImmutableState.sol": {
+            "id": 42
+          },
+          "contracts/interfaces/INonfungiblePositionManager.sol": {
+            "id": 40
+          },
+          "@pancakeswap/v3-core/contracts/libraries/FullMath.sol": {
+            "id": 26
+          },
+          "@pancakeswap/v3-core/contracts/libraries/TickMath.sol": {
+            "id": 27
+          },
+          "contracts/interfaces/external/IERC20PermitAllowed.sol": {
+            "id": 47
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol": {
+            "id": 8
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
+            "id": 9
+          },
+          "@pancakeswap/v3-core/contracts/libraries/FixedPoint96.sol": {
+            "id": 25
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol": {
+            "id": 7
+          },
+          "@pancakeswap/v3-core/contracts/libraries/FixedPoint128.sol": {
+            "id": 24
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/IPancakeV3Pool.sol": {
+            "id": 16
+          },
+          "contracts/interfaces/INonfungibleTokenPositionDescriptor.sol": {
+            "id": 41
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/IPancakeV3Factory.sol": {
+            "id": 15
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolState.sol": {
+            "id": 23
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolEvents.sol": {
+            "id": 20
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolActions.sol": {
+            "id": 18
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolImmutables.sol": {
+            "id": 21
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/callback/IPancakeV3MintCallback.sol": {
+            "id": 17
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolDerivedState.sol": {
+            "id": 19
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolOwnerActions.sol": {
+            "id": 22
+          }
+        }
+      },
+      "fullAbiSha256": "8b9a8fbd8faaa4a7eba89304e6ac099eafdc9b2413e1e91f16b23fbe0fce3def",
+      "sourceSemantics": {
+        "poolDerivation": "Immutable deployer and reviewed PoolAddress init-code hash derive token0/token1/fee pools; pool callbacks validate sender against derived pool. Callback ABI remains excluded as standalone user capability.",
+        "custody": "Zero swap/collect recipient means self custody. Settlement helpers sweep entire public contract balances, not per-caller escrow. Refund is full native balance to msg.sender.",
+        "native": "pay uses existing native balance to wrap WETH9 when sufficient, otherwise contract token custody or caller ERC20 transferFrom. Payable does not mean arbitrary native deposits will be refunded.",
+        "nft": "Manager uses NFT-owner/existing-approved-operator authorization for decrease/collect/burn and transfers, but increaseLiquidity is third-party fundable. Empty-data safeTransferFrom invokes fixed receiver callback; opaque four-argument payload remains excluded."
+      },
+      "decision": "admit-new-bounded-root",
+      "previousMulticallDecision": [
+        {
+          "abiIndex": 23,
+          "signature": "multicall(bytes[])",
+          "selector": "0xac9650d8",
+          "stateMutability": "payable",
+          "decision": "excluded",
+          "reason": "Opaque bytes[] self-delegatecall executor. Only already-existing BSC NPM bounded multicall is preserved; no new chain/address execution scope or child-binding migration is admitted in this catalog-only increment."
+        }
+      ],
+      "multicallAbi": {
+        "name": "multicall",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "data",
+            "type": "bytes[]",
+            "internalType": "bytes[]"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "results",
+            "type": "bytes[]",
+            "internalType": "bytes[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "capabilityId": "pancakeswap-v3-position-manager:closed-multicall-v1:1:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:multicall",
+      "review": {
+        "body": "Inherited public payable multicall(bytes[]) allocates results and loops in order over data; each item uses address(this).delegatecall(data[i]). Failed children revert the entire operation (short revert data reverts empty; otherwise Error(string) is decoded); successful result bytes are retained. No arbitrary target, external executor, child value allocation or forwarding call exists in this body.",
+        "inheritance": "Exact-target manager source imports and inherits Multicall; source-bound IMulticall ABI and concrete body agree. No multicall override in reviewed manager source.",
+        "identity": "Every allowed child is resolved from the fresh catalog at this exact chain/address; ABI hashes computed by actual repository functionAbiHash via node + ts-node/register/transpile-only. No cross-target ABI substitution.",
+        "limitations": "Provider grades retained without promotion; not a fresh runtime or execution check."
+      }
+    },
+    {
+      "chainId": 8453,
+      "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+      "protocol": "pancakeswap-v3-position-manager",
+      "deploymentEvidence": {
+        "sourceRef": "https://developer.pancakeswap.finance/contracts/v3/addresses",
+        "chainId": 8453,
+        "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+        "verifiedAt": "2026-11-01",
+        "rawDocumentSha256": "08901e5b4cb40084443f5ce9dc816768c9bba28e7b130e91eeee03642f2a4080"
+      },
+      "abiEvidence": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364?fields=all",
+        "chainId": 8453,
+        "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+        "verifiedAt": "2026-11-01",
+        "independentBinding": "Own exact-chain/address verifier response, never another deployment ABI.",
+        "match": "match",
+        "creationMatch": null,
+        "runtimeMatch": "match",
+        "proxyResolution": {
+          "isProxy": false,
+          "proxyType": null,
+          "implementations": []
+        },
+        "supplementarySourceRef": "https://basescan.org/address/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364#code",
+        "supplementaryGrade": "Similar Match to 0xCfB05AB06D338FD85BBF4486e69809D96A906b77; page also prints Exact Match headline, but Similar Match constructor warning controls interpretation.",
+        "limitations": "Runtime-only match retained. Source metadata contains Dackie-renamed interfaces, not independently exact creation source. Actual onchain creation suffix and runtime immutable substitutions bind Pancake dependencies; ABI/source come from this target response rather than substitution.",
+        "rawDocumentSha256": "4af5a34ed9c840099b72ed1699ac8bfb524a3f41cf39469bb7f11eac56592bd8",
+        "supplementaryDocumentSha256": "026ae79b06b639b91eb0e543fa451eeac62cf35ad99fe1b4873a0d763d7461b0"
+      },
+      "constructorArguments": "0x00000000000000000000000041ff9aa7e16b8b1a8a8dc4f0efacd93d02d071c90000000000000000000000000bfbcf9fa4f9c56b0f40a671ad40e0805a09186500000000000000000000000042000000000000000000000000000000000000060000000000000000000000003d00cdb4785f0ef20c903a13596e0b9b2c652227",
+      "constructorAddressOrder": [
+        [
+          "deployer",
+          "0x41ff9aa7e16b8b1a8a8dc4f0efacd93d02d071c9"
+        ],
+        [
+          "factory",
+          "0x0bfbcf9fa4f9c56b0f40a671ad40e0805a091865"
+        ],
+        [
+          "WETH9",
+          "0x4200000000000000000000000000000000000006"
+        ],
+        [
+          "tokenDescriptor",
+          "0x3d00cdb4785f0ef20c903a13596e0b9b2c652227"
+        ]
+      ],
+      "sourceFiles": {
+        "contracts/base/Multicall.sol": {
+          "sha256": "029ad0bcade48ff32da51094a3fb245fd7d8324c4fb4dd20fb4b2614efc9618c"
+        },
+        "contracts/interfaces/IMulticall.sol": {
+          "sha256": "fd259a304bdad5fd198ac0279109c6a97198869a2ae72121c7edd66cee91167f"
+        },
+        "contracts/base/PeripheryPayments.sol": {
+          "sha256": "68cef83e01906a13f4a2bb1c12a9e99fad3e957eea6ddbb54bac30ba3b06a436"
+        },
+        "contracts/base/LiquidityManagement.sol": {
+          "sha256": "b328d7af0918b75e57636cdb701c9273a4f9fac3e96f13d78edf24f62cad22c4"
+        },
+        "contracts/NonfungiblePositionManager.sol": {
+          "sha256": "b286b395aaac2b478ea5b79e48693d477704e036de7878338d0b007917549562"
+        },
+        "contracts/base/PeripheryImmutableState.sol": {
+          "sha256": "f4611f54f13d0599648bf88fc5bba7fe8eb3bfc27f898c5cc0e2f27272ebca99"
+        }
+      },
+      "verifierMetadata": {
+        "matchId": "2946725",
+        "verifiedAt": "2024-08-08T17:12:56Z",
+        "compilation": {
+          "language": "Solidity",
+          "compiler": "solc",
+          "compilerVersion": "0.7.6+commit.7338295f",
+          "compilerSettings": {
+            "metadata": {
+              "bytecodeHash": "none"
+            },
+            "libraries": {},
+            "optimizer": {
+              "runs": 2000,
+              "enabled": true
+            },
+            "evmVersion": "istanbul",
+            "remappings": []
+          },
+          "name": "NonfungiblePositionManager",
+          "fullyQualifiedName": "contracts/NonfungiblePositionManager.sol:NonfungiblePositionManager"
+        },
+        "deployment": {
+          "transactionHash": "0xcd6bbbdec8b196cb95c92901827ebe904db3519cbc5cb974dbb3b960e9ba6799",
+          "blockNumber": "2912503",
+          "transactionIndex": "128",
+          "deployer": "0x3af75af6F056d4D72c1675dA919aebF908A109D6"
+        },
+        "sourceIds": {
+          "contracts/base/Multicall.sol": {
+            "id": 32
+          },
+          "contracts/base/SelfPermit.sol": {
+            "id": 37
+          },
+          "contracts/base/ERC721Permit.sol": {
+            "id": 30
+          },
+          "contracts/libraries/ChainId.sol": {
+            "id": 50
+          },
+          "contracts/base/BlockTimestamp.sol": {
+            "id": 29
+          },
+          "contracts/base/PoolInitializer.sol": {
+            "id": 36
+          },
+          "contracts/interfaces/IMulticall.sol": {
+            "id": 39
+          },
+          "contracts/libraries/PoolAddress.sol": {
+            "id": 52
+          },
+          "contracts/libraries/PositionKey.sol": {
+            "id": 53
+          },
+          "contracts/base/PeripheryPayments.sol": {
+            "id": 34
+          },
+          "contracts/interfaces/ISelfPermit.sol": {
+            "id": 45
+          },
+          "contracts/base/LiquidityManagement.sol": {
+            "id": 31
+          },
+          "contracts/base/PeripheryValidation.sol": {
+            "id": 35
+          },
+          "contracts/interfaces/IERC721Permit.sol": {
+            "id": 38
+          },
+          "contracts/libraries/TransferHelper.sol": {
+            "id": 54
+          },
+          "contracts/NonfungiblePositionManager.sol": {
+            "id": 28
+          },
+          "contracts/interfaces/external/IWETH9.sol": {
+            "id": 48
+          },
+          "contracts/libraries/LiquidityAmounts.sol": {
+            "id": 51
+          },
+          "@openzeppelin/contracts/math/SafeMath.sol": {
+            "id": 3
+          },
+          "@openzeppelin/contracts/utils/Address.sol": {
+            "id": 10
+          },
+          "@openzeppelin/contracts/utils/Context.sol": {
+            "id": 11
+          },
+          "@openzeppelin/contracts/utils/Strings.sol": {
+            "id": 14
+          },
+          "contracts/interfaces/IPoolInitializer.sol": {
+            "id": 44
+          },
+          "contracts/base/PeripheryImmutableState.sol": {
+            "id": 33
+          },
+          "contracts/interfaces/external/IERC1271.sol": {
+            "id": 46
+          },
+          "contracts/libraries/CallbackValidation.sol": {
+            "id": 49
+          },
+          "contracts/interfaces/IPeripheryPayments.sol": {
+            "id": 43
+          },
+          "@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+            "id": 4
+          },
+          "@openzeppelin/contracts/drafts/IERC20Permit.sol": {
+            "id": 0
+          },
+          "@openzeppelin/contracts/token/ERC721/ERC721.sol": {
+            "id": 5
+          },
+          "@openzeppelin/contracts/utils/EnumerableMap.sol": {
+            "id": 12
+          },
+          "@openzeppelin/contracts/utils/EnumerableSet.sol": {
+            "id": 13
+          },
+          "@openzeppelin/contracts/introspection/ERC165.sol": {
+            "id": 1
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721.sol": {
+            "id": 6
+          },
+          "@openzeppelin/contracts/introspection/IERC165.sol": {
+            "id": 2
+          },
+          "contracts/interfaces/IPeripheryImmutableState.sol": {
+            "id": 42
+          },
+          "contracts/interfaces/INonfungiblePositionManager.sol": {
+            "id": 40
+          },
+          "@pancakeswap/v3-core/contracts/libraries/FullMath.sol": {
+            "id": 26
+          },
+          "@pancakeswap/v3-core/contracts/libraries/TickMath.sol": {
+            "id": 27
+          },
+          "contracts/interfaces/external/IERC20PermitAllowed.sol": {
+            "id": 47
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol": {
+            "id": 8
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
+            "id": 9
+          },
+          "@pancakeswap/v3-core/contracts/libraries/FixedPoint96.sol": {
+            "id": 25
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol": {
+            "id": 7
+          },
+          "@pancakeswap/v3-core/contracts/libraries/FixedPoint128.sol": {
+            "id": 24
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/IDackieV3Pool.sol": {
+            "id": 16
+          },
+          "contracts/interfaces/INonfungibleTokenPositionDescriptor.sol": {
+            "id": 41
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/IDackieV3Factory.sol": {
+            "id": 15
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IDackieV3PoolState.sol": {
+            "id": 23
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IDackieV3PoolEvents.sol": {
+            "id": 20
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IDackieV3PoolActions.sol": {
+            "id": 18
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IDackieV3PoolImmutables.sol": {
+            "id": 21
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/callback/IDackieV3MintCallback.sol": {
+            "id": 17
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IDackieV3PoolDerivedState.sol": {
+            "id": 19
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IDackieV3PoolOwnerActions.sol": {
+            "id": 22
+          }
+        }
+      },
+      "runtimeImmutableSubstitutions": {
+        "immutables": {
+          "4574": "0x0000000000000000000000003d00cdb4785f0ef20c903a13596e0b9b2c652227",
+          "5625": "0xc8147ae4d95e1ae5d91d5822a926bbc8b3167bc4efcba3aad25887e8d7e1ada0",
+          "5628": "0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6",
+          "6119": "0x00000000000000000000000041ff9aa7e16b8b1a8a8dc4f0efacd93d02d071c9",
+          "6123": "0x0000000000000000000000000bfbcf9fa4f9c56b0f40a671ad40e0805a091865",
+          "6127": "0x0000000000000000000000004200000000000000000000000000000000000006"
+        }
+      },
+      "constructorDecodingBasis": "Final four address words of exact-target provider onchain creation bytecode, corroborated by exact-target runtime immutable substitutions; not provider creation match.",
+      "fullAbiSha256": "8b9a8fbd8faaa4a7eba89304e6ac099eafdc9b2413e1e91f16b23fbe0fce3def",
+      "sourceSemantics": {
+        "poolDerivation": "Immutable deployer and reviewed PoolAddress init-code hash derive token0/token1/fee pools; pool callbacks validate sender against derived pool. Callback ABI remains excluded as standalone user capability.",
+        "custody": "Zero swap/collect recipient means self custody. Settlement helpers sweep entire public contract balances, not per-caller escrow. Refund is full native balance to msg.sender.",
+        "native": "pay uses existing native balance to wrap WETH9 when sufficient, otherwise contract token custody or caller ERC20 transferFrom. Payable does not mean arbitrary native deposits will be refunded.",
+        "nft": "Manager uses NFT-owner/existing-approved-operator authorization for decrease/collect/burn and transfers, but increaseLiquidity is third-party fundable. Empty-data safeTransferFrom invokes fixed receiver callback; opaque four-argument payload remains excluded."
+      },
+      "decision": "admit-new-bounded-root",
+      "previousMulticallDecision": [
+        {
+          "abiIndex": 23,
+          "signature": "multicall(bytes[])",
+          "selector": "0xac9650d8",
+          "stateMutability": "payable",
+          "decision": "excluded",
+          "reason": "Opaque bytes[] self-delegatecall executor. Only already-existing BSC NPM bounded multicall is preserved; no new chain/address execution scope or child-binding migration is admitted in this catalog-only increment."
+        }
+      ],
+      "multicallAbi": {
+        "name": "multicall",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "data",
+            "type": "bytes[]",
+            "internalType": "bytes[]"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "results",
+            "type": "bytes[]",
+            "internalType": "bytes[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "capabilityId": "pancakeswap-v3-position-manager:closed-multicall-v1:8453:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:multicall",
+      "review": {
+        "body": "Inherited public payable multicall(bytes[]) allocates results and loops in order over data; each item uses address(this).delegatecall(data[i]). Failed children revert the entire operation (short revert data reverts empty; otherwise Error(string) is decoded); successful result bytes are retained. No arbitrary target, external executor, child value allocation or forwarding call exists in this body.",
+        "inheritance": "Exact-target manager source imports and inherits Multicall; source-bound IMulticall ABI and concrete body agree. No multicall override in reviewed manager source.",
+        "identity": "Every allowed child is resolved from the fresh catalog at this exact chain/address; ABI hashes computed by actual repository functionAbiHash via node + ts-node/register/transpile-only. No cross-target ABI substitution.",
+        "limitations": "Runtime-only match retained. Source metadata contains Dackie-renamed interfaces, not independently exact creation source. Actual onchain creation suffix and runtime immutable substitutions bind Pancake dependencies; ABI/source come from this target response rather than substitution."
+      }
+    },
+    {
+      "chainId": 42161,
+      "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+      "protocol": "pancakeswap-v3-position-manager",
+      "deploymentEvidence": {
+        "sourceRef": "https://developer.pancakeswap.finance/contracts/v3/addresses",
+        "chainId": 42161,
+        "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+        "verifiedAt": "2026-11-01",
+        "rawDocumentSha256": "08901e5b4cb40084443f5ce9dc816768c9bba28e7b130e91eeee03642f2a4080"
+      },
+      "abiEvidence": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/42161/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364?fields=all",
+        "chainId": 42161,
+        "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+        "verifiedAt": "2026-11-01",
+        "independentBinding": "Own exact-chain/address verifier response, never another deployment ABI.",
+        "match": "match",
+        "creationMatch": "match",
+        "runtimeMatch": "match",
+        "proxyResolution": {
+          "isProxy": false,
+          "proxyType": null,
+          "implementations": []
+        },
+        "rawDocumentSha256": "adb661d16d6287ecc4b6ccab9bf3cf58d684c8d312fa6d1eb906f80c1ebacfc7"
+      },
+      "constructorArguments": "0x00000000000000000000000041ff9aa7e16b8b1a8a8dc4f0efacd93d02d071c90000000000000000000000000bfbcf9fa4f9c56b0f40a671ad40e0805a09186500000000000000000000000082af49447d8a07e3bd95bd0d56f35241523fbab10000000000000000000000003d00cdb4785f0ef20c903a13596e0b9b2c652227",
+      "constructorAddressOrder": [
+        [
+          "deployer",
+          "0x41ff9aa7e16b8b1a8a8dc4f0efacd93d02d071c9"
+        ],
+        [
+          "factory",
+          "0x0bfbcf9fa4f9c56b0f40a671ad40e0805a091865"
+        ],
+        [
+          "WETH9",
+          "0x82af49447d8a07e3bd95bd0d56f35241523fbab1"
+        ],
+        [
+          "tokenDescriptor",
+          "0x3d00cdb4785f0ef20c903a13596e0b9b2c652227"
+        ]
+      ],
+      "sourceFiles": {
+        "contracts/base/Multicall.sol": {
+          "sha256": "029ad0bcade48ff32da51094a3fb245fd7d8324c4fb4dd20fb4b2614efc9618c"
+        },
+        "contracts/interfaces/IMulticall.sol": {
+          "sha256": "fd259a304bdad5fd198ac0279109c6a97198869a2ae72121c7edd66cee91167f"
+        },
+        "contracts/base/PeripheryPayments.sol": {
+          "sha256": "68cef83e01906a13f4a2bb1c12a9e99fad3e957eea6ddbb54bac30ba3b06a436"
+        },
+        "contracts/base/LiquidityManagement.sol": {
+          "sha256": "ee004c7154a817f4b8899e9ed963351791761bb52c5eed2ee196a6a311382f86"
+        },
+        "contracts/NonfungiblePositionManager.sol": {
+          "sha256": "f49775d339101d0ab836bc68fb283fc87f24ddcb73d9f70a777003b6e82f3e88"
+        },
+        "contracts/base/PeripheryImmutableState.sol": {
+          "sha256": "f4611f54f13d0599648bf88fc5bba7fe8eb3bfc27f898c5cc0e2f27272ebca99"
+        }
+      },
+      "verifierMetadata": {
+        "matchId": "1300679",
+        "verifiedAt": "2024-08-08T12:53:17Z",
+        "compilation": {
+          "language": "Solidity",
+          "compiler": "solc",
+          "compilerVersion": "0.7.6+commit.7338295f",
+          "compilerSettings": {
+            "metadata": {
+              "bytecodeHash": "none"
+            },
+            "libraries": {},
+            "optimizer": {
+              "runs": 2000,
+              "enabled": true
+            },
+            "evmVersion": "istanbul",
+            "remappings": []
+          },
+          "name": "NonfungiblePositionManager",
+          "fullyQualifiedName": "contracts/NonfungiblePositionManager.sol:NonfungiblePositionManager"
+        },
+        "deployment": {
+          "transactionHash": "0x516591d5d051371b952ae1598bcf8f85049436650799a0caef90db114bebecde",
+          "blockNumber": "101032520",
+          "transactionIndex": "2",
+          "deployer": "0x3af75af6F056d4D72c1675dA919aebF908A109D6"
+        },
+        "sourceIds": {
+          "contracts/base/Multicall.sol": {
+            "id": 32
+          },
+          "contracts/base/SelfPermit.sol": {
+            "id": 37
+          },
+          "contracts/base/ERC721Permit.sol": {
+            "id": 30
+          },
+          "contracts/libraries/ChainId.sol": {
+            "id": 50
+          },
+          "contracts/base/BlockTimestamp.sol": {
+            "id": 29
+          },
+          "contracts/base/PoolInitializer.sol": {
+            "id": 36
+          },
+          "contracts/interfaces/IMulticall.sol": {
+            "id": 39
+          },
+          "contracts/libraries/PoolAddress.sol": {
+            "id": 52
+          },
+          "contracts/libraries/PositionKey.sol": {
+            "id": 53
+          },
+          "contracts/base/PeripheryPayments.sol": {
+            "id": 34
+          },
+          "contracts/interfaces/ISelfPermit.sol": {
+            "id": 45
+          },
+          "contracts/base/LiquidityManagement.sol": {
+            "id": 31
+          },
+          "contracts/base/PeripheryValidation.sol": {
+            "id": 35
+          },
+          "contracts/interfaces/IERC721Permit.sol": {
+            "id": 38
+          },
+          "contracts/libraries/TransferHelper.sol": {
+            "id": 54
+          },
+          "contracts/NonfungiblePositionManager.sol": {
+            "id": 28
+          },
+          "contracts/interfaces/external/IWETH9.sol": {
+            "id": 48
+          },
+          "contracts/libraries/LiquidityAmounts.sol": {
+            "id": 51
+          },
+          "@openzeppelin/contracts/math/SafeMath.sol": {
+            "id": 3
+          },
+          "@openzeppelin/contracts/utils/Address.sol": {
+            "id": 10
+          },
+          "@openzeppelin/contracts/utils/Context.sol": {
+            "id": 11
+          },
+          "@openzeppelin/contracts/utils/Strings.sol": {
+            "id": 14
+          },
+          "contracts/interfaces/IPoolInitializer.sol": {
+            "id": 44
+          },
+          "contracts/base/PeripheryImmutableState.sol": {
+            "id": 33
+          },
+          "contracts/interfaces/external/IERC1271.sol": {
+            "id": 46
+          },
+          "contracts/libraries/CallbackValidation.sol": {
+            "id": 49
+          },
+          "contracts/interfaces/IPeripheryPayments.sol": {
+            "id": 43
+          },
+          "@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+            "id": 4
+          },
+          "@openzeppelin/contracts/drafts/IERC20Permit.sol": {
+            "id": 0
+          },
+          "@openzeppelin/contracts/token/ERC721/ERC721.sol": {
+            "id": 5
+          },
+          "@openzeppelin/contracts/utils/EnumerableMap.sol": {
+            "id": 12
+          },
+          "@openzeppelin/contracts/utils/EnumerableSet.sol": {
+            "id": 13
+          },
+          "@openzeppelin/contracts/introspection/ERC165.sol": {
+            "id": 1
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721.sol": {
+            "id": 6
+          },
+          "@openzeppelin/contracts/introspection/IERC165.sol": {
+            "id": 2
+          },
+          "contracts/interfaces/IPeripheryImmutableState.sol": {
+            "id": 42
+          },
+          "contracts/interfaces/INonfungiblePositionManager.sol": {
+            "id": 40
+          },
+          "@pancakeswap/v3-core/contracts/libraries/FullMath.sol": {
+            "id": 26
+          },
+          "@pancakeswap/v3-core/contracts/libraries/TickMath.sol": {
+            "id": 27
+          },
+          "contracts/interfaces/external/IERC20PermitAllowed.sol": {
+            "id": 47
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol": {
+            "id": 8
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
+            "id": 9
+          },
+          "@pancakeswap/v3-core/contracts/libraries/FixedPoint96.sol": {
+            "id": 25
+          },
+          "@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol": {
+            "id": 7
+          },
+          "@pancakeswap/v3-core/contracts/libraries/FixedPoint128.sol": {
+            "id": 24
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/IPancakeV3Pool.sol": {
+            "id": 16
+          },
+          "contracts/interfaces/INonfungibleTokenPositionDescriptor.sol": {
+            "id": 41
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/IPancakeV3Factory.sol": {
+            "id": 15
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolState.sol": {
+            "id": 23
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolEvents.sol": {
+            "id": 20
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolActions.sol": {
+            "id": 18
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolImmutables.sol": {
+            "id": 21
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/callback/IPancakeV3MintCallback.sol": {
+            "id": 17
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolDerivedState.sol": {
+            "id": 19
+          },
+          "@pancakeswap/v3-core/contracts/interfaces/pool/IPancakeV3PoolOwnerActions.sol": {
+            "id": 22
+          }
+        }
+      },
+      "fullAbiSha256": "8b9a8fbd8faaa4a7eba89304e6ac099eafdc9b2413e1e91f16b23fbe0fce3def",
+      "sourceSemantics": {
+        "poolDerivation": "Immutable deployer and reviewed PoolAddress init-code hash derive token0/token1/fee pools; pool callbacks validate sender against derived pool. Callback ABI remains excluded as standalone user capability.",
+        "custody": "Zero swap/collect recipient means self custody. Settlement helpers sweep entire public contract balances, not per-caller escrow. Refund is full native balance to msg.sender.",
+        "native": "pay uses existing native balance to wrap WETH9 when sufficient, otherwise contract token custody or caller ERC20 transferFrom. Payable does not mean arbitrary native deposits will be refunded.",
+        "nft": "Manager uses NFT-owner/existing-approved-operator authorization for decrease/collect/burn and transfers, but increaseLiquidity is third-party fundable. Empty-data safeTransferFrom invokes fixed receiver callback; opaque four-argument payload remains excluded."
+      },
+      "decision": "admit-new-bounded-root",
+      "previousMulticallDecision": [
+        {
+          "abiIndex": 23,
+          "signature": "multicall(bytes[])",
+          "selector": "0xac9650d8",
+          "stateMutability": "payable",
+          "decision": "excluded",
+          "reason": "Opaque bytes[] self-delegatecall executor. Only already-existing BSC NPM bounded multicall is preserved; no new chain/address execution scope or child-binding migration is admitted in this catalog-only increment."
+        }
+      ],
+      "multicallAbi": {
+        "name": "multicall",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "data",
+            "type": "bytes[]",
+            "internalType": "bytes[]"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "results",
+            "type": "bytes[]",
+            "internalType": "bytes[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "capabilityId": "pancakeswap-v3-position-manager:closed-multicall-v1:42161:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:multicall",
+      "review": {
+        "body": "Inherited public payable multicall(bytes[]) allocates results and loops in order over data; each item uses address(this).delegatecall(data[i]). Failed children revert the entire operation (short revert data reverts empty; otherwise Error(string) is decoded); successful result bytes are retained. No arbitrary target, external executor, child value allocation or forwarding call exists in this body.",
+        "inheritance": "Exact-target manager source imports and inherits Multicall; source-bound IMulticall ABI and concrete body agree. No multicall override in reviewed manager source.",
+        "identity": "Every allowed child is resolved from the fresh catalog at this exact chain/address; ABI hashes computed by actual repository functionAbiHash via node + ts-node/register/transpile-only. No cross-target ABI substitution.",
+        "limitations": "Provider grades retained without promotion; not a fresh runtime or execution check."
+      }
+    },
+    {
+      "chainId": 143,
+      "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+      "protocol": "pancakeswap-v3-position-manager",
+      "deploymentEvidence": {
+        "sourceRef": "https://developer.pancakeswap.finance/contracts/v3/addresses",
+        "chainId": 143,
+        "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+        "verifiedAt": "2026-11-01",
+        "rawDocumentSha256": "08901e5b4cb40084443f5ce9dc816768c9bba28e7b130e91eeee03642f2a4080"
+      },
+      "abiEvidence": {
+        "sourceRef": "https://monadscan.com/address/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364#code",
+        "chainId": 143,
+        "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+        "verifiedAt": "2026-11-01",
+        "independentBinding": "Own exact-chain/address verifier response, never another deployment ABI.",
+        "match": "Exact Match",
+        "creationMatch": null,
+        "runtimeMatch": null,
+        "proxyResolution": {
+          "isProxy": false,
+          "basis": "Verified concrete implementation source and deployment constructor; no proxy in reviewed contract body."
+        },
+        "rawDocumentSha256": "876c1fce308bc6fa33ab576ea5d7d5d748b1be2f289186218d20d9bc7a525573"
+      },
+      "constructorArguments": "0x00000000000000000000000041ff9aa7e16b8b1a8a8dc4f0efacd93d02d071c90000000000000000000000000bfbcf9fa4f9c56b0f40a671ad40e0805a0918650000000000000000000000003bd359c1119da7da1d913d1c4d2b7c461115433a000000000000000000000000b099b459887bc759dbf0293e12d3dfcd0c456cff",
+      "constructorAddressOrder": [
+        [
+          "deployer",
+          "0x41ff9aa7e16b8b1a8a8dc4f0efacd93d02d071c9"
+        ],
+        [
+          "factory",
+          "0x0bfbcf9fa4f9c56b0f40a671ad40e0805a091865"
+        ],
+        [
+          "WETH9",
+          "0x3bd359c1119da7da1d913d1c4d2b7c461115433a"
+        ],
+        [
+          "tokenDescriptor",
+          "0xb099b459887bc759dbf0293e12d3dfcd0c456cff"
+        ]
+      ],
+      "sourceFiles": {
+        "src/v3-periphery/NonfungiblePositionManager.sol": {
+          "sha256": "f84e57c29d805f8bed2f372c8e17330ee33fa8802c836577857e8021509030a8"
+        },
+        "src/v3-periphery/base/LiquidityManagement.sol": {
+          "sha256": "ff3dde2f0704ddad9b7b2a44efa53f395e1f65a99b53b95c0c8a4221bec36b5d"
+        },
+        "src/v3-periphery/base/PeripheryImmutableState.sol": {
+          "sha256": "f01416ca20d7a99bf333ef9adc3b0ff4fde16161da5bb3895cd4240451198661"
+        },
+        "src/v3-periphery/base/Multicall.sol": {
+          "sha256": "e3b8cd7e720ba9327d47aa96ee81804e2c8af7b0de933139ff8a007d61f30199"
+        },
+        "src/v3-periphery/base/PeripheryPayments.sol": {
+          "sha256": "7b9b25d06caae85e43f9b29986f10003088f6c28d2b16829c66b02153d812587"
+        },
+        "src/v3-periphery/interfaces/IMulticall.sol": {
+          "sha256": "fd259a304bdad5fd198ac0279109c6a97198869a2ae72121c7edd66cee91167f"
+        }
+      },
+      "fullAbiSha256": "8b9a8fbd8faaa4a7eba89304e6ac099eafdc9b2413e1e91f16b23fbe0fce3def",
+      "sourceSemantics": {
+        "poolDerivation": "Immutable deployer and reviewed PoolAddress init-code hash derive token0/token1/fee pools; pool callbacks validate sender against derived pool. Callback ABI remains excluded as standalone user capability.",
+        "custody": "Zero swap/collect recipient means self custody. Settlement helpers sweep entire public contract balances, not per-caller escrow. Refund is full native balance to msg.sender.",
+        "native": "pay uses existing native balance to wrap WETH9 when sufficient, otherwise contract token custody or caller ERC20 transferFrom. Payable does not mean arbitrary native deposits will be refunded.",
+        "nft": "Manager uses NFT-owner/existing-approved-operator authorization for decrease/collect/burn and transfers, but increaseLiquidity is third-party fundable. Empty-data safeTransferFrom invokes fixed receiver callback; opaque four-argument payload remains excluded."
+      },
+      "decision": "admit-new-bounded-root",
+      "previousMulticallDecision": [
+        {
+          "abiIndex": 23,
+          "signature": "multicall(bytes[])",
+          "selector": "0xac9650d8",
+          "stateMutability": "payable",
+          "decision": "excluded",
+          "reason": "Opaque bytes[] self-delegatecall executor. Only already-existing BSC NPM bounded multicall is preserved; no new chain/address execution scope or child-binding migration is admitted in this catalog-only increment."
+        }
+      ],
+      "multicallAbi": {
+        "inputs": [
+          {
+            "internalType": "bytes[]",
+            "name": "data",
+            "type": "bytes[]"
+          }
+        ],
+        "name": "multicall",
+        "outputs": [
+          {
+            "internalType": "bytes[]",
+            "name": "results",
+            "type": "bytes[]"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "capabilityId": "pancakeswap-v3-position-manager:closed-multicall-v1:143:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:multicall",
+      "review": {
+        "body": "Inherited public payable multicall(bytes[]) allocates results and loops in order over data; each item uses address(this).delegatecall(data[i]). Failed children revert the entire operation (short revert data reverts empty; otherwise Error(string) is decoded); successful result bytes are retained. No arbitrary target, external executor, child value allocation or forwarding call exists in this body.",
+        "inheritance": "Exact-target manager source imports and inherits Multicall; source-bound IMulticall ABI and concrete body agree. No multicall override in reviewed manager source.",
+        "identity": "Every allowed child is resolved from the fresh catalog at this exact chain/address; ABI hashes computed by actual repository functionAbiHash via node + ts-node/register/transpile-only. No cross-target ABI substitution.",
+        "limitations": "Provider grades retained without promotion; not a fresh runtime or execution check."
+      }
+    },
+    {
+      "chainId": 56,
+      "address": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+      "decision": "preserve-existing-bounded-root-without-change",
+      "reason": "Already admitted BSC multicall with its existing exact eight-child scope; not duplicated or rewritten."
+    }
+  ],
+  "sourcePool": {
+    "029ad0bcade48ff32da51094a3fb245fd7d8324c4fb4dd20fb4b2614efc9618c": {
+      "sha256": "029ad0bcade48ff32da51094a3fb245fd7d8324c4fb4dd20fb4b2614efc9618c",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity =0.7.6;\npragma abicoder v2;\n\nimport '../interfaces/IMulticall.sol';\n\n/// @title Multicall\n/// @notice Enables calling multiple methods in a single call to the contract\nabstract contract Multicall is IMulticall {\n    /// @inheritdoc IMulticall\n    function multicall(bytes[] calldata data) public payable override returns (bytes[] memory results) {\n        results = new bytes[](data.length);\n        for (uint256 i = 0; i < data.length; i++) {\n            (bool success, bytes memory result) = address(this).delegatecall(data[i]);\n\n            if (!success) {\n                // Next 5 lines from https://ethereum.stackexchange.com/a/83577\n                if (result.length < 68) revert();\n                assembly {\n                    result := add(result, 0x04)\n                }\n                revert(abi.decode(result, (string)));\n            }\n\n            results[i] = result;\n        }\n    }\n}\n"
+    },
+    "fd259a304bdad5fd198ac0279109c6a97198869a2ae72121c7edd66cee91167f": {
+      "sha256": "fd259a304bdad5fd198ac0279109c6a97198869a2ae72121c7edd66cee91167f",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity >=0.7.5;\npragma abicoder v2;\n\n/// @title Multicall interface\n/// @notice Enables calling multiple methods in a single call to the contract\ninterface IMulticall {\n    /// @notice Call multiple functions in the current contract and return the data from all of them if they all succeed\n    /// @dev The `msg.value` should not be trusted for any method callable from multicall.\n    /// @param data The encoded function data for each of the calls to make to this contract\n    /// @return results The results from each of the calls passed in via data\n    function multicall(bytes[] calldata data) external payable returns (bytes[] memory results);\n}\n"
+    },
+    "68cef83e01906a13f4a2bb1c12a9e99fad3e957eea6ddbb54bac30ba3b06a436": {
+      "sha256": "68cef83e01906a13f4a2bb1c12a9e99fad3e957eea6ddbb54bac30ba3b06a436",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity >=0.7.5;\n\nimport '@openzeppelin/contracts/token/ERC20/IERC20.sol';\n\nimport '../interfaces/IPeripheryPayments.sol';\nimport '../interfaces/external/IWETH9.sol';\n\nimport '../libraries/TransferHelper.sol';\n\nimport './PeripheryImmutableState.sol';\n\nabstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableState {\n    receive() external payable {\n        require(msg.sender == WETH9, 'Not WETH9');\n    }\n\n    /// @inheritdoc IPeripheryPayments\n    function unwrapWETH9(uint256 amountMinimum, address recipient) public payable override {\n        uint256 balanceWETH9 = IWETH9(WETH9).balanceOf(address(this));\n        require(balanceWETH9 >= amountMinimum, 'Insufficient WETH9');\n\n        if (balanceWETH9 > 0) {\n            IWETH9(WETH9).withdraw(balanceWETH9);\n            TransferHelper.safeTransferETH(recipient, balanceWETH9);\n        }\n    }\n\n    /// @inheritdoc IPeripheryPayments\n    function sweepToken(\n        address token,\n        uint256 amountMinimum,\n        address recipient\n    ) public payable override {\n        uint256 balanceToken = IERC20(token).balanceOf(address(this));\n        require(balanceToken >= amountMinimum, 'Insufficient token');\n\n        if (balanceToken > 0) {\n            TransferHelper.safeTransfer(token, recipient, balanceToken);\n        }\n    }\n\n    /// @inheritdoc IPeripheryPayments\n    function refundETH() external payable override {\n        if (address(this).balance > 0) TransferHelper.safeTransferETH(msg.sender, address(this).balance);\n    }\n\n    /// @param token The token to pay\n    /// @param payer The entity that must pay\n    /// @param recipient The entity that will receive payment\n    /// @param value The amount to pay\n    function pay(\n        address token,\n        address payer,\n        address recipient,\n        uint256 value\n    ) internal {\n        if (token == WETH9 && address(this).balance >= value) {\n            // pay with WETH9\n            IWETH9(WETH9).deposit{value: value}(); // wrap only what is needed to pay\n            IWETH9(WETH9).transfer(recipient, value);\n        } else if (payer == address(this)) {\n            // pay with tokens already in the contract (for the exact input multihop case)\n            TransferHelper.safeTransfer(token, recipient, value);\n        } else {\n            // pull payment\n            TransferHelper.safeTransferFrom(token, payer, recipient, value);\n        }\n    }\n}\n"
+    },
+    "ee004c7154a817f4b8899e9ed963351791761bb52c5eed2ee196a6a311382f86": {
+      "sha256": "ee004c7154a817f4b8899e9ed963351791761bb52c5eed2ee196a6a311382f86",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity =0.7.6;\npragma abicoder v2;\n\nimport '@pancakeswap/v3-core/contracts/interfaces/IPancakeV3Factory.sol';\nimport '@pancakeswap/v3-core/contracts/interfaces/callback/IPancakeV3MintCallback.sol';\nimport '@pancakeswap/v3-core/contracts/libraries/TickMath.sol';\n\nimport '../libraries/PoolAddress.sol';\nimport '../libraries/CallbackValidation.sol';\nimport '../libraries/LiquidityAmounts.sol';\n\nimport './PeripheryPayments.sol';\nimport './PeripheryImmutableState.sol';\n\n/// @title Liquidity management functions\n/// @notice Internal functions for safely managing liquidity in PancakeSwap V3\nabstract contract LiquidityManagement is IPancakeV3MintCallback, PeripheryImmutableState, PeripheryPayments {\n    struct MintCallbackData {\n        PoolAddress.PoolKey poolKey;\n        address payer;\n    }\n\n    /// @inheritdoc IPancakeV3MintCallback\n    function pancakeV3MintCallback(\n        uint256 amount0Owed,\n        uint256 amount1Owed,\n        bytes calldata data\n    ) external override {\n        MintCallbackData memory decoded = abi.decode(data, (MintCallbackData));\n        CallbackValidation.verifyCallback(deployer, decoded.poolKey);\n\n        if (amount0Owed > 0) pay(decoded.poolKey.token0, decoded.payer, msg.sender, amount0Owed);\n        if (amount1Owed > 0) pay(decoded.poolKey.token1, decoded.payer, msg.sender, amount1Owed);\n    }\n\n    struct AddLiquidityParams {\n        address token0;\n        address token1;\n        uint24 fee;\n        address recipient;\n        int24 tickLower;\n        int24 tickUpper;\n        uint256 amount0Desired;\n        uint256 amount1Desired;\n        uint256 amount0Min;\n        uint256 amount1Min;\n    }\n\n    /// @notice Add liquidity to an initialized pool\n    function addLiquidity(AddLiquidityParams memory params)\n        internal\n        returns (\n            uint128 liquidity,\n            uint256 amount0,\n            uint256 amount1,\n            IPancakeV3Pool pool\n        )\n    {\n        PoolAddress.PoolKey memory poolKey =\n            PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});\n\n        pool = IPancakeV3Pool(PoolAddress.computeAddress(deployer, poolKey));\n\n        // compute the liquidity amount\n        {\n            (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();\n            uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(params.tickLower);\n            uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(params.tickUpper);\n\n            liquidity = LiquidityAmounts.getLiquidityForAmounts(\n                sqrtPriceX96,\n                sqrtRatioAX96,\n                sqrtRatioBX96,\n                params.amount0Desired,\n                params.amount1Desired\n            );\n        }\n\n        (amount0, amount1) = pool.mint(\n            params.recipient,\n            params.tickLower,\n            params.tickUpper,\n            liquidity,\n            abi.encode(MintCallbackData({poolKey: poolKey, payer: msg.sender}))\n        );\n\n        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, 'Price slippage check');\n    }\n}\n"
+    },
+    "f49775d339101d0ab836bc68fb283fc87f24ddcb73d9f70a777003b6e82f3e88": {
+      "sha256": "f49775d339101d0ab836bc68fb283fc87f24ddcb73d9f70a777003b6e82f3e88",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity =0.7.6;\npragma abicoder v2;\n\nimport '@pancakeswap/v3-core/contracts/interfaces/IPancakeV3Pool.sol';\nimport '@pancakeswap/v3-core/contracts/libraries/FixedPoint128.sol';\nimport '@pancakeswap/v3-core/contracts/libraries/FullMath.sol';\n\nimport './interfaces/INonfungiblePositionManager.sol';\nimport './interfaces/INonfungibleTokenPositionDescriptor.sol';\nimport './libraries/PositionKey.sol';\nimport './libraries/PoolAddress.sol';\nimport './base/LiquidityManagement.sol';\nimport './base/PeripheryImmutableState.sol';\nimport './base/Multicall.sol';\nimport './base/ERC721Permit.sol';\nimport './base/PeripheryValidation.sol';\nimport './base/SelfPermit.sol';\nimport './base/PoolInitializer.sol';\n\n/// @title NFT positions\n/// @notice Wraps Pancake V3 positions in the ERC721 non-fungible token interface\ncontract NonfungiblePositionManager is\n    INonfungiblePositionManager,\n    Multicall,\n    ERC721Permit,\n    PeripheryImmutableState,\n    PoolInitializer,\n    LiquidityManagement,\n    PeripheryValidation,\n    SelfPermit\n{\n    // details about the pancake position\n    struct Position {\n        // the nonce for permits\n        uint96 nonce;\n        // the address that is approved for spending this token\n        address operator;\n        // the ID of the pool with which this token is connected\n        uint80 poolId;\n        // the tick range of the position\n        int24 tickLower;\n        int24 tickUpper;\n        // the liquidity of the position\n        uint128 liquidity;\n        // the fee growth of the aggregate position as of the last action on the individual position\n        uint256 feeGrowthInside0LastX128;\n        uint256 feeGrowthInside1LastX128;\n        // how many uncollected tokens are owed to the position, as of the last computation\n        uint128 tokensOwed0;\n        uint128 tokensOwed1;\n    }\n\n    /// @dev IDs of pools assigned by this contract\n    mapping(address => uint80) private _poolIds;\n\n    /// @dev Pool keys by pool ID, to save on SSTOREs for position data\n    mapping(uint80 => PoolAddress.PoolKey) private _poolIdToPoolKey;\n\n    /// @dev The token ID position data\n    mapping(uint256 => Position) private _positions;\n\n    /// @dev The ID of the next token that will be minted. Skips 0\n    uint176 private _nextId = 1;\n    /// @dev The ID of the next pool that is used for the first time. Skips 0\n    uint80 private _nextPoolId = 1;\n\n    /// @dev The address of the token descriptor contract, which handles generating token URIs for position tokens\n    address private immutable _tokenDescriptor;\n\n    constructor(\n        address _deployer,\n        address _factory,\n        address _WETH9,\n        address _tokenDescriptor_\n    ) ERC721Permit('Pancake V3 Positions NFT-V1', 'PCS-V3-POS', '1') PeripheryImmutableState(_deployer, _factory, _WETH9) {\n        _tokenDescriptor = _tokenDescriptor_;\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function positions(uint256 tokenId)\n        external\n        view\n        override\n        returns (\n            uint96 nonce,\n            address operator,\n            address token0,\n            address token1,\n            uint24 fee,\n            int24 tickLower,\n            int24 tickUpper,\n            uint128 liquidity,\n            uint256 feeGrowthInside0LastX128,\n            uint256 feeGrowthInside1LastX128,\n            uint128 tokensOwed0,\n            uint128 tokensOwed1\n        )\n    {\n        Position memory position = _positions[tokenId];\n        require(position.poolId != 0, 'Invalid token ID');\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n        return (\n            position.nonce,\n            position.operator,\n            poolKey.token0,\n            poolKey.token1,\n            poolKey.fee,\n            position.tickLower,\n            position.tickUpper,\n            position.liquidity,\n            position.feeGrowthInside0LastX128,\n            position.feeGrowthInside1LastX128,\n            position.tokensOwed0,\n            position.tokensOwed1\n        );\n    }\n\n    /// @dev Caches a pool key\n    function cachePoolKey(address pool, PoolAddress.PoolKey memory poolKey) private returns (uint80 poolId) {\n        poolId = _poolIds[pool];\n        if (poolId == 0) {\n            _poolIds[pool] = (poolId = _nextPoolId++);\n            _poolIdToPoolKey[poolId] = poolKey;\n        }\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function mint(MintParams calldata params)\n        external\n        payable\n        override\n        checkDeadline(params.deadline)\n        returns (\n            uint256 tokenId,\n            uint128 liquidity,\n            uint256 amount0,\n            uint256 amount1\n        )\n    {\n        IPancakeV3Pool pool;\n        (liquidity, amount0, amount1, pool) = addLiquidity(\n            AddLiquidityParams({\n                token0: params.token0,\n                token1: params.token1,\n                fee: params.fee,\n                recipient: address(this),\n                tickLower: params.tickLower,\n                tickUpper: params.tickUpper,\n                amount0Desired: params.amount0Desired,\n                amount1Desired: params.amount1Desired,\n                amount0Min: params.amount0Min,\n                amount1Min: params.amount1Min\n            })\n        );\n\n        _mint(params.recipient, (tokenId = _nextId++));\n\n        bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);\n        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);\n\n        // idempotent set\n        uint80 poolId =\n            cachePoolKey(\n                address(pool),\n                PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee})\n            );\n\n        _positions[tokenId] = Position({\n            nonce: 0,\n            operator: address(0),\n            poolId: poolId,\n            tickLower: params.tickLower,\n            tickUpper: params.tickUpper,\n            liquidity: liquidity,\n            feeGrowthInside0LastX128: feeGrowthInside0LastX128,\n            feeGrowthInside1LastX128: feeGrowthInside1LastX128,\n            tokensOwed0: 0,\n            tokensOwed1: 0\n        });\n\n        emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);\n    }\n\n    modifier isAuthorizedForToken(uint256 tokenId) {\n        require(_isApprovedOrOwner(msg.sender, tokenId), 'Not approved');\n        _;\n    }\n\n    function tokenURI(uint256 tokenId) public view override(ERC721, IERC721Metadata) returns (string memory) {\n        require(_exists(tokenId));\n        return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId);\n    }\n\n    // save bytecode by removing implementation of unused method\n    function baseURI() public pure override returns (string memory) {}\n\n    /// @inheritdoc INonfungiblePositionManager\n    function increaseLiquidity(IncreaseLiquidityParams calldata params)\n        external\n        payable\n        override\n        checkDeadline(params.deadline)\n        returns (\n            uint128 liquidity,\n            uint256 amount0,\n            uint256 amount1\n        )\n    {\n        Position storage position = _positions[params.tokenId];\n\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n\n        IPancakeV3Pool pool;\n        (liquidity, amount0, amount1, pool) = addLiquidity(\n            AddLiquidityParams({\n                token0: poolKey.token0,\n                token1: poolKey.token1,\n                fee: poolKey.fee,\n                tickLower: position.tickLower,\n                tickUpper: position.tickUpper,\n                amount0Desired: params.amount0Desired,\n                amount1Desired: params.amount1Desired,\n                amount0Min: params.amount0Min,\n                amount1Min: params.amount1Min,\n                recipient: address(this)\n            })\n        );\n\n        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);\n\n        // this is now updated to the current transaction\n        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);\n\n        position.tokensOwed0 += uint128(\n            FullMath.mulDiv(\n                feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,\n                position.liquidity,\n                FixedPoint128.Q128\n            )\n        );\n        position.tokensOwed1 += uint128(\n            FullMath.mulDiv(\n                feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,\n                position.liquidity,\n                FixedPoint128.Q128\n            )\n        );\n\n        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;\n        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;\n        position.liquidity += liquidity;\n\n        emit IncreaseLiquidity(params.tokenId, liquidity, amount0, amount1);\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function decreaseLiquidity(DecreaseLiquidityParams calldata params)\n        external\n        payable\n        override\n        isAuthorizedForToken(params.tokenId)\n        checkDeadline(params.deadline)\n        returns (uint256 amount0, uint256 amount1)\n    {\n        require(params.liquidity > 0);\n        Position storage position = _positions[params.tokenId];\n\n        uint128 positionLiquidity = position.liquidity;\n        require(positionLiquidity >= params.liquidity);\n\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n        IPancakeV3Pool pool = IPancakeV3Pool(PoolAddress.computeAddress(deployer, poolKey));\n        (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, params.liquidity);\n\n        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, 'Price slippage check');\n\n        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);\n        // this is now updated to the current transaction\n        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);\n\n        position.tokensOwed0 +=\n            uint128(amount0) +\n            uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,\n                    positionLiquidity,\n                    FixedPoint128.Q128\n                )\n            );\n        position.tokensOwed1 +=\n            uint128(amount1) +\n            uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,\n                    positionLiquidity,\n                    FixedPoint128.Q128\n                )\n            );\n\n        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;\n        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;\n        // subtraction is safe because we checked positionLiquidity is gte params.liquidity\n        position.liquidity = positionLiquidity - params.liquidity;\n\n        emit DecreaseLiquidity(params.tokenId, params.liquidity, amount0, amount1);\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function collect(CollectParams calldata params)\n        external\n        payable\n        override\n        isAuthorizedForToken(params.tokenId)\n        returns (uint256 amount0, uint256 amount1)\n    {\n        require(params.amount0Max > 0 || params.amount1Max > 0);\n        // allow collecting to the nft position manager address with address 0\n        address recipient = params.recipient == address(0) ? address(this) : params.recipient;\n\n        Position storage position = _positions[params.tokenId];\n\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n\n        IPancakeV3Pool pool = IPancakeV3Pool(PoolAddress.computeAddress(deployer, poolKey));\n\n        (uint128 tokensOwed0, uint128 tokensOwed1) = (position.tokensOwed0, position.tokensOwed1);\n\n        // trigger an update of the position fees owed and fee growth snapshots if it has any liquidity\n        if (position.liquidity > 0) {\n            pool.burn(position.tickLower, position.tickUpper, 0);\n            (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) =\n                pool.positions(PositionKey.compute(address(this), position.tickLower, position.tickUpper));\n\n            tokensOwed0 += uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,\n                    position.liquidity,\n                    FixedPoint128.Q128\n                )\n            );\n            tokensOwed1 += uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,\n                    position.liquidity,\n                    FixedPoint128.Q128\n                )\n            );\n\n            position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;\n            position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;\n        }\n\n        // compute the arguments to give to the pool#collect method\n        (uint128 amount0Collect, uint128 amount1Collect) =\n            (\n                params.amount0Max > tokensOwed0 ? tokensOwed0 : params.amount0Max,\n                params.amount1Max > tokensOwed1 ? tokensOwed1 : params.amount1Max\n            );\n\n        // the actual amounts collected are returned\n        (amount0, amount1) = pool.collect(\n            recipient,\n            position.tickLower,\n            position.tickUpper,\n            amount0Collect,\n            amount1Collect\n        );\n\n        // sometimes there will be a few less wei than expected due to rounding down in core, but we just subtract the full amount expected\n        // instead of the actual amount so we can burn the token\n        (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - amount0Collect, tokensOwed1 - amount1Collect);\n\n        emit Collect(params.tokenId, recipient, amount0Collect, amount1Collect);\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function burn(uint256 tokenId) external payable override isAuthorizedForToken(tokenId) {\n        Position storage position = _positions[tokenId];\n        require(position.liquidity == 0 && position.tokensOwed0 == 0 && position.tokensOwed1 == 0, 'Not cleared');\n        delete _positions[tokenId];\n        _burn(tokenId);\n    }\n\n    function _getAndIncrementNonce(uint256 tokenId) internal override returns (uint256) {\n        return uint256(_positions[tokenId].nonce++);\n    }\n\n    /// @inheritdoc IERC721\n    function getApproved(uint256 tokenId) public view override(ERC721, IERC721) returns (address) {\n        require(_exists(tokenId), 'ERC721: approved query for nonexistent token');\n\n        return _positions[tokenId].operator;\n    }\n\n    /// @dev Overrides _approve to use the operator in the position, which is packed with the position permit nonce\n    function _approve(address to, uint256 tokenId) internal override(ERC721) {\n        _positions[tokenId].operator = to;\n        emit Approval(ownerOf(tokenId), to, tokenId);\n    }\n}\n"
+    },
+    "f4611f54f13d0599648bf88fc5bba7fe8eb3bfc27f898c5cc0e2f27272ebca99": {
+      "sha256": "f4611f54f13d0599648bf88fc5bba7fe8eb3bfc27f898c5cc0e2f27272ebca99",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity =0.7.6;\n\nimport '../interfaces/IPeripheryImmutableState.sol';\n\n/// @title Immutable state\n/// @notice Immutable state used by periphery contracts\nabstract contract PeripheryImmutableState is IPeripheryImmutableState {\n    /// @inheritdoc IPeripheryImmutableState\n    address public immutable override deployer;\n    /// @inheritdoc IPeripheryImmutableState\n    address public immutable override factory;\n    /// @inheritdoc IPeripheryImmutableState\n    address public immutable override WETH9;\n\n    constructor(address _deployer, address _factory, address _WETH9) {\n        deployer = _deployer;\n        factory = _factory;\n        WETH9 = _WETH9;\n    }\n}\n"
+    },
+    "b328d7af0918b75e57636cdb701c9273a4f9fac3e96f13d78edf24f62cad22c4": {
+      "sha256": "b328d7af0918b75e57636cdb701c9273a4f9fac3e96f13d78edf24f62cad22c4",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity =0.7.6;\npragma abicoder v2;\n\nimport '@pancakeswap/v3-core/contracts/interfaces/IDackieV3Factory.sol';\nimport '@pancakeswap/v3-core/contracts/interfaces/callback/IDackieV3MintCallback.sol';\nimport '@pancakeswap/v3-core/contracts/libraries/TickMath.sol';\n\nimport '../libraries/PoolAddress.sol';\nimport '../libraries/CallbackValidation.sol';\nimport '../libraries/LiquidityAmounts.sol';\n\nimport './PeripheryPayments.sol';\nimport './PeripheryImmutableState.sol';\n\n/// @title Liquidity management functions\n/// @notice Internal functions for safely managing liquidity in DackieSwap V3\nabstract contract LiquidityManagement is IDackieV3MintCallback, PeripheryImmutableState, PeripheryPayments {\n    struct MintCallbackData {\n        PoolAddress.PoolKey poolKey;\n        address payer;\n    }\n\n    /// @inheritdoc IDackieV3MintCallback\n    function pancakeV3MintCallback(\n        uint256 amount0Owed,\n        uint256 amount1Owed,\n        bytes calldata data\n    ) external override {\n        MintCallbackData memory decoded = abi.decode(data, (MintCallbackData));\n        CallbackValidation.verifyCallback(deployer, decoded.poolKey);\n\n        if (amount0Owed > 0) pay(decoded.poolKey.token0, decoded.payer, msg.sender, amount0Owed);\n        if (amount1Owed > 0) pay(decoded.poolKey.token1, decoded.payer, msg.sender, amount1Owed);\n    }\n\n    struct AddLiquidityParams {\n        address token0;\n        address token1;\n        uint24 fee;\n        address recipient;\n        int24 tickLower;\n        int24 tickUpper;\n        uint256 amount0Desired;\n        uint256 amount1Desired;\n        uint256 amount0Min;\n        uint256 amount1Min;\n    }\n\n    /// @notice Add liquidity to an initialized pool\n    function addLiquidity(AddLiquidityParams memory params)\n        internal\n        returns (\n            uint128 liquidity,\n            uint256 amount0,\n            uint256 amount1,\n            IDackieV3Pool pool\n        )\n    {\n        PoolAddress.PoolKey memory poolKey =\n            PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});\n\n        pool = IDackieV3Pool(PoolAddress.computeAddress(deployer, poolKey));\n\n        // compute the liquidity amount\n        {\n            (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();\n            uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(params.tickLower);\n            uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(params.tickUpper);\n\n            liquidity = LiquidityAmounts.getLiquidityForAmounts(\n                sqrtPriceX96,\n                sqrtRatioAX96,\n                sqrtRatioBX96,\n                params.amount0Desired,\n                params.amount1Desired\n            );\n        }\n\n        (amount0, amount1) = pool.mint(\n            params.recipient,\n            params.tickLower,\n            params.tickUpper,\n            liquidity,\n            abi.encode(MintCallbackData({poolKey: poolKey, payer: msg.sender}))\n        );\n\n        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, 'Price slippage check');\n    }\n}\n"
+    },
+    "b286b395aaac2b478ea5b79e48693d477704e036de7878338d0b007917549562": {
+      "sha256": "b286b395aaac2b478ea5b79e48693d477704e036de7878338d0b007917549562",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity =0.7.6;\npragma abicoder v2;\n\nimport '@pancakeswap/v3-core/contracts/interfaces/IDackieV3Pool.sol';\nimport '@pancakeswap/v3-core/contracts/libraries/FixedPoint128.sol';\nimport '@pancakeswap/v3-core/contracts/libraries/FullMath.sol';\n\nimport './interfaces/INonfungiblePositionManager.sol';\nimport './interfaces/INonfungibleTokenPositionDescriptor.sol';\nimport './libraries/PositionKey.sol';\nimport './libraries/PoolAddress.sol';\nimport './base/LiquidityManagement.sol';\nimport './base/PeripheryImmutableState.sol';\nimport './base/Multicall.sol';\nimport './base/ERC721Permit.sol';\nimport './base/PeripheryValidation.sol';\nimport './base/SelfPermit.sol';\nimport './base/PoolInitializer.sol';\n\n/// @title NFT positions\n/// @notice Wraps Dackie V3 positions in the ERC721 non-fungible token interface\ncontract NonfungiblePositionManager is\n    INonfungiblePositionManager,\n    Multicall,\n    ERC721Permit,\n    PeripheryImmutableState,\n    PoolInitializer,\n    LiquidityManagement,\n    PeripheryValidation,\n    SelfPermit\n{\n    // details about the pancake position\n    struct Position {\n        // the nonce for permits\n        uint96 nonce;\n        // the address that is approved for spending this token\n        address operator;\n        // the ID of the pool with which this token is connected\n        uint80 poolId;\n        // the tick range of the position\n        int24 tickLower;\n        int24 tickUpper;\n        // the liquidity of the position\n        uint128 liquidity;\n        // the fee growth of the aggregate position as of the last action on the individual position\n        uint256 feeGrowthInside0LastX128;\n        uint256 feeGrowthInside1LastX128;\n        // how many uncollected tokens are owed to the position, as of the last computation\n        uint128 tokensOwed0;\n        uint128 tokensOwed1;\n    }\n\n    /// @dev IDs of pools assigned by this contract\n    mapping(address => uint80) private _poolIds;\n\n    /// @dev Pool keys by pool ID, to save on SSTOREs for position data\n    mapping(uint80 => PoolAddress.PoolKey) private _poolIdToPoolKey;\n\n    /// @dev The token ID position data\n    mapping(uint256 => Position) private _positions;\n\n    /// @dev The ID of the next token that will be minted. Skips 0\n    uint176 private _nextId = 1;\n    /// @dev The ID of the next pool that is used for the first time. Skips 0\n    uint80 private _nextPoolId = 1;\n\n    /// @dev The address of the token descriptor contract, which handles generating token URIs for position tokens\n    address private immutable _tokenDescriptor;\n\n    constructor(\n        address _deployer,\n        address _factory,\n        address _WETH9,\n        address _tokenDescriptor_\n    ) ERC721Permit('DackieSwap Positions NFT', 'DKS-CL-POS', '1') PeripheryImmutableState(_deployer, _factory, _WETH9) {\n        _tokenDescriptor = _tokenDescriptor_;\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function positions(uint256 tokenId)\n        external\n        view\n        override\n        returns (\n            uint96 nonce,\n            address operator,\n            address token0,\n            address token1,\n            uint24 fee,\n            int24 tickLower,\n            int24 tickUpper,\n            uint128 liquidity,\n            uint256 feeGrowthInside0LastX128,\n            uint256 feeGrowthInside1LastX128,\n            uint128 tokensOwed0,\n            uint128 tokensOwed1\n        )\n    {\n        Position memory position = _positions[tokenId];\n        require(position.poolId != 0, 'Invalid token ID');\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n        return (\n            position.nonce,\n            position.operator,\n            poolKey.token0,\n            poolKey.token1,\n            poolKey.fee,\n            position.tickLower,\n            position.tickUpper,\n            position.liquidity,\n            position.feeGrowthInside0LastX128,\n            position.feeGrowthInside1LastX128,\n            position.tokensOwed0,\n            position.tokensOwed1\n        );\n    }\n\n    /// @dev Caches a pool key\n    function cachePoolKey(address pool, PoolAddress.PoolKey memory poolKey) private returns (uint80 poolId) {\n        poolId = _poolIds[pool];\n        if (poolId == 0) {\n            _poolIds[pool] = (poolId = _nextPoolId++);\n            _poolIdToPoolKey[poolId] = poolKey;\n        }\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function mint(MintParams calldata params)\n        external\n        payable\n        override\n        checkDeadline(params.deadline)\n        returns (\n            uint256 tokenId,\n            uint128 liquidity,\n            uint256 amount0,\n            uint256 amount1\n        )\n    {\n        IDackieV3Pool pool;\n        (liquidity, amount0, amount1, pool) = addLiquidity(\n            AddLiquidityParams({\n                token0: params.token0,\n                token1: params.token1,\n                fee: params.fee,\n                recipient: address(this),\n                tickLower: params.tickLower,\n                tickUpper: params.tickUpper,\n                amount0Desired: params.amount0Desired,\n                amount1Desired: params.amount1Desired,\n                amount0Min: params.amount0Min,\n                amount1Min: params.amount1Min\n            })\n        );\n\n        _mint(params.recipient, (tokenId = _nextId++));\n\n        bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);\n        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);\n\n        // idempotent set\n        uint80 poolId =\n            cachePoolKey(\n                address(pool),\n                PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee})\n            );\n\n        _positions[tokenId] = Position({\n            nonce: 0,\n            operator: address(0),\n            poolId: poolId,\n            tickLower: params.tickLower,\n            tickUpper: params.tickUpper,\n            liquidity: liquidity,\n            feeGrowthInside0LastX128: feeGrowthInside0LastX128,\n            feeGrowthInside1LastX128: feeGrowthInside1LastX128,\n            tokensOwed0: 0,\n            tokensOwed1: 0\n        });\n\n        emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);\n    }\n\n    modifier isAuthorizedForToken(uint256 tokenId) {\n        require(_isApprovedOrOwner(msg.sender, tokenId), 'Not approved');\n        _;\n    }\n\n    function tokenURI(uint256 tokenId) public view override(ERC721, IERC721Metadata) returns (string memory) {\n        require(_exists(tokenId));\n        return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId);\n    }\n\n    // save bytecode by removing implementation of unused method\n    function baseURI() public pure override returns (string memory) {}\n\n    /// @inheritdoc INonfungiblePositionManager\n    function increaseLiquidity(IncreaseLiquidityParams calldata params)\n        external\n        payable\n        override\n        checkDeadline(params.deadline)\n        returns (\n            uint128 liquidity,\n            uint256 amount0,\n            uint256 amount1\n        )\n    {\n        Position storage position = _positions[params.tokenId];\n\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n\n        IDackieV3Pool pool;\n        (liquidity, amount0, amount1, pool) = addLiquidity(\n            AddLiquidityParams({\n                token0: poolKey.token0,\n                token1: poolKey.token1,\n                fee: poolKey.fee,\n                tickLower: position.tickLower,\n                tickUpper: position.tickUpper,\n                amount0Desired: params.amount0Desired,\n                amount1Desired: params.amount1Desired,\n                amount0Min: params.amount0Min,\n                amount1Min: params.amount1Min,\n                recipient: address(this)\n            })\n        );\n\n        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);\n\n        // this is now updated to the current transaction\n        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);\n\n        position.tokensOwed0 += uint128(\n            FullMath.mulDiv(\n                feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,\n                position.liquidity,\n                FixedPoint128.Q128\n            )\n        );\n        position.tokensOwed1 += uint128(\n            FullMath.mulDiv(\n                feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,\n                position.liquidity,\n                FixedPoint128.Q128\n            )\n        );\n\n        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;\n        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;\n        position.liquidity += liquidity;\n\n        emit IncreaseLiquidity(params.tokenId, liquidity, amount0, amount1);\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function decreaseLiquidity(DecreaseLiquidityParams calldata params)\n        external\n        payable\n        override\n        isAuthorizedForToken(params.tokenId)\n        checkDeadline(params.deadline)\n        returns (uint256 amount0, uint256 amount1)\n    {\n        require(params.liquidity > 0);\n        Position storage position = _positions[params.tokenId];\n\n        uint128 positionLiquidity = position.liquidity;\n        require(positionLiquidity >= params.liquidity);\n\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n        IDackieV3Pool pool = IDackieV3Pool(PoolAddress.computeAddress(deployer, poolKey));\n        (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, params.liquidity);\n\n        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, 'Price slippage check');\n\n        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);\n        // this is now updated to the current transaction\n        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);\n\n        position.tokensOwed0 +=\n            uint128(amount0) +\n            uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,\n                    positionLiquidity,\n                    FixedPoint128.Q128\n                )\n            );\n        position.tokensOwed1 +=\n            uint128(amount1) +\n            uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,\n                    positionLiquidity,\n                    FixedPoint128.Q128\n                )\n            );\n\n        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;\n        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;\n        // subtraction is safe because we checked positionLiquidity is gte params.liquidity\n        position.liquidity = positionLiquidity - params.liquidity;\n\n        emit DecreaseLiquidity(params.tokenId, params.liquidity, amount0, amount1);\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function collect(CollectParams calldata params)\n        external\n        payable\n        override\n        isAuthorizedForToken(params.tokenId)\n        returns (uint256 amount0, uint256 amount1)\n    {\n        require(params.amount0Max > 0 || params.amount1Max > 0);\n        // allow collecting to the nft position manager address with address 0\n        address recipient = params.recipient == address(0) ? address(this) : params.recipient;\n\n        Position storage position = _positions[params.tokenId];\n\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n\n        IDackieV3Pool pool = IDackieV3Pool(PoolAddress.computeAddress(deployer, poolKey));\n\n        (uint128 tokensOwed0, uint128 tokensOwed1) = (position.tokensOwed0, position.tokensOwed1);\n\n        // trigger an update of the position fees owed and fee growth snapshots if it has any liquidity\n        if (position.liquidity > 0) {\n            pool.burn(position.tickLower, position.tickUpper, 0);\n            (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) =\n                pool.positions(PositionKey.compute(address(this), position.tickLower, position.tickUpper));\n\n            tokensOwed0 += uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,\n                    position.liquidity,\n                    FixedPoint128.Q128\n                )\n            );\n            tokensOwed1 += uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,\n                    position.liquidity,\n                    FixedPoint128.Q128\n                )\n            );\n\n            position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;\n            position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;\n        }\n\n        // compute the arguments to give to the pool#collect method\n        (uint128 amount0Collect, uint128 amount1Collect) =\n            (\n                params.amount0Max > tokensOwed0 ? tokensOwed0 : params.amount0Max,\n                params.amount1Max > tokensOwed1 ? tokensOwed1 : params.amount1Max\n            );\n\n        // the actual amounts collected are returned\n        (amount0, amount1) = pool.collect(\n            recipient,\n            position.tickLower,\n            position.tickUpper,\n            amount0Collect,\n            amount1Collect\n        );\n\n        // sometimes there will be a few less wei than expected due to rounding down in core, but we just subtract the full amount expected\n        // instead of the actual amount so we can burn the token\n        (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - amount0Collect, tokensOwed1 - amount1Collect);\n\n        emit Collect(params.tokenId, recipient, amount0Collect, amount1Collect);\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function burn(uint256 tokenId) external payable override isAuthorizedForToken(tokenId) {\n        Position storage position = _positions[tokenId];\n        require(position.liquidity == 0 && position.tokensOwed0 == 0 && position.tokensOwed1 == 0, 'Not cleared');\n        delete _positions[tokenId];\n        _burn(tokenId);\n    }\n\n    function _getAndIncrementNonce(uint256 tokenId) internal override returns (uint256) {\n        return uint256(_positions[tokenId].nonce++);\n    }\n\n    /// @inheritdoc IERC721\n    function getApproved(uint256 tokenId) public view override(ERC721, IERC721) returns (address) {\n        require(_exists(tokenId), 'ERC721: approved query for nonexistent token');\n\n        return _positions[tokenId].operator;\n    }\n\n    /// @dev Overrides _approve to use the operator in the position, which is packed with the position permit nonce\n    function _approve(address to, uint256 tokenId) internal override(ERC721) {\n        _positions[tokenId].operator = to;\n        emit Approval(ownerOf(tokenId), to, tokenId);\n    }\n}\n"
+    },
+    "f84e57c29d805f8bed2f372c8e17330ee33fa8802c836577857e8021509030a8": {
+      "sha256": "f84e57c29d805f8bed2f372c8e17330ee33fa8802c836577857e8021509030a8",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity =0.7.6;\npragma abicoder v2;\n\nimport \"@pancakeswap/v3-core/contracts/interfaces/IPancakeV3Pool.sol\";\nimport \"@pancakeswap/v3-core/contracts/libraries/FixedPoint128.sol\";\nimport \"@pancakeswap/v3-core/contracts/libraries/FullMath.sol\";\n\nimport \"./interfaces/INonfungiblePositionManager.sol\";\nimport \"./interfaces/INonfungibleTokenPositionDescriptor.sol\";\nimport \"./libraries/PositionKey.sol\";\nimport \"./libraries/PoolAddress.sol\";\nimport \"./base/LiquidityManagement.sol\";\nimport \"./base/PeripheryImmutableState.sol\";\nimport \"./base/Multicall.sol\";\nimport \"./base/ERC721Permit.sol\";\nimport \"./base/PeripheryValidation.sol\";\nimport \"./base/SelfPermit.sol\";\nimport \"./base/PoolInitializer.sol\";\n\n/// @title NFT positions\n/// @notice Wraps Pancake V3 positions in the ERC721 non-fungible token interface\ncontract NonfungiblePositionManager is\n    INonfungiblePositionManager,\n    Multicall,\n    ERC721Permit,\n    PeripheryImmutableState,\n    PoolInitializer,\n    LiquidityManagement,\n    PeripheryValidation,\n    SelfPermit\n{\n    // details about the pancake position\n    struct Position {\n        // the nonce for permits\n        uint96 nonce;\n        // the address that is approved for spending this token\n        address operator;\n        // the ID of the pool with which this token is connected\n        uint80 poolId;\n        // the tick range of the position\n        int24 tickLower;\n        int24 tickUpper;\n        // the liquidity of the position\n        uint128 liquidity;\n        // the fee growth of the aggregate position as of the last action on the individual position\n        uint256 feeGrowthInside0LastX128;\n        uint256 feeGrowthInside1LastX128;\n        // how many uncollected tokens are owed to the position, as of the last computation\n        uint128 tokensOwed0;\n        uint128 tokensOwed1;\n    }\n\n    /// @dev IDs of pools assigned by this contract\n    mapping(address => uint80) private _poolIds;\n\n    /// @dev Pool keys by pool ID, to save on SSTOREs for position data\n    mapping(uint80 => PoolAddress.PoolKey) private _poolIdToPoolKey;\n\n    /// @dev The token ID position data\n    mapping(uint256 => Position) private _positions;\n\n    /// @dev The ID of the next token that will be minted. Skips 0\n    uint176 private _nextId = 1;\n    /// @dev The ID of the next pool that is used for the first time. Skips 0\n    uint80 private _nextPoolId = 1;\n\n    /// @dev The address of the token descriptor contract, which handles generating token URIs for position tokens\n    address private immutable _tokenDescriptor;\n\n    constructor(address _deployer, address _factory, address _WETH9, address _tokenDescriptor_)\n        ERC721Permit(\"Pancake V3 Positions NFT-V1\", \"PCS-V3-POS\", \"1\")\n        PeripheryImmutableState(_deployer, _factory, _WETH9)\n    {\n        _tokenDescriptor = _tokenDescriptor_;\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function positions(uint256 tokenId)\n        external\n        view\n        override\n        returns (\n            uint96 nonce,\n            address operator,\n            address token0,\n            address token1,\n            uint24 fee,\n            int24 tickLower,\n            int24 tickUpper,\n            uint128 liquidity,\n            uint256 feeGrowthInside0LastX128,\n            uint256 feeGrowthInside1LastX128,\n            uint128 tokensOwed0,\n            uint128 tokensOwed1\n        )\n    {\n        Position memory position = _positions[tokenId];\n        require(position.poolId != 0, \"Invalid token ID\");\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n        return (\n            position.nonce,\n            position.operator,\n            poolKey.token0,\n            poolKey.token1,\n            poolKey.fee,\n            position.tickLower,\n            position.tickUpper,\n            position.liquidity,\n            position.feeGrowthInside0LastX128,\n            position.feeGrowthInside1LastX128,\n            position.tokensOwed0,\n            position.tokensOwed1\n        );\n    }\n\n    /// @dev Caches a pool key\n    function cachePoolKey(address pool, PoolAddress.PoolKey memory poolKey) private returns (uint80 poolId) {\n        poolId = _poolIds[pool];\n        if (poolId == 0) {\n            _poolIds[pool] = (poolId = _nextPoolId++);\n            _poolIdToPoolKey[poolId] = poolKey;\n        }\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function mint(MintParams calldata params)\n        external\n        payable\n        override\n        checkDeadline(params.deadline)\n        returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)\n    {\n        IPancakeV3Pool pool;\n        (liquidity, amount0, amount1, pool) = addLiquidity(\n            AddLiquidityParams({\n                token0: params.token0,\n                token1: params.token1,\n                fee: params.fee,\n                recipient: address(this),\n                tickLower: params.tickLower,\n                tickUpper: params.tickUpper,\n                amount0Desired: params.amount0Desired,\n                amount1Desired: params.amount1Desired,\n                amount0Min: params.amount0Min,\n                amount1Min: params.amount1Min\n            })\n        );\n\n        _mint(params.recipient, (tokenId = _nextId++));\n\n        bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);\n        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128,,) = pool.positions(positionKey);\n\n        // idempotent set\n        uint80 poolId = cachePoolKey(\n            address(pool), PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee})\n        );\n\n        _positions[tokenId] = Position({\n            nonce: 0,\n            operator: address(0),\n            poolId: poolId,\n            tickLower: params.tickLower,\n            tickUpper: params.tickUpper,\n            liquidity: liquidity,\n            feeGrowthInside0LastX128: feeGrowthInside0LastX128,\n            feeGrowthInside1LastX128: feeGrowthInside1LastX128,\n            tokensOwed0: 0,\n            tokensOwed1: 0\n        });\n\n        emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);\n    }\n\n    modifier isAuthorizedForToken(uint256 tokenId) {\n        require(_isApprovedOrOwner(msg.sender, tokenId), \"Not approved\");\n        _;\n    }\n\n    function tokenURI(uint256 tokenId) public view override(ERC721, IERC721Metadata) returns (string memory) {\n        require(_exists(tokenId));\n        return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId);\n    }\n\n    // save bytecode by removing implementation of unused method\n    function baseURI() public pure override returns (string memory) {}\n\n    /// @inheritdoc INonfungiblePositionManager\n    function increaseLiquidity(IncreaseLiquidityParams calldata params)\n        external\n        payable\n        override\n        checkDeadline(params.deadline)\n        returns (uint128 liquidity, uint256 amount0, uint256 amount1)\n    {\n        Position storage position = _positions[params.tokenId];\n\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n\n        IPancakeV3Pool pool;\n        (liquidity, amount0, amount1, pool) = addLiquidity(\n            AddLiquidityParams({\n                token0: poolKey.token0,\n                token1: poolKey.token1,\n                fee: poolKey.fee,\n                tickLower: position.tickLower,\n                tickUpper: position.tickUpper,\n                amount0Desired: params.amount0Desired,\n                amount1Desired: params.amount1Desired,\n                amount0Min: params.amount0Min,\n                amount1Min: params.amount1Min,\n                recipient: address(this)\n            })\n        );\n\n        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);\n\n        // this is now updated to the current transaction\n        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128,,) = pool.positions(positionKey);\n\n        position.tokensOwed0 += uint128(\n            FullMath.mulDiv(\n                feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128, position.liquidity, FixedPoint128.Q128\n            )\n        );\n        position.tokensOwed1 += uint128(\n            FullMath.mulDiv(\n                feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128, position.liquidity, FixedPoint128.Q128\n            )\n        );\n\n        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;\n        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;\n        position.liquidity += liquidity;\n\n        emit IncreaseLiquidity(params.tokenId, liquidity, amount0, amount1);\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function decreaseLiquidity(DecreaseLiquidityParams calldata params)\n        external\n        payable\n        override\n        isAuthorizedForToken(params.tokenId)\n        checkDeadline(params.deadline)\n        returns (uint256 amount0, uint256 amount1)\n    {\n        require(params.liquidity > 0);\n        Position storage position = _positions[params.tokenId];\n\n        uint128 positionLiquidity = position.liquidity;\n        require(positionLiquidity >= params.liquidity);\n\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n        IPancakeV3Pool pool = IPancakeV3Pool(PoolAddress.computeAddress(deployer, poolKey));\n        (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, params.liquidity);\n\n        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, \"Price slippage check\");\n\n        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);\n        // this is now updated to the current transaction\n        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128,,) = pool.positions(positionKey);\n\n        position.tokensOwed0 += uint128(amount0)\n            + uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128, positionLiquidity, FixedPoint128.Q128\n                )\n            );\n        position.tokensOwed1 += uint128(amount1)\n            + uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128, positionLiquidity, FixedPoint128.Q128\n                )\n            );\n\n        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;\n        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;\n        // subtraction is safe because we checked positionLiquidity is gte params.liquidity\n        position.liquidity = positionLiquidity - params.liquidity;\n\n        emit DecreaseLiquidity(params.tokenId, params.liquidity, amount0, amount1);\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function collect(CollectParams calldata params)\n        external\n        payable\n        override\n        isAuthorizedForToken(params.tokenId)\n        returns (uint256 amount0, uint256 amount1)\n    {\n        require(params.amount0Max > 0 || params.amount1Max > 0);\n        // allow collecting to the nft position manager address with address 0\n        address recipient = params.recipient == address(0) ? address(this) : params.recipient;\n\n        Position storage position = _positions[params.tokenId];\n\n        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];\n\n        IPancakeV3Pool pool = IPancakeV3Pool(PoolAddress.computeAddress(deployer, poolKey));\n\n        (uint128 tokensOwed0, uint128 tokensOwed1) = (position.tokensOwed0, position.tokensOwed1);\n\n        // trigger an update of the position fees owed and fee growth snapshots if it has any liquidity\n        if (position.liquidity > 0) {\n            pool.burn(position.tickLower, position.tickUpper, 0);\n            (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128,,) =\n                pool.positions(PositionKey.compute(address(this), position.tickLower, position.tickUpper));\n\n            tokensOwed0 += uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128, position.liquidity, FixedPoint128.Q128\n                )\n            );\n            tokensOwed1 += uint128(\n                FullMath.mulDiv(\n                    feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128, position.liquidity, FixedPoint128.Q128\n                )\n            );\n\n            position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;\n            position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;\n        }\n\n        // compute the arguments to give to the pool#collect method\n        (uint128 amount0Collect, uint128 amount1Collect) = (\n            params.amount0Max > tokensOwed0 ? tokensOwed0 : params.amount0Max,\n            params.amount1Max > tokensOwed1 ? tokensOwed1 : params.amount1Max\n        );\n\n        // the actual amounts collected are returned\n        (amount0, amount1) =\n            pool.collect(recipient, position.tickLower, position.tickUpper, amount0Collect, amount1Collect);\n\n        // sometimes there will be a few less wei than expected due to rounding down in core, but we just subtract the full amount expected\n        // instead of the actual amount so we can burn the token\n        (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - amount0Collect, tokensOwed1 - amount1Collect);\n\n        emit Collect(params.tokenId, recipient, amount0Collect, amount1Collect);\n    }\n\n    /// @inheritdoc INonfungiblePositionManager\n    function burn(uint256 tokenId) external payable override isAuthorizedForToken(tokenId) {\n        Position storage position = _positions[tokenId];\n        require(position.liquidity == 0 && position.tokensOwed0 == 0 && position.tokensOwed1 == 0, \"Not cleared\");\n        delete _positions[tokenId];\n        _burn(tokenId);\n    }\n\n    function _getAndIncrementNonce(uint256 tokenId) internal override returns (uint256) {\n        return uint256(_positions[tokenId].nonce++);\n    }\n\n    /// @inheritdoc IERC721\n    function getApproved(uint256 tokenId) public view override(ERC721, IERC721) returns (address) {\n        require(_exists(tokenId), \"ERC721: approved query for nonexistent token\");\n\n        return _positions[tokenId].operator;\n    }\n\n    /// @dev Overrides _approve to use the operator in the position, which is packed with the position permit nonce\n    function _approve(address to, uint256 tokenId) internal override(ERC721) {\n        _positions[tokenId].operator = to;\n        emit Approval(ownerOf(tokenId), to, tokenId);\n    }\n}\n"
+    },
+    "ff3dde2f0704ddad9b7b2a44efa53f395e1f65a99b53b95c0c8a4221bec36b5d": {
+      "sha256": "ff3dde2f0704ddad9b7b2a44efa53f395e1f65a99b53b95c0c8a4221bec36b5d",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity =0.7.6;\npragma abicoder v2;\n\nimport \"@pancakeswap/v3-core/contracts/interfaces/IPancakeV3Factory.sol\";\nimport \"@pancakeswap/v3-core/contracts/interfaces/callback/IPancakeV3MintCallback.sol\";\nimport \"@pancakeswap/v3-core/contracts/libraries/TickMath.sol\";\n\nimport \"../libraries/PoolAddress.sol\";\nimport \"../libraries/CallbackValidation.sol\";\nimport \"../libraries/LiquidityAmounts.sol\";\n\nimport \"./PeripheryPayments.sol\";\nimport \"./PeripheryImmutableState.sol\";\n\n/// @title Liquidity management functions\n/// @notice Internal functions for safely managing liquidity in PancakeSwap V3\nabstract contract LiquidityManagement is IPancakeV3MintCallback, PeripheryImmutableState, PeripheryPayments {\n    struct MintCallbackData {\n        PoolAddress.PoolKey poolKey;\n        address payer;\n    }\n\n    /// @inheritdoc IPancakeV3MintCallback\n    function pancakeV3MintCallback(uint256 amount0Owed, uint256 amount1Owed, bytes calldata data) external override {\n        MintCallbackData memory decoded = abi.decode(data, (MintCallbackData));\n        CallbackValidation.verifyCallback(deployer, decoded.poolKey);\n\n        if (amount0Owed > 0) pay(decoded.poolKey.token0, decoded.payer, msg.sender, amount0Owed);\n        if (amount1Owed > 0) pay(decoded.poolKey.token1, decoded.payer, msg.sender, amount1Owed);\n    }\n\n    struct AddLiquidityParams {\n        address token0;\n        address token1;\n        uint24 fee;\n        address recipient;\n        int24 tickLower;\n        int24 tickUpper;\n        uint256 amount0Desired;\n        uint256 amount1Desired;\n        uint256 amount0Min;\n        uint256 amount1Min;\n    }\n\n    /// @notice Add liquidity to an initialized pool\n    function addLiquidity(AddLiquidityParams memory params)\n        internal\n        returns (uint128 liquidity, uint256 amount0, uint256 amount1, IPancakeV3Pool pool)\n    {\n        PoolAddress.PoolKey memory poolKey =\n            PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});\n\n        pool = IPancakeV3Pool(PoolAddress.computeAddress(deployer, poolKey));\n\n        // compute the liquidity amount\n        {\n            (uint160 sqrtPriceX96,,,,,,) = pool.slot0();\n            uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(params.tickLower);\n            uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(params.tickUpper);\n\n            liquidity = LiquidityAmounts.getLiquidityForAmounts(\n                sqrtPriceX96, sqrtRatioAX96, sqrtRatioBX96, params.amount0Desired, params.amount1Desired\n            );\n        }\n\n        (amount0, amount1) = pool.mint(\n            params.recipient,\n            params.tickLower,\n            params.tickUpper,\n            liquidity,\n            abi.encode(MintCallbackData({poolKey: poolKey, payer: msg.sender}))\n        );\n\n        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, \"Price slippage check\");\n    }\n}\n"
+    },
+    "f01416ca20d7a99bf333ef9adc3b0ff4fde16161da5bb3895cd4240451198661": {
+      "sha256": "f01416ca20d7a99bf333ef9adc3b0ff4fde16161da5bb3895cd4240451198661",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity =0.7.6;\n\nimport \"../interfaces/IPeripheryImmutableState.sol\";\n\n/// @title Immutable state\n/// @notice Immutable state used by periphery contracts\nabstract contract PeripheryImmutableState is IPeripheryImmutableState {\n    /// @inheritdoc IPeripheryImmutableState\n    address public immutable override deployer;\n    /// @inheritdoc IPeripheryImmutableState\n    address public immutable override factory;\n    /// @inheritdoc IPeripheryImmutableState\n    address public immutable override WETH9;\n\n    constructor(address _deployer, address _factory, address _WETH9) {\n        deployer = _deployer;\n        factory = _factory;\n        WETH9 = _WETH9;\n    }\n}\n"
+    },
+    "e3b8cd7e720ba9327d47aa96ee81804e2c8af7b0de933139ff8a007d61f30199": {
+      "sha256": "e3b8cd7e720ba9327d47aa96ee81804e2c8af7b0de933139ff8a007d61f30199",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity =0.7.6;\npragma abicoder v2;\n\nimport \"../interfaces/IMulticall.sol\";\n\n/// @title Multicall\n/// @notice Enables calling multiple methods in a single call to the contract\nabstract contract Multicall is IMulticall {\n    /// @inheritdoc IMulticall\n    function multicall(bytes[] calldata data) public payable override returns (bytes[] memory results) {\n        results = new bytes[](data.length);\n        for (uint256 i = 0; i < data.length; i++) {\n            (bool success, bytes memory result) = address(this).delegatecall(data[i]);\n\n            if (!success) {\n                // Next 5 lines from https://ethereum.stackexchange.com/a/83577\n                if (result.length < 68) revert();\n                assembly {\n                    result := add(result, 0x04)\n                }\n                revert(abi.decode(result, (string)));\n            }\n\n            results[i] = result;\n        }\n    }\n}\n"
+    },
+    "7b9b25d06caae85e43f9b29986f10003088f6c28d2b16829c66b02153d812587": {
+      "sha256": "7b9b25d06caae85e43f9b29986f10003088f6c28d2b16829c66b02153d812587",
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity >=0.7.5;\n\nimport \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\n\nimport \"../interfaces/IPeripheryPayments.sol\";\nimport \"../interfaces/external/IWETH9.sol\";\n\nimport \"../libraries/TransferHelper.sol\";\n\nimport \"./PeripheryImmutableState.sol\";\n\nabstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableState {\n    receive() external payable {\n        require(msg.sender == WETH9, \"Not WETH9\");\n    }\n\n    /// @inheritdoc IPeripheryPayments\n    function unwrapWETH9(uint256 amountMinimum, address recipient) public payable override {\n        uint256 balanceWETH9 = IWETH9(WETH9).balanceOf(address(this));\n        require(balanceWETH9 >= amountMinimum, \"Insufficient WETH9\");\n\n        if (balanceWETH9 > 0) {\n            IWETH9(WETH9).withdraw(balanceWETH9);\n            TransferHelper.safeTransferETH(recipient, balanceWETH9);\n        }\n    }\n\n    /// @inheritdoc IPeripheryPayments\n    function sweepToken(address token, uint256 amountMinimum, address recipient) public payable override {\n        uint256 balanceToken = IERC20(token).balanceOf(address(this));\n        require(balanceToken >= amountMinimum, \"Insufficient token\");\n\n        if (balanceToken > 0) {\n            TransferHelper.safeTransfer(token, recipient, balanceToken);\n        }\n    }\n\n    /// @inheritdoc IPeripheryPayments\n    function refundETH() external payable override {\n        if (address(this).balance > 0) TransferHelper.safeTransferETH(msg.sender, address(this).balance);\n    }\n\n    /// @param token The token to pay\n    /// @param payer The entity that must pay\n    /// @param recipient The entity that will receive payment\n    /// @param value The amount to pay\n    function pay(address token, address payer, address recipient, uint256 value) internal {\n        if (token == WETH9 && address(this).balance >= value) {\n            // pay with WETH9\n            IWETH9(WETH9).deposit{value: value}(); // wrap only what is needed to pay\n            IWETH9(WETH9).transfer(recipient, value);\n        } else if (payer == address(this)) {\n            // pay with tokens already in the contract (for the exact input multihop case)\n            TransferHelper.safeTransfer(token, recipient, value);\n        } else {\n            // pull payment\n            TransferHelper.safeTransferFrom(token, payer, recipient, value);\n        }\n    }\n}\n"
+    }
+  },
+  "additions": [
+    {
+      "abi": {
+        "inputs": [
+          {
+            "name": "data",
+            "type": "bytes[]"
+          }
+        ],
+        "name": "multicall",
+        "outputs": [
+          {
+            "name": "results",
+            "type": "bytes[]"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "capabilityId": "pancakeswap-v3-position-manager:closed-multicall-v1:1:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:multicall",
+      "chainId": 1,
+      "contract": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+      "description": "Deployment-bound Pancake V3 position-manager multicall restricted to the existing eight-child same-target execution language.",
+      "executionScope": {
+        "kind": "same-target-multicall-v1",
+        "bytesArrayArgIndex": 0,
+        "allowedChildren": [
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:1:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:burn-42966c68",
+            "signature": "burn(uint256)",
+            "abiHash": "0x99a11506f24a01115f6d3a3b251ac1df07c992300c02faa292bfc9d08d245384"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:1:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:collect-fc6f7865",
+            "signature": "collect((uint256,address,uint128,uint128))",
+            "abiHash": "0x3e7b6be204a2f8697e2d59260b7f15f1ecba884c80034387a84c61327d00e81d"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:1:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:decrease-liquidity-0c49ccbe",
+            "signature": "decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))",
+            "abiHash": "0x37adc7f2e33bc1cd56ae7e8d75e30fa6c284a76188830c01942bccabe208e104"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:1:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:increase-liquidity-219f5d17",
+            "signature": "increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256))",
+            "abiHash": "0x2b434cd1915a365e0b4f7e7e4a7d5fe7274245a8d00b2b0d7fc04b4842acf78e"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:1:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:mint-88316456",
+            "signature": "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))",
+            "abiHash": "0x16710f7bea2c432a5e982e9377a678be08e6dc2a14f579baa99843ec1ce69a5d"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:1:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:refund-eth-12210e8a",
+            "signature": "refundETH()",
+            "abiHash": "0x92fb6e0be5b9ef3a9b2a93d0879db721cc5e75d63d1e0e136d1851823e82612c"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:1:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:sweep-token-df2ab5bb",
+            "signature": "sweepToken(address,uint256,address)",
+            "abiHash": "0x26646f5e9c19af40c2c7f4ea7c5ab280d78dc2f42d383326236dbdf027c0e3a4"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:1:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:unwrap-weth9-49404b7c",
+            "signature": "unwrapWETH9(uint256,address)",
+            "abiHash": "0x828cb2dd7bb8957cba6cd10334a09dbf08bbe3dd0421bb513eb4865c9f42cf1c"
+          }
+        ]
+      },
+      "functionName": "multicall",
+      "label": "PancakeSwap V3 bounded position-manager multicall",
+      "operation": "multicall",
+      "protocol": "pancakeswap-v3-position-manager",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/pancake-v3-closed-multicall-support.json | data/defi-catalog/sources/pancake-supported-deployment-parity.json | https://developer.pancakeswap.finance/contracts/v3/addresses | https://sourcify.dev/server/v2/contract/1/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-11-01"
+      },
+      "signature": "multicall(bytes[])",
+      "status": "active",
+      "type": "contract_call",
+      "warnings": [
+        "Bounded self-delegatecall only: exactly eight independently admitted same-chain/address child identities. No nested multicall, createPool, NFT transfer, approval, permit or standalone callback children.",
+        "Self-delegatecall preserves original msg.sender, msg.value, address(this) and storage. The same outer native value is visible to every child, not a fresh per-child payment or allocated budget.",
+        "Native balance can fund wrapping; otherwise pay uses manager custody or caller ERC20 transferFrom. Send only intended native value and explicitly refund residual native funds; payable does not guarantee automatic refunds.",
+        "unwrapWETH9 and sweepToken transfer entire manager balances, not per-caller escrow; refundETH sends entire native balance to original caller. Zero collect recipient retains manager custody. Ordered child calls may leave assets in public custody.",
+        "NFT authorization, caller-selected recipient, token pair, fee, ticks, minimums, deadline and existing token approvals remain independent responsibilities. increaseLiquidity is third-party fundable.",
+        "Root and each child require independent grants and pause checks. Existing canonical ABI/native-value checks, execution node limits and final authorization rechecks remain unchanged.",
+        "Source admission is not fresh bytecode identity, balances, liquidity, funding, successful execution, financial safety or complete-workflow attestation."
+      ]
+    },
+    {
+      "abi": {
+        "inputs": [
+          {
+            "name": "data",
+            "type": "bytes[]"
+          }
+        ],
+        "name": "multicall",
+        "outputs": [
+          {
+            "name": "results",
+            "type": "bytes[]"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "capabilityId": "pancakeswap-v3-position-manager:closed-multicall-v1:8453:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:multicall",
+      "chainId": 8453,
+      "contract": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+      "description": "Deployment-bound Pancake V3 position-manager multicall restricted to the existing eight-child same-target execution language.",
+      "executionScope": {
+        "kind": "same-target-multicall-v1",
+        "bytesArrayArgIndex": 0,
+        "allowedChildren": [
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:8453:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:burn-42966c68",
+            "signature": "burn(uint256)",
+            "abiHash": "0x99a11506f24a01115f6d3a3b251ac1df07c992300c02faa292bfc9d08d245384"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:8453:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:collect-fc6f7865",
+            "signature": "collect((uint256,address,uint128,uint128))",
+            "abiHash": "0x3e7b6be204a2f8697e2d59260b7f15f1ecba884c80034387a84c61327d00e81d"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:8453:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:decrease-liquidity-0c49ccbe",
+            "signature": "decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))",
+            "abiHash": "0x37adc7f2e33bc1cd56ae7e8d75e30fa6c284a76188830c01942bccabe208e104"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:8453:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:increase-liquidity-219f5d17",
+            "signature": "increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256))",
+            "abiHash": "0x2b434cd1915a365e0b4f7e7e4a7d5fe7274245a8d00b2b0d7fc04b4842acf78e"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:8453:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:mint-88316456",
+            "signature": "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))",
+            "abiHash": "0x16710f7bea2c432a5e982e9377a678be08e6dc2a14f579baa99843ec1ce69a5d"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:8453:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:refund-eth-12210e8a",
+            "signature": "refundETH()",
+            "abiHash": "0x92fb6e0be5b9ef3a9b2a93d0879db721cc5e75d63d1e0e136d1851823e82612c"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:8453:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:sweep-token-df2ab5bb",
+            "signature": "sweepToken(address,uint256,address)",
+            "abiHash": "0x26646f5e9c19af40c2c7f4ea7c5ab280d78dc2f42d383326236dbdf027c0e3a4"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:8453:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:unwrap-weth9-49404b7c",
+            "signature": "unwrapWETH9(uint256,address)",
+            "abiHash": "0x828cb2dd7bb8957cba6cd10334a09dbf08bbe3dd0421bb513eb4865c9f42cf1c"
+          }
+        ]
+      },
+      "functionName": "multicall",
+      "label": "PancakeSwap V3 bounded position-manager multicall",
+      "operation": "multicall",
+      "protocol": "pancakeswap-v3-position-manager",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/pancake-v3-closed-multicall-support.json | data/defi-catalog/sources/pancake-supported-deployment-parity.json | https://developer.pancakeswap.finance/contracts/v3/addresses | https://sourcify.dev/server/v2/contract/8453/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-11-01"
+      },
+      "signature": "multicall(bytes[])",
+      "status": "active",
+      "type": "contract_call",
+      "warnings": [
+        "Bounded self-delegatecall only: exactly eight independently admitted same-chain/address child identities. No nested multicall, createPool, NFT transfer, approval, permit or standalone callback children.",
+        "Self-delegatecall preserves original msg.sender, msg.value, address(this) and storage. The same outer native value is visible to every child, not a fresh per-child payment or allocated budget.",
+        "Native balance can fund wrapping; otherwise pay uses manager custody or caller ERC20 transferFrom. Send only intended native value and explicitly refund residual native funds; payable does not guarantee automatic refunds.",
+        "unwrapWETH9 and sweepToken transfer entire manager balances, not per-caller escrow; refundETH sends entire native balance to original caller. Zero collect recipient retains manager custody. Ordered child calls may leave assets in public custody.",
+        "NFT authorization, caller-selected recipient, token pair, fee, ticks, minimums, deadline and existing token approvals remain independent responsibilities. increaseLiquidity is third-party fundable.",
+        "Root and each child require independent grants and pause checks. Existing canonical ABI/native-value checks, execution node limits and final authorization rechecks remain unchanged.",
+        "Source admission is not fresh bytecode identity, balances, liquidity, funding, successful execution, financial safety or complete-workflow attestation.",
+        "Runtime-only match retained. Source metadata contains Dackie-renamed interfaces, not independently exact creation source. Actual onchain creation suffix and runtime immutable substitutions bind Pancake dependencies; ABI/source come from this target response rather than substitution.",
+        "Similar Match to 0xCfB05AB06D338FD85BBF4486e69809D96A906b77; page also prints Exact Match headline, but Similar Match constructor warning controls interpretation."
+      ]
+    },
+    {
+      "abi": {
+        "inputs": [
+          {
+            "name": "data",
+            "type": "bytes[]"
+          }
+        ],
+        "name": "multicall",
+        "outputs": [
+          {
+            "name": "results",
+            "type": "bytes[]"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "capabilityId": "pancakeswap-v3-position-manager:closed-multicall-v1:42161:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:multicall",
+      "chainId": 42161,
+      "contract": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+      "description": "Deployment-bound Pancake V3 position-manager multicall restricted to the existing eight-child same-target execution language.",
+      "executionScope": {
+        "kind": "same-target-multicall-v1",
+        "bytesArrayArgIndex": 0,
+        "allowedChildren": [
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:42161:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:burn-42966c68",
+            "signature": "burn(uint256)",
+            "abiHash": "0x99a11506f24a01115f6d3a3b251ac1df07c992300c02faa292bfc9d08d245384"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:42161:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:collect-fc6f7865",
+            "signature": "collect((uint256,address,uint128,uint128))",
+            "abiHash": "0x3e7b6be204a2f8697e2d59260b7f15f1ecba884c80034387a84c61327d00e81d"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:42161:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:decrease-liquidity-0c49ccbe",
+            "signature": "decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))",
+            "abiHash": "0x37adc7f2e33bc1cd56ae7e8d75e30fa6c284a76188830c01942bccabe208e104"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:42161:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:increase-liquidity-219f5d17",
+            "signature": "increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256))",
+            "abiHash": "0x2b434cd1915a365e0b4f7e7e4a7d5fe7274245a8d00b2b0d7fc04b4842acf78e"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:42161:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:mint-88316456",
+            "signature": "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))",
+            "abiHash": "0x16710f7bea2c432a5e982e9377a678be08e6dc2a14f579baa99843ec1ce69a5d"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:42161:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:refund-eth-12210e8a",
+            "signature": "refundETH()",
+            "abiHash": "0x92fb6e0be5b9ef3a9b2a93d0879db721cc5e75d63d1e0e136d1851823e82612c"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:42161:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:sweep-token-df2ab5bb",
+            "signature": "sweepToken(address,uint256,address)",
+            "abiHash": "0x26646f5e9c19af40c2c7f4ea7c5ab280d78dc2f42d383326236dbdf027c0e3a4"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:42161:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:unwrap-weth9-49404b7c",
+            "signature": "unwrapWETH9(uint256,address)",
+            "abiHash": "0x828cb2dd7bb8957cba6cd10334a09dbf08bbe3dd0421bb513eb4865c9f42cf1c"
+          }
+        ]
+      },
+      "functionName": "multicall",
+      "label": "PancakeSwap V3 bounded position-manager multicall",
+      "operation": "multicall",
+      "protocol": "pancakeswap-v3-position-manager",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/pancake-v3-closed-multicall-support.json | data/defi-catalog/sources/pancake-supported-deployment-parity.json | https://developer.pancakeswap.finance/contracts/v3/addresses | https://sourcify.dev/server/v2/contract/42161/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-11-01"
+      },
+      "signature": "multicall(bytes[])",
+      "status": "active",
+      "type": "contract_call",
+      "warnings": [
+        "Bounded self-delegatecall only: exactly eight independently admitted same-chain/address child identities. No nested multicall, createPool, NFT transfer, approval, permit or standalone callback children.",
+        "Self-delegatecall preserves original msg.sender, msg.value, address(this) and storage. The same outer native value is visible to every child, not a fresh per-child payment or allocated budget.",
+        "Native balance can fund wrapping; otherwise pay uses manager custody or caller ERC20 transferFrom. Send only intended native value and explicitly refund residual native funds; payable does not guarantee automatic refunds.",
+        "unwrapWETH9 and sweepToken transfer entire manager balances, not per-caller escrow; refundETH sends entire native balance to original caller. Zero collect recipient retains manager custody. Ordered child calls may leave assets in public custody.",
+        "NFT authorization, caller-selected recipient, token pair, fee, ticks, minimums, deadline and existing token approvals remain independent responsibilities. increaseLiquidity is third-party fundable.",
+        "Root and each child require independent grants and pause checks. Existing canonical ABI/native-value checks, execution node limits and final authorization rechecks remain unchanged.",
+        "Source admission is not fresh bytecode identity, balances, liquidity, funding, successful execution, financial safety or complete-workflow attestation."
+      ]
+    },
+    {
+      "abi": {
+        "inputs": [
+          {
+            "name": "data",
+            "type": "bytes[]"
+          }
+        ],
+        "name": "multicall",
+        "outputs": [
+          {
+            "name": "results",
+            "type": "bytes[]"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "capabilityId": "pancakeswap-v3-position-manager:closed-multicall-v1:143:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:multicall",
+      "chainId": 143,
+      "contract": "0x46a15b0b27311cedf172ab29e4f4766fbe7f4364",
+      "description": "Deployment-bound Pancake V3 position-manager multicall restricted to the existing eight-child same-target execution language.",
+      "executionScope": {
+        "kind": "same-target-multicall-v1",
+        "bytesArrayArgIndex": 0,
+        "allowedChildren": [
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:143:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:burn-42966c68",
+            "signature": "burn(uint256)",
+            "abiHash": "0x99a11506f24a01115f6d3a3b251ac1df07c992300c02faa292bfc9d08d245384"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:143:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:collect-fc6f7865",
+            "signature": "collect((uint256,address,uint128,uint128))",
+            "abiHash": "0x3e7b6be204a2f8697e2d59260b7f15f1ecba884c80034387a84c61327d00e81d"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:143:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:decrease-liquidity-0c49ccbe",
+            "signature": "decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))",
+            "abiHash": "0x37adc7f2e33bc1cd56ae7e8d75e30fa6c284a76188830c01942bccabe208e104"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:143:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:increase-liquidity-219f5d17",
+            "signature": "increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256))",
+            "abiHash": "0x2b434cd1915a365e0b4f7e7e4a7d5fe7274245a8d00b2b0d7fc04b4842acf78e"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:143:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:mint-88316456",
+            "signature": "mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))",
+            "abiHash": "0x16710f7bea2c432a5e982e9377a678be08e6dc2a14f579baa99843ec1ce69a5d"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:143:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:refund-eth-12210e8a",
+            "signature": "refundETH()",
+            "abiHash": "0x92fb6e0be5b9ef3a9b2a93d0879db721cc5e75d63d1e0e136d1851823e82612c"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:143:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:sweep-token-df2ab5bb",
+            "signature": "sweepToken(address,uint256,address)",
+            "abiHash": "0x26646f5e9c19af40c2c7f4ea7c5ab280d78dc2f42d383326236dbdf027c0e3a4"
+          },
+          {
+            "capabilityId": "pancakeswap-v3-position-manager:deploy-v1:143:0x46a15b0b27311cedf172ab29e4f4766fbe7f4364:unwrap-weth9-49404b7c",
+            "signature": "unwrapWETH9(uint256,address)",
+            "abiHash": "0x828cb2dd7bb8957cba6cd10334a09dbf08bbe3dd0421bb513eb4865c9f42cf1c"
+          }
+        ]
+      },
+      "functionName": "multicall",
+      "label": "PancakeSwap V3 bounded position-manager multicall",
+      "operation": "multicall",
+      "protocol": "pancakeswap-v3-position-manager",
+      "provenance": {
+        "sourceRef": "data/defi-catalog/sources/pancake-v3-closed-multicall-support.json | data/defi-catalog/sources/pancake-supported-deployment-parity.json | https://developer.pancakeswap.finance/contracts/v3/addresses | https://monadscan.com/address/0x46a15b0b27311cedf172ab29e4f4766fbe7f4364#code",
+        "status": "verified",
+        "verifiedAt": "2026-11-01"
+      },
+      "signature": "multicall(bytes[])",
+      "status": "active",
+      "type": "contract_call",
+      "warnings": [
+        "Bounded self-delegatecall only: exactly eight independently admitted same-chain/address child identities. No nested multicall, createPool, NFT transfer, approval, permit or standalone callback children.",
+        "Self-delegatecall preserves original msg.sender, msg.value, address(this) and storage. The same outer native value is visible to every child, not a fresh per-child payment or allocated budget.",
+        "Native balance can fund wrapping; otherwise pay uses manager custody or caller ERC20 transferFrom. Send only intended native value and explicitly refund residual native funds; payable does not guarantee automatic refunds.",
+        "unwrapWETH9 and sweepToken transfer entire manager balances, not per-caller escrow; refundETH sends entire native balance to original caller. Zero collect recipient retains manager custody. Ordered child calls may leave assets in public custody.",
+        "NFT authorization, caller-selected recipient, token pair, fee, ticks, minimums, deadline and existing token approvals remain independent responsibilities. increaseLiquidity is third-party fundable.",
+        "Root and each child require independent grants and pause checks. Existing canonical ABI/native-value checks, execution node limits and final authorization rechecks remain unchanged.",
+        "Source admission is not fresh bytecode identity, balances, liquidity, funding, successful execution, financial safety or complete-workflow attestation.",
+        "Monad explorer Exact Match is retained as the explorer grade only; creation/runtime match fields are absent and no Sourcify or fresh runtime attestation is implied."
+      ]
+    }
+  ]
+}

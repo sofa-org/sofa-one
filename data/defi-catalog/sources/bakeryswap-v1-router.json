@@ -1,0 +1,2083 @@
+{
+  "schemaVersion": 1,
+  "chainId": 56,
+  "address": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+  "protocol": "bakeryswap-v1",
+  "website": "https://github.com/BakeryProject/bakery-swap-periphery",
+  "deploymentEvidence": {
+    "sourceRef": "https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+    "deployment": {
+      "transactionHash": "0xc81c30962be64d4bbaadb2dcd1b8ecd0e444115cfce3b8f54f2ced50f94b9017",
+      "blockNumber": "470751",
+      "transactionIndex": "0",
+      "deployer": "0xFEa7747216Ff0212Cb21ae35578c17B60428E376"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "evidence": "BscScan indexed exact-address name tag identifies BakerySwap: BakerySwap Router, attributed by explorer to a Kleros Curate submission; direct page request returned403. Sourcify supplies exact chain/address deployment identity and BakerySwapRouter source/ABI. Deployed router body matches pinned official BakeryProject source after CRLF normalization; no independent live runtime check or official deployed-address table retrieval is claimed.",
+    "limitations": [
+      "Official docs.bakeryswap.org/contracts was unreachable. Former www.bakeryswap.org now serves a /lander redirect; frontend uses attributable official source repository rather than that domain.",
+      "Sourcify reports creation/runtime match, not exact_match. Protocol attribution is corroborated by exact source-body comparison, not a current financial-safety or activity guarantee."
+    ]
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.6.6+commit.6c089d02",
+      "compilerSettings": {
+        "libraries": {},
+        "optimizer": {
+          "runs": 999999,
+          "enabled": true
+        },
+        "evmVersion": "istanbul"
+      },
+      "name": "BakerySwapRouter",
+      "fullyQualifiedName": "BakerySwapRouter.sol:BakerySwapRouter"
+    },
+    "matchId": "30765590",
+    "reportedCreationMatch": "match",
+    "reportedRuntimeMatch": "match",
+    "sourceFile": "BakerySwapRouter.sol",
+    "sourceSha256": "bee0c07fca7ae8c806e13aa2131c8dc3c599b2d615ad4374e90019a469fe44fd",
+    "normalizedRouterBodySha256": "98d08cc1d1420228a87aa168c06b76586c2bc0034ea432ae9ca9751c43a14367",
+    "evidence": "Full ABI copied from this exact chain/address Sourcify abi. Flattened deployed-source router body equals pinned official contract body after normalize CRLF to LF, take contract BakerySwapRouter through EOF, trim. Verified deployment library is authoritative for dependencies; no whole-repository identity claim or generic Uniswap ABI substitution."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_WBNB",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "WBNB",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidityBNB",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountTokenDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBNBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBNB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountsIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quote",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityBNB",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBNBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBNB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityBNBSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBNBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountBNB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityBNBWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBNBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBNB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityBNBWithPermitSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBNBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountBNB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapBNBForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactBNBForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactBNBForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactTokensForBNB",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForBNBSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactBNB",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "WBNB",
+      "signature": "WBNB()",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit token/token liquidity provision; pulls caller tokens by allowance, derives pair from immutable factory, may create it, enforces reserve-balancing minimums and deadline, mints LP to specified recipient."
+    },
+    {
+      "functionName": "addLiquidityBNB",
+      "signature": "addLiquidityBNB(address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit token/BNB liquidity provision; pulls caller tokens, wraps required native msg.value through immutable WBNB, checks minimums/deadline, mints LP to recipient and refunds unused BNB to caller."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "getAmountIn",
+      "signature": "getAmountIn(uint256,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(uint256,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "getAmountsIn",
+      "signature": "getAmountsIn(uint256,address[])",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "getAmountsOut",
+      "signature": "getAmountsOut(uint256,address[])",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "quote",
+      "signature": "quote(uint256,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability or a new read API."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/token removal; consumes specified caller LP allowance, burns LP to recipient and checks both output minimums and deadline."
+    },
+    {
+      "functionName": "removeLiquidityBNB",
+      "signature": "removeLiquidityBNB(address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/BNB removal; consumes caller LP allowance, checks pair-burn minimums/deadline, unwraps calculated WBNB amount and sends tokens/native BNB to recipient."
+    },
+    {
+      "functionName": "removeLiquidityBNBSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityBNBSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit non-permit fee-supporting token/BNB removal; checks burn-accounting minimums/deadline but transfers entire router token balance, so token minimum is not guaranteed net post-tax receipt."
+    },
+    {
+      "functionName": "removeLiquidityBNBWithPermit",
+      "signature": "removeLiquidityBNBWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit path and approveMax allowance authority; ordinary non-permit removal is selected independently."
+    },
+    {
+      "functionName": "removeLiquidityBNBWithPermitSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityBNBWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit path and approveMax allowance authority; ordinary non-permit removal is selected independently."
+    },
+    {
+      "functionName": "removeLiquidityWithPermit",
+      "signature": "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit path and approveMax allowance authority; ordinary non-permit removal is selected independently."
+    },
+    {
+      "functionName": "swapBNBForExactTokens",
+      "signature": "swapBNBForExactTokens(uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-output native-BNB/token path swap; checks requested output, deadline and msg.value ceiling, wraps required input and refunds surplus BNB to caller."
+    },
+    {
+      "functionName": "swapExactBNBForTokens",
+      "signature": "swapExactBNBForTokens(uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input native-BNB/token path swap; wraps msg.value, requires WBNB path start, checks output minimum/deadline and pays specified recipient."
+    },
+    {
+      "functionName": "swapExactBNBForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactBNBForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input native-BNB/token fee-supporting path swap; wraps msg.value, checks WBNB path start/deadline and recipient balance increase against minimum."
+    },
+    {
+      "functionName": "swapExactTokensForBNB",
+      "signature": "swapExactTokensForBNB(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/native-BNB path swap; pulls caller allowance-bounded input, requires WBNB path end, checks minimum/deadline and unwraps calculated output to recipient."
+    },
+    {
+      "functionName": "swapExactTokensForBNBSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForBNBSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/native-BNB fee-supporting swap; pulls caller amount, requires WBNB path end/deadline and checks minimum against entire router WBNB balance before unwrap/payment."
+    },
+    {
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token path swap; pulls caller amount using allowance, checks minimum/deadline and derives pair calls from immutable factory and token path."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token fee-supporting path swap; pulls caller amount, computes hops using pair balances, checks recipient token balance delta against minimum and enforces deadline."
+    },
+    {
+      "functionName": "swapTokensForExactBNB",
+      "signature": "swapTokensForExactBNB(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-output token/native-BNB swap; pulls calculated caller input under maximum, requires WBNB path end/deadline and unwraps specified output to recipient."
+    },
+    {
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "decision": "admitted",
+      "reason": "Explicit exact-output token path swap; pulls calculated caller input under maximum and enforces deadline; no opaque executor or arbitrary payload."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:add-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountADesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap addLiquidity",
+      "operation": "add-liquidity",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:add-liquidity-bnb",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "addLiquidityBNB",
+      "signature": "addLiquidityBNB(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidityBNB",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountTokenDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBNBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBNB",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap addLiquidityBNB",
+      "operation": "add-liquidity-bnb",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap removeLiquidity",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:remove-liquidity-bnb",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "removeLiquidityBNB",
+      "signature": "removeLiquidityBNB(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityBNB",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBNBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBNB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap removeLiquidityBNB",
+      "operation": "remove-liquidity-bnb",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:remove-liquidity-bnb-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "removeLiquidityBNBSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityBNBSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityBNBSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBNBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountBNB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap removeLiquidityBNBSupportingFeeOnTransferTokens",
+      "operation": "remove-liquidity-bnb-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:swap-bnb-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "swapBNBForExactTokens",
+      "signature": "swapBNBForExactTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapBNBForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap swapBNBForExactTokens",
+      "operation": "swap-bnb-for-exact-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:swap-exact-bnb-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "swapExactBNBForTokens",
+      "signature": "swapExactBNBForTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactBNBForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap swapExactBNBForTokens",
+      "operation": "swap-exact-bnb-for-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:swap-exact-bnb-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "swapExactBNBForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactBNBForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactBNBForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap swapExactBNBForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-bnb-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:swap-exact-tokens-for-bnb",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "swapExactTokensForBNB",
+      "signature": "swapExactTokensForBNB(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForBNB",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap swapExactTokensForBNB",
+      "operation": "swap-exact-tokens-for-bnb",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:swap-exact-tokens-for-bnb-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "swapExactTokensForBNBSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForBNBSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForBNBSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap swapExactTokensForBNBSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-bnb-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:swap-exact-tokens-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap swapExactTokensForTokens",
+      "operation": "swap-exact-tokens-for-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:swap-tokens-for-exact-bnb",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "swapTokensForExactBNB",
+      "signature": "swapTokensForExactBNB(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactBNB",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap swapTokensForExactBNB",
+      "operation": "swap-tokens-for-exact-bnb",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    },
+    {
+      "capabilityId": "bakeryswap-v1:v1:56:0xcde540d7eafe93ac5fe6233bee57e1270d3e330f:swap-tokens-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F",
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment and ABI: https://sourcify.dev/server/v2/contract/56/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f?fields=all ; indexed attribution: https://bscscan.com/address/0xcde540d7eafe93ac5fe6233bee57e1270d3e330f#code ; matching official router source: https://github.com/BakeryProject/bakery-swap-periphery/blob/57302536083c08ec5cde90ea2b3e2cf3d4d6149c/contracts/BakerySwapRouter.sol",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "bakeryswap-v1",
+      "label": "BakerySwap swapTokensForExactTokens",
+      "operation": "swap-tokens-for-exact-tokens",
+      "warnings": [
+        "Caller selects assets, path, recipient, amounts, minimums and deadline; financial parameters and execution outcomes remain caller responsibilities under independent controls.",
+        "Token and LP spending needs caller balances and allowances. Payable functions spend native BNB; nonpayable functions require zero native value.",
+        "Fee-supporting removal forwards the entire router token balance; supporting token-to-BNB swaps unwrap the entire router WBNB balance. Post-tax receipt, rebasing behavior and compatibility with nonstandard tokens are not guaranteed.",
+        "Pair swap interface takes only amount0Out/amount1Out/to, not arbitrary callback data. Source review does not attest current bytecode, dependencies, funding, pool liquidity, success or financial safety. Catalog metadata creates no API-key grant and bypasses no independent policy."
+      ]
+    }
+  ]
+}

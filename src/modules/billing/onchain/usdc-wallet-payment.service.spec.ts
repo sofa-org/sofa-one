@@ -146,7 +146,7 @@ describe('UsdcWalletPaymentService', () => {
       walletAddress: PAYER.toLowerCase(),
       agentOpenfortAccountId: 'agent-1',
       agentKeyHash: '0x' + 'ab'.repeat(32),
-      agentWalletAddress: '0x3333333333333333333333333333333333333333',
+      signerAddress: '0x3333333333333333333333333333333333333333',
     }]);
     prisma.user.findUnique.mockResolvedValue({ frozenAt: null });
     prisma.walletChainAuthorization.findFirst.mockResolvedValue({
@@ -277,7 +277,7 @@ describe('UsdcWalletPaymentService', () => {
       walletAddress: PAYER.toLowerCase(),
       agentOpenfortAccountId: 'agent-1',
       agentKeyHash: '0x' + 'ab'.repeat(32),
-      agentWalletAddress: '0x3333333333333333333333333333333333333333',
+      signerAddress: '0x3333333333333333333333333333333333333333',
     }]);
     await expect(service.payFromWallet(USER, INVOICE, ATTEMPT)).rejects.toMatchObject({
       response: expect.objectContaining({ code: API_ERROR_CODES.USDC_WALLET_NOT_ACTIVE }),
@@ -1073,7 +1073,7 @@ describe('UsdcWalletPaymentService', () => {
       walletAddress: PAYER.toLowerCase(),
       agentOpenfortAccountId: 'agent-1',
       agentKeyHash: '0x' + 'ab'.repeat(32),
-      agentWalletAddress: '0x3333333333333333333333333333333333333333',
+      signerAddress: '0x3333333333333333333333333333333333333333',
     };
     const mutatedWallet = {
       ...matchingWallet,

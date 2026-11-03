@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Syntropia",
+  "website": "https://syntropia.ai/",
+  "verifiedAt": "2026-10-24",
+  "status": "deferred",
+  "reason": "Current primary Ethereum deposit targets are Lagoon curator vaults, not an independently source-bound Syntropia financial accounting product. Lagoon Finance is already canonical; do not count curator/tranche branding as a new protocol. No shutdown claim. Parent approved BiFi replacement.",
+  "deploymentEvidence": [
+    {
+      "sourceRef": "https://syntropia.ai/discover",
+      "chainId": 1,
+      "vaults": [
+        {
+          "name": "synUSD+",
+          "address": "0xd17049ed25d8f99fe3bfd10cef2263da9995cfd8"
+        },
+        {
+          "name": "synUSD",
+          "address": "0x1b2cb79a4564206f53ba80b4d780f251b4ae6765"
+        },
+        {
+          "name": "synUSDx",
+          "address": "0x8df3deba711ae4a9af16cbca5e4fbb1402f036d5"
+        },
+        {
+          "name": "synBTC",
+          "address": "0xb5348362c6dbfd197fe026f2db9a1c2e8133855b"
+        }
+      ],
+      "observation": "Every listed Ethereum supply link opens app.lagoon.finance/vault/1/<address>."
+    },
+    {
+      "sourceRef": "https://syntropia.ai/",
+      "observation": "Liquidity Providers links to https://app.lagoon.finance/?curator=curator%3Asyntropia; official partner list includes Lagoon."
+    },
+    {
+      "sourceRef": "https://docs.syntropia.ai/",
+      "observation": "Primary docs describe team-run delta-neutral DeFi strategies and tranche products, not a separate attributable Ethereum implementation."
+    }
+  ],
+  "selectedFunctions": [],
+  "functionDecisions": [],
+  "limitations": [
+    "Identity/source-binding deferral only. No allegation of unsafe product, shutdown, zero liquidity or inactivity. Solana product outside allowed chains."
+  ]
+}

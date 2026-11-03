@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "renzo",
+      "familyVersion": "contracts-public@fc8c8e08",
+      "chains": [
+        {
+          "chainId": 1,
+          "status": "inactive",
+          "contracts": [
+            {
+              "address": "0x74a09653A083691711cF8215a6ab074BB4e99ef5",
+              "status": "inactive",
+              "contractName": "RestakeManager",
+              "functions": [
+                {
+                  "capabilityId": "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:f6326fb3",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0x74a09653A083691711cF8215a6ab074BB4e99ef5",
+                  "functionName": "depositETH",
+                  "signature": "depositETH()",
+                  "abi": {
+                    "type": "function",
+                    "name": "depositETH",
+                    "stateMutability": "payable",
+                    "inputs": [],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "renzo-contracts-public-fc8c8e08",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Renzo",
+                  "operation": "deposit-eth",
+                  "label": "Renzo deposit-eth",
+                  "warnings": [
+                    "Caller-controlled ABI-valid asset and financial arguments; no platform bounds, allowlists or approval pairing."
+                  ]
+                },
+                {
+                  "capabilityId": "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:5358fbda",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0x74a09653A083691711cF8215a6ab074BB4e99ef5",
+                  "functionName": "depositETH",
+                  "signature": "depositETH(uint256)",
+                  "abi": {
+                    "type": "function",
+                    "name": "depositETH",
+                    "stateMutability": "payable",
+                    "inputs": [
+                      {
+                        "name": "_referralId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "renzo-contracts-public-fc8c8e08",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Renzo",
+                  "operation": "deposit-eth-referral",
+                  "label": "Renzo deposit-eth-referral",
+                  "warnings": [
+                    "Caller-controlled ABI-valid asset and financial arguments; no platform bounds, allowlists or approval pairing."
+                  ]
+                },
+                {
+                  "capabilityId": "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:47e7ef24",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0x74a09653A083691711cF8215a6ab074BB4e99ef5",
+                  "functionName": "deposit",
+                  "signature": "deposit(address,uint256)",
+                  "abi": {
+                    "type": "function",
+                    "name": "deposit",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_collateralToken",
+                        "type": "address",
+                        "internalType": "contract IERC20"
+                      },
+                      {
+                        "name": "_amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "renzo-contracts-public-fc8c8e08",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Renzo",
+                  "operation": "deposit-erc20",
+                  "label": "Renzo deposit-erc20",
+                  "warnings": [
+                    "Caller-controlled ABI-valid asset and financial arguments; no platform bounds, allowlists or approval pairing."
+                  ]
+                },
+                {
+                  "capabilityId": "renzo:v1:1:0x74a09653a083691711cf8215a6ab074bb4e99ef5:0efe6a8b",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0x74a09653A083691711cF8215a6ab074BB4e99ef5",
+                  "functionName": "deposit",
+                  "signature": "deposit(address,uint256,uint256)",
+                  "abi": {
+                    "type": "function",
+                    "name": "deposit",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_collateralToken",
+                        "type": "address",
+                        "internalType": "contract IERC20"
+                      },
+                      {
+                        "name": "_amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_referralId",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "renzo-contracts-public-fc8c8e08",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Renzo",
+                  "operation": "deposit-erc20-referral",
+                  "label": "Renzo deposit-erc20-referral",
+                  "warnings": [
+                    "Caller-controlled ABI-valid asset and financial arguments; no platform bounds, allowlists or approval pairing."
+                  ]
+                }
+              ]
+            },
+            {
+              "address": "0x5efc9D10E42FB517456f4ac41EB5e2eBe42C8918",
+              "status": "inactive",
+              "contractName": "RenzoWithdrawalContract / WithdrawQueue",
+              "functions": [
+                {
+                  "capabilityId": "renzo:v1:1:0x5efc9d10e42fb517456f4ac41eb5e2ebe42c8918:00f714ce",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0x5efc9D10E42FB517456f4ac41EB5e2eBe42C8918",
+                  "functionName": "withdraw",
+                  "signature": "withdraw(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "withdraw",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "_amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "_assetOut",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "renzo-contracts-public-fc8c8e08",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Renzo",
+                  "operation": "withdraw",
+                  "label": "Renzo withdraw",
+                  "warnings": [
+                    "Caller-controlled ABI-valid asset and financial arguments; no platform bounds, allowlists or approval pairing."
+                  ]
+                },
+                {
+                  "capabilityId": "renzo:v1:1:0x5efc9d10e42fb517456f4ac41eb5e2ebe42c8918:ddd5e1b2",
+                  "type": "contract_call",
+                  "chainId": 1,
+                  "contract": "0x5efc9D10E42FB517456f4ac41EB5e2eBe42C8918",
+                  "functionName": "claim",
+                  "signature": "claim(uint256,address)",
+                  "abi": {
+                    "type": "function",
+                    "name": "claim",
+                    "stateMutability": "nonpayable",
+                    "inputs": [
+                      {
+                        "name": "withdrawRequestIndex",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                      },
+                      {
+                        "name": "user",
+                        "type": "address",
+                        "internalType": "address"
+                      }
+                    ],
+                    "outputs": []
+                  },
+                  "status": "inactive",
+                  "provenance": {
+                    "sourceRef": "renzo-contracts-public-fc8c8e08",
+                    "verifiedAt": "2026-10-04",
+                    "status": "candidate"
+                  },
+                  "protocol": "Renzo",
+                  "operation": "claim",
+                  "label": "Renzo claim",
+                  "warnings": [
+                    "Caller-controlled ABI-valid asset and financial arguments; no platform bounds, allowlists or approval pairing."
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    {
+      "sourceId": "renzo-contracts-public-fc8c8e08",
+      "url": "https://github.com/Renzo-Protocol/contracts-public/tree/fc8c8e083852339fbddc7339287e54db77ff3959",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official Renzo contracts-public source is pinned to commit fc8c8e083852339fbddc7339287e54db77ff3959 (commit date 2025-12-10), confirmed through the repository commit API. Source files contracts/RestakeManager.sol and contracts/Withdraw/WithdrawQueue.sol declare the represented six methods and ABI inputs; source-level interfaces do not assert deployed implementation bytecode or funded execution."
+    },
+    {
+      "sourceId": "renzo-ethereum-deployments",
+      "url": "https://docs.renzoprotocol.com/docs/contracts/ethereum-mainnet.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official Ethereum deployment documentation identifies RestakeManager 0x74a09653A083691711cF8215a6ab074BB4e99ef5 and RenzoWithdrawalContract/WithdrawQueue 0x5efc9D10E42FB517456f4ac41EB5e2eBe42C8918. The page sitemap modification date is 2026-06-26; addresses are role records, not an assertion of proxy status."
+    },
+    {
+      "sourceId": "renzo-source-ownership",
+      "url": "https://docs.renzoprotocol.com/docs/contracts/source-code.md",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official source-code documentation identifies Renzo-Protocol/contracts-public as the canonical source repository."
+    }
+  ]
+}

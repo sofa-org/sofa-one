@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "usual",
+      "familyVersion": "v1",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xd861bE82dEe3223CFBEd160791f6550b0704D406",
+          "status": "inactive",
+          "contractName": "Usual Ethereum sUSD0 Savings",
+          "sourceRefs": [
+            "usual-usd0-savings-documentation",
+            "usual-usd0-underlying-documentation",
+            "usual-susd0-implementation-verified-source"
+          ],
+          "abiFunctions": [
+            {
+              "type": "function",
+              "name": "deposit",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "usual-susd0-implementation-verified-source"
+            },
+            {
+              "type": "function",
+              "name": "mint",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "usual-susd0-implementation-verified-source"
+            },
+            {
+              "type": "function",
+              "name": "withdraw",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" },
+                { "name": "owner", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "usual-susd0-implementation-verified-source"
+            },
+            {
+              "type": "function",
+              "name": "redeem",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "shares", "type": "uint256", "internalType": "uint256" },
+                { "name": "receiver", "type": "address", "internalType": "address" },
+                { "name": "owner", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "assets", "type": "uint256", "internalType": "uint256" }
+              ],
+              "sourceId": "usual-susd0-implementation-verified-source"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "usual-usd0-savings-documentation",
+      "url": "https://docs.usual.money/usual-products/yield-products/usd-products/usd0-savings",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official documentation identifies Ethereum sUSD0 at 0xd861bE82dEe3223CFBEd160791f6550b0704D406 as the savings product. Documentation is product-role evidence, not present deployment state or payout evidence."
+    },
+    {
+      "sourceId": "usual-usd0-underlying-documentation",
+      "url": "https://docs.usual.money/usual-products/usd0-stablecoin/usd0",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official documentation identifies USD0 at 0x73A15FeD60Bf67631dC6cd7Bc5B6e8da8190aCF5. Savings-product terms, fees and redemption availability remain configurable/protocol-dependent."
+    },
+    {
+      "sourceId": "usual-susd0-implementation-verified-source",
+      "url": "https://repo.sourcify.dev/contracts/full_match/1/0xe5a90E1a154D9444356A9DfA27bb164Feee847BF/metadata.json",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Verified Solidity 0.8.20 SUsd0 implementation source associated with the documented sUSD0 proxy; selected ABI is the exact four nonpayable ERC4626-style user methods only. The implementation address is source evidence, not the authorized call target. Proxy-to-implementation mapping is from the reviewed documentation/source records and is not a current runtime-slot proof."
+    }
+  ]
+}

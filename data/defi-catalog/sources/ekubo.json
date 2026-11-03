@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "ekubo",
+      "familyVersion": "positions-v3.1.1@f8e38b5b",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x02D9876A21AF7545f8632C3af76eC90b5ad4b66D",
+          "status": "inactive",
+          "contractName": "Ekubo Ethereum Positions",
+          "sourceRefs": ["ekubo-positions-ethereum-deployment", "ekubo-evm-contracts-v3.1.1-source", "ekubo-positions-sourcify-abi"],
+          "abiFunctions": [
+            {
+              "type": "function", "name": "mintAndDeposit", "stateMutability": "payable",
+              "inputs": [
+                { "name": "poolKey", "type": "tuple", "internalType": "struct PoolKey", "components": [
+                  { "name": "token0", "type": "address", "internalType": "address" },
+                  { "name": "token1", "type": "address", "internalType": "address" },
+                  { "name": "config", "type": "bytes32", "internalType": "PoolConfig" }
+                ] },
+                { "name": "tickLower", "type": "int32", "internalType": "int32" },
+                { "name": "tickUpper", "type": "int32", "internalType": "int32" },
+                { "name": "maxAmount0", "type": "uint128", "internalType": "uint128" },
+                { "name": "maxAmount1", "type": "uint128", "internalType": "uint128" },
+                { "name": "minLiquidity", "type": "uint128", "internalType": "uint128" }
+              ],
+              "outputs": [
+                { "name": "id", "type": "uint256", "internalType": "uint256" },
+                { "name": "liquidity", "type": "uint128", "internalType": "uint128" },
+                { "name": "amount0", "type": "uint128", "internalType": "uint128" },
+                { "name": "amount1", "type": "uint128", "internalType": "uint128" }
+              ], "sourceId": "ekubo-positions-sourcify-abi"
+            },
+            {
+              "type": "function", "name": "deposit", "stateMutability": "payable",
+              "inputs": [
+                { "name": "id", "type": "uint256", "internalType": "uint256" },
+                { "name": "poolKey", "type": "tuple", "internalType": "struct PoolKey", "components": [
+                  { "name": "token0", "type": "address", "internalType": "address" },
+                  { "name": "token1", "type": "address", "internalType": "address" },
+                  { "name": "config", "type": "bytes32", "internalType": "PoolConfig" }
+                ] },
+                { "name": "tickLower", "type": "int32", "internalType": "int32" },
+                { "name": "tickUpper", "type": "int32", "internalType": "int32" },
+                { "name": "maxAmount0", "type": "uint128", "internalType": "uint128" },
+                { "name": "maxAmount1", "type": "uint128", "internalType": "uint128" },
+                { "name": "minLiquidity", "type": "uint128", "internalType": "uint128" }
+              ],
+              "outputs": [
+                { "name": "liquidity", "type": "uint128", "internalType": "uint128" },
+                { "name": "amount0", "type": "uint128", "internalType": "uint128" },
+                { "name": "amount1", "type": "uint128", "internalType": "uint128" }
+              ], "sourceId": "ekubo-positions-sourcify-abi"
+            },
+            {
+              "type": "function", "name": "withdraw", "stateMutability": "payable",
+              "inputs": [
+                { "name": "id", "type": "uint256", "internalType": "uint256" },
+                { "name": "poolKey", "type": "tuple", "internalType": "struct PoolKey", "components": [
+                  { "name": "token0", "type": "address", "internalType": "address" },
+                  { "name": "token1", "type": "address", "internalType": "address" },
+                  { "name": "config", "type": "bytes32", "internalType": "PoolConfig" }
+                ] },
+                { "name": "tickLower", "type": "int32", "internalType": "int32" },
+                { "name": "tickUpper", "type": "int32", "internalType": "int32" },
+                { "name": "liquidity", "type": "uint128", "internalType": "uint128" }
+              ],
+              "outputs": [
+                { "name": "amount0", "type": "uint128", "internalType": "uint128" },
+                { "name": "amount1", "type": "uint128", "internalType": "uint128" }
+              ], "sourceId": "ekubo-positions-sourcify-abi"
+            },
+            {
+              "type": "function", "name": "withdraw", "stateMutability": "payable",
+              "inputs": [
+                { "name": "id", "type": "uint256", "internalType": "uint256" },
+                { "name": "poolKey", "type": "tuple", "internalType": "struct PoolKey", "components": [
+                  { "name": "token0", "type": "address", "internalType": "address" },
+                  { "name": "token1", "type": "address", "internalType": "address" },
+                  { "name": "config", "type": "bytes32", "internalType": "PoolConfig" }
+                ] },
+                { "name": "tickLower", "type": "int32", "internalType": "int32" },
+                { "name": "tickUpper", "type": "int32", "internalType": "int32" },
+                { "name": "liquidity", "type": "uint128", "internalType": "uint128" },
+                { "name": "recipient", "type": "address", "internalType": "address" },
+                { "name": "withFees", "type": "bool", "internalType": "bool" }
+              ],
+              "outputs": [
+                { "name": "amount0", "type": "uint128", "internalType": "uint128" },
+                { "name": "amount1", "type": "uint128", "internalType": "uint128" }
+              ], "sourceId": "ekubo-positions-sourcify-abi"
+            },
+            {
+              "type": "function", "name": "collectFees", "stateMutability": "payable",
+              "inputs": [
+                { "name": "id", "type": "uint256", "internalType": "uint256" },
+                { "name": "poolKey", "type": "tuple", "internalType": "struct PoolKey", "components": [
+                  { "name": "token0", "type": "address", "internalType": "address" },
+                  { "name": "token1", "type": "address", "internalType": "address" },
+                  { "name": "config", "type": "bytes32", "internalType": "PoolConfig" }
+                ] },
+                { "name": "tickLower", "type": "int32", "internalType": "int32" },
+                { "name": "tickUpper", "type": "int32", "internalType": "int32" }
+              ],
+              "outputs": [
+                { "name": "amount0", "type": "uint128", "internalType": "uint128" },
+                { "name": "amount1", "type": "uint128", "internalType": "uint128" }
+              ], "sourceId": "ekubo-positions-sourcify-abi"
+            },
+            {
+              "type": "function", "name": "collectFees", "stateMutability": "payable",
+              "inputs": [
+                { "name": "id", "type": "uint256", "internalType": "uint256" },
+                { "name": "poolKey", "type": "tuple", "internalType": "struct PoolKey", "components": [
+                  { "name": "token0", "type": "address", "internalType": "address" },
+                  { "name": "token1", "type": "address", "internalType": "address" },
+                  { "name": "config", "type": "bytes32", "internalType": "PoolConfig" }
+                ] },
+                { "name": "tickLower", "type": "int32", "internalType": "int32" },
+                { "name": "tickUpper", "type": "int32", "internalType": "int32" },
+                { "name": "recipient", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [
+                { "name": "amount0", "type": "uint128", "internalType": "uint128" },
+                { "name": "amount1", "type": "uint128", "internalType": "uint128" }
+              ], "sourceId": "ekubo-positions-sourcify-abi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "ekubo-positions-ethereum-deployment",
+      "url": "https://docs.ekubo.org/reference/contracts/evm-v3/",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official contract reference labels 0x02D9876A21AF7545f8632C3af76eC90b5ad4b66D as Ethereum Original v3.1.1 Positions; the official v3.1.1 EVM contract release is dated 2026-05-03. This identifies the documented user role, not current runtime identity, liquidity, or funded execution."
+    },
+    {
+      "sourceId": "ekubo-evm-contracts-v3.1.1-source",
+      "url": "https://github.com/EkuboProtocol/evm-contracts/tree/f8e38b5be3f856ff99d98475be4f10af7f593a58/src",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Pinned official source commit f8e38b5be3f856ff99d98475be4f10af7f593a58 includes src/base/BasePositions.sol and src/Positions.sol for v3.1.1 Positions. The source shows the fixed lock callback is internal protocol behavior; no generic callback/locker authority is selected."
+    },
+    {
+      "sourceId": "ekubo-positions-sourcify-abi",
+      "url": "https://sourcify.dev/server/v2/contract/1/0x02D9876A21AF7545f8632C3af76eC90b5ad4b66D?fields=all",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Address-specific Sourcify exact match verified 2026-01-09 provides the complete selected payable ABI for mintAndDeposit, deposit, both withdraw overloads, and both collectFees overloads. PoolKey tuple components are token0/address, token1/address, config/bytes32 with internalType PoolConfig; all names, outputs, primitive types, and mutabilities are retained literally."
+    }
+  ]
+}

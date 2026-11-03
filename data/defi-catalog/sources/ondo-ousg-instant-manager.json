@@ -1,0 +1,2289 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "address": "0x93358db73B6cd4b98D89c8F5f230E81a95c2643a",
+  "protocol": "Ondo Finance",
+  "protocolId": "ondo-ousg-instant-manager",
+  "website": "https://ondo.finance/",
+  "scope": "Current Ethereum OUSG_InstantManager ordinary subscribe/redeem and corresponding rOUSG-output/input variants; no direct issuer-token admin mint, manual administrative subscriptions, deprecated managers, other chains, USDY, bridge, arbitrary executor or runtime scope expansion.",
+  "lifecycleEvidence": {
+    "verifiedAt": "2026-10-22",
+    "decision": "eligible-active",
+    "sourceRefs": [
+      "https://docs.ondo.finance/addresses.md",
+      "https://docs.ondo.finance/qualified-access-products/ousg/overview.md",
+      "https://docs.ondo.finance/qualified-access-products/eligibility.md"
+    ],
+    "evidence": "Current official address table lists this OUSG_InstantManager under active Ethereum OUSG deployments and explicitly describes it as the ondo.finance investor instant buy/redeem entry point. Official current OUSG overview describes 24/7 USDC/PYUSD subscriptions and redemptions and management-fee waiver until January 1, 2027. The separate Legacy section explicitly deprecates old manager 0x2826989983e3a66F0622132D019c2Ae173eb6A43 on April 7, 2025; that deployment is not admitted. No reviewed official source announces this current manager or OUSG wind-down/team disbandment. These are lifecycle/product maintenance signals, not DAU or manager-specific vaultTVL evidence."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.ondo.finance/addresses.md",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0x93358db73B6cd4b98D89c8F5f230E81a95c2643a",
+    "deployment": {
+      "transactionHash": "0xfc8e579759e3edaa02d1f735db410dc22725a644f44ceaa6ceaa4872f6858990",
+      "blockNumber": "22141423",
+      "transactionIndex": "38",
+      "deployer": "0x094Bee6b74Ec29D32869ae3140A659cAc0482882"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "constructorArguments": "0x000000000000000000000000094bee6b74ec29d32869ae3140a659cac04828820000000000000000000000001b19c19393e2d034d8ff31ff34c81252fcbbee9200000000000000000000000054043c656f0fad0652d9ae2603cdf347c5578d0000000000000000000000000000000000000000000000010f0cf064dd5920000000000000000000000000000000000000000000000000010f0cf064dd59200000",
+    "evidence": "Official current Ethereum address table explicitly binds OUSG_InstantManager to this exact address and links its Etherscan source. Verified constructor arguments bind immutable rwaToken OUSG 0x1B19C19393e2d034D8Ff31ff34c81252FcBbee92 and rousg 0x54043c656f0faD0652D9Ae2603cdF347c5578d00. Source is a directly deployed constructor contract, and Sourcify reports isProxy=false; configurable router/oracle/compliance/ID/fee/limiter dependencies are not treated as separately admitted targets."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a?fields=all",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0x93358db73B6cd4b98D89c8F5f230E81a95c2643a",
+    "reportedCreationMatch": "match",
+    "reportedRuntimeMatch": "match",
+    "sourceServiceVerifiedAt": "2025-04-14T17:35:04Z",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.16+commit.07a7930e",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "london",
+        "remappings": [
+          ":@aragon/=node_modules/@aragon/",
+          ":@ensdomains/=node_modules/@ensdomains/",
+          ":@openzeppelin/=node_modules/@openzeppelin/",
+          ":@uniswap/=node_modules/@uniswap/",
+          ":eth-gas-reporter/=node_modules/eth-gas-reporter/",
+          ":forge-std/=lib/forge-std/src/",
+          ":forge-tests/=forge-tests/",
+          ":hardhat-deploy/=node_modules/hardhat-deploy/",
+          ":hardhat/=node_modules/hardhat/",
+          ":lib/=lib/",
+          ":math/=node_modules/@aragon/os/contracts/lib/math/",
+          ":misc/=node_modules/@aragon/os/contracts/lib/misc/",
+          ":solidity-bytes-utils/=node_modules/solidity-bytes-utils/",
+          ":standards/=node_modules/@aragon/os/contracts/lib/standards/",
+          ":token/=node_modules/@aragon/os/contracts/lib/token/",
+          ":truffle/=node_modules/truffle/"
+        ]
+      },
+      "name": "OUSG_InstantManager",
+      "fullyQualifiedName": "contracts/xManager/rwaManagers/OUSG_InstantManager.sol:OUSG_InstantManager"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "reportedExplorerMatch": "Exact Match",
+    "evidence": "Full exact-address ABI and compiler-bound sources fetched from Sourcify v2 for this official manager. Sourcify creation/runtime both report match, not exact_match; Etherscan separately labels source Exact Match. Record both services literally without upgrading Sourcify match status. Full 56-function inventory retained including inherited BaseRWAManager/AccessControl methods; not a generic ERC20 ABI and not a legacy-manager repository substitute. No fresh RPC or independent compilation/execution verification."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_defaultAdmin",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_rwaToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_rousg",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_minimumDepositAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_minimumRedemptionAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "AdminSubscriptionCheckerAddressCantBeZero",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ComplianceAddressCantBeZero",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "DepositAmountTooSmall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "FeeGreaterThanRedemption",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "FeeGreaterThanSubscription",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "FeesAddressCantBeZero",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "IDRegistryAddressCantBeZero",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OracleAddressCantBeZero",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RWAPriceTooLow",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RateLimiterAddressCantBeZero",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RebasingOUSGCantBeZeroAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ReceiveAmountTooSmall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RedemptionAmountTooSmall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RedemptionsPaused",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RouterAddressCantBeZero",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "RwaReceiveAmountTooSmall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "SafeERC20FailedOperation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "SubscriptionsPaused",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "TokenAddressCantBeZero",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "TokenNotAccepted",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "UserNotRegistered",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AcceptedRedemptionTokenSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "accepted",
+          "type": "bool",
+          "indexed": true,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "AcceptedSubscriptionTokenSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "accepted",
+          "type": "bool",
+          "indexed": true,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "AdminSubscription",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "adminCaller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "recipientId",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "rwaAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "usdAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "metadata",
+          "type": "bytes32",
+          "indexed": false,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "AdminSubscriptionCheckerSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldAdminSubscriptionChecker",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdminSubscriptionChecker",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "AdminSubscriptionRebasingOUSG",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "ousgAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "rousgAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "metadata",
+          "type": "bytes32",
+          "indexed": false,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "InstantRedemptionRebasingOUSG",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "redeemer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "ousgAmountIn",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "rousgAmountIn",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "receivingToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "receiveTokenAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "InstantSubscriptionRebasingOUSG",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "ousgAmountOut",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "rousgAmountOut",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "depositToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "depositAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MinimumDepositAmountSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldMinDepositAmount",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newMinDepositAmount",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MinimumRedemptionAmountSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldMinRedemptionAmount",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newMinRedemptionAmount",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MinimumRwaPriceSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldMinimumRwaPrice",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newMinimumRwaPrice",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OndoComplianceSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldOndoCompliance",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOndoCompliance",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OndoIDRegistrySet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldOndoIDRegistry",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOndoIDRegistry",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OndoOracleSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldOndoOracle",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOndoOracle",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OndoRateLimiterSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldOndoRateLimiter",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOndoRateLimiter",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OndoRedemptionFeesSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldOndoRedemptionFees",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOndoRedemptionFees",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OndoSubscriptionFeesSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldOndoSubscriptionFees",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOndoSubscriptionFees",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OndoTokenRouterSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldOndoTokenRouter",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOndoTokenRouter",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RedeemPaused",
+      "type": "event",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "name": "RedeemUnpaused",
+      "type": "event",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "name": "Redemption",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "redeemer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "redeemerId",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "rwaAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "receivingToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "receiveTokenAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "redemptionUSDValue",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "fee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleAdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "previousAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "newAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleGranted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleRevoked",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "SubscribePaused",
+      "type": "event",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "name": "SubscribeUnpaused",
+      "type": "event",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "name": "Subscription",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "subscriber",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "subscriberId",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "rwaAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "depositToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "depositAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "depositUSDValue",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "fee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ADMIN_SUBSCRIPTION_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "CONFIGURER_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "DEFAULT_ADMIN_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "OUSG_TO_ROUSG_SHARES_MULTIPLIER",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "PAUSER_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "RWA_NORMALIZER",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "USD_NORMALIZER",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "acceptedRedemptionTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "acceptedSubscriptionTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "adminSubscribe",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "rwaAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "metadata",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "adminSubscribeRebasingOUSG",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "rousgAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "metadata",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "adminSubscriptionChecker",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IAdminSubscriptionChecker"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getRoleAdmin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getRoleMember",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "index",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getRoleMemberCount",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "grantRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "hasRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "minimumDepositUSD",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "minimumRedemptionUSD",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "minimumRwaPrice",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ondoCompliance",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IOndoCompliance"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ondoIDRegistry",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IOndoIDRegistry"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ondoOracle",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IOndoOracle"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ondoRateLimiter",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IOndoRateLimiter"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ondoRedemptionFees",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IOndoFees"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ondoSubscriptionFees",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IOndoFees"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "ondoTokenRouter",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IOndoTokenRouter"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pauseRedeem",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "pauseSubscribe",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "rwaAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receivingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "minimumTokenReceived",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "receiveTokenAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "redeemPaused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "redeemRebasingOUSG",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "rousgAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receivingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "minimumTokenReceived",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "receiveTokenAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "retrieveTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "revokeRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "rousg",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract ROUSG"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "rwaToken",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "setAcceptedRedemptionToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "accepted",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setAcceptedSubscriptionToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "accepted",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setAdminSubscriptionChecker",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_adminSubscriptionChecker",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setMinimumDepositAmount",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_minimumDepositUSD",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setMinimumRedemptionAmount",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_minimumRedemptionUSD",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setMinimumRwaPrice",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_minimumRwaPrice",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setOndoCompliance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_ondoCompliance",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setOndoIDRegistry",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_ondoIDRegistry",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setOndoOracle",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_ondoOracle",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setOndoRateLimiter",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_ondoRateLimiter",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setOndoRedemptionFees",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_ondoRedemptionFees",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setOndoSubscriptionFees",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_ondoSubscriptionFees",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setOndoTokenRouter",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_ondoTokenRouter",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "subscribe",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "depositToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "depositAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minimumRwaReceived",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "rwaAmountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "subscribePaused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "subscribeRebasingOUSG",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "depositToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "depositAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minimumRousgReceived",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "rousgAmountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "supportsInterface",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "unpauseRedeem",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unpauseSubscribe",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "sourceSemantics": {
+    "evidence": "OUSG_InstantManager subscribe and redeem are external nonReentrant investor entry points, not onlyRole admin mint methods. _processSubscription/_processRedemption enforce accepted tokens, pause flags, ondoCompliance, nonzero OndoID, configured oracle minimum price, USD minima, fee limits, per-user/global rate limits and caller minimum output. subscribe mints to sender after pulling deposit; redeem burns sender OUSG and pays sender through configured router. Rebasing variants explicitly wrap/unwrap rOUSG on behalf of caller and preserve the same guards. _adminProcessSubscription separately requires ADMIN_SUBSCRIPTION_ROLE and is excluded. Legal qualified-access restrictions are explicit, never inferred permissionless access.",
+    "sources": {
+      "contracts/ousg/rOUSG.sol": {
+        "content": "/**SPDX-License-Identifier: BUSL-1.1\n\n      ▄▄█████████▄\n   ╓██▀└ ,╓▄▄▄, '▀██▄\n  ██▀ ▄██▀▀╙╙▀▀██▄ └██µ           ,,       ,,      ,     ,,,            ,,,\n ██ ,██¬ ▄████▄  ▀█▄ ╙█▄      ▄███▀▀███▄   ███▄    ██  ███▀▀▀███▄    ▄███▀▀███,\n██  ██ ╒█▀'   ╙█▌ ╙█▌ ██     ▐██      ███  █████,  ██  ██▌    └██▌  ██▌     └██▌\n██ ▐█▌ ██      ╟█  █▌ ╟█     ██▌      ▐██  ██ └███ ██  ██▌     ╟██ j██       ╟██\n╟█  ██ ╙██    ▄█▀ ▐█▌ ██     ╙██      ██▌  ██   ╙████  ██▌    ▄██▀  ██▌     ,██▀\n ██ \"██, ╙▀▀███████████⌐      ╙████████▀   ██     ╙██  ███████▀▀     ╙███████▀`\n  ██▄ ╙▀██▄▄▄▄▄,,,                ¬─                                    '─¬\n   ╙▀██▄ '╙╙╙▀▀▀▀▀▀▀▀\n      ╙▀▀██████R⌐\n\n */\npragma solidity 0.8.16;\n\nimport \"contracts/external/openzeppelin/contracts/token/IERC20.sol\";\nimport \"contracts/external/openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol\";\nimport \"contracts/external/openzeppelin/contracts-upgradeable/token/ERC20/IERC20MetadataUpgradeable.sol\";\nimport \"contracts/external/openzeppelin/contracts-upgradeable/proxy/Initializable.sol\";\nimport \"contracts/external/openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol\";\nimport \"contracts/external/openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol\";\nimport \"contracts/external/openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol\";\nimport \"contracts/kyc/KYCRegistryClientUpgradeable.sol\";\nimport \"contracts/rwaOracles/IRWAOracle.sol\";\n\n/**\n * @title Interest-bearing ERC20-like token for OUSG.\n *\n * rOUSG balances are dynamic and represent the holder's share of the underlying OUSG\n * controlled by the protocol. To calculate each account's balance, we do\n *\n *   shares[account] * ousgPrice\n *\n * For example, if we assume that we have the following:\n *\n *   ousgPrice = 105 (18 decimals)\n *   rousg.sharesOf(user1) -> 1 (22 decimals)\n *   rousg.sharesOf(user2) -> 4 (22 decimals)\n *   ousg.balanceOf(rousg) -> 5 OUSG (18 decimals)\n *\n * Below would be the balances of the users:\n *\n *   rousg.balanceOf(user1) -> 105 rOUSG (18 decimals)\n *   rousg.balanceOf(user2) -> 420 rOUSG (18 decimals)\n *\n * Since balances of all token holders change when the price of OUSG changes, this\n * token cannot fully implement ERC20 standard: it only emits `Transfer` events\n * upon explicit transfer between holders. In contrast, when total amount of pooled\n * Cash increases, no `Transfer` events are generated: doing so would require emitting\n * an event for each token holder and thus running an unbounded loop.\n *\n */\n\ncontract ROUSG is\n  Initializable,\n  ContextUpgradeable,\n  PausableUpgradeable,\n  AccessControlEnumerableUpgradeable,\n  KYCRegistryClientUpgradeable,\n  IERC20Upgradeable,\n  IERC20MetadataUpgradeable\n{\n  /**\n   * @dev rOUSG balances are dynamic and are calculated based on the accounts' shares (OUSG)\n   * and the the price of OUSG. Account shares aren't\n   * normalized, so the contract also stores the sum of all shares to calculate\n   * each account's token balance which equals to:\n   *\n   *   shares[account] * ousgPrice\n   */\n  mapping(address => uint256) private shares;\n\n  /// @dev Allowances are nominated in tokens, not token shares.\n  mapping(address => mapping(address => uint256)) private allowances;\n\n  // Total shares in existence\n  uint256 public totalShares;\n\n  // Address of the oracle that provides the `ousgPrice`\n  IRWAOracle public oracle;\n\n  // Address of the OUSG token\n  IERC20 public ousg;\n\n  // Used to scale up ousg amount -> shares\n  uint256 public constant OUSG_TO_ROUSG_SHARES_MULTIPLIER = 10_000;\n\n  // Name of the token\n  string internal _name;\n\n  // Symbol of the token\n  string internal _symbol;\n\n  // Error when redeeming shares < `OUSG_TO_ROUSG_SHARES_MULTIPLIER`\n  error UnwrapTooSmall();\n\n  // Error when setting the oracle address to zero\n  error CannotSetToZeroAddress();\n\n  /// @dev Role based access control roles\n  bytes32 public constant PAUSER_ROLE = keccak256(\"PAUSER_ROLE\");\n  bytes32 public constant BURNER_ROLE = keccak256(\"BURN_ROLE\");\n  bytes32 public constant CONFIGURER_ROLE = keccak256(\"CONFIGURER_ROLE\");\n\n  /// @custom:oz-upgrades-unsafe-allow constructor\n  constructor() {\n    _disableInitializers();\n  }\n\n  function initialize(\n    address _kycRegistry,\n    uint256 requirementGroup,\n    address _ousg,\n    address guardian,\n    address _oracle\n  ) public virtual initializer {\n    __rOUSG_init(_kycRegistry, requirementGroup, _ousg, guardian, _oracle);\n  }\n\n  function __rOUSG_init(\n    address _kycRegistry,\n    uint256 requirementGroup,\n    address _ousg,\n    address guardian,\n    address _oracle\n  ) internal onlyInitializing {\n    __rOUSG_init_unchained(\n      _kycRegistry,\n      requirementGroup,\n      _ousg,\n      guardian,\n      _oracle\n    );\n  }\n\n  function __rOUSG_init_unchained(\n    address _kycRegistry,\n    uint256 _requirementGroup,\n    address _ousg,\n    address guardian,\n    address _oracle\n  ) internal onlyInitializing {\n    __KYCRegistryClientInitializable_init(_kycRegistry, _requirementGroup);\n    ousg = IERC20(_ousg);\n    oracle = IRWAOracle(_oracle);\n    _grantRole(DEFAULT_ADMIN_ROLE, guardian);\n    _grantRole(PAUSER_ROLE, guardian);\n    _grantRole(BURNER_ROLE, guardian);\n    _grantRole(CONFIGURER_ROLE, guardian);\n    _name = \"Ondo Short-Term U.S. Government Bond Fund (Rebasing)\";\n    _symbol = \"rOUSG\";\n  }\n\n  /**\n   * @notice Emitted when the name is set\n   *\n   * @param oldName The old name of the token\n   * @param newName The new name of the token\n   */\n  event NameSet(string oldName, string newName);\n\n  /**\n   * @notice Emitted when the symbol is set\n   *\n   * @param oldSymbol The old symbol of the token\n   * @param newSymbol The new symbol of the token\n   */\n\n  event SymbolSet(string oldSymbol, string newSymbol);\n  /**\n   * @notice An executed shares transfer from `sender` to `recipient`.\n   *\n   * @dev emitted in pair with an ERC20-defined `Transfer` event.\n   */\n  event TransferShares(\n    address indexed from,\n    address indexed to,\n    uint256 sharesValue\n  );\n\n  /**\n   * @notice Emitted when the oracle address is set\n   *\n   * @param oldOracle The address of the old oracle\n   * @param newOracle The address of the new oracle\n   */\n  event OracleSet(address indexed oldOracle, address indexed newOracle);\n\n  /**\n   * @return the name of the token.\n   */\n  function name() public view returns (string memory) {\n    return _name;\n  }\n\n  /**\n   * @return the symbol of the token, usually a shorter version of the\n   * name.\n   */\n  function symbol() public view returns (string memory) {\n    return _symbol;\n  }\n\n  /**\n   * @return the number of decimals for getting user representation of a token amount.\n   */\n  function decimals() public pure returns (uint8) {\n    return 18;\n  }\n\n  /**\n   * @return the amount of tokens in existence.\n   */\n  function totalSupply() public view returns (uint256) {\n    return\n      (totalShares * getOUSGPrice()) / (1e18 * OUSG_TO_ROUSG_SHARES_MULTIPLIER);\n  }\n\n  /**\n   * @return the amount of tokens owned by the `_account`.\n   *\n   * @dev Balances are dynamic and equal the `_account`'s OUSG shares multiplied\n   *      by the price of OUSG\n   */\n  function balanceOf(address _account) public view returns (uint256) {\n    return\n      (_sharesOf(_account) * getOUSGPrice()) /\n      (1e18 * OUSG_TO_ROUSG_SHARES_MULTIPLIER);\n  }\n\n  /**\n   * @notice Moves `_amount` tokens from the caller's account to the `_recipient` account.\n   *\n   * @return a boolean value indicating whether the operation succeeded.\n   * Emits a `Transfer` event.\n   * Emits a `TransferShares` event.\n   *\n   * Requirements:\n   *\n   * - `_recipient` cannot be the zero address.\n   * - the caller must have a balance of at least `_amount`.\n   * - the contract must not be paused.\n   *\n   * @dev The `_amount` argument is the amount of tokens, not shares.\n   */\n  function transfer(address _recipient, uint256 _amount) public returns (bool) {\n    _transfer(msg.sender, _recipient, _amount);\n    return true;\n  }\n\n  /**\n   * @return the remaining number of tokens that `_spender` is allowed to spend\n   * on behalf of `_owner` through `transferFrom`. This is zero by default.\n   *\n   * @dev This value changes when `approve` or `transferFrom` is called.\n   */\n  function allowance(\n    address _owner,\n    address _spender\n  ) public view returns (uint256) {\n    return allowances[_owner][_spender];\n  }\n\n  /**\n   * @notice Sets `_amount` as the allowance of `_spender` over the caller's tokens.\n   *\n   * @return a boolean value indicating whether the operation succeeded.\n   * Emits an `Approval` event.\n   *\n   * Requirements:\n   *\n   * - `_spender` cannot be the zero address.\n   * - the contract must not be paused.\n   *\n   * @dev The `_amount` argument is the amount of tokens, not shares.\n   */\n  function approve(address _spender, uint256 _amount) public returns (bool) {\n    _approve(msg.sender, _spender, _amount);\n    return true;\n  }\n\n  /**\n   * @notice Moves `_amount` tokens from `_sender` to `_recipient` using the\n   * allowance mechanism. `_amount` is then deducted from the caller's\n   * allowance.\n   *\n   * @return a boolean value indicating whether the operation succeeded.\n   *\n   * Emits a `Transfer` event.\n   * Emits a `TransferShares` event.\n   * Emits an `Approval` event indicating the updated allowance.\n   *\n   * Requirements:\n   *\n   * - `_sender` and `_recipient` cannot be the zero addresses.\n   * - `_sender` must have a balance of at least `_amount`.\n   * - the caller must have allowance for `_sender`'s tokens of at least `_amount`.\n   * - the contract must not be paused.\n   *\n   * @dev The `_amount` argument is the amount of tokens, not shares.\n   */\n  function transferFrom(\n    address _sender,\n    address _recipient,\n    uint256 _amount\n  ) public returns (bool) {\n    uint256 currentAllowance = allowances[_sender][msg.sender];\n    require(currentAllowance >= _amount, \"TRANSFER_AMOUNT_EXCEEDS_ALLOWANCE\");\n\n    _transfer(_sender, _recipient, _amount);\n    _approve(_sender, msg.sender, currentAllowance - _amount);\n    return true;\n  }\n\n  /**\n   * @notice Atomically increases the allowance granted to `_spender` by the caller by `_addedValue`.\n   *\n   * This is an alternative to `approve` that can be used as a mitigation for\n   * problems described in:\n   * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol#L42\n   * Emits an `Approval` event indicating the updated allowance.\n   *\n   * Requirements:\n   *\n   * - `_spender` cannot be the the zero address.\n   * - the contract must not be paused.\n   */\n  function increaseAllowance(\n    address _spender,\n    uint256 _addedValue\n  ) public returns (bool) {\n    _approve(\n      msg.sender,\n      _spender,\n      allowances[msg.sender][_spender] + _addedValue\n    );\n    return true;\n  }\n\n  /**\n   * @notice Atomically decreases the allowance granted to `_spender` by the caller by `_subtractedValue`.\n   *\n   * This is an alternative to `approve` that can be used as a mitigation for\n   * problems described in:\n   * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol#L42\n   * Emits an `Approval` event indicating the updated allowance.\n   *\n   * Requirements:\n   *\n   * - `_spender` cannot be the zero address.\n   * - `_spender` must have allowance for the caller of at least `_subtractedValue`.\n   * - the contract must not be paused.\n   */\n  function decreaseAllowance(\n    address _spender,\n    uint256 _subtractedValue\n  ) public returns (bool) {\n    uint256 currentAllowance = allowances[msg.sender][_spender];\n    require(\n      currentAllowance >= _subtractedValue,\n      \"DECREASED_ALLOWANCE_BELOW_ZERO\"\n    );\n    _approve(msg.sender, _spender, currentAllowance - _subtractedValue);\n    return true;\n  }\n\n  /**\n   * @return the amount of shares owned by `_account`.\n   *\n   * @dev This is the equivalent to the amount of OUSG wrapped by `_account`.\n   */\n  function sharesOf(address _account) public view returns (uint256) {\n    return _sharesOf(_account);\n  }\n\n  /**\n   * @return the amount of shares that corresponds to `_rOUSGAmount` of rOUSG\n   */\n  function getSharesByROUSG(\n    uint256 _rOUSGAmount\n  ) public view returns (uint256) {\n    return\n      (_rOUSGAmount * 1e18 * OUSG_TO_ROUSG_SHARES_MULTIPLIER) / getOUSGPrice();\n  }\n\n  /**\n   * @return the amount of rOUSG that corresponds to `_shares` of OUSG.\n   */\n  function getROUSGByShares(uint256 _shares) public view returns (uint256) {\n    return\n      (_shares * getOUSGPrice()) / (1e18 * OUSG_TO_ROUSG_SHARES_MULTIPLIER);\n  }\n\n  function getOUSGPrice() public view returns (uint256 price) {\n    (price, ) = oracle.getPriceData();\n  }\n\n  /**\n   * @notice Moves `_sharesAmount` token shares from the caller's account to the `_recipient` account.\n   *\n   * @return amount of transferred tokens.\n   * Emits a `TransferShares` event.\n   * Emits a `Transfer` event.\n   *\n   * Requirements:\n   *\n   * - `_recipient` cannot be the zero address.\n   * - the caller must have at least `_sharesAmount` shares.\n   * - the contract must not be paused.\n   *\n   * @dev The `_sharesAmount` argument is the amount of shares, not tokens.\n   */\n  function transferShares(\n    address _recipient,\n    uint256 _sharesAmount\n  ) public returns (uint256) {\n    _transferShares(msg.sender, _recipient, _sharesAmount);\n    emit TransferShares(msg.sender, _recipient, _sharesAmount);\n    uint256 tokensAmount = getROUSGByShares(_sharesAmount);\n    emit Transfer(msg.sender, _recipient, tokensAmount);\n    return tokensAmount;\n  }\n\n  /**\n   * @notice Function called by users to wrap their OUSG tokens\n   *\n   * @param _OUSGAmount The amount of OUSG Tokens to wrap\n   *\n   * @dev KYC checks implicit in OUSG Transfer\n   */\n  function wrap(uint256 _OUSGAmount) external whenNotPaused {\n    require(_OUSGAmount > 0, \"rOUSG: can't wrap zero OUSG tokens\");\n    uint256 ousgSharesAmount = _OUSGAmount * OUSG_TO_ROUSG_SHARES_MULTIPLIER;\n    _mintShares(msg.sender, ousgSharesAmount);\n    ousg.transferFrom(msg.sender, address(this), _OUSGAmount);\n    emit Transfer(address(0), msg.sender, getROUSGByShares(ousgSharesAmount));\n    emit TransferShares(address(0), msg.sender, ousgSharesAmount);\n  }\n\n  /**\n   * @notice Function called by users to unwrap their rOUSG tokens by rOUSG amount\n   *\n   * @param _rOUSGAmount The amount of rOUSG to unwrap\n   *\n   * @dev KYC checks implicit in OUSG Transfer\n   */\n  function unwrap(uint256 _rOUSGAmount) external whenNotPaused {\n    require(_rOUSGAmount > 0, \"rOUSG: can't unwrap zero rOUSG tokens\");\n    uint256 ousgSharesAmount = getSharesByROUSG(_rOUSGAmount);\n    if (ousgSharesAmount < OUSG_TO_ROUSG_SHARES_MULTIPLIER)\n      revert UnwrapTooSmall();\n    _burnShares(msg.sender, ousgSharesAmount);\n    ousg.transfer(\n      msg.sender,\n      ousgSharesAmount / OUSG_TO_ROUSG_SHARES_MULTIPLIER\n    );\n    emit Transfer(msg.sender, address(0), _rOUSGAmount);\n    emit TransferShares(msg.sender, address(0), ousgSharesAmount);\n  }\n\n  /**\n   * @notice Function called by users to unwrap their rOUSG tokens by shares\n   *\n   * @param _sharesAmount The amount of shares to transfer\n   *\n   * @dev KYC checks implicit in OUSG Transfer\n   * @dev This is a more precise unwrap, as it avoids the division by price when converting rOUSG to shares\n   */\n  function unwrapShares(uint256 _sharesAmount) external whenNotPaused {\n    if (_sharesAmount < OUSG_TO_ROUSG_SHARES_MULTIPLIER)\n      revert UnwrapTooSmall();\n\n    uint256 rOUSGAmount = getROUSGByShares(_sharesAmount);\n\n    _burnShares(msg.sender, _sharesAmount);\n    ousg.transfer(msg.sender, _sharesAmount / OUSG_TO_ROUSG_SHARES_MULTIPLIER);\n    emit Transfer(msg.sender, address(0), rOUSGAmount);\n    emit TransferShares(msg.sender, address(0), _sharesAmount);\n  }\n\n  /**\n   * @notice Moves `_amount` tokens from `_sender` to `_recipient`.\n   * Emits a `Transfer` event.\n   * Emits a `TransferShares` event.\n   */\n  function _transfer(\n    address _sender,\n    address _recipient,\n    uint256 _amount\n  ) internal {\n    uint256 _sharesToTransfer = getSharesByROUSG(_amount);\n    _transferShares(_sender, _recipient, _sharesToTransfer);\n    emit Transfer(_sender, _recipient, _amount);\n    emit TransferShares(_sender, _recipient, _sharesToTransfer);\n  }\n\n  /**\n   * @notice Sets `_amount` as the allowance of `_spender` over the `_owner` s tokens.\n   *\n   * Emits an `Approval` event.\n   *\n   * Requirements:\n   *\n   * - `_owner` cannot be the zero address.\n   * - `_spender` cannot be the zero address.\n   * - the contract must not be paused.\n   */\n  function _approve(\n    address _owner,\n    address _spender,\n    uint256 _amount\n  ) internal whenNotPaused {\n    require(_owner != address(0), \"APPROVE_FROM_ZERO_ADDRESS\");\n    require(_spender != address(0), \"APPROVE_TO_ZERO_ADDRESS\");\n\n    allowances[_owner][_spender] = _amount;\n    emit Approval(_owner, _spender, _amount);\n  }\n\n  /**\n   * @return the amount of shares owned by `_account`.\n   */\n  function _sharesOf(address _account) internal view returns (uint256) {\n    return shares[_account];\n  }\n\n  /**\n   * @notice Moves `_sharesAmount` shares from `_sender` to `_recipient`.\n   *\n   * Requirements:\n   *\n   * - `_sender` cannot be the zero address.\n   * - `_recipient` cannot be the zero address.\n   * - `_sender` must hold at least `_sharesAmount` shares.\n   * - the contract must not be paused.\n   */\n  function _transferShares(\n    address _sender,\n    address _recipient,\n    uint256 _sharesAmount\n  ) internal whenNotPaused {\n    require(_sender != address(0), \"TRANSFER_FROM_THE_ZERO_ADDRESS\");\n    require(_recipient != address(0), \"TRANSFER_TO_THE_ZERO_ADDRESS\");\n\n    _beforeTokenTransfer(_sender, _recipient, _sharesAmount);\n\n    uint256 currentSenderShares = shares[_sender];\n    require(\n      _sharesAmount <= currentSenderShares,\n      \"TRANSFER_AMOUNT_EXCEEDS_BALANCE\"\n    );\n\n    shares[_sender] = currentSenderShares - _sharesAmount;\n    shares[_recipient] += _sharesAmount;\n  }\n\n  /**\n   * @notice Creates `_sharesAmount` shares and assigns them to `_recipient`, increasing the total amount of shares.\n   *\n   * Requirements:\n   *\n   * - `_recipient` cannot be the zero address.\n   * - the contract must not be paused.\n   */\n  function _mintShares(address _recipient, uint256 _sharesAmount) internal {\n    require(_recipient != address(0), \"MINT_TO_THE_ZERO_ADDRESS\");\n\n    _beforeTokenTransfer(address(0), _recipient, _sharesAmount);\n\n    totalShares += _sharesAmount;\n\n    shares[_recipient] += _sharesAmount;\n  }\n\n  /**\n   * @notice Destroys `_sharesAmount` shares from `_account`'s holdings, decreasing the total amount of shares.\n   * @dev This doesn't decrease the token total supply.\n   *\n   * Requirements:\n   *\n   * - `_account` cannot be the zero address.\n   * - `_account` must hold at least `_sharesAmount` shares.\n   * - the contract must not be paused.\n   */\n  function _burnShares(address _account, uint256 _sharesAmount) internal {\n    require(_account != address(0), \"BURN_FROM_THE_ZERO_ADDRESS\");\n\n    _beforeTokenTransfer(_account, address(0), _sharesAmount);\n\n    uint256 accountShares = shares[_account];\n    require(_sharesAmount <= accountShares, \"BURN_AMOUNT_EXCEEDS_BALANCE\");\n\n    totalShares -= _sharesAmount;\n\n    shares[_account] = accountShares - _sharesAmount;\n  }\n\n  /**\n   * @dev Hook that is called before any transfer of tokens. This includes\n   * minting and burning.\n   *\n   * Calling conditions:\n   *\n   * - when `from` and `to` are both non-zero, `amount` of ``from``'s tokens\n   * will be transferred to `to`.\n   * - when `from` is zero, `amount` tokens will be minted for `to`.\n   * - when `to` is zero, `amount` of ``from``'s tokens will be burned.\n   * - `from` and `to` are never both zero.\n   *\n   * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].\n   */\n  function _beforeTokenTransfer(\n    address from,\n    address to,\n    uint256\n  ) internal view {\n    // Check constraints when `transferFrom` is called to facliitate\n    // a transfer between two parties that are not `from` or `to`.\n    if (from != msg.sender && to != msg.sender) {\n      require(_getKYCStatus(msg.sender), \"rOUSG: 'sender' address not KYC'd\");\n    }\n\n    if (from != address(0)) {\n      // If not minting\n      require(_getKYCStatus(from), \"rOUSG: 'from' address not KYC'd\");\n    }\n\n    if (to != address(0)) {\n      // If not burning\n      require(_getKYCStatus(to), \"rOUSG: 'to' address not KYC'd\");\n    }\n  }\n\n  /**\n   * @notice Sets the Oracle address\n   * @dev The new oracle must comply with the IRWAOracle interface\n   * @param _oracle Address of the new oracle\n   */\n  function setOracle(address _oracle) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    if (_oracle == address(0)) {\n      revert CannotSetToZeroAddress();\n    }\n    emit OracleSet(address(oracle), _oracle);\n    oracle = IRWAOracle(_oracle);\n  }\n\n  /**\n   * @notice Sets the token name\n   * @param newName New name of the token\n   */\n  function setName(\n    string memory newName\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    emit NameSet(_name, newName);\n    _name = newName;\n  }\n\n  /**\n   * @notice Sets the token symbol\n   * @param newSymbol New symbol of the token\n   */\n  function setSymbol(\n    string memory newSymbol\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    emit SymbolSet(_symbol, newSymbol);\n    _symbol = newSymbol;\n  }\n\n  /**\n   * @notice Admin burn function to burn rOUSG tokens from any account\n   * @param _account The account to burn tokens from\n   * @param _sharesAmount  The amount of OUSG shares to burn\n   * @dev Burns shares and transfers OUSG (if any) to `msg.sender`\n   */\n  function burnShares(\n    address _account,\n    uint256 _sharesAmount\n  ) external onlyRole(BURNER_ROLE) {\n    require(_sharesAmount > 0, \"rOUSG: can't burn zero shares\");\n\n    uint256 rOUSGAmount = getROUSGByShares(_sharesAmount);\n\n    _burnShares(_account, _sharesAmount);\n    emit TransferShares(_account, address(0), _sharesAmount);\n\n    if (_sharesAmount >= OUSG_TO_ROUSG_SHARES_MULTIPLIER) {\n      ousg.transfer(\n        msg.sender,\n        _sharesAmount / OUSG_TO_ROUSG_SHARES_MULTIPLIER\n      );\n      emit Transfer(_account, address(0), rOUSGAmount);\n    }\n  }\n\n  function pause() external onlyRole(PAUSER_ROLE) {\n    _pause();\n  }\n\n  function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {\n    _unpause();\n  }\n\n  function setKYCRegistry(\n    address registry\n  ) external override onlyRole(CONFIGURER_ROLE) {\n    _setKYCRegistry(registry);\n  }\n\n  function setKYCRequirementGroup(\n    uint256 group\n  ) external override onlyRole(CONFIGURER_ROLE) {\n    _setKYCRequirementGroup(group);\n  }\n}\n"
+      },
+      "contracts/xManager/interfaces/IOUSG_InstantManager.sol": {
+        "content": "// SPDX-License-Identifier: BUSL-1.1\n/*\n      ▄▄█████████▄\n   ╓██▀└ ,╓▄▄▄, '▀██▄\n  ██▀ ▄██▀▀╙╙▀▀██▄ └██µ           ,,       ,,      ,     ,,,            ,,,\n ██ ,██¬ ▄████▄  ▀█▄ ╙█▄      ▄███▀▀███▄   ███▄    ██  ███▀▀▀███▄    ▄███▀▀███,\n██  ██ ╒█▀'   ╙█▌ ╙█▌ ██     ▐██      ███  █████,  ██  ██▌    └██▌  ██▌     └██▌\n██ ▐█▌ ██      ╟█  █▌ ╟█     ██▌      ▐██  ██ └███ ██  ██▌     ╟██ j██       ╟██\n╟█  ██ ╙██    ▄█▀ ▐█▌ ██     ╙██      ██▌  ██   ╙████  ██▌    ▄██▀  ██▌     ,██▀\n ██ \"██, ╙▀▀███████████⌐      ╙████████▀   ██     ╙██  ███████▀▀     ╙███████▀`\n  ██▄ ╙▀██▄▄▄▄▄,,,                ¬─                                    '─¬\n   ╙▀██▄ '╙╙╙▀▀▀▀▀▀▀▀\n      ╙▀▀██████R⌐\n */\npragma solidity 0.8.16;\n\ninterface IOUSG_InstantManager {\n  function subscribe(\n    address depositToken,\n    uint256 depositAmount,\n    uint256 minimumRwaReceived\n  ) external returns (uint256 rwaAmountOut);\n\n  function subscribeRebasingOUSG(\n    address depositToken,\n    uint256 depositAmount,\n    uint256 minimumRwaReceived\n  ) external returns (uint256 rousgAmountOut);\n\n  function adminSubscribe(\n    address recipient,\n    uint256 rwaAmount,\n    bytes32 metadata\n  ) external;\n\n  function adminSubscribeRebasingOUSG(\n    address recipient,\n    uint256 rousgAmount,\n    bytes32 metadata\n  ) external;\n\n  function redeem(\n    uint256 rwaAmount,\n    address receivingToken,\n    uint256 minimumTokenReceived\n  ) external returns (uint256 receiveTokenAmount);\n\n  function redeemRebasingOUSG(\n    uint256 rwaAmount,\n    address receivingToken,\n    uint256 minimumTokenReceived\n  ) external returns (uint256 receiveTokenAmount);\n}\n"
+      },
+      "contracts/xManager/rwaManagers/BaseRWAManager.sol": {
+        "content": "// SPDX-License-Identifier: BUSL-1.1\n/*\n      ▄▄█████████▄\n   ╓██▀└ ,╓▄▄▄, '▀██▄\n  ██▀ ▄██▀▀╙╙▀▀██▄ └██µ           ,,       ,,      ,     ,,,            ,,,\n ██ ,██¬ ▄████▄  ▀█▄ ╙█▄      ▄███▀▀███▄   ███▄    ██  ███▀▀▀███▄    ▄███▀▀███,\n██  ██ ╒█▀'   ╙█▌ ╙█▌ ██     ▐██      ███  █████,  ██  ██▌    └██▌  ██▌     └██▌\n██ ▐█▌ ██      ╟█  █▌ ╟█     ██▌      ▐██  ██ └███ ██  ██▌     ╟██ j██       ╟██\n╟█  ██ ╙██    ▄█▀ ▐█▌ ██     ╙██      ██▌  ██   ╙████  ██▌    ▄██▀  ██▌     ,██▀\n ██ \"██, ╙▀▀███████████⌐      ╙████████▀   ██     ╙██  ███████▀▀     ╙███████▀`\n  ██▄ ╙▀██▄▄▄▄▄,,,                ¬─                                    '─¬\n   ╙▀██▄ '╙╙╙▀▀▀▀▀▀▀▀\n      ╙▀▀██████R⌐\n */\npragma solidity 0.8.16;\nimport \"contracts/xManager/interfaces/ITokenSource.sol\";\nimport \"contracts/xManager/interfaces/ITokenRecipient.sol\";\nimport \"contracts/xManager/interfaces/IOndoTokenRouter.sol\";\nimport \"contracts/xManager/interfaces/IOndoIDRegistry.sol\";\nimport \"contracts/xManager/interfaces/IOndoCompliance.sol\";\nimport \"contracts/xManager/interfaces/IOndoRateLimiter.sol\";\nimport \"contracts/xManager/interfaces/IOndoOracle.sol\";\nimport \"contracts/xManager/interfaces/IOndoFees.sol\";\nimport \"contracts/xManager/interfaces/IAdminSubscriptionChecker.sol\";\nimport \"contracts/interfaces/IRWALike.sol\";\nimport \"contracts/xManager/rwaManagers/IBaseRWAManagerEvents.sol\";\nimport \"contracts/xManager/rwaManagers/IBaseRWAManagerErrors.sol\";\nimport \"contracts/external/openzeppelin/contracts/token/IERC20Metadata.sol\";\nimport \"contracts/external/openzeppelin/contracts/access/AccessControlEnumerable.sol\";\nimport \"contracts/external/openzeppelin/contracts/security/ReentrancyGuard.sol\";\nimport \"contracts/external/openzeppelin/contracts/token/SafeERC20.sol\";\n\n/**\n * @title  BaseRWAManager\n * @author Ondo Finance\n * @notice The BaseRWAManager contract contains the core logic for processing subscriptions\n *         and redemptions of RWA tokens. The abstract logic of this contract never touches\n *         RWA tokens, so inheriting child classes may implement the RWA token processing as they\n *         see fit.\n *         The responsibilities of this contract are:\n *          - Receiving deposits of tokens and depositing them into the OndoTokenRouter\n *          - Calculating the amount of RWA tokens to mint and/or transfer\n *            based on the deposit amount of subscriptions\n *          - Calculating the amount of tokens to return to users based on the redemption amount\n *          - Withdrawing tokens from the OndoTokenRouter and sending them to users\n *          - Enforcing the minimum deposit and redemption amounts\n *          - Ensuring users are registered with the OndoIDRegistry\n *          - Ensuring users are compliant with the OndoCompliance contract\n *         -  Checking user-specific and global rate limits\n *         -  Calculating the fees incurred by users for subscriptions and\n *            redemptions\n */\nabstract contract BaseRWAManager is\n  IBaseRWAManagerEvents,\n  IBaseRWAManagerErrors,\n  ReentrancyGuard,\n  AccessControlEnumerable\n{\n  using SafeERC20 for IERC20;\n  /// The decimals normalizer for USD\n  uint256 public constant USD_NORMALIZER = 1e18;\n\n  /// The decimals normalizer for the RWA token\n  uint256 public immutable RWA_NORMALIZER;\n\n  /// Role to configure the contract\n  bytes32 public constant CONFIGURER_ROLE = keccak256(\"CONFIGURER_ROLE\");\n\n  /// Role to pause subscriptions and redemptions\n  bytes32 public constant PAUSER_ROLE = keccak256(\"PAUSER_ROLE\");\n\n  /// Role to manually service a subscription to RWA tokens\n  bytes32 public constant ADMIN_SUBSCRIPTION_ROLE =\n    keccak256(\"ADMIN_SUBSCRIPTION_ROLE\");\n\n  /**\n   * @notice Minimum USD amount required to subscribe to a RWA token, denoted in USD with 18\n   *         decimals.\n   */\n  uint256 public minimumDepositUSD;\n\n  /**\n   * @notice Minimum USD amount required to perform an RWA token redemption to be allowed,\n   *         denoted in USD with 18 decimals\n   */\n  uint256 public minimumRedemptionUSD;\n\n  /// Minimum price of RWA token that this contract will use, denoted in USD with 18 decimals\n  uint256 public minimumRwaPrice;\n\n  /// Whether subscriptions are paused for this contract\n  bool public subscribePaused;\n\n  /// Whether redemptions are paused for this contract\n  bool public redeemPaused;\n\n  /// The contract address for the RWA token this contract is responsible for\n  address public immutable rwaToken;\n\n  /// The `OndoTokenRouter` contract address\n  IOndoTokenRouter public ondoTokenRouter;\n\n  /// The `OndoOracle` contract address\n  IOndoOracle public ondoOracle;\n\n  /// The `OndoCompliance` contract address\n  IOndoCompliance public ondoCompliance;\n\n  /// The `OndoIDRegistry` contract address\n  IOndoIDRegistry public ondoIDRegistry;\n\n  /// The `OndoRateLimiter` contract address\n  IOndoRateLimiter public ondoRateLimiter;\n\n  /// The `OndoFees` contract for managing subscription fees\n  IOndoFees public ondoSubscriptionFees;\n\n  /// The `OndoFees` contract for managing redemption fees\n  IOndoFees public ondoRedemptionFees;\n\n  /// The `AdminSubscriptionChecker` contract\n  IAdminSubscriptionChecker public adminSubscriptionChecker;\n\n  /// Mapping of accepted subscription tokens\n  mapping(address => bool) public acceptedSubscriptionTokens;\n\n  /// Mapping of accepted redemption tokens\n  mapping(address => bool) public acceptedRedemptionTokens;\n\n  /**\n   * @param _defaultAdmin         The default admin role for the contract\n   * @param _rwaToken             The RWA token address\n   * @param _minimumDepositUSD    The minimum subscription amount, denoted in USD with 18 decimals\n   * @param _minimumRedemptionUSD The minimum redemption amount, denoted in USD with 18 decimals\n   */\n  constructor(\n    address _defaultAdmin,\n    address _rwaToken,\n    uint256 _minimumDepositUSD,\n    uint256 _minimumRedemptionUSD\n  ) {\n    if (_rwaToken == address(0)) revert TokenAddressCantBeZero();\n\n    rwaToken = _rwaToken;\n    RWA_NORMALIZER = 10 ** IERC20Metadata(_rwaToken).decimals();\n    minimumDepositUSD = _minimumDepositUSD;\n    minimumRedemptionUSD = _minimumRedemptionUSD;\n    _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);\n  }\n\n  /**\n   * @notice Internal function for processing subscriptions\n   * @param  depositToken       The token to deposit\n   * @param  depositAmount      The amount of tokens to deposit, in decimals of the\n   *                            token being deposited\n   * @param  minimumRwaReceived The minimum amount of RWA tokens to receive, in\n   *                            decimals of the RWA token\n   * @return rwaAmountOut       The amount of RWA tokens to mint or transfer, in\n   *                            decimals of the RWA token\n   * @dev    This function will transfer the deposit tokens from the `msg.sender` to this contract\n   *         and then deposit them via the `OndoTokenRouter`. The mint or transfer of the RWA token\n   *         must be done in the child class.\n   */\n  function _processSubscription(\n    address depositToken,\n    uint256 depositAmount,\n    uint256 minimumRwaReceived\n  ) internal whenSubscribeNotPaused returns (uint256 rwaAmountOut) {\n    if (!acceptedSubscriptionTokens[depositToken]) revert TokenNotAccepted();\n\n    // Reverts if user address is not compliant\n    ondoCompliance.checkIsCompliant(rwaToken, _msgSender());\n    bytes32 userId = ondoIDRegistry.getRegisteredID(rwaToken, _msgSender());\n    if (userId == bytes32(0)) revert UserNotRegistered();\n\n    IERC20(depositToken).safeTransferFrom(\n      _msgSender(),\n      address(this),\n      depositAmount\n    );\n    IERC20(depositToken).forceApprove(address(ondoTokenRouter), depositAmount);\n\n    ondoTokenRouter.depositToken(rwaToken, depositToken, depositAmount);\n\n    // USD values are normalized to 18 decimals\n    uint256 depositUSDValue = (ondoOracle.getAssetPrice(depositToken) *\n      depositAmount) / 10 ** IERC20Metadata(depositToken).decimals();\n\n    if (depositUSDValue < minimumDepositUSD) revert DepositAmountTooSmall();\n\n    // Fee in USD with 18 decimals\n    uint256 fee = ondoSubscriptionFees.getAndUpdateFee(\n      rwaToken,\n      depositToken,\n      userId,\n      depositUSDValue\n    );\n\n    if (fee > depositUSDValue) revert FeeGreaterThanSubscription();\n\n    // Prices are returned in 18 decimals, so multiply by the rwa normalizer to get the RWA amount\n    rwaAmountOut = ((depositUSDValue - fee) * RWA_NORMALIZER) / _getRwaPrice();\n\n    if (rwaAmountOut < minimumRwaReceived) revert RwaReceiveAmountTooSmall();\n\n    ondoRateLimiter.checkAndUpdateRateLimit(\n      IOndoRateLimiter.TransactionType.SUBSCRIPTION,\n      rwaToken,\n      userId,\n      depositUSDValue\n    );\n\n    emit Subscription(\n      _msgSender(),\n      userId,\n      rwaAmountOut,\n      depositToken,\n      depositAmount,\n      depositUSDValue,\n      fee\n    );\n  }\n\n  /**\n   * @notice Internal function for processing redemptions\n   * @param  rwaAmount            The amount of RWA tokens to redeem, in decimals of\n   *                              the RWA token\n   * @param  receivingToken       The token the user receives\n   * @param  minimumTokenReceived The minimum amount of tokens to receive, in\n   *                              decimals of `receivingToken`\n   * @return receiveTokenAmount   The amount of tokens to sent back to the caller,\n   *                              in decimals of `receivingToken`\n   * @dev    This function will send tokens to send back to the caller to service redemptions.\n   *         The transfer/burn of the RWA itself must be done in the child class.\n   */\n  function _processRedemption(\n    uint256 rwaAmount,\n    address receivingToken,\n    uint256 minimumTokenReceived\n  ) internal whenRedeemNotPaused returns (uint256 receiveTokenAmount) {\n    if (!acceptedRedemptionTokens[receivingToken]) revert TokenNotAccepted();\n\n    // Reverts if the user address is not compliant\n    ondoCompliance.checkIsCompliant(rwaToken, _msgSender());\n    bytes32 userId = ondoIDRegistry.getRegisteredID(rwaToken, _msgSender());\n    if (userId == bytes32(0)) revert UserNotRegistered();\n\n    // USD values are normalized to 18 decimals\n    uint256 redemptionUSDValue = (_getRwaPrice() * rwaAmount) / RWA_NORMALIZER;\n    if (redemptionUSDValue < minimumRedemptionUSD)\n      revert RedemptionAmountTooSmall();\n\n    // Fee is denoted in USD with 18 decimals\n    uint256 fee = ondoRedemptionFees.getAndUpdateFee(\n      rwaToken,\n      receivingToken,\n      userId,\n      redemptionUSDValue\n    );\n\n    if (fee > redemptionUSDValue) revert FeeGreaterThanRedemption();\n\n    ondoRateLimiter.checkAndUpdateRateLimit(\n      IOndoRateLimiter.TransactionType.REDEMPTION,\n      rwaToken,\n      userId,\n      redemptionUSDValue\n    );\n\n    // Prices are returned in 18 decimals\n    receiveTokenAmount =\n      ((redemptionUSDValue - fee) *\n        10 ** IERC20Metadata(receivingToken).decimals()) /\n      ondoOracle.getAssetPrice(receivingToken);\n\n    if (receiveTokenAmount < minimumTokenReceived)\n      revert ReceiveAmountTooSmall();\n\n    ondoTokenRouter.withdrawToken(\n      address(rwaToken),\n      receivingToken,\n      userId,\n      receiveTokenAmount\n    );\n\n    IERC20(receivingToken).safeTransfer(_msgSender(), receiveTokenAmount);\n\n    emit Redemption(\n      _msgSender(),\n      userId,\n      rwaAmount,\n      receivingToken,\n      receiveTokenAmount,\n      redemptionUSDValue,\n      fee\n    );\n  }\n\n  /**\n   * @notice Admin function to service a subscription whose corresponding deposit been made outside\n   *         of this contracts system. This is almost identical to the `_processSubscription`\n   *         function, but skips the deposit token transfer and fee calculation (fees are\n   *         managed off-chain). The mint and/or transfer itself must be done in the child contract\n   *         implementation.\n   * @param  recipient The address to send the RWA tokens to\n   * @param  rwaAmount The amount of RWA tokens to mint and/or transfer\n   * @param  metadata  Additional metadata to emit with the subscription\n   */\n  function _adminProcessSubscription(\n    address recipient,\n    uint256 rwaAmount,\n    bytes32 metadata\n  ) internal whenSubscribeNotPaused onlyRole(ADMIN_SUBSCRIPTION_ROLE) {\n    // Will revert if the user is not compliant.\n    ondoCompliance.checkIsCompliant(rwaToken, recipient);\n    bytes32 userId = ondoIDRegistry.getRegisteredID(rwaToken, recipient);\n    if (userId == bytes32(0)) revert UserNotRegistered();\n\n    // All USD values are normalized to 18 decimals.\n    uint256 depositUSDValue = (rwaAmount * _getRwaPrice()) / RWA_NORMALIZER;\n\n    adminSubscriptionChecker.checkAndUpdateAdminSubscriptionAllowance(\n      _msgSender(),\n      depositUSDValue\n    );\n    ondoRateLimiter.checkAndUpdateRateLimit(\n      IOndoRateLimiter.TransactionType.SUBSCRIPTION,\n      rwaToken,\n      userId,\n      depositUSDValue\n    );\n    emit AdminSubscription(\n      _msgSender(),\n      recipient,\n      userId,\n      rwaAmount,\n      depositUSDValue,\n      metadata\n    );\n  }\n\n  /**\n   * @notice Gets the rwa token price from the oracle\n   * @return rwaPrice The price of the RWA token\n   */\n  function _getRwaPrice() internal view returns (uint256 rwaPrice) {\n    rwaPrice = ondoOracle.getAssetPrice(rwaToken);\n    if (rwaPrice < minimumRwaPrice) revert RWAPriceTooLow();\n  }\n\n  /**\n   * @notice Sets whether a token is accepted for subscriptions\n   * @param  token    The token address\n   * @param  accepted Whether the token is accepted for subscription\n   */\n  function setAcceptedSubscriptionToken(\n    address token,\n    bool accepted\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    if (token == address(0)) revert TokenAddressCantBeZero();\n    // Ensure the oracle supports the token\n    if (accepted) ondoOracle.getAssetPrice(token);\n    emit AcceptedSubscriptionTokenSet(token, accepted);\n    acceptedSubscriptionTokens[token] = accepted;\n  }\n\n  /**\n   * @notice Sets whether a token is accepted for redemption.\n   * @param  token    The token address\n   * @param  accepted Whether the token is accepted for redemption\n   */\n  function setAcceptedRedemptionToken(\n    address token,\n    bool accepted\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    if (token == address(0)) revert TokenAddressCantBeZero();\n    // Ensure the oracle supports the token\n    if (accepted) ondoOracle.getAssetPrice(token);\n    emit AcceptedRedemptionTokenSet(token, accepted);\n    acceptedRedemptionTokens[token] = accepted;\n  }\n\n  /**\n   * @notice Admin function to set the `OndoTokenRouter` contract\n   * @param  _ondoTokenRouter The `OndoTokenRouter` contract address\n   */\n  function setOndoTokenRouter(\n    address _ondoTokenRouter\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    if (_ondoTokenRouter == address(0)) revert RouterAddressCantBeZero();\n    emit OndoTokenRouterSet(address(ondoTokenRouter), _ondoTokenRouter);\n    ondoTokenRouter = IOndoTokenRouter(_ondoTokenRouter);\n  }\n\n  /**\n   * @notice Admin function to set the `OndoOracle` contract\n   * @param  _ondoOracle The `OndoOracle` contract address\n   * @dev    Will revert if new `OndoOracle` contract returns a price lower than the minimum\n   *         configured price of the RWA token\n   */\n  function setOndoOracle(\n    address _ondoOracle\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    if (_ondoOracle == address(0)) revert OracleAddressCantBeZero();\n    emit OndoOracleSet(address(ondoOracle), _ondoOracle);\n    ondoOracle = IOndoOracle(_ondoOracle);\n\n    uint256 price = ondoOracle.getAssetPrice(rwaToken);\n    if (price < minimumRwaPrice) revert RWAPriceTooLow();\n  }\n\n  /**\n   * @notice Sets the `OndoCompliance` contract\n   * @param  _ondoCompliance The `OndoCompliance` contract address\n   */\n  function setOndoCompliance(\n    address _ondoCompliance\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    if (_ondoCompliance == address(0)) revert ComplianceAddressCantBeZero();\n    emit OndoComplianceSet(address(ondoCompliance), _ondoCompliance);\n    ondoCompliance = IOndoCompliance(_ondoCompliance);\n\n    // Ensure that the `OndoCompliance` interface is supported and\n    // this contract is compliant\n    ondoCompliance.checkIsCompliant(rwaToken, address(this));\n  }\n\n  /**\n   * @notice Sets the `OndoIDRegistry` contract\n   * @param  _ondoIDRegistry The `OndoIDRegistry` contract address\n   */\n  function setOndoIDRegistry(\n    address _ondoIDRegistry\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    if (_ondoIDRegistry == address(0)) revert IDRegistryAddressCantBeZero();\n    emit OndoIDRegistrySet(address(ondoIDRegistry), _ondoIDRegistry);\n    ondoIDRegistry = IOndoIDRegistry(_ondoIDRegistry);\n    // Ensure that the `OndoIDRegistry` interface is supported\n    ondoIDRegistry.getRegisteredID(rwaToken, address(this));\n  }\n\n  /**\n   * @notice Sets the `OndoRateLimiter` contract\n   * @param  _ondoRateLimiter The `OndoRateLimiter` contract address\n   */\n  function setOndoRateLimiter(\n    address _ondoRateLimiter\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    if (_ondoRateLimiter == address(0)) revert RateLimiterAddressCantBeZero();\n    emit OndoRateLimiterSet(address(ondoRateLimiter), _ondoRateLimiter);\n    ondoRateLimiter = IOndoRateLimiter(_ondoRateLimiter);\n  }\n\n  /**\n   * @notice Sets the `AdminSubscriptionChecker` contract\n   * @param  _adminSubscriptionChecker The `AdminSubscriptionChecker` contract address\n   */\n  function setAdminSubscriptionChecker(\n    address _adminSubscriptionChecker\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    if (_adminSubscriptionChecker == address(0))\n      revert AdminSubscriptionCheckerAddressCantBeZero();\n    emit AdminSubscriptionCheckerSet(\n      address(adminSubscriptionChecker),\n      _adminSubscriptionChecker\n    );\n    adminSubscriptionChecker = IAdminSubscriptionChecker(\n      _adminSubscriptionChecker\n    );\n  }\n\n  /**\n   * @notice Sets the `OndoFees` contract for subscriptions\n   * @param  _ondoSubscriptionFees The `OndoFees` contract address\n   */\n  function setOndoSubscriptionFees(\n    address _ondoSubscriptionFees\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    if (_ondoSubscriptionFees == address(0)) revert FeesAddressCantBeZero();\n    emit OndoSubscriptionFeesSet(\n      address(ondoSubscriptionFees),\n      _ondoSubscriptionFees\n    );\n    ondoSubscriptionFees = IOndoFees(_ondoSubscriptionFees);\n  }\n\n  /**\n   * @notice Sets the `OndoFees` contract for redemptions\n   * @param  _ondoRedemptionFees The `OndoFees` contract address\n   */\n  function setOndoRedemptionFees(\n    address _ondoRedemptionFees\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    if (_ondoRedemptionFees == address(0)) revert FeesAddressCantBeZero();\n    emit OndoRedemptionFeesSet(\n      address(ondoRedemptionFees),\n      _ondoRedemptionFees\n    );\n    ondoRedemptionFees = IOndoFees(_ondoRedemptionFees);\n  }\n\n  /**\n   * @notice Sets the minimum amount required for a subscription\n   * @param  _minimumDepositUSD The minimum amount required to subscribe, denoted in\n   *                            USD with 18 decimals\n   */\n  function setMinimumDepositAmount(\n    uint256 _minimumDepositUSD\n  ) external onlyRole(CONFIGURER_ROLE) {\n    emit MinimumDepositAmountSet(minimumDepositUSD, _minimumDepositUSD);\n    minimumDepositUSD = _minimumDepositUSD;\n  }\n\n  /**\n   * @notice Sets the minimum amount to redeem\n   * @param  _minimumRedemptionUSD The minimum amount required to redeem,\n   *                               denoted in USD with 18.\n   */\n  function setMinimumRedemptionAmount(\n    uint256 _minimumRedemptionUSD\n  ) external onlyRole(CONFIGURER_ROLE) {\n    emit MinimumRedemptionAmountSet(\n      minimumRedemptionUSD,\n      _minimumRedemptionUSD\n    );\n    minimumRedemptionUSD = _minimumRedemptionUSD;\n  }\n\n  /**\n   * @notice Sets the minimum price of RWA token\n   * @param  _minimumRwaPrice The minimum price of the RWA token\n   */\n  function setMinimumRwaPrice(\n    uint256 _minimumRwaPrice\n  ) external onlyRole(CONFIGURER_ROLE) {\n    emit MinimumRwaPriceSet(minimumRwaPrice, _minimumRwaPrice);\n    minimumRwaPrice = _minimumRwaPrice;\n  }\n\n  /**\n   * @notice Rescue and transfer tokens locked in this contract\n   * @param  token  The address of the token\n   * @param  to     The address of the recipient\n   * @param  amount The amount of token to transfer\n   */\n  function retrieveTokens(\n    address token,\n    address to,\n    uint256 amount\n  ) external onlyRole(DEFAULT_ADMIN_ROLE) {\n    IERC20(token).safeTransfer(to, amount);\n  }\n\n  /*//////////////////////////////////////////////////////////////\n                          Pause/Unpause\n  //////////////////////////////////////////////////////////////*/\n\n  /// Pause the subscribe functionality.\n  function pauseSubscribe() external onlyRole(PAUSER_ROLE) {\n    subscribePaused = true;\n    emit SubscribePaused();\n  }\n\n  /// Unpause the subscribe functionality.\n  function unpauseSubscribe() external onlyRole(DEFAULT_ADMIN_ROLE) {\n    subscribePaused = false;\n    emit SubscribeUnpaused();\n  }\n\n  /// Pause the redeem functionality.\n  function pauseRedeem() external onlyRole(PAUSER_ROLE) {\n    redeemPaused = true;\n    emit RedeemPaused();\n  }\n\n  /// Unpause the redeem functionality.\n  function unpauseRedeem() external onlyRole(DEFAULT_ADMIN_ROLE) {\n    redeemPaused = false;\n    emit RedeemUnpaused();\n  }\n\n  /// Ensure that the subscribe functionality is not paused\n  modifier whenSubscribeNotPaused() {\n    if (subscribePaused) revert SubscriptionsPaused();\n    _;\n  }\n\n  /// Ensure that the redeem functionality is not paused\n  modifier whenRedeemNotPaused() {\n    if (redeemPaused) revert RedemptionsPaused();\n    _;\n  }\n}\n"
+      },
+      "contracts/xManager/rwaManagers/OUSG_InstantManager.sol": {
+        "content": "// SPDX-License-Identifier: BUSL-1.1\n/*\n      ▄▄█████████▄\n   ╓██▀└ ,╓▄▄▄, '▀██▄\n  ██▀ ▄██▀▀╙╙▀▀██▄ └██µ           ,,       ,,      ,     ,,,            ,,,\n ██ ,██¬ ▄████▄  ▀█▄ ╙█▄      ▄███▀▀███▄   ███▄    ██  ███▀▀▀███▄    ▄███▀▀███,\n██  ██ ╒█▀'   ╙█▌ ╙█▌ ██     ▐██      ███  █████,  ██  ██▌    └██▌  ██▌     └██▌\n██ ▐█▌ ██      ╟█  █▌ ╟█     ██▌      ▐██  ██ └███ ██  ██▌     ╟██ j██       ╟██\n╟█  ██ ╙██    ▄█▀ ▐█▌ ██     ╙██      ██▌  ██   ╙████  ██▌    ▄██▀  ██▌     ,██▀\n ██ \"██, ╙▀▀███████████⌐      ╙████████▀   ██     ╙██  ███████▀▀     ╙███████▀`\n  ██▄ ╙▀██▄▄▄▄▄,,,                ¬─                                    '─¬\n   ╙▀██▄ '╙╙╙▀▀▀▀▀▀▀▀\n      ╙▀▀██████R⌐\n */\npragma solidity 0.8.16;\n\nimport \"contracts/xManager/rwaManagers/BaseRWAManager.sol\";\nimport \"contracts/interfaces/IRWALike.sol\";\nimport \"contracts/ousg/rOUSG.sol\";\nimport \"contracts/xManager/interfaces/IOUSG_InstantManager.sol\";\n\n/**\n * @title  OUSG_InstantManager\n * @author Ondo Finance\n * @notice This contract manages instant subscriptions and redemptions of OUSG and rOUSG tokens,\n *         with support for conversion between OUSG and rOUSG.\n *\n *         This contract allows for:\n *         - Users to instantly subscribe to OUSG or rOUSG by depositing supported tokens\n *         - Users to redeem OUSG or rOUSG back to supported tokens\n *         - An admin to execute manual subscriptions for specialized use cases\n */\ncontract OUSG_InstantManager is BaseRWAManager, IOUSG_InstantManager {\n  /// The rebasing OUSG token contract\n  ROUSG public immutable rousg;\n\n  /// Helper constant for converting between OUSG tokens and rOUSG shares\n  uint256 public constant OUSG_TO_ROUSG_SHARES_MULTIPLIER = 10_000;\n\n  /**\n   * @notice Event emitted when a user mints rOUSG\n   * @param  recipient      Address of the recipient\n   * @param  ousgAmountOut  Amount of OUSG wrapped for the user\n   * @param  rousgAmountOut Amount of rOUSG sent to user\n   * @param  depositToken   Address of the token deposited\n   * @param  depositAmount  Amount of tokens deposited, denoted in decimals of `depositToken`\n   */\n  event InstantSubscriptionRebasingOUSG(\n    address indexed recipient,\n    uint256 ousgAmountOut,\n    uint256 rousgAmountOut,\n    address depositToken,\n    uint256 depositAmount\n  );\n\n  /**\n   * @notice Event emitted when a user redeems rOUSG\n   * @param  redeemer           Address of the redeemer\n   * @param  ousgAmountIn       Amount of OUSG unwrapped for the user\n   * @param  rousgAmountIn      Amount of the rOUSG burned for the redemption\n   * @param  receivingToken     Address of the token received\n   * @param  receiveTokenAmount Amount of tokens received, denoted in decimals of `receivingToken`\n   */\n  event InstantRedemptionRebasingOUSG(\n    address indexed redeemer,\n    uint256 ousgAmountIn,\n    uint256 rousgAmountIn,\n    address receivingToken,\n    uint256 receiveTokenAmount\n  );\n\n  /**\n   * @notice Event emitted when an admin mints rOUSG\n   * @param  recipient   Address of the recipient\n   * @param  ousgAmount  Amount of OUSG wrapped for the user\n   * @param  rousgAmount Amount of rOUSG sent to recipient\n   * @param  metadata    Metadata for the subscription\n   */\n  event AdminSubscriptionRebasingOUSG(\n    address indexed recipient,\n    uint256 ousgAmount,\n    uint256 rousgAmount,\n    bytes32 metadata\n  );\n\n  /// Error emitted when setting the rOUSG address to the zero address\n  error RebasingOUSGCantBeZeroAddress();\n\n  /**\n   * @param _defaultAdmin            The default admin address\n   * @param _rwaToken                The OUSG token address\n   * @param _rousg                   The rOUSG token address\n   * @param _minimumDepositAmount    The minimum deposit amount\n   * @param _minimumRedemptionAmount The minimum redemption amount\n   */\n  constructor(\n    address _defaultAdmin,\n    address _rwaToken,\n    address _rousg,\n    uint256 _minimumDepositAmount,\n    uint256 _minimumRedemptionAmount\n  )\n    BaseRWAManager(\n      _defaultAdmin,\n      _rwaToken,\n      _minimumDepositAmount,\n      _minimumRedemptionAmount\n    )\n  {\n    if (_rousg == address(0)) revert RebasingOUSGCantBeZeroAddress();\n    rousg = ROUSG(_rousg);\n  }\n\n  /**\n   * @notice Subscribes to the RWA using the specified deposit token and amount\n   * @param  depositToken       The address of the token to be deposited\n   * @param  depositAmount      The amount of the deposit token to be deposited, expected to be in\n   *                            decimals of `depositToken`\n   * @param  minimumRwaReceived The minimum amount of RWA to be received from the subscription,\n   *                            expected to be in decimals of the RWA token\n   * @return rwaAmountOut       The amount of RWA received from the subscription, expected to be in\n   *                            decimals of the RWA token\n   */\n  function subscribe(\n    address depositToken,\n    uint256 depositAmount,\n    uint256 minimumRwaReceived\n  ) external nonReentrant returns (uint256 rwaAmountOut) {\n    rwaAmountOut = _processSubscription(\n      depositToken,\n      depositAmount,\n      minimumRwaReceived\n    );\n    IRWALike(rwaToken).mint(_msgSender(), rwaAmountOut);\n  }\n\n  /**\n   * @notice Subscribes to rOUSG. This works similar to `subscribe`, but\n   *         wraps the OUSG into rOUSG before transferring to the user.\n   * @param  depositToken         The token to deposit\n   * @param  depositAmount        Amount of tokens to deposit, denoted in decimals of the\n   *                              `depositToken`\n   * @param  minimumRousgReceived Minimum amount of rOUSG to receive\n   * @return rousgAmountOut       Amount of rOUSG received, in decimals of rOUSG\n   */\n  function subscribeRebasingOUSG(\n    address depositToken,\n    uint256 depositAmount,\n    uint256 minimumRousgReceived\n  ) external nonReentrant returns (uint256 rousgAmountOut) {\n    uint256 minimumOusgAmount = rousg.getSharesByROUSG(minimumRousgReceived) /\n      OUSG_TO_ROUSG_SHARES_MULTIPLIER;\n    uint256 ousgAmountOut = _processSubscription(\n      depositToken,\n      depositAmount,\n      minimumOusgAmount\n    );\n\n    IRWALike(rwaToken).mint(address(this), ousgAmountOut);\n    IRWALike(rwaToken).approve(address(rousg), ousgAmountOut);\n    rousg.wrap(ousgAmountOut);\n    rousgAmountOut = rousg.transferShares(\n      _msgSender(),\n      ousgAmountOut * OUSG_TO_ROUSG_SHARES_MULTIPLIER\n    );\n\n    // Verify rOUSG amount received directly, avoiding precision loss from checking OUSG values\n    // in `_processSubscription`\n    if (rousgAmountOut < minimumRousgReceived)\n      revert RwaReceiveAmountTooSmall();\n\n    emit InstantSubscriptionRebasingOUSG(\n      _msgSender(),\n      ousgAmountOut,\n      rousgAmountOut,\n      depositToken,\n      depositAmount\n    );\n  }\n\n  /**\n   * @notice Allows an admin to subscribe on behalf of a recipient with the specified RWA amount\n   *         and metadata\n   * @param  recipient The address of the recipient\n   * @param  rwaAmount The amount of RWA to be subscribed, expected to be in decimals of the RWA\n   *                   token\n   * @param  metadata  Additional metadata associated with the subscription\n   */\n  function adminSubscribe(\n    address recipient,\n    uint256 rwaAmount,\n    bytes32 metadata\n  ) external nonReentrant {\n    _adminProcessSubscription(recipient, rwaAmount, metadata);\n    IRWALike(rwaToken).mint(recipient, rwaAmount);\n  }\n\n  /**\n   * @notice Performs an admin subscription to rOUSG. This works similar to\n   *         `adminSubscribe`, but wraps the OUSG to rOUSG before transferring the tokens\n   *         to the user.\n   * @param  recipient    Recipient of the rOUSG\n   * @param  rousgAmount  Amount of rOUSG to send, in decimals of rOUSG\n   * @param  metadata     Metadata for the subscription\n   */\n  function adminSubscribeRebasingOUSG(\n    address recipient,\n    uint256 rousgAmount,\n    bytes32 metadata\n  ) external nonReentrant {\n    uint256 ousgAmount = rousg.getSharesByROUSG(rousgAmount) /\n      OUSG_TO_ROUSG_SHARES_MULTIPLIER;\n    _adminProcessSubscription(recipient, ousgAmount, metadata);\n    IRWALike(rwaToken).mint(address(this), ousgAmount);\n    IRWALike(rwaToken).approve(address(rousg), ousgAmount);\n    rousg.wrap(ousgAmount);\n    rousg.transferShares(\n      recipient,\n      ousgAmount * OUSG_TO_ROUSG_SHARES_MULTIPLIER\n    );\n\n    emit AdminSubscriptionRebasingOUSG(\n      recipient,\n      ousgAmount,\n      rousgAmount,\n      metadata\n    );\n  }\n\n  /**\n   * @notice Redeems the specified amount of RWA for the receiving token\n   * @param  rwaAmount            The amount of RWA to be redeemed, expected to be in decimals of\n   *                              the RWA token\n   * @param  receivingToken       The address of the token to receive\n   * @param  minimumTokenReceived The minimum amount of the receiving token to be received,\n   *                              expected to be in decimals of `receivingToken`\n   * @return receiveTokenAmount   The amount of the token received from the redemption, expected\n   *                              to be in decimals of the `receivingToken`\n   */\n  function redeem(\n    uint256 rwaAmount,\n    address receivingToken,\n    uint256 minimumTokenReceived\n  ) external nonReentrant returns (uint256 receiveTokenAmount) {\n    IRWALike(rwaToken).transferFrom(_msgSender(), address(this), rwaAmount);\n    IRWALike(rwaToken).burn(rwaAmount);\n\n    receiveTokenAmount = _processRedemption(\n      rwaAmount,\n      receivingToken,\n      minimumTokenReceived\n    );\n  }\n\n  /**\n   * @notice Performs a rOUSG redemption. This works similar to `redeem`, but\n   *         unwraps the rOUSG to OUSG before processing the redemption.\n   * @param  rousgAmount            Amount of rOUSG to redeem\n   * @param  receivingToken         Token to receive\n   * @param  minimumTokenReceived   Minimum amount of tokens to receive, denoted in decimals of\n   *                                `receivingToken`\n   * @return receiveTokenAmount     Amount of tokens received, denoted in decimals of\n   *                                `receivingToken`\n   */\n  function redeemRebasingOUSG(\n    uint256 rousgAmount,\n    address receivingToken,\n    uint256 minimumTokenReceived\n  ) external nonReentrant returns (uint256 receiveTokenAmount) {\n    rousg.transferFrom(_msgSender(), address(this), rousgAmount);\n    rousg.unwrap(rousgAmount);\n    uint256 ousgAmountIn = rousg.getSharesByROUSG(rousgAmount) /\n      OUSG_TO_ROUSG_SHARES_MULTIPLIER;\n    IRWALike(rwaToken).burn(ousgAmountIn);\n    receiveTokenAmount = _processRedemption(\n      ousgAmountIn,\n      receivingToken,\n      minimumTokenReceived\n    );\n    emit InstantRedemptionRebasingOUSG(\n      _msgSender(),\n      ousgAmountIn,\n      rousgAmount,\n      receivingToken,\n      receiveTokenAmount\n    );\n  }\n}\n"
+      }
+    }
+  },
+  "functionDecisions": [
+    {
+      "signature": "ADMIN_SUBSCRIPTION_ROLE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only privileged subscription-role identifier; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "CONFIGURER_ROLE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only configurer-role identifier; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "DEFAULT_ADMIN_ROLE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only default-admin role identifier; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "OUSG_TO_ROUSG_SHARES_MULTIPLIER()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only OUSG/rOUSG normalization constant; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "PAUSER_ROLE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only pauser-role identifier; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "RWA_NORMALIZER()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only RWA decimal-normalizer constant; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "USD_NORMALIZER()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only USD decimal-normalizer constant; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "acceptedRedemptionTokens(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only accepted redemption-token configuration query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "acceptedSubscriptionTokens(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only accepted deposit-token configuration query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "adminSubscribe(address,uint256,bytes32)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "_adminProcessSubscription requires ADMIN_SUBSCRIPTION_ROLE and manual-subscription allowance; administrative issuance without ordinary deposit transfer is explicitly excluded."
+    },
+    {
+      "signature": "adminSubscribeRebasingOUSG(address,uint256,bytes32)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Uses ADMIN_SUBSCRIPTION_ROLE-protected _adminProcessSubscription and privileged manual issuance before wrapping; not the ordinary investor subscribeRebasingOUSG path."
+    },
+    {
+      "signature": "adminSubscriptionChecker()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only privileged manual-subscription checker address; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "getRoleAdmin(bytes32)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only role administration query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "getRoleMember(bytes32,uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only role-member enumeration; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "getRoleMemberCount(bytes32)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only role-member count; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "grantRole(bytes32,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires role administrator; privileged AccessControl grant excluded."
+    },
+    {
+      "signature": "hasRole(bytes32,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only role membership query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "minimumDepositUSD()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only configured subscription-minimum query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "minimumRedemptionUSD()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only configured redemption-minimum query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "minimumRwaPrice()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only configured minimum oracle-price query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "ondoCompliance()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only compliance dependency address query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "ondoIDRegistry()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only ID-registry dependency address query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "ondoOracle()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only oracle dependency address query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "ondoRateLimiter()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only rate-limiter dependency address query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "ondoRedemptionFees()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only redemption-fee dependency address query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "ondoSubscriptionFees()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only subscription-fee dependency address query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "ondoTokenRouter()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only token-router dependency address query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "pauseRedeem()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "PAUSER_ROLE-only emergency redemption freeze excluded."
+    },
+    {
+      "signature": "pauseSubscribe()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "PAUSER_ROLE-only emergency subscription freeze excluded."
+    },
+    {
+      "signature": "redeem(uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary investor redemption: pulls and burns caller OUSG, then guarded _processRedemption checks accepted token, compliance/OndoID, pause, minima, oracle, fees, rate limits and minimum output before paying caller."
+    },
+    {
+      "signature": "redeemPaused()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only redemption pause-state query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "redeemRebasingOUSG(uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary investor rOUSG redemption: pulls caller rOUSG, unwraps and burns resulting OUSG, then uses the same guarded redemption flow and caller minimum output; no admin role."
+    },
+    {
+      "signature": "renounceRole(bytes32,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Self renunciation modifies authorization rather than investor mint/redeem; excluded."
+    },
+    {
+      "signature": "retrieveTokens(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "DEFAULT_ADMIN_ROLE token rescue can transfer arbitrary contract holdings; not investor redemption."
+    },
+    {
+      "signature": "revokeRole(bytes32,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires role administrator; privileged AccessControl revocation excluded."
+    },
+    {
+      "signature": "rousg()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only immutable rOUSG token-address query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "rwaToken()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only immutable OUSG token-address query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "setAcceptedRedemptionToken(address,bool)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires DEFAULT_ADMIN_ROLE; modifies accepted redemption token configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setAcceptedSubscriptionToken(address,bool)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires DEFAULT_ADMIN_ROLE; modifies accepted subscription token configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setAdminSubscriptionChecker(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires DEFAULT_ADMIN_ROLE; modifies admin subscription checker configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setMinimumDepositAmount(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires CONFIGURER_ROLE; modifies minimum deposit amount configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setMinimumRedemptionAmount(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires CONFIGURER_ROLE; modifies minimum redemption amount configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setMinimumRwaPrice(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires CONFIGURER_ROLE; modifies minimum rwa price configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setOndoCompliance(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires DEFAULT_ADMIN_ROLE; modifies ondo compliance configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setOndoIDRegistry(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires DEFAULT_ADMIN_ROLE; modifies ondo i d registry configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setOndoOracle(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires DEFAULT_ADMIN_ROLE; modifies ondo oracle configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setOndoRateLimiter(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires DEFAULT_ADMIN_ROLE; modifies ondo rate limiter configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setOndoRedemptionFees(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires DEFAULT_ADMIN_ROLE; modifies ondo redemption fees configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setOndoSubscriptionFees(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires DEFAULT_ADMIN_ROLE; modifies ondo subscription fees configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "setOndoTokenRouter(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires DEFAULT_ADMIN_ROLE; modifies ondo token router configuration, not an ordinary investor operation."
+    },
+    {
+      "signature": "subscribe(address,uint256,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary investor subscription: _processSubscription enforces accepted token, pause, compliance, OndoID, minima, fees, oracle and limits, pulls caller deposit and mints OUSG to caller; no admin role."
+    },
+    {
+      "signature": "subscribePaused()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only subscription pause-state query; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "subscribeRebasingOUSG(address,uint256,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Ordinary investor subscription with rOUSG output: same guarded deposit processing, manager mints OUSG internally and wraps it, transfers rOUSG shares to caller and checks minimum rOUSG output; no admin role."
+    },
+    {
+      "signature": "supportsInterface(bytes4)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only interface support introspection; retained in full ABI inventory, not activated as a transaction capability."
+    },
+    {
+      "signature": "unpauseRedeem()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "DEFAULT_ADMIN_ROLE-only redemption unpause excluded."
+    },
+    {
+      "signature": "unpauseSubscribe()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "DEFAULT_ADMIN_ROLE-only subscription unpause excluded."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "rwaAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receivingToken",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "minimumTokenReceived",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "receiveTokenAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "ondo-ousg-instant-manager:v1:1:0x93358db73b6cd4b98d89c8f5f230e81a95c2643a:redeem",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x93358db73B6cd4b98D89c8F5f230E81a95c2643a",
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.ondo.finance/addresses.md ; https://docs.ondo.finance/qualified-access-products/ousg/overview.md ; https://docs.ondo.finance/qualified-access-products/eligibility.md ; https://etherscan.io/address/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a#code ; https://sourcify.dev/server/v2/contract/1/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Ondo Finance",
+      "operation": "redeem",
+      "label": "Ondo Finance OUSG InstantManager redeem",
+      "warnings": [
+        "OUSG is a Qualified Access product, not an unrestricted stablecoin. Ordinary investor entry points require completed onboarding/KYC, both accredited-investor and qualified-purchaser eligibility, jurisdiction eligibility, nonzero OndoID and compliance checks. No whitelist or legal restriction is bypassed.",
+        "Only tokens accepted by this manager configuration may be deposited or received. Caller token balances/allowances, configured oracle minimum price, minimum subscription/redemption, fees, user/global rate limits, pause state and router liquidity apply. Current configuration is not freshly attested.",
+        "subscribe mints OUSG to the caller after transferring accepted deposit tokens; subscribeRebasingOUSG additionally wraps into rOUSG. redeem transfers/burns caller OUSG; redeemRebasingOUSG transfers/unwraps caller rOUSG before burning OUSG and paying the accepted receiving token. This is not adminSubscribe or direct role-only OUSG mint.",
+        "Use a meaningful minimumRwaReceived/minimumRousgReceived/minimumTokenReceived in the output token decimals. Input token/rOUSG and underlying OUSG decimals differ; oracle conversion, fees and rebasing-share rounding apply. No caller deadline.",
+        "The current official manager is 0x93358db73B6cd4b98D89c8F5f230E81a95c2643a; legacy 0x2826989983e3a66F0622132D019c2Ae173eb6A43 is officially deprecated and not supported. Manager source is non-proxy; its configurable dependencies and rOUSG token may change behavior.",
+        "All four calls are nonpayable and require zero native value. Source/explorer binding is not a fresh runtime/RPC, execution, funding, liquidity or financial-safety guarantee and grants no API-key authority. No DAU or manager-vaultTVL claim."
+      ]
+    },
+    {
+      "abi": {
+        "name": "redeemRebasingOUSG",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "rousgAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "receivingToken",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "minimumTokenReceived",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "receiveTokenAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "ondo-ousg-instant-manager:v1:1:0x93358db73b6cd4b98d89c8f5f230e81a95c2643a:redeemRebasingOUSG",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x93358db73B6cd4b98D89c8F5f230E81a95c2643a",
+      "functionName": "redeemRebasingOUSG",
+      "signature": "redeemRebasingOUSG(uint256,address,uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.ondo.finance/addresses.md ; https://docs.ondo.finance/qualified-access-products/ousg/overview.md ; https://docs.ondo.finance/qualified-access-products/eligibility.md ; https://etherscan.io/address/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a#code ; https://sourcify.dev/server/v2/contract/1/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Ondo Finance",
+      "operation": "redeemRebasingOUSG",
+      "label": "Ondo Finance OUSG InstantManager redeemRebasingOUSG",
+      "warnings": [
+        "OUSG is a Qualified Access product, not an unrestricted stablecoin. Ordinary investor entry points require completed onboarding/KYC, both accredited-investor and qualified-purchaser eligibility, jurisdiction eligibility, nonzero OndoID and compliance checks. No whitelist or legal restriction is bypassed.",
+        "Only tokens accepted by this manager configuration may be deposited or received. Caller token balances/allowances, configured oracle minimum price, minimum subscription/redemption, fees, user/global rate limits, pause state and router liquidity apply. Current configuration is not freshly attested.",
+        "subscribe mints OUSG to the caller after transferring accepted deposit tokens; subscribeRebasingOUSG additionally wraps into rOUSG. redeem transfers/burns caller OUSG; redeemRebasingOUSG transfers/unwraps caller rOUSG before burning OUSG and paying the accepted receiving token. This is not adminSubscribe or direct role-only OUSG mint.",
+        "Use a meaningful minimumRwaReceived/minimumRousgReceived/minimumTokenReceived in the output token decimals. Input token/rOUSG and underlying OUSG decimals differ; oracle conversion, fees and rebasing-share rounding apply. No caller deadline.",
+        "The current official manager is 0x93358db73B6cd4b98D89c8F5f230E81a95c2643a; legacy 0x2826989983e3a66F0622132D019c2Ae173eb6A43 is officially deprecated and not supported. Manager source is non-proxy; its configurable dependencies and rOUSG token may change behavior.",
+        "All four calls are nonpayable and require zero native value. Source/explorer binding is not a fresh runtime/RPC, execution, funding, liquidity or financial-safety guarantee and grants no API-key authority. No DAU or manager-vaultTVL claim."
+      ]
+    },
+    {
+      "abi": {
+        "name": "subscribe",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "depositToken",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "depositAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minimumRwaReceived",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "rwaAmountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "ondo-ousg-instant-manager:v1:1:0x93358db73b6cd4b98d89c8f5f230e81a95c2643a:subscribe",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x93358db73B6cd4b98D89c8F5f230E81a95c2643a",
+      "functionName": "subscribe",
+      "signature": "subscribe(address,uint256,uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.ondo.finance/addresses.md ; https://docs.ondo.finance/qualified-access-products/ousg/overview.md ; https://docs.ondo.finance/qualified-access-products/eligibility.md ; https://etherscan.io/address/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a#code ; https://sourcify.dev/server/v2/contract/1/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Ondo Finance",
+      "operation": "subscribe",
+      "label": "Ondo Finance OUSG InstantManager subscribe",
+      "warnings": [
+        "OUSG is a Qualified Access product, not an unrestricted stablecoin. Ordinary investor entry points require completed onboarding/KYC, both accredited-investor and qualified-purchaser eligibility, jurisdiction eligibility, nonzero OndoID and compliance checks. No whitelist or legal restriction is bypassed.",
+        "Only tokens accepted by this manager configuration may be deposited or received. Caller token balances/allowances, configured oracle minimum price, minimum subscription/redemption, fees, user/global rate limits, pause state and router liquidity apply. Current configuration is not freshly attested.",
+        "subscribe mints OUSG to the caller after transferring accepted deposit tokens; subscribeRebasingOUSG additionally wraps into rOUSG. redeem transfers/burns caller OUSG; redeemRebasingOUSG transfers/unwraps caller rOUSG before burning OUSG and paying the accepted receiving token. This is not adminSubscribe or direct role-only OUSG mint.",
+        "Use a meaningful minimumRwaReceived/minimumRousgReceived/minimumTokenReceived in the output token decimals. Input token/rOUSG and underlying OUSG decimals differ; oracle conversion, fees and rebasing-share rounding apply. No caller deadline.",
+        "The current official manager is 0x93358db73B6cd4b98D89c8F5f230E81a95c2643a; legacy 0x2826989983e3a66F0622132D019c2Ae173eb6A43 is officially deprecated and not supported. Manager source is non-proxy; its configurable dependencies and rOUSG token may change behavior.",
+        "All four calls are nonpayable and require zero native value. Source/explorer binding is not a fresh runtime/RPC, execution, funding, liquidity or financial-safety guarantee and grants no API-key authority. No DAU or manager-vaultTVL claim."
+      ]
+    },
+    {
+      "abi": {
+        "name": "subscribeRebasingOUSG",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "depositToken",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "depositAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minimumRousgReceived",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "rousgAmountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "ondo-ousg-instant-manager:v1:1:0x93358db73b6cd4b98d89c8f5f230e81a95c2643a:subscribeRebasingOUSG",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x93358db73B6cd4b98D89c8F5f230E81a95c2643a",
+      "functionName": "subscribeRebasingOUSG",
+      "signature": "subscribeRebasingOUSG(address,uint256,uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://docs.ondo.finance/addresses.md ; https://docs.ondo.finance/qualified-access-products/ousg/overview.md ; https://docs.ondo.finance/qualified-access-products/eligibility.md ; https://etherscan.io/address/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a#code ; https://sourcify.dev/server/v2/contract/1/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Ondo Finance",
+      "operation": "subscribeRebasingOUSG",
+      "label": "Ondo Finance OUSG InstantManager subscribeRebasingOUSG",
+      "warnings": [
+        "OUSG is a Qualified Access product, not an unrestricted stablecoin. Ordinary investor entry points require completed onboarding/KYC, both accredited-investor and qualified-purchaser eligibility, jurisdiction eligibility, nonzero OndoID and compliance checks. No whitelist or legal restriction is bypassed.",
+        "Only tokens accepted by this manager configuration may be deposited or received. Caller token balances/allowances, configured oracle minimum price, minimum subscription/redemption, fees, user/global rate limits, pause state and router liquidity apply. Current configuration is not freshly attested.",
+        "subscribe mints OUSG to the caller after transferring accepted deposit tokens; subscribeRebasingOUSG additionally wraps into rOUSG. redeem transfers/burns caller OUSG; redeemRebasingOUSG transfers/unwraps caller rOUSG before burning OUSG and paying the accepted receiving token. This is not adminSubscribe or direct role-only OUSG mint.",
+        "Use a meaningful minimumRwaReceived/minimumRousgReceived/minimumTokenReceived in the output token decimals. Input token/rOUSG and underlying OUSG decimals differ; oracle conversion, fees and rebasing-share rounding apply. No caller deadline.",
+        "The current official manager is 0x93358db73B6cd4b98D89c8F5f230E81a95c2643a; legacy 0x2826989983e3a66F0622132D019c2Ae173eb6A43 is officially deprecated and not supported. Manager source is non-proxy; its configurable dependencies and rOUSG token may change behavior.",
+        "All four calls are nonpayable and require zero native value. Source/explorer binding is not a fresh runtime/RPC, execution, funding, liquidity or financial-safety guarantee and grants no API-key authority. No DAU or manager-vaultTVL claim."
+      ]
+    }
+  ],
+  "limitations": [
+    "OUSG is a Qualified Access product, not an unrestricted stablecoin. Ordinary investor entry points require completed onboarding/KYC, both accredited-investor and qualified-purchaser eligibility, jurisdiction eligibility, nonzero OndoID and compliance checks. No whitelist or legal restriction is bypassed.",
+    "Only tokens accepted by this manager configuration may be deposited or received. Caller token balances/allowances, configured oracle minimum price, minimum subscription/redemption, fees, user/global rate limits, pause state and router liquidity apply. Current configuration is not freshly attested.",
+    "subscribe mints OUSG to the caller after transferring accepted deposit tokens; subscribeRebasingOUSG additionally wraps into rOUSG. redeem transfers/burns caller OUSG; redeemRebasingOUSG transfers/unwraps caller rOUSG before burning OUSG and paying the accepted receiving token. This is not adminSubscribe or direct role-only OUSG mint.",
+    "Use a meaningful minimumRwaReceived/minimumRousgReceived/minimumTokenReceived in the output token decimals. Input token/rOUSG and underlying OUSG decimals differ; oracle conversion, fees and rebasing-share rounding apply. No caller deadline.",
+    "The current official manager is 0x93358db73B6cd4b98D89c8F5f230E81a95c2643a; legacy 0x2826989983e3a66F0622132D019c2Ae173eb6A43 is officially deprecated and not supported. Manager source is non-proxy; its configurable dependencies and rOUSG token may change behavior.",
+    "All four calls are nonpayable and require zero native value. Source/explorer binding is not a fresh runtime/RPC, execution, funding, liquidity or financial-safety guarantee and grants no API-key authority. No DAU or manager-vaultTVL claim."
+  ],
+  "sourceRefs": [
+    "https://docs.ondo.finance/addresses.md",
+    "https://docs.ondo.finance/qualified-access-products/ousg/overview.md",
+    "https://docs.ondo.finance/qualified-access-products/eligibility.md",
+    "https://etherscan.io/address/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a#code",
+    "https://sourcify.dev/server/v2/contract/1/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a?fields=all"
+  ]
+}

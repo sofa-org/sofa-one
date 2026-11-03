@@ -1,0 +1,2361 @@
+{
+  "schemaVersion": 1,
+  "protocol": "biswap-v2",
+  "chainId": 56,
+  "address": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+  "contractName": "BiswapRouter02",
+  "reviewedAt": "2026-10-16",
+  "deploymentEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all",
+    "verifiedAt": "2026-10-16",
+    "chainId": 56,
+    "address": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+    "sourceType": "address-bound Sourcify verified deployment record",
+    "deploymentTransaction": "0xf1c39ceb5e0a805dd44b4cfcf90c0f1f3323c102b58bb3dcf84ed44ef80e481e",
+    "deploymentBlock": "7664672",
+    "deployer": "0xc6aF770101dA859d680E0829380748CCcD8F7984",
+    "contractName": "BiswapRouter02.sol:BiswapRouter02",
+    "reportedProxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "protocolAttributionRefs": [
+      "https://bscscan.com/address/0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8#code",
+      "https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol"
+    ],
+    "evidence": "Sourcify v2 returns this exact chain/address with deployment transaction, block 7664672, compiled contract BiswapRouter02 and non-proxy resolution. BscScan indexed search result labels this address Biswap: Router. The full BiswapRouter02 body extracted from address-bound verified source is identical to pinned biswap-org/periphery Router02 source after CRLF normalization and trimming, independently supporting attribution. This admission targets the legacy V2-style router, not the current separate Smart Router.",
+    "constructorArguments": {
+      "encodedSuffix": "0x000000000000000000000000858e3312ed3a876947ea49d572a7c42de08af7ee000000000000000000000000bb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c",
+      "factory": "0x858e3312ed3a876947ea49d572a7c42de08af7ee",
+      "WETH": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"
+    },
+    "limitations": [
+      "Deployment identity is taken from source/verification services, not an independent live RPC bytecode or state check.",
+      "Official current smart-contracts documentation names Smart Router 0x0eB6949e725A295Ecb3BEacFc3766610BC970BEF instead; that address is not substituted or admitted here."
+    ]
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all",
+    "verifiedAt": "2026-10-16",
+    "chainId": 56,
+    "address": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+    "sourceType": "address-bound Sourcify v2 abi and verified flattened source",
+    "sourcifyMatchId": "29549110",
+    "sourcifyVerifiedAt": "2026-05-21T09:47:51Z",
+    "reportedMatch": "match",
+    "reportedCreationMatch": "match",
+    "reportedRuntimeMatch": "match",
+    "compiler": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.6.6+commit.6c089d02",
+      "compilerSettings": {
+        "libraries": {},
+        "optimizer": {
+          "runs": 999999,
+          "enabled": true
+        },
+        "evmVersion": "istanbul"
+      },
+      "name": "BiswapRouter02",
+      "fullyQualifiedName": "BiswapRouter02.sol:BiswapRouter02"
+    },
+    "sourceFile": "BiswapRouter02.sol",
+    "metadataSourceKeccak256": "0x06a1f22cfe4a88bcf1b562c8b4495baa4fcc2a4e31a4edf2b3c622a7f464b72a",
+    "normalizedRouterBodySha256": "95ddbbe592200c83118a5e654b8471861f2af4a4590ed64ddc4f53374c1de7f8",
+    "normalizedRouterBodyHashRecipe": "Normalize CRLF to LF, take text beginning at contract BiswapRouter02 through end of file, trim surrounding whitespace, and SHA-256 the UTF-8 bytes.",
+    "officialPinnedSourceRef": "https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+    "officialPinnedCommit": "824b144dfb9d5095e65d26e92d9169ebac364bbb",
+    "evidence": "The ABI below is copied from Sourcify v2 abi for chain 56 and this exact deployed address, not a generic fork ABI. Sourcify reports creationMatch=match and runtimeMatch=match (recorded verbatim; not asserted as metadata-exact match). The deployed Router02 contract body matches pinned official Router02 after newline normalization. The Router01 discovery lead was not used as the deployed interface. getAmountIn/getAmountOut have four uint256 inputs including swapFee; Ownable and swapFeeReward surfaces are retained in full inventory.",
+    "rejectedAbiArtifact": {
+      "sourceRef": "https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/artifacts/BiswapRouter02.json",
+      "reason": "Pinned official build artifact has an extra sqrt(uint256) function absent from this address-bound verified ABI; all overlapping entries agree, but this artifact is not used as the deployed ABI and sqrt is not invented in the inventory."
+    }
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_WETH",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "OwnershipTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "WETH",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountTokenDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "swapFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "swapFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountsIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "isOwner",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quote",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setSwapFeeReward",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_swapFeeReward",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapETHForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactTokensForETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapFeeReward",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "swapTokensForExactETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferOwnership",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "WETH",
+      "signature": "WETH()",
+      "selector": "0xad5c4648",
+      "stateMutability": "view",
+      "reviewStatus": "excluded",
+      "reason": "Exclude read-only wrapped-native address getter; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "selector": "0xe8e33700",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit token/token liquidity addition: caller supplies both assets, desired/minimum amounts, LP recipient and deadline; router transfers approved caller tokens to the factory-derived pair and mints LP tokens."
+    },
+    {
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "selector": "0xf305d719",
+      "stateMutability": "payable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit token/native-BNB liquidity addition: caller supplies token, desired/minimum amounts, LP recipient and deadline; payable value is wrapped through the constructor-bound WETH address and unused native value is refunded."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "selector": "0xc45a0155",
+      "stateMutability": "view",
+      "reviewStatus": "excluded",
+      "reason": "Exclude read-only factory address getter; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "getAmountIn",
+      "signature": "getAmountIn(uint256,uint256,uint256,uint256)",
+      "selector": "0x571fd012",
+      "stateMutability": "pure",
+      "reviewStatus": "excluded",
+      "reason": "Exclude pure quote helper; preserve actual four-uint256 interface including protocol-specific swapFee, not the three-argument Uniswap helper."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(uint256,uint256,uint256,uint256)",
+      "selector": "0x52707d8c",
+      "stateMutability": "pure",
+      "reviewStatus": "excluded",
+      "reason": "Exclude pure quote helper; preserve actual four-uint256 interface including protocol-specific swapFee, not the three-argument Uniswap helper."
+    },
+    {
+      "functionName": "getAmountsIn",
+      "signature": "getAmountsIn(uint256,address[])",
+      "selector": "0x1f00ca74",
+      "stateMutability": "view",
+      "reviewStatus": "excluded",
+      "reason": "Exclude read-only path quote helper; not a transaction capability or a promise of executable pricing."
+    },
+    {
+      "functionName": "getAmountsOut",
+      "signature": "getAmountsOut(uint256,address[])",
+      "selector": "0xd06ca61f",
+      "stateMutability": "view",
+      "reviewStatus": "excluded",
+      "reason": "Exclude read-only path quote helper; not a transaction capability or a promise of executable pricing."
+    },
+    {
+      "functionName": "isOwner",
+      "signature": "isOwner(address)",
+      "selector": "0x2f54bf6e",
+      "stateMutability": "view",
+      "reviewStatus": "excluded",
+      "reason": "Exclude read-only ownership query; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "owner",
+      "signature": "owner()",
+      "selector": "0x8da5cb5b",
+      "stateMutability": "view",
+      "reviewStatus": "excluded",
+      "reason": "Exclude read-only ownership getter; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "quote",
+      "signature": "quote(uint256,uint256,uint256)",
+      "selector": "0xad615dec",
+      "stateMutability": "pure",
+      "reviewStatus": "excluded",
+      "reason": "Exclude pure reserve-ratio quote helper; not a transaction capability."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "selector": "0xbaa2abde",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit token/token liquidity removal using an existing caller LP allowance, specified liquidity, minimum amounts, recipient and deadline; no permit or signed approval is accepted."
+    },
+    {
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "selector": "0x02751cec",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit token/native-BNB liquidity removal using an existing LP allowance, token/native minimums, recipient and deadline; wrapped native output is unwrapped and sent to the explicit recipient."
+    },
+    {
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "selector": "0xaf2979eb",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit fee-on-transfer token/native-BNB liquidity removal without permit: uses caller LP allowance, minimums, recipient and deadline; transfers the router token balance after burning liquidity. Token minimum checks precede the final token transfer and do not guarantee net recipient tokens after tax."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermit",
+      "signature": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "selector": "0xded9382a",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "excluded",
+      "reason": "Exclude signature-bearing LP permit path accepting approveMax, v, r and s; ordinary removal is admitted separately using existing allowance."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "selector": "0x5b0d5984",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "excluded",
+      "reason": "Exclude signature-bearing fee-on-transfer LP permit path accepting approveMax, v, r and s; non-permit removal is admitted separately."
+    },
+    {
+      "functionName": "removeLiquidityWithPermit",
+      "signature": "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "selector": "0x2195995c",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "excluded",
+      "reason": "Exclude signature-bearing LP permit path accepting approveMax, v, r and s; ordinary removal is admitted separately using existing allowance."
+    },
+    {
+      "functionName": "renounceOwnership",
+      "signature": "renounceOwnership()",
+      "selector": "0x715018a6",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "excluded",
+      "reason": "Exclude privileged administration that permanently relinquishes router ownership; not an ordinary swap/liquidity action."
+    },
+    {
+      "functionName": "setSwapFeeReward",
+      "signature": "setSwapFeeReward(address)",
+      "selector": "0xfbbeedf1",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "excluded",
+      "reason": "Exclude owner-only administration changing the external reward-hook destination used during swaps; not an ordinary swap/liquidity action."
+    },
+    {
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "selector": "0xfb3bdb41",
+      "stateMutability": "payable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit exact-output native-BNB/token path swap with requested output, explicit recipient and deadline; msg.value bounds input and unused native value is refunded to caller."
+    },
+    {
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "selector": "0x7ff36ab5",
+      "stateMutability": "payable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit exact-input native-BNB/token path swap with msg.value input, minimum output, explicit recipient and deadline."
+    },
+    {
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "selector": "0xb6f9de95",
+      "stateMutability": "payable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit exact-input native-BNB/token fee-on-transfer path swap: uses msg.value and enforces minimum recipient token balance increase, recipient and deadline; accepts no opaque executor data."
+    },
+    {
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "selector": "0x18cbafe5",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit exact-input token/native-BNB path swap with approved caller input, minimum output, explicit recipient and deadline; wrapped-native result is unwrapped."
+    },
+    {
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "selector": "0x791ac947",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit exact-input token/native-BNB fee-on-transfer path swap with approved caller input, minimum native output, recipient and deadline; unwraps the router wrapped-native balance."
+    },
+    {
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "selector": "0x38ed1739",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit exact-input token/token path swap with approved caller input, minimum output, recipient and deadline; no arbitrary target or calldata is supplied."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "selector": "0x5c11d795",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit exact-input fee-on-transfer token/token path swap with approved caller input and minimum recipient token balance increase, recipient and deadline."
+    },
+    {
+      "functionName": "swapFeeReward",
+      "signature": "swapFeeReward()",
+      "selector": "0xa3ddb30b",
+      "stateMutability": "view",
+      "reviewStatus": "excluded",
+      "reason": "Exclude read-only reward-hook address getter; no transaction capability or read API is added."
+    },
+    {
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "selector": "0x4a25d94a",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit exact-output token/native-BNB path swap with requested output, maximum approved caller input, recipient and deadline; wrapped-native output is unwrapped."
+    },
+    {
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "selector": "0x8803dbee",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "admitted",
+      "reason": "Admit explicit exact-output token/token path swap with requested output, maximum approved caller input, recipient and deadline."
+    },
+    {
+      "functionName": "transferOwnership",
+      "signature": "transferOwnership(address)",
+      "selector": "0xf2fde38b",
+      "stateMutability": "nonpayable",
+      "reviewStatus": "excluded",
+      "reason": "Exclude owner-only administration changing router control; not an ordinary swap/liquidity action."
+    }
+  ],
+  "nonFunctionEntries": [
+    {
+      "type": "constructor",
+      "name": null,
+      "reason": "Not an ABI function: deployment-only constructor"
+    },
+    {
+      "type": "event",
+      "name": "OwnershipTransferred",
+      "reason": "Not an ABI function: event, not a callable entry point"
+    },
+    {
+      "type": "receive",
+      "name": null,
+      "reason": "Not an ABI function: receive accepts native currency only from WETH in the reviewed source; no function capability is created"
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:add-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountADesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 addLiquidity",
+      "operation": "add-liquidity",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:add-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountTokenDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 addLiquidityETH",
+      "operation": "add-liquidity-eth",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "ETH/WETH names are retained exactly from this BSC ABI; constructor arguments bind WETH to WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Native currency here is BNB, not Ethereum ETH.",
+        "Payable call can spend native BNB from msg.value; addLiquidityETH and swapETHForExactTokens may refund unused BNB to msg.sender."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 removeLiquidity",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:remove-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 removeLiquidityETH",
+      "operation": "remove-liquidity-eth",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "ETH/WETH names are retained exactly from this BSC ABI; constructor arguments bind WETH to WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Native currency here is BNB, not Ethereum ETH."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 removeLiquidityETHSupportingFeeOnTransferTokens",
+      "operation": "remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "ETH/WETH names are retained exactly from this BSC ABI; constructor arguments bind WETH to WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Native currency here is BNB, not Ethereum ETH.",
+        "Fee-on-transfer support does not establish compatibility with all taxed, rebasing or other nonstandard tokens; transfer taxes may change recipient amounts.",
+        "The token minimum is checked during pair burn before the final taxed transfer; the function forwards the router entire token balance and does not guarantee net recipient tokens after tax."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:swap-eth-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapETHForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 swapETHForExactTokens",
+      "operation": "swap-eth-for-exact-tokens",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "Biswap-specific behavior: each hop reads its pair swapFee and invokes swapFeeReward.swap when the owner-configurable hook address is nonzero. Hook configuration and hook behavior were not live-checked; the hook may affect or revert swaps.",
+        "ETH/WETH names are retained exactly from this BSC ABI; constructor arguments bind WETH to WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Native currency here is BNB, not Ethereum ETH.",
+        "Payable call can spend native BNB from msg.value; addLiquidityETH and swapETHForExactTokens may refund unused BNB to msg.sender."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:swap-exact-eth-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 swapExactETHForTokens",
+      "operation": "swap-exact-eth-for-tokens",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "Biswap-specific behavior: each hop reads its pair swapFee and invokes swapFeeReward.swap when the owner-configurable hook address is nonzero. Hook configuration and hook behavior were not live-checked; the hook may affect or revert swaps.",
+        "ETH/WETH names are retained exactly from this BSC ABI; constructor arguments bind WETH to WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Native currency here is BNB, not Ethereum ETH.",
+        "Payable call can spend native BNB from msg.value; addLiquidityETH and swapETHForExactTokens may refund unused BNB to msg.sender."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "Biswap-specific behavior: each hop reads its pair swapFee and invokes swapFeeReward.swap when the owner-configurable hook address is nonzero. Hook configuration and hook behavior were not live-checked; the hook may affect or revert swaps.",
+        "ETH/WETH names are retained exactly from this BSC ABI; constructor arguments bind WETH to WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Native currency here is BNB, not Ethereum ETH.",
+        "Payable call can spend native BNB from msg.value; addLiquidityETH and swapETHForExactTokens may refund unused BNB to msg.sender.",
+        "Fee-on-transfer support does not establish compatibility with all taxed, rebasing or other nonstandard tokens; transfer taxes may change recipient amounts."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:swap-exact-tokens-for-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 swapExactTokensForETH",
+      "operation": "swap-exact-tokens-for-eth",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "Biswap-specific behavior: each hop reads its pair swapFee and invokes swapFeeReward.swap when the owner-configurable hook address is nonzero. Hook configuration and hook behavior were not live-checked; the hook may affect or revert swaps.",
+        "ETH/WETH names are retained exactly from this BSC ABI; constructor arguments bind WETH to WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Native currency here is BNB, not Ethereum ETH."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "Biswap-specific behavior: each hop reads its pair swapFee and invokes swapFeeReward.swap when the owner-configurable hook address is nonzero. Hook configuration and hook behavior were not live-checked; the hook may affect or revert swaps.",
+        "ETH/WETH names are retained exactly from this BSC ABI; constructor arguments bind WETH to WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Native currency here is BNB, not Ethereum ETH.",
+        "Fee-on-transfer support does not establish compatibility with all taxed, rebasing or other nonstandard tokens; transfer taxes may change recipient amounts.",
+        "The implementation unwraps the router entire WBNB balance after swaps, not a per-call balance delta."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:swap-exact-tokens-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 swapExactTokensForTokens",
+      "operation": "swap-exact-tokens-for-tokens",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "Biswap-specific behavior: each hop reads its pair swapFee and invokes swapFeeReward.swap when the owner-configurable hook address is nonzero. Hook configuration and hook behavior were not live-checked; the hook may affect or revert swaps."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "Biswap-specific behavior: each hop reads its pair swapFee and invokes swapFeeReward.swap when the owner-configurable hook address is nonzero. Hook configuration and hook behavior were not live-checked; the hook may affect or revert swaps.",
+        "Fee-on-transfer support does not establish compatibility with all taxed, rebasing or other nonstandard tokens; transfer taxes may change recipient amounts."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:swap-tokens-for-exact-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 swapTokensForExactETH",
+      "operation": "swap-tokens-for-exact-eth",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "Biswap-specific behavior: each hop reads its pair swapFee and invokes swapFeeReward.swap when the owner-configurable hook address is nonzero. Hook configuration and hook behavior were not live-checked; the hook may affect or revert swaps.",
+        "ETH/WETH names are retained exactly from this BSC ABI; constructor arguments bind WETH to WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Native currency here is BNB, not Ethereum ETH."
+      ]
+    },
+    {
+      "capabilityId": "biswap-v2:v2:56:0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8:swap-tokens-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8",
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "Deployment and ABI: https://sourcify.dev/server/v2/contract/56/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8?fields=all ; protocol source: https://raw.githubusercontent.com/biswap-org/periphery/824b144dfb9d5095e65d26e92d9169ebac364bbb/contracts/BiswapRouter02.sol",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "biswap-v2",
+      "label": "Biswap V2 swapTokensForExactTokens",
+      "operation": "swap-tokens-for-exact-tokens",
+      "warnings": [
+        "Caller controls assets, path, amounts, recipient, minimums and deadline; these records do not constrain financial parameters or recipients.",
+        "Token/LP allowances, balances, native BNB gas, pool liquidity, token behavior and slippage remain caller responsibilities under independent policies.",
+        "Source/ABI admission does not attest current bytecode, current configuration, balances, successful execution, workflow completeness or financial safety; catalog records grant no API-key authority.",
+        "Biswap-specific behavior: each hop reads its pair swapFee and invokes swapFeeReward.swap when the owner-configurable hook address is nonzero. Hook configuration and hook behavior were not live-checked; the hook may affect or revert swaps."
+      ]
+    }
+  ],
+  "reviewSummary": {
+    "abiFunctionCount": 30,
+    "selectedFunctionCount": 14,
+    "excludedFunctionCount": 16,
+    "selectedScope": "Nine explicit swaps (six ordinary exact-input/exact-output and three fee-on-transfer exact-input variants) and five explicit add/remove-liquidity actions without permits.",
+    "excludedScope": "Ten read-only/pure getters and quotes, three signature/permit entry points and three administrative entry points. No multicall or opaque execute entry exists in this address-bound ABI.",
+    "sourceReviewNotes": [
+      "Ordinary swaps call factory-derived Biswap pairs with explicit path/amount/minimum/recipient/deadline parameters, not caller-provided arbitrary executor targets or calldata.",
+      "All swap variants can call the owner-configurable swapFeeReward external contract per hop; admin mutation of that hook is excluded but its runtime risk remains in selected swap warnings.",
+      "No current reward-hook value, ownership, pool reserves, balances, allowances or execution success was attested.",
+      "Full ABI preserves constructor/event/receive entries for evidence but they create no function capabilities."
+    ]
+  },
+  "additionalSources": [
+    {
+      "sourceRef": "https://docs.biswap.org/biswap/general-information/biswap-smart-contracts.md",
+      "verifiedAt": "2026-10-16",
+      "evidence": "Current official page lists a different Smart Router address. Retained to distinguish the legacy V2-style deployment rather than misstate it as the current preferred router."
+    },
+    {
+      "sourceRef": "https://app.dedaub.com/binance/address/0x3a6d8ca21d1cf76f653a67577fa0d27453350dd8",
+      "verifiedAt": "2026-10-16",
+      "evidence": "Indexed Dedaub address page identifies BiswapRouter02 on binance, deployment May 23 2021 at block 7664672; supplemental only, not the ABI source."
+    }
+  ]
+}

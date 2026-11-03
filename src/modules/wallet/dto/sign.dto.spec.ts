@@ -4,48 +4,24 @@ import { validate } from 'class-validator';
 import { SignDto } from './sign.dto';
 
 describe('SignDto', () => {
-  const validateDto = (input: Record<string, unknown>) => validate(plainToInstance(SignDto, input));
-
-  it('accepts valid plain string message signing', async () => {
-    const errors = await validateDto({
-      type: 'message',
-      message: 'Hello, world',
-    });
-
-    expect(errors).toHaveLength(0);
+  const validateDto = (input: Record<string, unknown>) => validate(plainToInstance(SignDto, input), {
+    whitelist: true,
+    forbidNonWhitelisted: true,
   });
 
-  it('accepts valid raw hex message signing', async () => {
-    const errors = await validateDto({
-      type: 'message',
-      message: { raw: '0x48656c6c6f' },
-    });
-
-    expect(errors).toHaveLength(0);
+  it.each(['Hello, world', { raw: '0x48656c6c6f' }])('rejects message signing (%p)', async (message) => {
+    const errors = await validateDto({ type: 'message', message });
+    expect(errors.some((error) => error.property === 'type')).toBe(true);
+    expect(errors.some((error) => error.property === 'message')).toBe(true);
   });
 
   it('rejects invalid signing types', async () => {
-    const invalidTypes = ['hash', 'raw_hash', 'raw-hash', 'rawHash'];
+    const invalidTypes = ['message', 'hash', 'raw_hash', 'raw-hash', 'rawHash'];
 
     for (const type of invalidTypes) {
       const errors = await validateDto({ type, message: 'Hello' });
 
       expect(errors.some((error) => error.property === 'type')).toBe(true);
-    }
-  });
-
-  it('requires a non-empty valid message for message signing', async () => {
-    const invalidInputs = [
-      '',
-      { raw: 'not-hex' },
-      { raw: '0x123', extra: true },
-      { raw: '0xzz' },
-    ];
-
-    for (const message of invalidInputs) {
-      const errors = await validateDto({ type: 'message', message });
-
-      expect(errors.some((error) => error.property === 'message')).toBe(true);
     }
   });
 
@@ -78,25 +54,24 @@ describe('SignDto', () => {
     }
   });
 
-  it('accepts executionMode session_key and eoa only', async () => {
-    for (const executionMode of ['session_key', 'eoa'] as const) {
+  it('accepts explicit EOA execution and omission of executionMode', async () => {
+    for (const executionMode of ['eoa', undefined]) {
       const errors = await validateDto({
-        type: 'message',
-        message: 'Hello',
+        type: 'typed_data',
+        typedData: {},
         executionMode,
       });
-
       expect(errors).toHaveLength(0);
     }
   });
 
   it('rejects invalid executionMode values', async () => {
-    const invalidValues = ['sessionKey', 'wallet', '', 'eoa '];
+    const invalidValues = ['session_key', 'sessionKey', 'wallet', '', 'eoa '];
 
     for (const executionMode of invalidValues) {
       const errors = await validateDto({
-        type: 'message',
-        message: 'Hello',
+        type: 'typed_data',
+        typedData: {},
         executionMode,
       });
 
@@ -109,8 +84,8 @@ describe('SignDto', () => {
 
     for (const chainId of invalidValues) {
       const errors = await validateDto({
-        type: 'message',
-        message: 'Hello',
+        type: 'typed_data',
+        typedData: {},
         chainId,
       });
 

@@ -12,7 +12,7 @@ export function WalletLoadingState() {
           <div>
             <h2 className="font-serif text-xl font-bold text-brand-text">Preparing your wallet dashboard</h2>
             <p className="mt-1 text-sm text-brand-muted">
-              We are checking your Openfort session, wallet provisioning status, and API access authorization.
+              We are checking your SOFA session, wallet provisioning status, and API access authorization.
             </p>
           </div>
         </div>

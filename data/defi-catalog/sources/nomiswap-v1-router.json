@@ -1,0 +1,2215 @@
+{
+  "schemaVersion": 1,
+  "protocol": "nomiswap-v1",
+  "chainId": 56,
+  "address": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+  "website": "https://nomiswap.gitbook.io/home/home.md",
+  "websiteEvidence": {
+    "sourceRef": "https://nomiswap.gitbook.io/home/home.md",
+    "verifiedAt": "2026-10-20",
+    "evidence": "Official frontend links to this GitBook. Documentation explicitly states the team disbanded, recommends withdrawing all funds, says NMX issuance has stopped and marks every page historical/out of date. Directory should link this warning rather than imply a supported trading frontend."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js",
+    "verifiedAt": "2026-10-20",
+    "chainId": 56,
+    "address": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+    "officialSiteRef": "https://nomiswap.io/",
+    "officialDocumentationRef": "https://nomiswap.gitbook.io/home/home.md",
+    "frontendBundleSha256": "39df9a1f8b7b3acabe451a0f4d5e50259bde948b4ab014bc63a583c07cf59949",
+    "frontendBinding": {
+      "chainEnum": "e[e.BSC=56]=\"BSC\"",
+      "routerVersionEnum": "e[e.V1=1]=\"V1\",e[e.V2=2]=\"V2\",e[e.V3=3]=\"V3\"",
+      "routerMap": "ru[O.BSC]=(Hm={},Hm[ur.V1]=\"0xD654953D746f0b114d1F85332Dc43446ac79413d\",Hm[ur.V2]=\"0x4eC3432d9443f05022e2Ff4E54fC7514BE2359e0\",Hm[ur.V3]=\"0x13147820401f455e3318db8686958D457ad2E7b0\",Hm)",
+      "routerMapConsumer": "Jpe=(e,t,n)=>XU.connect(Oh[t][e],Yi[t])",
+      "factoryV1": {
+        "address": "0xd6715A8be3944ec72738F0BFDC739d48C3c29349",
+        "initCodeHash": "0x83eb759f5ea0525124f03d4ac741bb4af0bb1c703d5f694bd42a8bd72e495a01"
+      }
+    },
+    "deployment": {
+      "transactionHash": "0x08557eb9eaad52388d2cf07a37f77a2d8055aee3389a4c5be544bdaeaaa08e9f",
+      "blockNumber": "13909084",
+      "transactionIndex": "48",
+      "deployer": "0x8AEB1ccC55d3455B084E309Ba2a4F661afE945B8"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "constructorArguments": {
+      "constructorArguments": "0x000000000000000000000000d6715a8be3944ec72738f0bfdc739d48c3c29349000000000000000000000000bb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c"
+    },
+    "immutableBindings": {
+      "immutables": {
+        "1605": "0x000000000000000000000000d6715a8be3944ec72738f0bfdc739d48c3c29349",
+        "1608": "0x000000000000000000000000bb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c"
+      }
+    },
+    "officialConstructorConfigurationRef": "https://github.com/nominex/nomiswap-periphery-contracts/blob/63ad9aeb807ef7d7dca148c96b3fa13ce0af9222/migrations/2_deploy_NomiswapRouter.js",
+    "evidence": "Official site HTML loads this filename-versioned bundle, whose BSC chain 56/V1 router map binds this exact address separately from V2/V3 and the EPCS router. Official pinned migration config independently specifies constructor factory and WBNB matching Sourcify deployment transformations. Exact-address Sourcify identifies direct non-proxy NomiswapRouter. Current GitBook index/sitemap no longer exposes a contract-address page; official deployment attribution therefore comes from first-party frontend configuration, not a guessed documentation URL or a third-party fork. Direct explorer retrieval returned HTTP 403; no human challenge or credential was used. No fresh RPC identity/configuration check."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+    "verifiedAt": "2026-10-20",
+    "chainId": 56,
+    "address": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.6.6+commit.6c089d02",
+      "compilerSettings": {
+        "libraries": {},
+        "optimizer": {
+          "runs": 1000,
+          "enabled": true
+        }
+      },
+      "name": "NomiswapRouter",
+      "fullyQualifiedName": "NomiswapRouter.sol:NomiswapRouter"
+    },
+    "matchId": "29480578",
+    "sourceServiceVerifiedAt": "2026-05-21T03:38:44Z",
+    "reportedCreationMatch": "match",
+    "reportedRuntimeMatch": "match",
+    "sourceFile": "NomiswapRouter.sol",
+    "sourceSha256": "ec6fe6cf5bd381672c3c7f69956318fc5ae71fccba00ca2e98d0b01479e5dbfb",
+    "officialSourceRef": "https://github.com/nominex/nomiswap-periphery-contracts/blob/63ad9aeb807ef7d7dca148c96b3fa13ce0af9222/contracts/NomiswapRouter.sol",
+    "officialSourceSha256": "96dd8665beaf02b40ad224ae649f38a9d0b4b23749de8d327ebda6061a8e8f45",
+    "officialLibraryRef": "https://github.com/nominex/nomiswap-periphery-contracts/blob/63ad9aeb807ef7d7dca148c96b3fa13ce0af9222/contracts/libraries/NomiswapLibrary.sol",
+    "officialLibrarySha256": "14b757b1f039a7e144ba1efec62174803453305f6ef9619dcf8df5dff676473d",
+    "officialComparison": "Router contract body and NomiswapLibrary body each match pinned official source after whitespace removal, not byte-for-byte. Deployed flattened source includes factory/pair/router interfaces, TransferHelper, SafeMath, IERC20 and IWETH; these deployed dependency bodies were reviewed and are authoritative. No whole-repository byte identity is claimed.",
+    "factoryDependencyEvidence": {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/56/0xd6715A8be3944ec72738F0BFDC739d48C3c29349?fields=abi,compilation,deployment,proxyResolution,sources",
+      "chainId": 56,
+      "address": "0xd6715A8be3944ec72738F0BFDC739d48C3c29349",
+      "matchId": "29967979",
+      "sourceServiceVerifiedAt": "2026-05-26T17:01:31Z",
+      "reportedCreationMatch": "match",
+      "reportedRuntimeMatch": "match",
+      "sourceFile": "NomiswapFactory.sol",
+      "sourceSha256": "1c78127c852724eb5ac3a3472e253b43f91901348473d0fcf353cdd4b9e2a289",
+      "evidence": "Reviewed address-bound factory source and embedded NomiswapPair for fee-setting, swap invariant, protocol-fee minting and absence of mining hooks. This is dependency-source review, not admission of any factory/pair function or a fresh identity check of every route pair."
+    },
+    "evidence": "Full exact-address deployed ABI retained unchanged, including constructor and receive; all 24 function entries are individually decided. Fourteen selected fragments come directly from this ABI, not a generic Uniswap/Pancake fork interface. Service-reported match labels are retained without upgrading them to exact_match or claiming a new runtime-bytecode check."
+  },
+  "sourceSemantics": {
+    "routing": "Immutable factory 0xd6715A8be3944ec72738F0BFDC739d48C3c29349 and hardcoded CREATE2 pair init-code hash 0x83eb759f5ea0525124f03d4ac741bb4af0bb1c703d5f694bd42a8bd72e495a01 derive pairs from sorted token addresses. Paths are address arrays, not opaque calldata. Both swap loops call derived pairs with new bytes(0); no arbitrary executor, delegatecall or multicall is exposed.",
+    "fees": "Library quote loops and fee-supporting swap loop fetch each pair swapFee; getAmountOut/getAmountIn use denominator 1000 and multiplier 1000-swapFee. Factory-source pair defaults to 1 (0.1%), but feeToSetter can set individual pair fees via factory; pair setter accepts >0 and <=1000, so a current 0.1% fee or usable quote is not guaranteed. Pair mint/burn can mint protocol-fee LP to factory feeTo using mutable devFee; old 1/6th comment does not define the actual formula. Neither current fees nor fee recipient/settings are attested.",
+    "mining": "This direct V1 router has no swapMining, swapFeeReward, reward setter/call, referral parameter, cashback claim or mining callback. Reviewed embedded factory pair swap emits events and enforces reserve invariant; it invokes nomiswapCall only for nonempty data, which this router never supplies. Offchain/historical cashback or farming claims do not become capability guarantees, and official documentation says NMX issuance stopped.",
+    "liquidity": "_addLiquidity may create absent pair. If both reserves are zero it uses desired amounts without minimum checks; otherwise it checks only amountBOptimal >= amountBMin or amountAOptimal >= amountAMin on the optimized side, not both desired amounts. LP is minted to caller-selected recipient, with no min-LP-output argument. Removals pull caller LP via pair.transferFrom then burn; minima use gross burn amounts, not post-tax receipt. Pair burn consumes pair-held LP balance, not a segregated caller ledger.",
+    "native": "Immutable WETH is WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. ETH-named methods spend/return BSC native BNB. Four payable functions are addLiquidityETH and three native-input swaps. addLiquidityETH and swapETHForExactTokens refund excess BNB to msg.sender. Native-output calls unwrap WBNB and send native value using empty calldata; receive asserts sender equals immutable WBNB.",
+    "feeSupporting": "Token-output supporting swaps require final recipient token balance delta >= amountOutMin; per-hop input uses pair balance minus reserve. Supporting native removal transfers the entire router token balance, and supporting token-to-BNB swap checks and unwraps the entire router WBNB balance. Removal token minimum is checked before forwarding/tax, not as recipient balance delta. Taxed/rebasing/nonstandard tokens can alter or revert accounting.",
+    "tokenCalls": "Deployed TransferHelper encodes only transferFrom/transfer and accepts empty data or true; native send uses empty bytes. Nonstandard token code still runs externally. Pair LP transferFrom allowance is required. No approval-management or token-transfer capability is created by these internal funding steps.",
+    "lifecycle": {
+      "sourceRef": "https://nomiswap.gitbook.io/home/home.md",
+      "verifiedAt": "2026-10-20",
+      "evidence": "Official notice: development team disbanded and can no longer develop/support Nomiswap; recommends withdrawing all funds as soon as possible; NMX tokenomic supply limit reached and issuance stopped; historical information is out of date and continued use is at user risk. Router source itself has no owner, global pause, mining hook or unconditional shutdown revert. Ordinary methods remain ABI admissions, not advice to deposit or proof of functioning service/rewards."
+    },
+    "excluded": "Seven read-only getters/quote methods and three LP-permit/signature methods excluded individually. Constructor and receive create no capabilities. No farm, staking, referral, claim, factory/pair administration, raw pair swap/flash callback, token approval/transfer, V2/V3/EPCS router or nested executor is admitted.",
+    "assuranceBoundary": "Evidence is deployment attribution plus source/interface review, not current runtime/dependency byte identity, live configuration, fees, rewards, balances, liquidity, financial safety or successful execution. Exact grants, pauses, canonical calldata/value checks and all independent runtime policies remain mandatory."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_WETH",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "WETH",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountTokenDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "swapFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "swapFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountsIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quote",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapETHForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactTokensForETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "WETH",
+      "signature": "WETH()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only immutable wrapped-native getter; no transaction capability or read endpoint is admitted."
+    },
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit caller-funded token/token liquidity add; may create a pair, transfers tokens under caller allowances and mints LP to recipient. Minimum checks are branch-dependent, and no minimum LP-output argument exists."
+    },
+    {
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit caller-funded token/BNB liquidity add; wraps constructor-bound WBNB, mints LP to recipient and refunds unused BNB to caller. Minimum checks are branch-dependent, with no minimum LP output."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only immutable factory getter; no transaction capability or read endpoint is admitted."
+    },
+    {
+      "functionName": "getAmountIn",
+      "signature": "getAmountIn(uint256,uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Pure quote helper using caller-supplied reserves and swap fee; not an executable swap."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(uint256,uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Pure quote helper using caller-supplied reserves and swap fee; not an executable swap."
+    },
+    {
+      "functionName": "getAmountsIn",
+      "signature": "getAmountsIn(uint256,address[])",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only path quote using pair reserves and each pair swapFee; no transaction capability."
+    },
+    {
+      "functionName": "getAmountsOut",
+      "signature": "getAmountsOut(uint256,address[])",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Read-only path quote using pair reserves and each pair swapFee; no transaction capability."
+    },
+    {
+      "functionName": "quote",
+      "signature": "quote(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Pure proportional reserve quote; not an executable swap or liquidity operation."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit token/token liquidity removal using caller LP allowance; pair burns LP to chosen recipient and router checks gross pair-return amounts against minima, not net post-tax receipts."
+    },
+    {
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit token/BNB liquidity removal using caller LP allowance; burns through router, forwards nominal token amount, unwraps WBNB and sends BNB to recipient. Minimums do not establish net taxed-token receipt."
+    },
+    {
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting token/BNB removal using caller LP allowance; forwards the entire router token balance, unwraps returned WBNB and sends BNB to recipient. Token minimum is pair-burn accounting, not net recipient receipt."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermit",
+      "signature": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Excluded signature/LP-permit entry point; ordinary allowance-funded removal is admitted separately."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Excluded signature/LP-permit entry point, including approveMax authority; ordinary fee-supporting removal is admitted separately."
+    },
+    {
+      "functionName": "removeLiquidityWithPermit",
+      "signature": "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Excluded signature/LP-permit entry point, including approveMax authority; ordinary token/token removal is admitted separately."
+    },
+    {
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit exact-output BNB-to-token swap over token-address path; input bounded by msg.value, wraps only quoted WBNB input and refunds unused BNB to caller; sends quoted output to recipient."
+    },
+    {
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input BNB-to-token swap; wraps msg.value, requires path starts at immutable WBNB, checks quoted final output minimum and sends output to recipient."
+    },
+    {
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting exact-input BNB-to-token swap; wraps msg.value, requires WBNB first, computes per-hop output from actual pair balance deltas and checks recipient final-token balance delta."
+    },
+    {
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token-to-BNB swap funded by caller allowance; requires WBNB last, checks quoted output minimum, unwraps exact quoted output and sends BNB to recipient."
+    },
+    {
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting exact-input token-to-BNB swap funded by caller allowance; requires WBNB last, checks and unwraps the entire router WBNB balance and sends BNB to recipient."
+    },
+    {
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token swap funded by caller allowance over address-only path; checks quoted final output minimum and derives all pairs from immutable factory and fixed init-code hash."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit fee-supporting exact-input token swap funded by caller allowance; computes per-hop inputs from pair balance minus reserve and checks recipient final-token balance increase against minimum."
+    },
+    {
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-output token-to-BNB swap funded by caller allowance; requires WBNB last, checks quoted input against maximum, unwraps exact quoted WBNB output and sends BNB to recipient."
+    },
+    {
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-output token swap funded by caller allowance; checks quoted required input against maximum and executes address-only path with empty pair callback data."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:add-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountADesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap addLiquidity",
+      "operation": "add-liquidity",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:add-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountTokenDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap addLiquidityETH",
+      "operation": "add-liquidity-eth",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap removeLiquidity",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:remove-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap removeLiquidityETH",
+      "operation": "remove-liquidity-eth",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap removeLiquidityETHSupportingFeeOnTransferTokens",
+      "operation": "remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:swap-eth-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapETHForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap swapETHForExactTokens",
+      "operation": "swap-eth-for-exact-tokens",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:swap-exact-eth-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap swapExactETHForTokens",
+      "operation": "swap-exact-eth-for-tokens",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:swap-exact-tokens-for-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap swapExactTokensForETH",
+      "operation": "swap-exact-tokens-for-eth",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:swap-exact-tokens-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap swapExactTokensForTokens",
+      "operation": "swap-exact-tokens-for-tokens",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:swap-tokens-for-exact-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap swapTokensForExactETH",
+      "operation": "swap-tokens-for-exact-eth",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    },
+    {
+      "capabilityId": "nomiswap-v1:v1:56:0xd654953d746f0b114d1f85332dc43446ac79413d:swap-tokens-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD654953D746f0b114d1F85332Dc43446ac79413d",
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://nomiswap.io/assets/index-BeDMMqiK.js ; https://sourcify.dev/server/v2/contract/56/0xD654953D746f0b114d1F85332Dc43446ac79413d?fields=all",
+        "verifiedAt": "2026-10-20",
+        "status": "verified"
+      },
+      "protocol": "nomiswap-v1",
+      "label": "Nomiswap swapTokensForExactTokens",
+      "operation": "swap-tokens-for-exact-tokens",
+      "warnings": [
+        "Official documentation says the Nomiswap development team has disbanded, recommends withdrawing all funds, says NMX issuance stopped and marks historical material out of date. Admission is interface metadata, not an endorsement of new deposits, continued support, cashback, mining, farming or reward availability.",
+        "Caller chooses path/assets, amounts, input/output bounds, recipient and deadline; token/LP balances and allowances, gas and independent policies remain required. Pair fees, prices, liquidity and execution success are not attested.",
+        "ETH/WETH ABI names mean BSC native BNB and immutable WBNB 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c. Four payable methods spend BNB; nonpayable methods require zero value. Refund or recipient contract incompatibility can revert native transfers.",
+        "Quotes and both swap loops read pair-specific swapFee in units of 1/1000, not a fixed advertised 0.1%; factory feeToSetter can change fees. This direct router has no mining/reward hook, reward claim or cashback entitlement, unlike other protocol routers.",
+        "Liquidity-add minima are branch-dependent: an empty pool uses desired amounts without checking minima, and an existing pool checks only the optimized side. There is no minimum LP-output argument. Removal minimums refer to gross pair-burn amounts and do not guarantee net taxed-token receipts.",
+        "Fee-supporting native removal forwards the entire router token balance; fee-supporting token-to-native swap checks and unwraps the entire router WBNB balance. Nonstandard, fee-on-transfer or rebasing tokens may change accounting or revert; ordinary exact-output paths do not support transfer-tax accounting.",
+        "Pairs are derived from immutable factory and fixed init-code hash, with empty callback bytes; paths are token addresses, not arbitrary executors. Permits, callback entry points, multicall, administration, token approval/transfer and farming are not admitted. Sourcify match labels are not fresh bytecode, dependency, funding or financial-safety guarantees."
+      ]
+    }
+  ]
+}

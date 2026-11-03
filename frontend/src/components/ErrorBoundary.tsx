@@ -5,6 +5,7 @@ import { CopyButton } from './CopyButton';
 
 interface Props {
   children: ReactNode;
+  inline?: boolean;
 }
 
 interface State {
@@ -53,7 +54,7 @@ export class ErrorBoundary extends Component<Props, State> {
       const errorDetails = this.getErrorDetails(this.state.error);
 
       return (
-        <div className="flex min-h-screen items-center justify-center p-8">
+        <div role="alert" className={`flex items-center justify-center p-8 ${this.props.inline ? 'min-h-64' : 'min-h-screen'}`}>
           <div className="flex max-w-md flex-col items-center gap-4 rounded-2xl border border-red-200 bg-red-50 p-8 text-center shadow-sm">
             <AlertCircle className="h-10 w-10 text-red-500" />
             <div className="space-y-2">

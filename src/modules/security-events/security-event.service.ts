@@ -23,6 +23,8 @@ export type RecordSecurityEventInput = {
   result?: SecurityEventResult | null;
   reason?: string | null;
   metadata?: Prisma.InputJsonValue;
+  /** Trusted persistence timestamp (e.g. sourced from PostgreSQL clock_timestamp()). */
+  createdAt?: Date;
 };
 
 type SecurityEventClient = {
@@ -43,13 +45,13 @@ export class SecurityEventService {
     @Optional() private readonly exporter?: SecurityEventExportService,
   ) {}
 
-  async record(input: RecordSecurityEventInput, tx?: SecurityEventClient) {
+  async record(input: RecordSecurityEventInput, tx?: SecurityEventClient | Prisma.TransactionClient, options?: { deferExport?: boolean }) {
     const eventType = input.eventType.trim();
     if (!eventType) {
       throw new BadRequestException('Security event type is required');
     }
 
-    const client = (tx ?? this.prisma) as SecurityEventClient;
+    const client = (tx ?? this.prisma) as unknown as SecurityEventClient;
     const risk = this.riskService?.score({ ...input, eventType }) ?? {
       riskLevel: input.riskLevel ?? 'low',
     };
@@ -67,6 +69,7 @@ export class SecurityEventService {
         result: input.result ?? null,
         reason: input.reason ?? null,
         metadata: input.metadata ?? Prisma.JsonNull,
+        ...(input.createdAt ? { createdAt: input.createdAt } : {}),
       },
     });
 
@@ -79,15 +82,21 @@ export class SecurityEventService {
       );
     }
 
+    if (!options?.deferExport) await this.exportCommitted(event as { eventType?: string });
+
+    return event;
+  }
+
+  async exportCommitted(event: unknown) {
     try {
       await this.exporter?.exportSecurityEvent(event as never);
     } catch (error) {
+      const eventType = typeof event === 'object' && event !== null && 'eventType' in event && typeof event.eventType === 'string' ? event.eventType : 'unknown';
       this.logger.error(
         `SecurityEvent SIEM export failed: eventType=${eventType}`,
         error instanceof Error ? error.stack : undefined,
       );
     }
 
-    return event;
   }
 }

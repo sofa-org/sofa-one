@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Strike",
+  "observedAt": "2026-10-24",
+  "status": "deferred",
+  "reason": "Current primary ordinary Ethereum lending product/deployment anchor not established: official root domain serves Safenames parked-domain page; app, docs and repository-linked staging domains could not be reached. Official GitHub still describes Ethereum lending, but cannot alone establish current ordinary maintained deployed product. This is a precise evidence gap, not a shutdown inference from failed fetch or old repository.",
+  "selectedFunctions": [],
+  "sourceRefs": [
+    "https://strike.org/",
+    "https://app.strike.org/",
+    "https://docs.strike.org/",
+    "https://staging.strike.org/",
+    "https://github.com/StrikeFinance",
+    "https://github.com/StrikeFinance/strike-protocol",
+    "https://github.com/StrikeFinance/strike-app"
+  ],
+  "sourceSnapshots": [
+    {
+      "sourceRef": "https://strike.org/",
+      "readerText": "URL: https://strike.org/\nContent-Type: text/html\nMethod: native\n\n---\n\n---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Domain Registered at Safenames\n---\n\n![Safenames]\n\n# This domain is registered with Safenames\n\nThere is no website configured for this address yet. Safenames is a global domain, security and brand-protection partner, trusted by leading organisations since 1999.\n\n- Domain registration in 1,400+ extensions\n- Enterprise domain management\n- Mark Protect\u2122 brand monitoring\n- Domain consultancy & acquisition\n- SSL & certificate management\n- Cyber security solutions\n\n[Visit safenames.net](https://www.safenames.net?ref=lndrdr)\n\nEurope, Middle East & Africa: +44 1908 200022  \nUSA, Canada & South America: +1 703 574 5313  \nAustralia & Asia-Pacific: +61 755 245 575",
+      "sha256": "ca2fa1a88a8f6e25bd03673ca00834760fd7405a246387f8826d1e6f70d07902"
+    }
+  ],
+  "observations": [
+    {
+      "sourceRef": "https://github.com/StrikeFinance/strike-protocol",
+      "excerpt": "The Strike Protocol is an Ethereum smart contract for supplying or borrowing assets. sToken mint/redeem/borrow/repay ordinary financial product described.",
+      "limitation": "Repository snapshot is not a current deployment lifecycle attestation."
+    },
+    {
+      "sourceRef": "https://github.com/StrikeFinance/strike-app",
+      "excerpt": "Strike Frontend DApp; links staging.strike.org.",
+      "limitation": "Linked site failed to connect on observation date."
+    }
+  ],
+  "limitations": [
+    "Not the unrelated Strike Cardano perpetuals protocol or Strike Bitcoin payments/lending company.",
+    "No generic Compound ABI substituted, no new active capability or unsupported chain introduced.",
+    "No claim based on TVL or activity thresholds."
+  ]
+}

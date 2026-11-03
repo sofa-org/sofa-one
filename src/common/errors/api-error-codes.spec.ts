@@ -45,7 +45,6 @@ describe('resolveApiErrorCode', () => {
     ],
     ['UserOperation fee estimate failed', API_ERROR_CODES.USER_OPERATION_GAS_PRICE_UNAVAILABLE],
     ['UserOperation rejected by bundler', API_ERROR_CODES.USER_OPERATION_REJECTED],
-    ['Backend EOA transaction failed', API_ERROR_CODES.BACKEND_TRANSACTION_FAILED],
     ['Wallet service unavailable', API_ERROR_CODES.WALLET_SERVICE_UNAVAILABLE],
     [
       'Unproven asset outflow is not allowed while destination protection is enabled. Use a dedicated withdraw/payment path, or send only direct ERC-20 transfers to allowlisted destinations.',

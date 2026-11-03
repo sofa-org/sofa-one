@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Perennial",
+  "reviewedAt": "2026-10-24",
+  "batch": 50,
+  "status": "rejected",
+  "reason": "The current official homepage explicitly states that Perennial has sunsetted and its application has been taken offline. Remaining funds are directed to a separate Equilibria claiming app. The catalog lifecycle policy excludes sunset or wound-down protocols even when exit methods remain callable; historical market/vault ABIs cannot establish maintained-product eligibility.",
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://perennial.finance/",
+      "observedAt": "2026-10-24",
+      "sourceType": "current official protocol homepage",
+      "title": "Perennial has sunsetted",
+      "observation": "The application has been taken offline. Thank you for the support. Equilibria (the creator of Perennial) has set up an app for claiming all unwithdrawn funds. If you still had funds on the platform, you may claim them at the link below.",
+      "links": ["https://claim.equilibria.xyz"],
+      "context": "This is an explicit current product-wide sunset notice, not an inference from a fetch failure, low activity, or an isolated-chain migration."
+    },
+    {
+      "sourceRef": "https://claim.equilibria.xyz/",
+      "observedAt": "2026-10-24",
+      "sourceType": "claiming application linked by current official homepage",
+      "title": "Claim your balance.",
+      "observation": "The page offers Connect Wallet and Address Lookup, and provides instructions for claiming Cascade or perp.fun balances.",
+      "limitations": [
+        "This is supplementary evidence of a claims-oriented successor page, not an admitted ongoing Perennial market or vault product.",
+        "No wallet was connected, no private key was supplied, and no claim or transaction was executed."
+      ]
+    }
+  ],
+  "fetchLimitations": [
+    "https://docs.perennial.finance/ could not be fetched directly, while search indexed older layered perps-ecosystem documentation. This failed fetch is not the basis of rejection; historical documentation cannot override the current primary sunset notice."
+  ],
+  "sourceRefs": [
+    "https://perennial.finance/",
+    "https://claim.equilibria.xyz/"
+  ],
+  "selectedFunctions": [],
+  "allFunctionDecisions": [],
+  "contracts": [],
+  "scope": "Lifecycle rejection before deployment/function admission. No historical market/vault target, invoker/multicall, oracle-proof forwarding, ABI completeness, deployment identity, live balances, successful execution, financial safety, or persistent runtime attestation is claimed."
+}

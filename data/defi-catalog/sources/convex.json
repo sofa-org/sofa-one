@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "convex",
+      "familyVersion": "platform@4f220383",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xF403C135812408BFbE8713b5A23a04b3D48AAE31",
+          "status": "inactive",
+          "contractName": "Convex Booster (Ethereum Mainnet)",
+          "sourceRefs": ["convex-booster-deployment", "convex-booster-interface"],
+          "abiFunctions": [
+            { "type": "function", "name": "deposit", "stateMutability": "nonpayable", "inputs": [{ "name": "_pid", "type": "uint256" }, { "name": "_amount", "type": "uint256" }, { "name": "_stake", "type": "bool" }], "outputs": [{ "name": "", "type": "bool" }] },
+            { "type": "function", "name": "depositAll", "stateMutability": "nonpayable", "inputs": [{ "name": "_pid", "type": "uint256" }, { "name": "_stake", "type": "bool" }], "outputs": [{ "name": "", "type": "bool" }] },
+            { "type": "function", "name": "withdraw", "stateMutability": "nonpayable", "inputs": [{ "name": "_pid", "type": "uint256" }, { "name": "_amount", "type": "uint256" }], "outputs": [{ "name": "", "type": "bool" }] },
+            { "type": "function", "name": "withdrawAll", "stateMutability": "nonpayable", "inputs": [{ "name": "_pid", "type": "uint256" }], "outputs": [{ "name": "", "type": "bool" }] }
+          ]
+        },
+        {
+          "chainId": 1,
+          "address": "0xf34DFF761145FF0B05e917811d488B441F33a968",
+          "status": "inactive",
+          "contractName": "Convex BaseRewardPool (observed Ethereum pool)",
+          "sourceRefs": ["convex-rewardpool-registry-read", "convex-reward-pool-interface", "convex-reward-factory-interface"],
+          "abiFunctions": [
+            { "type": "function", "name": "withdrawAndUnwrap", "stateMutability": "nonpayable", "inputs": [{ "name": "amount", "type": "uint256" }, { "name": "claim", "type": "bool" }], "outputs": [{ "name": "", "type": "bool" }] },
+            { "type": "function", "name": "getReward", "stateMutability": "nonpayable", "inputs": [], "outputs": [{ "name": "", "type": "bool" }] }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    { "sourceId": "convex-booster-deployment", "url": "https://docs.convexfinance.com/convexfinanceintegration/booster", "retrievedAtUtc": "2026-10-04", "evidence": "Official Convex integration documentation identifies the Ethereum Booster deployment role and ordinary pool deposit/withdraw workflow." },
+    { "sourceId": "convex-booster-interface", "url": "https://github.com/convex-eth/platform/blob/4f22038387ca4ce014dec3d7f5781a8e28051c13/contracts/contracts/Booster.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official Booster source declares the selected deposit, depositAll, withdraw, and withdrawAll methods returning bool. The snapshot is not an asserted complete ABI." },
+    { "sourceId": "convex-reward-pool-interface", "url": "https://github.com/convex-eth/platform/blob/4f22038387ca4ce014dec3d7f5781a8e28051c13/contracts/contracts/BaseRewardPool.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official BaseRewardPool source declares withdrawAndUnwrap(uint256,bool) and zero-argument getReward() returning bool; other overloads are deliberately excluded." },
+    { "sourceId": "convex-reward-factory-interface", "url": "https://github.com/convex-eth/platform/blob/4f22038387ca4ce014dec3d7f5781a8e28051c13/contracts/contracts/RewardFactory.sol", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official RewardFactory source defines BaseRewardPool construction via createCrvRewards(pid,depositToken); paired with the source-declared Booster operator relationship, this supports the selected reward-pool role mapping, not live installation or funded state." },
+    { "sourceId": "convex-rewardpool-registry-read", "url": "https://etherscan.io/address/0xF403C135812408BFbE8713b5A23a04b3D48AAE31#readContract", "retrievedAtUtc": "2026-10-04", "evidence": "Public Ethereum read at block 0x18e86c7 returned poolLength()=583 and poolInfo(0).crvRewards=0xf34DFF761145FF0B05e917811d488B441F33a968 (alongside LP/deposit token, gauge, stash, and shutdown fields). Read-result hash: 0xc8c68c958e0e15b194b153c1889f1c2c1b952ef78efad9b120a59cf6d34a270a. Historical pool identity does not prove current liquidity, funded execution, or all-pool coverage." }
+  ]
+}

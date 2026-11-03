@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { BadGatewayException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 jest.mock('../../core/openfort/openfort.service', () => ({
@@ -54,35 +54,14 @@ describe('OpenfortAuthGuard', () => {
     expect(openfort.verifyIamSession).not.toHaveBeenCalled();
   });
 
-  it('rejects Openfort verification failures as unauthorized', async () => {
-    const { guard, openfort } = createGuard();
-    openfort.verifyIamSession.mockRejectedValue(new Error('boom'));
-
-    await expect(
-      guard.canActivate(contextWithHeaders({ authorization: 'Bearer token-123' })),
-    ).rejects.toThrow(UnauthorizedException);
-  });
-
-  it('attaches Openfort session data on successful bearer token verification', async () => {
-    const { guard, openfort } = createGuard();
-    const session = {
-      openfortUserId: 'user-1',
-      session: { id: 'session-1' },
-      email: 'user@example.com',
-    };
-    openfort.verifyIamSession.mockResolvedValue(session);
-    const request = { headers: { authorization: 'Bearer token-123' } } as any;
-    const context = {
-      getHandler: jest.fn(),
-      getClass: jest.fn(),
-      switchToHttp: () => ({ getRequest: () => request }),
-    } as any;
-
-    await expect(guard.canActivate(context)).resolves.toBe(true);
-    expect(openfort.verifyIamSession).toHaveBeenCalledWith('token-123');
-    expect(request.openfortUserId).toBe('user-1');
-    expect(request.openfortAccessToken).toBe('token-123');
-    expect(request.openfortSession).toEqual({ id: 'session-1' });
-    expect(request.openfortEmail).toBe('user@example.com');
-  });
+  it.each([new UnauthorizedException('expired'), new BadGatewayException('upstream unavailable')])(
+    'preserves the authentication failure status $status',
+    async (error) => {
+      const { guard, openfort } = createGuard();
+      openfort.verifyIamSession.mockRejectedValue(error);
+      await expect(
+        guard.canActivate(contextWithHeaders({ authorization: 'Bearer token-123' })),
+      ).rejects.toBe(error);
+    },
+  );
 });

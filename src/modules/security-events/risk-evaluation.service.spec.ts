@@ -148,6 +148,21 @@ describe('RiskEvaluationService', () => {
           expect.objectContaining({ name: 'consecutive_policy_denials' }),
         );
       });
+
+      it('counts two DeFi denials and blocks the next API-key operation', async () => {
+        configureCountMocks(prisma, { 'defi.policy_denied': 2 });
+
+        const assessment = await service.evaluateRisk(baseContext);
+
+        expect(assessment.factors).toContainEqual(expect.objectContaining({ name: 'consecutive_policy_denials', weight: 35 }));
+        expect(assessment.riskLevel).toBe('medium');
+        expect(assessment.action).toBe('block');
+        const denialQuery = prisma.securityEvent.count.mock.calls.find((call: [{ where: Record<string, unknown> }]) => {
+          const eventType = call[0]?.where?.eventType;
+          return Boolean(eventType && typeof eventType === 'object' && 'in' in eventType && (eventType.in as string[]).includes('defi.policy_denied'));
+        });
+        expect(denialQuery).toBeDefined();
+      });
     });
 
     describe('consecutive_auth_failures', () => {

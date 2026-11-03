@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Madness",
+  "website": "https://madness.finance/",
+  "reviewedAt": "2026-10-23",
+  "status": "rejected",
+  "reason": "Missing current official maintained Monad mainnet deployment/lifecycle evidence. Current root and swap host serve unrelated Thai gambling content; surviving /exp frontend explicitly links Monad testnet. No mainnet ABI/source or active protocol capabilities inferred from old remnants.",
+  "lifecycleEvidence": {
+    "status": "unestablished",
+    "verifiedAt": "2026-10-23",
+    "observed": [
+      {
+        "sourceRef": "https://madness.finance/",
+        "sha256": "7baaec8a22e55d76bbcc9dc2dbd404ed2c836a5e869b5162b72c71b1d61a2515",
+        "title": "\u0e2a\u0e25\u0e47\u0e2d\u0e15\u0e40\u0e27\u0e47\u0e1a\u0e15\u0e23\u0e07 \u0e40\u0e27\u0e47\u0e1a\u0e2a\u0e25\u0e47\u0e2d\u0e15 \u0e41\u0e17\u0e49 100 \u0e1d\u0e32\u0e01\u0e44\u0e21\u0e48\u0e21\u0e35\u0e02\u0e31\u0e49\u0e19\u0e15\u0e48\u0e4d\u0e32 PG Slot \u0e40\u0e01\u0e21\u0e40\u0e14\u0e48\u0e19 2026 \u0e1d\u0e32\u0e01\u0e16\u0e2d\u0e19\u0e44\u0e27 RTP \u0e2a\u0e39\u0e07 \u0e23\u0e2d\u0e07\u0e23\u0e31\u0e1a \u0e27\u0e2d \u0e40\u0e25\u0e17",
+        "excerpts": [
+          "Current canonical points www.madness.finance; gambling content links funswin.bio/register?partner_ref=madness."
+        ]
+      },
+      {
+        "sourceRef": "https://swap.madness.finance/",
+        "sha256": "deb5910af50af5c52dd11ba8fa8e5e1ead628fe5fc18b7b04ac468f2eccc6428",
+        "excerpts": [
+          "Current gambling site links funswin.bio/register?partner_ref=madness, not a protocol swap product."
+        ]
+      },
+      {
+        "sourceRef": "https://madness.finance/exp",
+        "sha256": "104d7f959e05593dd71cb164bb8d56047fafa89e496d882e2bd6dacb85e9aa45",
+        "title": "Madness - The Lead DEX Built on Monad",
+        "excerpts": [
+          "content=\"Madness - The Lead DEX Built on Monad\"/><meta name=\"next-head-count\" content=\"8\"/><link rel=\"preconnect\" href=\"https://testnet-rpc.monad.xyz/\"/><link rel=\"preconnect\" href=\"https://testnet-rpc.monad.xyz/\"/><link rel=\"preconnect\" href=\"https://fonts.googleapis.com/\"/><lin"
+        ],
+        "assessment": "Surviving stale frontend references testnet; not current mainnet deployment evidence."
+      }
+    ],
+    "limitations": [
+      "No assertion that every historical contract/ecosystem no longer exists. Current primary active/mainnet evidence is missing. Third-party search result flags rug-pull/down but not used as standalone primary lifecycle proof."
+    ]
+  },
+  "abi": [],
+  "functionDecisions": [],
+  "selectedFunctions": [],
+  "limitations": [
+    "No ABI invented and no generic fork interface, testnet or residual exit-only deployment admitted."
+  ],
+  "additionalSourceRefs": [
+    "https://madness.finance/",
+    "https://swap.madness.finance/",
+    "https://madness.finance/exp",
+    "https://defillama.com/protocol/fees/madness-finance"
+  ],
+  "replacement": "D2 Finance explicitly authorized by Main."
+}

@@ -1,15 +1,20 @@
 # Shared Components (`frontend/src/components/`)
 
 ## Responsibility
-Reusable React components for the SOFA ONE SPA: Openfort auth provider wiring, route-level auth gating (sign-in protection, public-only redirect, dashboard MFA step-up), error handling, config diagnostics, and a clipboard utility. No business/API logic lives here; components compose `@openfort/react`, React Router, and `src/lib/api` helpers.
+Shared application-session state, route/MFA gates, wallet-only Openfort provider wiring, error/config diagnostics and UI utilities. AppSessionProvider owns server introspection/exchange/logout; wallet keys remain entirely in Openfort.
 
 ## Component inventory
 
+### AppSessionProvider.tsx
+- Root local-session context exposes snapshot/loading/error, refresh, explicit IAM exchange and current/all-device logout.
+- Transport uses cookies plus in-memory CSRF. Concurrent ordinary refresh/focus/visibility calls share one request; settlement releases it for future security checks. Cookie 401/absolute expiry clears session/proof state; 403/5xx preserve state with retry. Explicit exchange supersedes older reads; revocation/expiry/unmount invalidate late responses.
+- Session ID replacement remounts protected content and clears proof cache; same-session snapshots do not fan out business reloads. A server MFA downgrade clears proofs and reopens verification; upgrades retain recovery-code acknowledgement. Cached proofs never authenticate users.
+
 ### AuthProviders.tsx
-- **Responsibility**: Full provider stack for the authenticated dashboard tree. Validates Openfort env config up front and renders `OpenfortConfigError` if `VITE_OPENFORT_PUBLISHABLE_KEY` or `VITE_OPENFORT_SHIELD_PUBLISHABLE_KEY` is missing.
+- **Responsibility**: Wallet-route-only Wagmi/Shield/Openfort provider stack. Missing wallet configuration does not block non-wallet dashboard routes.
 - **Design/Patterns**: Provider composition (wrapper) pattern. Module-level singletons: `QueryClient`, `wagmiConfig` built once via `getDefaultConfig` from `@openfort/react/wagmi` with 13 viem chains (baseSepolia, base, mainnet, sepolia, polygon, polygonAmoy, arbitrum, optimism, optimismSepolia, bsc, bscTestnet, monad, monadTestnet), each with an `http()` transport defaulting to public RPCs and overridable via `VITE_*_RPC_URL` env vars.
 - **Flow**: `QueryClientProvider` → `WagmiProvider` → `OpenfortWagmiBridge` → `OpenfortProvider` → `children`. `OpenfortProvider` config: EVM chain type, EOA account type on `DEFAULT_CHAIN_ID` (84532 from `src/lib/api`), `connectOnLogin: false`, Shield publishable key for wallet recovery, `uiConfig` with `EMAIL_OTP` auth provider and `PASSWORD` default recovery method.
-- **Integration**: Lazy-loaded in `App.tsx`; wraps the `/dashboard` route tree. Depends on `@openfort/react`, `@openfort/react/wagmi`, `wagmi`, `viem/chains`, `@tanstack/react-query`, `DEFAULT_CHAIN_ID` from `src/lib/api`, and `OpenfortConfigError`.
+- **Integration**: Lazy-loaded only around the dashboard index WalletPage in App.tsx; non-wallet pages use AppSessionProvider without Openfort context.
 
 ### OpenfortAuthProvider.tsx
 - **Responsibility**: Minimal Openfort provider for the public sign-in flow (no Wagmi/Shield). Renders `OpenfortConfigError` when `VITE_OPENFORT_PUBLISHABLE_KEY` is missing.
@@ -20,32 +25,32 @@ Reusable React components for the SOFA ONE SPA: Openfort auth provider wiring, r
 ### AuthFormPanel.tsx
 - **Responsibility**: Composition root for the sign-in form area.
 - **Design/Patterns**: Nested wrapper composition.
-- **Flow**: `OpenfortAuthProvider` → `PublicOnlyRoute` → `EmailOtpForm` (from `src/pages/EmailOtpForm`).
+- **Flow**: `PublicOnlyRoute` → `OpenfortAuthProvider` → `EmailOtpForm`; local sessions redirect before mounting provider configuration.
 - **Integration**: Lazy-loaded by `src/pages/SignIn.tsx` (`/sign-in/*` route). Depends on `OpenfortAuthProvider`, `PublicOnlyRoute`, `EmailOtpForm`.
 
 ### ProtectedRoute.tsx
 - **Responsibility**: Route guard for authenticated-only pages.
-- **Design/Patterns**: Conditional render guard using `useOpenfort()` (`isLoading`, `user`).
-- **Flow**: If `user` → render `children`. If `isLoading` → centered "Checking your Openfort session" spinner with reload button. Else → `<Navigate to="/sign-in" replace state={{ from: location }} />` so the sign-in flow can return the user to the original dashboard path.
-- **Integration**: Lazy-loaded in `App.tsx`; wraps `DashboardStepUpGate` inside the `/dashboard` route. Depends on `@openfort/react` and `react-router-dom`.
+- **Design/Patterns**: Uses AppSessionProvider snapshot/loading/error, with retry instead of sign-out on service outages.
+- **Flow**: Live local snapshot renders session-keyed children; absent session redirects with state.from; pending MFA remains behind DashboardStepUpGate.
+- **Integration**: Wraps the dashboard layout without Openfort dependencies.
 
 ### PublicOnlyRoute.tsx
 - **Responsibility**: Route guard for public pages; keeps already-authenticated users out of sign-in.
 - **Design/Patterns**: Conditional render guard with redirect-state parsing (`getDashboardRedirectPath`).
-- **Flow**: If `isLoading` → compact "Account check" spinner panel. If `user` → `<Navigate>` to the `location.state.from` path when it starts with `/dashboard` (preserving search/hash), otherwise `/dashboard`. Else → render `children`.
-- **Integration**: Used by `AuthFormPanel` for the sign-in page. Depends on `@openfort/react` and `react-router-dom`.
+- **Flow**: Restores the SOFA snapshot before rendering sign-in; authenticated users return to a dashboard path, otherwise children render. Outages offer retry.
+- **Integration**: Uses AppSessionProvider and React Router; no Openfort-context dependency.
 
 ### DashboardStepUpGate.tsx
-- **Responsibility**: MFA step-up gate for the dashboard. Blocks `children` until the user has a valid TOTP proof for the session; provisions MFA on first use.
-- **Design/Patterns**: State-machine gate with stages `checking | setup | verify | recovery | ready | error`. Bootstrap effect runs `syncSession` → `getMfaStatusAuth`; if MFA disabled, calls `setupTotpAuth` and shows QR setup; if enabled, shows verify form. Proof persistence via `sessionStorage` helpers in `src/pages/dashboard/step-up-session.ts` (`getDashboardStepUpToken` short-circuits to `ready` when a non-expired proof exists). QR code rendered client-side via `qrcode` `toDataURL`. Digit/part input handling with refs for auto-advance, backspace, and paste; recovery codes normalized to `[A-HJ-NP-Z2-9]` (Crocker-Ford base32) in 3×4-char parts.
-- **Flow**: `checking` → (`setup` → `recovery` → `ready`) or (`verify` → `ready`); `error` on API failure with retry. `ready` renders `children`. Verification calls `enableTotpAuth` (setup path) or `verifyTotpAuth` (verify/recovery path), then `storeDashboardStepUpProof` before advancing.
-- **Integration**: Lazy-loaded in `App.tsx`; wraps `DashboardLayout` inside `ProtectedRoute`. Depends on `useUser` from `@openfort/react`, API helpers `syncSession`/`getMfaStatusAuth`/`setupTotpAuth`/`enableTotpAuth`/`verifyTotpAuth`/`getApiErrorMessage` and types `MfaStatusResponse`/`TotpSetupResponse` from `src/lib/api`, `step-up-session` helpers, `CopyButton`, `qrcode`, `lucide-react`.
+- **Responsibility**: Server-authoritative MFA gate; cached proofs never bypass pending MFA.
+- **Design/Patterns**: checking/setup/verify/recovery/ready/error states. Pending sessions query MFA status and set up or verify; full-MFA snapshots render children. QR and recovery-code UX is preserved.
+- **Flow**: Enable then verify the factor, refresh and confirm the same server session upgraded, cache proof with its originating session ID. Initial recovery codes require explicit acknowledgement before entry.
+- **Integration**: Uses AppSessionProvider and cookie-auth API helpers; no Openfort hook or login exchange during dashboard bootstrap.
 
 ### ErrorBoundary.tsx
-- **Responsibility**: Top-level render error boundary for the whole SPA.
+- **Responsibility**: Render error boundary for the whole SPA and, in inline mode, dashboard route content.
 - **Design/Patterns**: Class component with `getDerivedStateFromError` + `componentDidCatch` (logs `console.error` with component stack). Error details string (time, timezone, path, UA, language, error; stack only in dev) exposed via `CopyButton`.
 - **Flow**: On error → full-screen error card with "Reload app", "Back to dashboard" (`window.location.assign('/dashboard')`), "Try without reload" (clears error state), and copy-details button. Otherwise renders `children`.
-- **Integration**: Wraps the entire app in `src/main.tsx`. Depends on `CopyButton` and `lucide-react`.
+- **Integration**: Wraps the entire app in `src/main.tsx`; DashboardLayout uses a pathname-keyed inline boundary around its Suspense/Outlet so child failures keep navigation/logout mounted. Depends on `CopyButton` and `lucide-react`.
 
 ### OpenfortConfigError.tsx
 - **Responsibility**: Full-screen diagnostic when required Openfort env vars are missing.
@@ -60,8 +65,8 @@ Reusable React components for the SOFA ONE SPA: Openfort auth provider wiring, r
 - **Integration**: Consumed across the app: `DashboardStepUpGate`, `ErrorBoundary`, `OpenfortConfigError`, and dashboard pages (`DashboardLayout`, `Wallet`, `ApiKeys`, `ApiKeyBanner`, `Transactions`, `Docs`, `WithdrawForm`, `UsdcPaymentPanel`, `Step2AuthorizeAccess`). Depends on `lucide-react`.
 
 ## Route protection summary
-- `/dashboard/*` (in `App.tsx`): `AuthProviders` → `ProtectedRoute` → `DashboardStepUpGate` → `DashboardLayout` (all lazy-loaded). Unauthenticated users are redirected to `/sign-in` with `state.from`; authenticated users without a session MFA proof are held at the step-up gate.
-- `/sign-in/*`: `SignInPage` lazy-loads `AuthFormPanel` (`OpenfortAuthProvider` → `PublicOnlyRoute` → `EmailOtpForm`); authenticated users are redirected back to `/dashboard`.
+- `/dashboard/*`: root AppSessionProvider → ProtectedRoute → DashboardStepUpGate → DashboardLayout; only the wallet index mounts AuthProviders.
+- `/sign-in/*`: PublicOnlyRoute → OpenfortAuthProvider → EmailOtpForm; successful OTP explicitly exchanges identity before dashboard navigation.
 - `/sign-up/*` and unknown paths redirect to `/sign-in` and `/` respectively.
 - `ErrorBoundary` wraps the entire app in `main.tsx`.
 

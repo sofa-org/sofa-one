@@ -34,7 +34,7 @@ shape and format of the `code` field; no other module defines or re-validates it
 
 ## Flow
 
-1. Frontend sends `POST /v1/auth/mfa/totp/{enable|verify|disable}` with JSON body
+1. Frontend sends `POST /auth/mfa/totp/{enable|verify|disable}` with JSON body
    `{ "code": "<6-digit TOTP or recovery code>" }`.
 2. Global `ValidationPipe` (transform mode) validates the body against `TotpCodeDto`:
    - non-string / empty / malformed `code` → 400 with the `@Matches` message;
@@ -47,11 +47,11 @@ shape and format of the `code` field; no other module defines or re-validates it
 
 - **Consumers**: `MfaController` (`src/modules/mfa/mfa.controller.ts`) imports
   `TotpCodeDto` and uses it as the `@Body()` type on three routes:
-  - `POST /v1/auth/mfa/totp/enable` → `mfa.enableTotp(req.user.id, dto.code)`
-  - `POST /v1/auth/mfa/totp/verify` → `mfa.verifyTotp(req.user.id, dto.code)`
-  - `POST /v1/auth/mfa/totp/disable` → `mfa.disableTotp(req.user.id, dto.code)`
-- **Not used** by `GET /v1/auth/mfa/status` or `POST /v1/auth/mfa/totp/setup` (no body).
-- **Route context**: all routes are `@FrontendOnly()` and guarded by `OpenfortUserGuard` +
+  - `POST /auth/mfa/totp/enable` → `mfa.enableTotp(req.user.id, req.appSession.id, dto.code)`
+  - `POST /auth/mfa/totp/verify` → `mfa.verifyTotp(req.user.id, req.appSession.id, dto.code)`
+  - `POST /auth/mfa/totp/disable` → `mfa.disableTotp(req.user.id, req.appSession.id, dto.code)` and clear revoked cookie
+- **Not used** by `GET /auth/mfa/status` or `POST /auth/mfa/totp/setup` (no body).
+- **Route context**: all routes are frontend-only and use AppSessionGuard +
   `FrontendOnlyGuard`; the DTO itself carries no auth concerns.
 - **Dependencies**: external `class-validator` (npm). No internal module imports.
 - **Output**: a validated `TotpCodeDto` instance (or a 400 `BadRequestException` from the global

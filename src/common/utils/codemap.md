@@ -37,7 +37,7 @@ Pure, dependency-light helper functions shared across backend modules: IP/CIDR a
 - Defense-in-depth redaction: `sanitizeErrorMessage` is applied at multiple layers (global exception filter, service error paths, SIEM export) so internal details are stripped even if an error propagates through several boundaries.
 
 ## Flow
-- **IP allowlist**: `ApiKeyAuthGuard` / `EitherAuthGuard` / `EoaExecutionPolicyService` → `IpAllowlistService.assertIpAllowed` / `isIpAllowed` → `isIpAllowed` (utils) → boolean; rejections are recorded as `api_key.ip_rejected` `SecurityEvent` rows. `CreateApiKeyDto` uses `isIpOrCidr` inside a `@ValidatorConstraint` to validate `ipAllowlist` entries at API-key creation time.
+- **IP allowlist**: `ApiKeyAuthGuard` / `EoaExecutionPolicyService` → `IpAllowlistService.assertIpAllowed` / `isIpAllowed` → `isIpAllowed` (utils) → boolean; rejections are recorded as `api_key.ip_rejected` `SecurityEvent` rows. `CreateApiKeyDto` uses `isIpOrCidr` inside a `@ValidatorConstraint` to validate `ipAllowlist` entries at API-key creation time.
 - **Idempotency/audit hashing**: `WalletService` (withdraw/sign paths) and `TransactionsService` (send path) call `hashRequest` on request payloads to produce `requestHash` / `interactionsHash` stored on `Transaction` rows and used for idempotency lookups.
 - **Error sanitization**: thrown errors → `getErrorText` (e.g. `TransactionSimulationService` for `eth_call` preflight reasons) → `sanitizeErrorMessage` → safe message stored in `SecurityEvent` metadata or returned to clients. The global `HttpExceptionFilter` sanitizes every exception message before it is serialized into the HTTP response; `OpenfortService` and `BillingReconciliationService` sanitize error details before logging/persisting.
 

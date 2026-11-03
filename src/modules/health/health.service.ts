@@ -2,6 +2,8 @@ import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../core/database/prisma.service';
 import { SESSION_CLEANUP_STATUS_NEEDS_REVIEW } from '../billing/stripe/stripe.constants';
+import { ResilientThrottlerStorage } from '../../common/throttler/resilient-throttler-storage';
+import type { RateLimitHealth } from '../../common/throttler/resilient-throttler-storage';
 
 export type HealthBaseResponse = {
   status: 'ok';
@@ -20,10 +22,12 @@ export type BillingWorkerHealth = {
   needsReviewCount: number;
 };
 
-export type HealthReadyResponse = HealthBaseResponse & {
+export type HealthReadyResponse = Omit<HealthBaseResponse, 'status'> & {
+  status: 'ok' | 'degraded';
   checks: {
     database: 'ok';
     billingWorker: BillingWorkerHealth;
+    rateLimit: RateLimitHealth;
   };
 };
 
@@ -51,6 +55,7 @@ export class HealthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly rateLimitStorage: ResilientThrottlerStorage,
   ) {}
 
   live(): HealthBaseResponse {
@@ -68,12 +73,13 @@ export class HealthService {
   async ready(): Promise<HealthReadyResponse> {
     const timestamp = new Date().toISOString();
     const billingWorker = await this.workerHealth();
+    const rateLimit = this.rateLimitStorage.getHealth();
 
     if (!(await this.databaseReady())) {
       throw new ServiceUnavailableException({
         status: 'error',
         timestamp,
-        checks: { database: 'unavailable', billingWorker },
+        checks: { database: 'unavailable', billingWorker, rateLimit },
       });
     }
 
@@ -81,14 +87,14 @@ export class HealthService {
       throw new ServiceUnavailableException({
         status: 'error',
         timestamp,
-        checks: { database: 'ok', billingWorker },
+        checks: { database: 'ok', billingWorker, rateLimit },
       });
     }
 
     return {
-      status: 'ok',
+      status: rateLimit.status === 'degraded' ? 'degraded' : 'ok',
       timestamp,
-      checks: { database: 'ok', billingWorker },
+      checks: { database: 'ok', billingWorker, rateLimit },
     };
   }
 

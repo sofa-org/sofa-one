@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "protocol": "level-lvlusd",
+  "protocolName": "Level Finance",
+  "website": "https://level.money",
+  "verifiedAt": "2026-10-22",
+  "status": "excluded",
+  "admissionStatus": "blocked-lifecycle",
+  "selectedFunctions": [],
+  "lifecycleEvidence": {
+    "status": "sunset",
+    "sourceRef": "https://level-money.gitbook.io/level-documentation/update-for-the-level-community.md",
+    "observedAt": "2026-10-22",
+    "observedContent": "> For the complete documentation index, see [llms.txt](https://level-money.gitbook.io/level-documentation/llms.txt). Markdown versions of documentation pages are available by appending `.md` to page URLs; this page is available as [Markdown](https://level-money.gitbook.io/level-documentation/update-for-the-level-community.md).\n\n# Update for the Level Community\n\nThe Level team is joining the Sky (fka MakerDAO) ecosystem as a part of Grove.\n\n[Blog Post](https://www.grove.finance/blog/grove-adds-the-level-team-to-accelerate-the-future-of-onchain-yield)\n\nOur mission has always been to build and expand access to high quality onchain financial products. Since launching nearly a year ago, lvlUSD grew to a peak market cap of $185M and slvlUSD has delivered an average APY of over 7%.\n\nTo fully realize this mission, greater scale and reach are required. Today, we are announcing that the Level team will be joining a leading DeFi protocol to accelerate the future of onchain finance.\n\nAs part of this transition, we will be sunsetting the Level protocol, including lvlUSD and slvlUSD. All users will be able to unstake their slvlUSD and redeem lvlUSD, and all cooldown periods will be reduced to 2 seconds. More details below.\n\nThe last yield distribution will be on October 2nd, 2025. After that date, users will not receive any yield regardless of whether their assets remain staked. The frontend will remain live until December 15th, 2025. After that date, users will still be able to interact with the smart contracts to unstake and redeem their assets.\n\nWe are deeply grateful for everyone that has been part of our journey so far and look forward to the next chapter.\n\n**For users with funds in Level XP Farm**\n\nUsers who have lvlUSD or LP tokens for the lvlUSD/USDC or slvlUSD/lvlUSD Curve pools will be able to withdraw from the farm in 2 seconds. This cooldown reduction also applies to any redemptions in flight. Withdrawing from the Level XP Farm for the above tokens will remain a two step process.&#x20;\n\nWithdrawing all other tokens from the farming contract will continue to remain one step.\n\nVisit [Interacting with Level Contracts](/level-documentation/user-guides/interacting-with-level-contracts.md) to get started\n\n**For users who have staked lvlUSD**\n\nThe protocol will reduce the time to unstake lvlUSD to 2 seconds. Unstaking will remain a two step process. Note: in-flight redemptions will continue to have a cooldown period of 3 days.\n\nVisit [Interacting with Level Contracts](/level-documentation/user-guides/interacting-with-level-contracts.md) to get started\n\n**lvlUSD redemptions**\n\nThe protocol will:\n\n* *Make redemptions public:* everybody will be able to redeem lvlUSD for underlying collateral at <https://app.level.money/redeem> until December 15. Afterwards, users will be able to redeem by interacting with contracts directly (see [Interacting with Level Contracts](/level-documentation/user-guides/interacting-with-level-contracts.md) for more information)\n* *Fix redemption rates to 1:1:* whereas we were previously using Chainlink oracles to calculate conversion rates from lvlUSD to collateral, users will be able to convert 1:1 back to the underlying collateral\n* *Pause mints*: no more lvlUSD will be able to be minted\n\nIn addition, the redemption cooldown period will be reduced to 2 seconds, and the per-block redemption limit will be increased to 1m lvlUSD per block.\n\nVisit [Interacting with Level Contracts](/level-documentation/user-guides/interacting-with-level-contracts.md) to get started.\n\n**For integrators**\n\nThe recommended way to convert lvlUSD to underlying collateral is to call the LevelMinting to redeem instead of selling through liquidity pools. Redemption is a two step process:\n\n* LevelMinting contract: [0x9136aB0294986267b71BeED86A75eeb3336d09E1](https://etherscan.io/address/0x9136aB0294986267b71BeED86A75eeb3336d09E1)\n\n  * First, call `initiateRedeem()` with the following variables:\n    * `asset (address)`: the collateral asset to redeem for. Use USDC's Ethereum Mainnet address `(0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48)`\n    * `lvlUsdAmount (uint256)`: the amount of `lvlUSD` to redeem. `lvlUSD` is an 18-decimal token\n    * `minAssetAmount (uint256)`: the minimum amount of collateral to receive back, to the collateral's precision. For example, to receive back $1 in USDC, input `1e6`&#x20;\n  * Two seconds later, call `completeRedeem()` with the following variables:\n    * `asset (address)`: the desired collateral asset. Must be the same address you inputted when calling `initiateRedeem()`.&#x20;\n    * `beneficiary (address)`: the address to receive the collateral asset\n  * *Note: if you call `initiateRedeem()` twice, you will restart the cooldown period*\n\n**Interacting with contracts directly**\n\nThough the front-end will remain up until December 15th, users will always be able to withdraw their funds by interacting with the smart contracts directly. See here for more information: [Interacting with Level Contracts](/level-documentation/user-guides/interacting-with-level-contracts.md)\n",
+    "sha256": "0bcb557d9345c6be7b9e7fb9d0009810af189d5689649c7536b1ae8a534ecad4",
+    "keyExcerpts": [
+      "As part of this transition, we will be sunsetting the Level protocol, including lvlUSD and slvlUSD.",
+      "The last yield distribution will be on October 2nd, 2025.",
+      "The frontend will remain live until December 15th, 2025.",
+      "Pause mints: no more lvlUSD will be able to be minted"
+    ],
+    "decision": "Reject entire Level lvlUSD/slvlUSD protocol under lifecycle exclusion policy; remaining two-step direct redemption is not an exception."
+  },
+  "reviewedOfficialExitTarget": {
+    "chainId": 1,
+    "address": "0x9136aB0294986267b71BeED86A75eeb3336d09E1",
+    "label": "LevelMinting",
+    "sourceRef": "https://level-money.gitbook.io/level-documentation/update-for-the-level-community.md",
+    "status": "excluded"
+  },
+  "abi": null,
+  "functionDecisions": [],
+  "limitations": [
+    "Admission stops at definitive official lifecycle failure. No deployment ABI was substituted or claimed reviewed; no exit-only capability admitted.",
+    "This is Level lvlUSD/slvlUSD, not the unrelated LVL-token perpetual protocol whose older exploit can appear in searches."
+  ],
+  "sourceRefs": [
+    "https://level-money.gitbook.io/level-documentation/update-for-the-level-community.md",
+    "https://www.grove.finance/blog/grove-adds-the-level-team-to-accelerate-the-future-of-onchain-yield"
+  ]
+}

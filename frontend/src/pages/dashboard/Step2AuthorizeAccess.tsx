@@ -27,6 +27,8 @@ interface Step2AuthorizeAccessProps {
   walletExplorerUrl: string | null;
   agentGasHelpUrl: string | null;
   pendingAuthorizationTxHash: string | null;
+  pendingUserOpHash: string | null;
+  pendingOperationUnknown: boolean;
   pendingAuthorizationExplorerUrl: string | null;
   agentRegistrationCheckStatus: 'idle' | 'checking' | 'timed_out';
   isAgentRegistrationChecking: boolean;
@@ -59,6 +61,8 @@ export function Step2AuthorizeAccess({
   walletExplorerUrl,
   agentGasHelpUrl,
   pendingAuthorizationTxHash,
+  pendingUserOpHash,
+  pendingOperationUnknown,
   pendingAuthorizationExplorerUrl,
   agentRegistrationCheckStatus,
   isAgentRegistrationChecking,
@@ -76,6 +80,7 @@ export function Step2AuthorizeAccess({
 }: Step2AuthorizeAccessProps) {
   return (
     <form
+      id="wallet-authorize-access"
       onSubmit={onSubmit}
       className={`rounded-2xl border p-5 shadow-sm ${
         isSelectedChainRegistered ? 'border-green-200 bg-green-50' : 'border-blue-200 bg-blue-50'
@@ -96,7 +101,9 @@ export function Step2AuthorizeAccess({
           {isSelectedChainRegistered
             ? `${agentChainName} is already authorized for API access. Choose a new expiry and re-authorize to renew the session key.`
             : isAgentRegistrationChecking
-              ? 'Authorization is checking on-chain. We will update this page automatically; do not submit another authorization.'
+              ? agentRegistrationCheckStatus === 'checking'
+                ? 'Authorization is checking on-chain. Do not submit another authorization.'
+                : 'Authorization is unresolved. Use Retry check to resume without signing or submitting again.'
               : 'This one-time on-chain approval lets your backend submit transactions through API keys.'}
         </p>
         {!isSelectedChainRegistered && !isAgentRegistrationChecking && (
@@ -113,7 +120,7 @@ export function Step2AuthorizeAccess({
           <div className="mt-3 rounded-xl bg-white/70 p-4 text-sm text-blue-900 border border-blue-200 shadow-inner">
             <strong className="block mb-1 text-blue-950">Deposit gas to continue</strong>
             <p className="mb-3 text-blue-800">
-              Send a small amount of {agentNativeSymbol} on {agentChainName} to this EOA address. Then use your Step 1
+              Send a small amount of {agentNativeSymbol} on {agentChainName} to your wallet address below. Then use your Step 1
               password to sign the one-time Calibur authorization in your browser.
             </p>
             <div className="flex items-center gap-2 bg-white rounded-md p-1.5 border border-blue-200 shadow-sm">
@@ -132,7 +139,7 @@ export function Step2AuthorizeAccess({
                 rel="noreferrer"
                 className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900"
               >
-                View EOA on {agentChainName} explorer
+                View wallet on {agentChainName} explorer
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             )}
@@ -159,13 +166,13 @@ export function Step2AuthorizeAccess({
       )}
 
       {walletSetupSuccess && (
-        <div className="mb-4 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800 shadow-sm">
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
+        <div className={`mb-4 flex items-center gap-3 rounded-xl border p-4 text-sm font-medium shadow-sm ${isSelectedChainRegistered ? 'border-green-200 bg-green-50 text-green-800' : 'border-blue-200 bg-blue-50 text-blue-800'}`}>
+          {isSelectedChainRegistered && <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />}
           <span className="break-all">{walletSetupSuccess}</span>
         </div>
       )}
 
-      {pendingAuthorizationTxHash && (
+      {(pendingAuthorizationTxHash || pendingUserOpHash || pendingOperationUnknown) && (
         <div className="mb-4 rounded-xl border border-blue-200 bg-white/80 p-4 text-sm text-blue-900 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -176,10 +183,10 @@ export function Step2AuthorizeAccess({
               </p>
               <div className="mt-2 flex max-w-xl items-center gap-2 rounded-lg border border-blue-200 bg-blue-50/70 p-1.5">
                 <code className="min-w-0 flex-1 break-all px-2 py-1 font-mono text-xs text-blue-900">
-                  Tx: {pendingAuthorizationTxHash}
+                  {pendingAuthorizationTxHash ? `Tx: ${pendingAuthorizationTxHash}` : pendingUserOpHash ? `UserOperation: ${pendingUserOpHash}` : 'Submission outcome unknown. Contact support before authorizing again.'}
                 </code>
                 <CopyButton
-                  text={pendingAuthorizationTxHash}
+                  text={pendingAuthorizationTxHash ?? pendingUserOpHash ?? walletAddress}
                   className="shrink-0 border-blue-300 bg-white text-blue-700 hover:bg-blue-100"
                 />
               </div>
@@ -208,16 +215,15 @@ export function Step2AuthorizeAccess({
         </div>
       )}
 
-      {isSelectedChainRegistered && selectedAuthorizationExpiry && (
+      {selectedAuthorizationExpiry && (
         <div className={`mb-4 rounded-xl border p-4 text-sm shadow-sm ${selectedAuthorizationExpiryClasses}`}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-semibold">
-                Current network authorization expires {selectedAuthorizationExpiry.relativeLabel.toLowerCase()}.
+                {selectedAuthorizationExpiry.tone === 'red' ? 'Current network authorization has expired.' : `Current network authorization expires ${selectedAuthorizationExpiry.relativeLabel.toLowerCase()}.`}
               </p>
               <p className="mt-1 text-xs opacity-80">
-                Exact expiry: {selectedAuthorizationExpiry.absoluteLabel}. Re-authorize before then if this backend
-                integration must keep running.
+                Exact expiry: {selectedAuthorizationExpiry.absoluteLabel}. Renew authorization to keep this backend integration running.
               </p>
             </div>
             {shouldPromptReauthorization && (

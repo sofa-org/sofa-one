@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "maple-pool-v2",
+      "familyVersion": "maple-pool-v2@fce0fca3",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a",
+          "status": "inactive",
+          "contractName": "MaplePool",
+          "sourceRefs": [
+            "maple-official-mainnet-docs",
+            "maple-sdk-pool-v2-abi",
+            "maple-usdg-etherscan-source"
+          ],
+          "abiFunctions": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets_",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver_",
+                  "type": "address"
+                }
+              ],
+              "name": "deposit",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares_",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "maple-official-mainnet-docs",
+                "maple-sdk-pool-v2-abi",
+                "maple-usdg-etherscan-source"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares_",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "receiver_",
+                  "type": "address"
+                }
+              ],
+              "name": "mint",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "assets_",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "maple-official-mainnet-docs",
+                "maple-sdk-pool-v2-abi",
+                "maple-usdg-etherscan-source"
+              ]
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "shares_",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "owner_",
+                  "type": "address"
+                }
+              ],
+              "name": "requestRedeem",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "escrowedShares_",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function",
+              "status": "inactive",
+              "sourceRefs": [
+                "maple-official-mainnet-docs",
+                "maple-sdk-pool-v2-abi",
+                "maple-usdg-etherscan-source"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "maple-official-mainnet-docs",
+      "url": "https://docs.maple.finance/integrate/ethereum-mainnet/frontend-integration",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Official Maple Ethereum mainnet integration documentation identifies syrupUSDG at the exact PoolV2 address 0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a; this is distinct from the listed SyrupRouter and wrapped-token roles. Dated product-role evidence does not establish present runtime identity."
+    },
+    {
+      "sourceId": "maple-sdk-pool-v2-abi",
+      "url": "https://github.com/maple-labs/maple-js/blob/3d1d9fdf061d2d57de52808759ee1b9b8bc864ad/src/abis/PoolV2Pool.abi.json",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned full PoolV2 SDK ABI corroborates the selected named ABI entries only; it is not compiler output or address/runtime identity evidence."
+    },
+    {
+      "sourceId": "maple-usdg-etherscan-source",
+      "url": "https://etherscan.io/address/0x87b65c4aaffa76881f9e96f3e7ed945ddfc3cd7a#code",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Etherscan verified source and ABI for the exact syrupUSDG target. Retrieved 2026-10-05 15:01:08 UTC (HTTP 200); verified-source flattened carrier SHA-256 fce0fca3805680be1d1e0230234f84e4e8c0b856715071bc7bca0005feedca85; Etherscan HTML SHA-256 b6333d1f7d499ba60f6ef2de41db48ab5708573b3735381081a5fcda9fdf3f95. The MaplePool class body matches the accepted PoolV2 implementation class; the flattened source differs outside that class. Dated source association does not establish present runtime or constructor/manager configuration, funding, liquidity, execution success, exit completion, or financial safety."
+    }
+  ],
+  "unresolved": []
+}

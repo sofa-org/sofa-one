@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Alluo",
+  "observedAt": "2026-10-24",
+  "decision": "deferred-current-primary-maintenance-binding",
+  "reason": "Both root/www primary endpoints currently expose domain-for-sale landers. Docs TLS unrecognized-name and app endpoint unavailable. Current maintained normal primary product/deployment binding not established. Domain failure alone is not proof of shutdown; no categorical team-disbanded claim and no legacy ibAlluo backfill.",
+  "sourceRefs": [
+    "https://www.alluo.com/",
+    "https://alluo.com/",
+    "https://www.alluo.com/llms.txt",
+    "https://docs.alluo.com/alluo-explained",
+    "https://app.alluo.com/"
+  ],
+  "sourceSnapshots": {
+    "primaryDomainStatus": {
+      "sourceRef": "https://www.alluo.com/llms.txt",
+      "content": "# www.alluo.com\n\n> www.alluo.com is a domain name currently listed for sale on GoDaddy's aftermarket. It is available via Buy-It-Now, Make-an-Offer, or Lease-to-Own, depending on the listing's current configuration.\n\n## Status\n- For sale: Yes\n- Listed on: GoDaddy (aftermarket)\n- Marketplace listing: https://forsale.godaddy.com/forsale/www.alluo.com\n- Escrow / transfer: GoDaddy-backed, typical 5\u00e2\u0080\u00937 business-day completion\n\n## How to buy\n- Buy It Now, Make an Offer, or Lease-to-Own options are presented on the listing page.\n- Transactions are protected by GoDaddy escrow.\n",
+      "sha256": "4a3c86b6c9229f596bee04ce8189555fc4836a301daab6545aba5476fd5fad46"
+    }
+  },
+  "selectedFunctions": []
+}

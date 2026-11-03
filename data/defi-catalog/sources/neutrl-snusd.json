@@ -1,0 +1,2465 @@
+{
+  "schemaVersion": 1,
+  "protocol": "neutrl-snusd",
+  "website": "https://neutrl.finance",
+  "chainId": 1,
+  "address": "0x08EFCC2F3e61185D0EA7F8830B3FEc9Bfa2EE313",
+  "reviewStatus": "not-admitted-restricted-recovery",
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.neutrl.finance/resources-and-ecosystem/addresses",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0x08EFCC2F3e61185D0EA7F8830B3FEc9Bfa2EE313",
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "deployment": {
+      "transactionHash": "0x8003e86d0de6802b47c7019b76847a80ec8e7e667c2336b15ca40222b124491d",
+      "blockNumber": "23495849",
+      "transactionIndex": "234",
+      "deployer": "0xE78615F841c3C013173FBE7679d17442C8673Cc1"
+    }
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x08EFCC2F3e61185D0EA7F8830B3FEc9Bfa2EE313?fields=all",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0x08EFCC2F3e61185D0EA7F8830B3FEc9Bfa2EE313",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.8.26+commit.8a97fa7a",
+      "compilerSettings": {
+        "viaIR": true,
+        "metadata": {
+          "appendCBOR": true,
+          "bytecodeHash": "ipfs",
+          "useLiteralContent": false
+        },
+        "optimizer": {
+          "runs": 200,
+          "enabled": false
+        },
+        "evmVersion": "cancun",
+        "remappings": [
+          "@openzeppelin/src/=lib/openzeppelin-contracts/contracts/",
+          "test/=test/",
+          "@layerzerolabs/oft-evm/=lib/devtools/packages/oft-evm/",
+          "@layerzerolabs/oapp-evm/=lib/devtools/packages/oapp-evm/",
+          "@layerzerolabs/lz-evm-protocol-v2/=lib/LayerZero-v2/packages/layerzero-v2/evm/protocol/",
+          "@layerzerolabs/lz-evm-messagelib-v2/=lib/LayerZero-v2/packages/layerzero-v2/evm/messagelib/",
+          "solidity-bytes-utils/=lib/solidity-bytes-utils/",
+          "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+          "LayerZero-v2/=lib/LayerZero-v2/",
+          "createx-forge/=lib/createx-forge/",
+          "devtools/=lib/devtools/packages/toolbox-foundry/src/",
+          "ds-test/=lib/createx-forge/lib/forge-std/lib/ds-test/src/",
+          "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+          "forge-std/=lib/forge-std/src/",
+          "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+          "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+        ]
+      },
+      "name": "sNUSD",
+      "fullyQualifiedName": "src/sNUSD.sol:sNUSD"
+    },
+    "sourceServiceVerifiedAt": "2026-08-13T14:08:42Z",
+    "reportedCreationMatch": "match",
+    "reportedRuntimeMatch": "match",
+    "reportedMatch": "match",
+    "deployment": {
+      "transactionHash": "0x8003e86d0de6802b47c7019b76847a80ec8e7e667c2336b15ca40222b124491d",
+      "blockNumber": "23495849",
+      "transactionIndex": "234",
+      "deployer": "0xE78615F841c3C013173FBE7679d17442C8673Cc1"
+    },
+    "sourceHashes": {
+      "src/sNUSD.sol": "adf7b573625e9630019e7d91d31ab25502128b072ce4dd2bafaa5b231858f5b6",
+      "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol": "c08afc9ba498f2e0262075e565baccd4311db16a354ac63b3d14b930a5c69671",
+      "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": "30edf7394bab78d48b7db3a059248e1ea7c2c77d2ec0e37a13bb91415aafbe5a",
+      "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol": "ac1fd9fa99b194a8db8dfa9ae8e3ff44feaa8f16668241fd2b66ae8b47d7c082",
+      "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol": "75f9f66db047b1413aa45538a53211e7b20479d74c3dd2657335bf4dc50b8811",
+      "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol": "ae9ebec93361fedcef698b834876642ca20d06732a1737298a0e8fca9c51f3f0",
+      "lib/openzeppelin-contracts/contracts/utils/Pausable.sol": "2c26130748f06552c65ca74d89eaf78c9324a3cbac3ba6fdbadaa8beba0cb0b4",
+      "src/utils/Silo.sol": "985856cf7a05b2b19dd722ca7a32767bc75190b02048517c49319c47a43e8531",
+      "src/utils/SingleAdminAccessControl.sol": "d65d5ef24eab6a87a292804fa85e2284d7bb08744ffd9423d10c4841d6afa26e",
+      "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol": "9e7c70ec72d2f7d592e23ea84f3852b04f91f6f644ce57e0263493046b36afb9",
+      "lib/openzeppelin-contracts/contracts/utils/Context.sol": "847fda5460fee70f56f4200f59b82ae622bb03c79c77e67af010e31b7e2cc5b6",
+      "lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol": "56380323009ef4a119d44550b910fde1bff9cedde8f7f4c690152c7629bc3338",
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC1363.sol": "54f427f63724d9760211dfa9e0cc5d79d86c0724becd81f8e638e2e27b0e2669",
+      "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol": "026aca1c8ee4574eb9719dca7dfc33e3e57a618715ae702a675e8a8c9ea1e82d",
+      "lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol": "0964ddd02f4a7a8cf9ba130e3aeead588ca3d425d5bc13cc4221358c69108ed0",
+      "lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol": "75b837fe3868fd4217cc5e9a6ca89055b7277dc7a41b01db0fe6253ebe6aa95d",
+      "lib/openzeppelin-contracts/contracts/utils/Nonces.sol": "9b4cbb85d1f5053c744e83302538eb643a713ffd14bc37665b224f1c66529339",
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC4626.sol": "4877e7208c9d408f2beccc1bd9072bd7f672ab73acdd03844a0e4b7866791090",
+      "lib/openzeppelin-contracts/contracts/utils/math/Math.sol": "92fee281fd46a1b058b190cf21d6b1a528f0433a907850ae1c9bcf36c5c0cd98",
+      "lib/openzeppelin-contracts/contracts/access/AccessControl.sol": "2a6209420909ff3f892bd461db4e96c98937f0a78987c3b6c5b24990830d034d",
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC5313.sol": "8bc20fb9e53bdb556386519448975a15afa3794230a90b6e3050fe00cbb48d50",
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol": "cb42f0b4d269ba8ef2629c176a7f99bf4fb50837c92f45596b54822b26e3df4b",
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol": "49abfb8fa26e3f1715fe05948a96e3762b805bd4a77d103eb40ba96b1acfa144",
+      "lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol": "936a89f512d5da84b0896b66d2398f2bea9eefdf2afa788af5265fcd74302693",
+      "lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol": "542d5dfe5e4375d83f2e3b5246b2d0d7507406a4b582844dbc73bd31ed2faa83",
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC5267.sol": "efd1ebd1e04b6ef9c3b8781a097588f83da954323f438d54a71dc06508e6c7b8",
+      "lib/openzeppelin-contracts/contracts/utils/Panic.sol": "270fc8401c1a13fae6a7a4a2dd6e381b95d658896701e51f0d3e2688acab3dec",
+      "lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol": "9769274bf53f26a7c7896c526ea1980dc9bea5bf5c2a5fd04870008c4afc1de9",
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": "e3c0885d437bb495ca88d12a04cadaa89db7288f4f0400f728a7634025a24536",
+      "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol": "7fdc4dc9e3872f6a4c1ec9cfa9583a1fc18ccd7a416397a6e698bd5bbf92f32b",
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": "7c5c3f98ab876991e7dd34b84d41137e836306eb9f36f6386a631f5be3f5d6d4",
+      "lib/openzeppelin-contracts/contracts/utils/Strings.sol": "d99cb2df33b265a5533b0e9fa6f5da0bc60e98a8855c3392e8ffdc712149f0dd",
+      "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol": "75704538dcb223239280c6726d9a31cf769a7816718517c997fc7d63bdb70778",
+      "lib/openzeppelin-contracts/contracts/utils/math/SignedMath.sol": "1ed50b1056af886752f0fb48a0165d381e69bb4a4b18b893b066dc144a7e08d7"
+    }
+  },
+  "lifecycleEvidence": {
+    "sourceRefs": [
+      "https://cointelegraph.com/news/neutrl-pauses-nusd-redemptions-over-undisclosed-reserve-issue",
+      "https://www.cryptotimes.io/2026/09/18/neutrl-opens-nusd-snusd-redemptions-as-on-chain-rate-reads-0-51/",
+      "https://cryptobriefing.com/lulo-boost-drawdown-neutrl-exposure/",
+      "https://x.com/Neutrl/status/2087863440136147224",
+      "https://x.com/Neutrl/status/2100614848241414280"
+    ],
+    "verifiedAt": "2026-10-22",
+    "decision": "Not admitted. Aug 14 report quotes official suspension of minting/redemptions and other functions after reserve impairment. Sep 18 report quotes official Sep 17 limited redemption program operated by Caverna Auctus, fixed against liquid reserves through Nov 14. Oct 20 reporting still identifies recovery redemption at 0.51 USDC. This establishes restricted recovery context, not currently resumed ordinary staking; do not infer ongoing maintenance from stale marketing/docs or exit transactions. This record does not assert a formally announced team disbanding.",
+    "sourceLimitations": "Direct X reads were blocked (xAI credentials unavailable); official statements are quoted and linked by readable reports. Official product/docs pages remain online but do not resolve the recovery restrictions."
+  },
+  "sourceSemantics": {
+    "staking": "deposit/mint use real ERC4626 inheritance with pause, soft/full blacklist, positive assets/shares and MIN_SHARES checks. Source presence is NOT admission during restricted recovery.",
+    "exit": "cooldownAssets/cooldownShares burn shares and transfer NUSD into immutable Silo; extend shared account cooldown and accumulate claim assets. unstake(receiver) releases full matured account amount. Direct withdraw/redeem revert CooldownOn whenever cooldownDuration != 0. No generic ERC4626 exit substitution.",
+    "configurationObservation": "Explorer read page displayed cooldownDuration=1, paused=false, lastDistributionTimestamp=1786480631. These are third-party displayed values, not fresh RPC checks or evidence that staking has resumed. Official docs elsewhere say 10-day queue and instant router route, so neither historical/default duration is asserted current."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_NUSD",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "AccessControlBadConfirmation",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AccessControlUnauthorizedAccount",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "neededRole",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "name": "CooldownOff",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "CooldownOn",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ECDSAInvalidSignature",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ECDSAInvalidSignatureLength",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "length",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ECDSAInvalidSignatureS",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InsufficientAllowance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "allowance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InsufficientBalance",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "balance",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "needed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidApprover",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "approver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidReceiver",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC20InvalidSpender",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC2612ExpiredSignature",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC2612InvalidSigner",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "signer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxDeposit",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxMint",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxRedeem",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "ERC4626ExceededMaxWithdraw",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "EnforcedPause",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ExcessiveRedeemAmount",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ExcessiveWithdrawAmount",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ExpectedPause",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidAccountNonce",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "currentNonce",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "InvalidAdminChange",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidCooldown",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidShortString",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidToken",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "MinSharesViolation",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "NotPendingAdmin",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OperationNotAllowed",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "SafeERC20FailedOperation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "StillVesting",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "StringTooLong",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "str",
+          "type": "string",
+          "internalType": "string"
+        }
+      ]
+    },
+    {
+      "name": "ZeroInput",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "AdminTransferRequested",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldAdmin",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "AdminTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "oldAdmin",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "CooldownDurationSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "cooldownDuration",
+          "type": "uint24",
+          "indexed": false,
+          "internalType": "uint24"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "EIP712DomainChanged",
+      "type": "event",
+      "inputs": [],
+      "anonymous": false
+    },
+    {
+      "name": "LockedAmountRedistributed",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Paused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RewardsReceived",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleAdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "previousAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "newAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleGranted",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "RoleRevoked",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Unpaused",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UnstakeRequested",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "staker",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "cooldownEnd",
+          "type": "uint104",
+          "indexed": false,
+          "internalType": "uint104"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Unstaked",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "staker",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "VestingPeriodSet",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "vestingPeriod",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BLACKLIST_MANAGER_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "DEFAULT_ADMIN_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "DOMAIN_SEPARATOR",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "FULL_RESTRICTED_STAKER_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "MIN_SHARES",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "PAUSER_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "REWARDER_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "SOFT_RESTRICTED_STAKER_ROLE",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "acceptAdmin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addToBlacklist",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "isFullBlacklisting",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "asset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "cooldownAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "cooldownDuration",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint24",
+          "internalType": "uint24"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "cooldownShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "cooldowns",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cooldownEnd",
+          "type": "uint104",
+          "internalType": "uint104"
+        },
+        {
+          "name": "underlyingAmount",
+          "type": "uint152",
+          "internalType": "uint152"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "eip712Domain",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "fields",
+          "type": "bytes1",
+          "internalType": "bytes1"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "chainId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "verifyingContract",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "salt",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "extensions",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getRoleAdmin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getUnvestedAmount",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "grantRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "hasRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "lastDistributionTimestamp",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "maxWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "nonces",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "nusd",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IERC20"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "paused",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "permit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "previewDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "recoverToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "redistributeLockedAmount",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountToDistribute",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeFromBlacklist",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "isFullBlacklisting",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "revokeRole",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setCooldownDuration",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_cooldownDuration",
+          "type": "uint24",
+          "internalType": "uint24"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setVestingPeriod",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_vestingPeriod",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "silo",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract Silo"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "supportsInterface",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferAdmin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferInRewards",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unpause",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "unstake",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "vestingAmount",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "vestingPeriod",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "functionDecisions": [
+    {
+      "signature": "BLACKLIST_MANAGER_ROLE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; BLACKLIST_MANAGER_ROLE cannot be activated from stale product docs."
+    },
+    {
+      "signature": "DEFAULT_ADMIN_ROLE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; DEFAULT_ADMIN_ROLE cannot be activated from stale product docs."
+    },
+    {
+      "signature": "DOMAIN_SEPARATOR()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; DOMAIN_SEPARATOR cannot be activated from stale product docs."
+    },
+    {
+      "signature": "FULL_RESTRICTED_STAKER_ROLE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; FULL_RESTRICTED_STAKER_ROLE cannot be activated from stale product docs."
+    },
+    {
+      "signature": "MIN_SHARES()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; MIN_SHARES cannot be activated from stale product docs."
+    },
+    {
+      "signature": "PAUSER_ROLE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; PAUSER_ROLE cannot be activated from stale product docs."
+    },
+    {
+      "signature": "REWARDER_ROLE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; REWARDER_ROLE cannot be activated from stale product docs."
+    },
+    {
+      "signature": "SOFT_RESTRICTED_STAKER_ROLE()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; SOFT_RESTRICTED_STAKER_ROLE cannot be activated from stale product docs."
+    },
+    {
+      "signature": "acceptAdmin()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; acceptAdmin cannot be activated from stale product docs."
+    },
+    {
+      "signature": "addToBlacklist(address,bool)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; addToBlacklist cannot be activated from stale product docs."
+    },
+    {
+      "signature": "allowance(address,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; allowance cannot be activated from stale product docs."
+    },
+    {
+      "signature": "approve(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; approve cannot be activated from stale product docs."
+    },
+    {
+      "signature": "asset()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; asset cannot be activated from stale product docs."
+    },
+    {
+      "signature": "balanceOf(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; balanceOf cannot be activated from stale product docs."
+    },
+    {
+      "signature": "convertToAssets(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; convertToAssets cannot be activated from stale product docs."
+    },
+    {
+      "signature": "convertToShares(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; convertToShares cannot be activated from stale product docs."
+    },
+    {
+      "signature": "cooldownAssets(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; cooldownAssets cannot be activated from stale product docs."
+    },
+    {
+      "signature": "cooldownDuration()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; cooldownDuration cannot be activated from stale product docs."
+    },
+    {
+      "signature": "cooldownShares(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; cooldownShares cannot be activated from stale product docs."
+    },
+    {
+      "signature": "cooldowns(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; cooldowns cannot be activated from stale product docs."
+    },
+    {
+      "signature": "decimals()",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; decimals cannot be activated from stale product docs."
+    },
+    {
+      "signature": "deposit(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; deposit cannot be activated from stale product docs."
+    },
+    {
+      "signature": "eip712Domain()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; eip712Domain cannot be activated from stale product docs."
+    },
+    {
+      "signature": "getRoleAdmin(bytes32)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; getRoleAdmin cannot be activated from stale product docs."
+    },
+    {
+      "signature": "getUnvestedAmount()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; getUnvestedAmount cannot be activated from stale product docs."
+    },
+    {
+      "signature": "grantRole(bytes32,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; grantRole cannot be activated from stale product docs."
+    },
+    {
+      "signature": "hasRole(bytes32,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; hasRole cannot be activated from stale product docs."
+    },
+    {
+      "signature": "lastDistributionTimestamp()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; lastDistributionTimestamp cannot be activated from stale product docs."
+    },
+    {
+      "signature": "maxDeposit(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; maxDeposit cannot be activated from stale product docs."
+    },
+    {
+      "signature": "maxMint(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; maxMint cannot be activated from stale product docs."
+    },
+    {
+      "signature": "maxRedeem(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; maxRedeem cannot be activated from stale product docs."
+    },
+    {
+      "signature": "maxWithdraw(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; maxWithdraw cannot be activated from stale product docs."
+    },
+    {
+      "signature": "mint(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; mint cannot be activated from stale product docs."
+    },
+    {
+      "signature": "name()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; name cannot be activated from stale product docs."
+    },
+    {
+      "signature": "nonces(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; nonces cannot be activated from stale product docs."
+    },
+    {
+      "signature": "nusd()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; nusd cannot be activated from stale product docs."
+    },
+    {
+      "signature": "owner()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; owner cannot be activated from stale product docs."
+    },
+    {
+      "signature": "pause()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; pause cannot be activated from stale product docs."
+    },
+    {
+      "signature": "paused()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; paused cannot be activated from stale product docs."
+    },
+    {
+      "signature": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; permit cannot be activated from stale product docs."
+    },
+    {
+      "signature": "previewDeposit(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; previewDeposit cannot be activated from stale product docs."
+    },
+    {
+      "signature": "previewMint(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; previewMint cannot be activated from stale product docs."
+    },
+    {
+      "signature": "previewRedeem(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; previewRedeem cannot be activated from stale product docs."
+    },
+    {
+      "signature": "previewWithdraw(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; previewWithdraw cannot be activated from stale product docs."
+    },
+    {
+      "signature": "recoverToken(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; recoverToken cannot be activated from stale product docs."
+    },
+    {
+      "signature": "redeem(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; redeem cannot be activated from stale product docs. Direct ERC4626 exit requires cooldownDuration == 0; explorer displayed a nonzero value."
+    },
+    {
+      "signature": "redistributeLockedAmount(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; redistributeLockedAmount cannot be activated from stale product docs."
+    },
+    {
+      "signature": "removeFromBlacklist(address,bool)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; removeFromBlacklist cannot be activated from stale product docs."
+    },
+    {
+      "signature": "renounceRole(bytes32,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; renounceRole cannot be activated from stale product docs. Additionally renounceRole always reverts OperationNotAllowed."
+    },
+    {
+      "signature": "revokeRole(bytes32,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; revokeRole cannot be activated from stale product docs."
+    },
+    {
+      "signature": "setCooldownDuration(uint24)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; setCooldownDuration cannot be activated from stale product docs."
+    },
+    {
+      "signature": "setVestingPeriod(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; setVestingPeriod cannot be activated from stale product docs."
+    },
+    {
+      "signature": "silo()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; silo cannot be activated from stale product docs."
+    },
+    {
+      "signature": "supportsInterface(bytes4)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; supportsInterface cannot be activated from stale product docs."
+    },
+    {
+      "signature": "symbol()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; symbol cannot be activated from stale product docs."
+    },
+    {
+      "signature": "totalAssets()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; totalAssets cannot be activated from stale product docs."
+    },
+    {
+      "signature": "totalSupply()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; totalSupply cannot be activated from stale product docs."
+    },
+    {
+      "signature": "transfer(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; transfer cannot be activated from stale product docs."
+    },
+    {
+      "signature": "transferAdmin(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; transferAdmin cannot be activated from stale product docs."
+    },
+    {
+      "signature": "transferFrom(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; transferFrom cannot be activated from stale product docs."
+    },
+    {
+      "signature": "transferInRewards(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; transferInRewards cannot be activated from stale product docs."
+    },
+    {
+      "signature": "unpause()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; unpause cannot be activated from stale product docs."
+    },
+    {
+      "signature": "unstake(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; unstake cannot be activated from stale product docs."
+    },
+    {
+      "signature": "vestingAmount()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; vestingAmount cannot be activated from stale product docs."
+    },
+    {
+      "signature": "vestingPeriod()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; vestingPeriod cannot be activated from stale product docs."
+    },
+    {
+      "signature": "withdraw(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Not admitted: reviewed sNUSD deployment is in restricted reserve-recovery/redemption context rather than established ongoing staking operation; withdraw cannot be activated from stale product docs. Direct ERC4626 exit requires cooldownDuration == 0; explorer displayed a nonzero value."
+    }
+  ],
+  "selectedFunctions": [],
+  "reviewedSources": {
+    "src/sNUSD.sol": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.26;\n\nimport {ERC20} from \"@openzeppelin/contracts/token/ERC20/ERC20.sol\";\nimport {IERC20} from \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\nimport {SafeERC20} from \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\nimport {ERC20Permit} from \"@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol\";\nimport {ERC4626} from \"@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol\";\nimport {Pausable} from \"@openzeppelin/contracts/utils/Pausable.sol\";\nimport {Silo} from \"src/utils/Silo.sol\";\nimport {SingleAdminAccessControl} from \"src/utils/SingleAdminAccessControl.sol\";\n\nstruct UserCooldown {\n    /// @notice The timestamp of the cooldown end\n    uint104 cooldownEnd;\n    /// @notice The amount of underlying tokens that are cooldown\n    uint152 underlyingAmount;\n}\n\n/// @title sNUSD\n/// @notice Staked NUSD token with cooldown, vesting, and blacklisting features\ncontract sNUSD is ERC4626, ERC20Permit, SingleAdminAccessControl, Pausable {\n    using SafeERC20 for IERC20;\n\n    /*//////////////////////////////////////////////////////////////\n                             ERRORS\n    //////////////////////////////////////////////////////////////*/\n\n    error InvalidToken();\n    error ZeroInput();\n    error MinSharesViolation();\n    error StillVesting();\n    error OperationNotAllowed();\n    error CooldownOff();\n    error CooldownOn();\n    error ExcessiveWithdrawAmount();\n    error ExcessiveRedeemAmount();\n    error InvalidCooldown();\n\n    /*//////////////////////////////////////////////////////////////\n                             EVENTS\n    //////////////////////////////////////////////////////////////*/\n\n    event VestingPeriodSet(uint256 vestingPeriod);\n    event RewardsReceived(uint256 amount);\n    event CooldownDurationSet(uint24 cooldownDuration);\n    event LockedAmountRedistributed(address indexed from, address indexed to, uint256 amount);\n    event Unstaked(address indexed staker, address indexed receiver, uint256 amount);\n    event UnstakeRequested(address indexed staker, uint256 shares, uint256 assets, uint104 cooldownEnd);\n\n    /*//////////////////////////////////////////////////////////////\n                             STORAGE\n    //////////////////////////////////////////////////////////////*/\n\n    /// @notice The role that is allowed to distribute rewards to this contract\n    bytes32 public constant REWARDER_ROLE = keccak256(\"REWARDER_ROLE\");\n\n    /// @notice The role that is allowed to blacklist and un-blacklist addresses\n    bytes32 public constant BLACKLIST_MANAGER_ROLE = keccak256(\"BLACKLIST_MANAGER_ROLE\");\n\n    /// @notice The role which prevents an address to stake\n    bytes32 public constant SOFT_RESTRICTED_STAKER_ROLE = keccak256(\"SOFT_RESTRICTED_STAKER_ROLE\");\n\n    /// @notice The role which prevents an address to transfer, stake, or unstake. The owner of the contract can redirect address staking balance if an address is in full restricting mode.\n    bytes32 public constant FULL_RESTRICTED_STAKER_ROLE = keccak256(\"FULL_RESTRICTED_STAKER_ROLE\");\n\n    /// @notice The role that is allowed to pause and unpause the contract\n    bytes32 public constant PAUSER_ROLE = keccak256(\"PAUSER_ROLE\");\n\n    /// @notice Minimum non-zero shares amount to prevent donation attack\n    uint256 public constant MIN_SHARES = 1 ether;\n\n    /// @notice NUSD address\n    IERC20 public immutable nusd;\n\n    /// @notice The silo contract\n    Silo public immutable silo;\n\n    /// @notice The vesting period of lastDistributionAmount over which it increasingly becomes available to stakers\n    uint256 public vestingPeriod;\n\n    /// @notice The amount of the last asset distribution from the controller contract into this\n    /// contract + any unvested remainder at that time\n    uint256 public vestingAmount;\n\n    /// @notice The timestamp of the last asset distribution from the controller contract into this contract\n    uint256 public lastDistributionTimestamp;\n\n    /// @notice The cooldown duration\n    uint24 public cooldownDuration;\n\n    /// @notice The mapping of user cooldowns\n    mapping(address => UserCooldown) public cooldowns;\n\n    /*//////////////////////////////////////////////////////////////\n                             INITIALIZATION\n    //////////////////////////////////////////////////////////////*/\n    constructor(address _NUSD, address _owner)\n        ERC20(\"Staked NUSD\", \"sNUSD\")\n        ERC4626(IERC20(_NUSD))\n        ERC20Permit(\"Staked NUSD\")\n    {\n        _grantRole(DEFAULT_ADMIN_ROLE, _owner);\n        silo = new Silo(address(this), _NUSD);\n        _setVestingPeriod(8 hours);\n        _setCooldownDuration(30 days);\n    }\n\n    /*//////////////////////////////////////////////////////////////\n                             ADMIN FUNCTIONS\n    //////////////////////////////////////////////////////////////*/\n\n    /// @notice Emergency function to recover tokens accidentally sent to the contract\n    /// @param token Address of the token to recover\n    /// @param to Address to send the recovered tokens to\n    /// @param amount Amount of tokens to recover\n    function recoverToken(address token, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {\n        if (token == address(asset())) revert InvalidToken();\n        IERC20(token).safeTransfer(to, amount);\n    }\n\n    /// @notice Set vesting period.\n    /// @param _vestingPeriod Duration of the vesting period\n    function setVestingPeriod(uint256 _vestingPeriod) external onlyRole(DEFAULT_ADMIN_ROLE) {\n        uint256 unvestedAmount = getUnvestedAmount();\n        if (unvestedAmount > 0) revert StillVesting();\n        vestingAmount = 0;\n\n        _setVestingPeriod(_vestingPeriod);\n    }\n\n    /// @notice Set cooldown duration. If cooldown duration is set to zero, the behavior changes\n    /// to follow ERC4626 standard and disables cooldownShares and cooldownAssets methods.\n    /// If cooldown duration is greater than zero, the ERC4626 withdrawal and redeem functions are disabled,\n    /// breaking the ERC4626 standard, and enabling the cooldownShares and the cooldownAssets functions.\n    /// @param _cooldownDuration Duration of the cooldown\n    function setCooldownDuration(uint24 _cooldownDuration) external onlyRole(DEFAULT_ADMIN_ROLE) {\n        _setCooldownDuration(_cooldownDuration);\n    }\n\n    /// @notice Pauses the contract\n    function pause() external onlyRole(PAUSER_ROLE) {\n        _pause();\n    }\n\n    /// @notice Unpauses the contract\n    function unpause() external onlyRole(PAUSER_ROLE) {\n        _unpause();\n    }\n\n    /// @notice Redistributes the locked amount from one address to another\n    /// @param from The address to burn the entire balance, with the FULL_RESTRICTED_STAKER_ROLE\n    /// @param to The address to mint the entire balance of \"from\" parameter.\n    /// @param amountToDistribute The amount of tokens to redistribute.\n    function redistributeLockedAmount(address from, address to, uint256 amountToDistribute)\n        external\n        onlyRole(DEFAULT_ADMIN_ROLE)\n    {\n        if (hasRole(FULL_RESTRICTED_STAKER_ROLE, from) && !hasRole(FULL_RESTRICTED_STAKER_ROLE, to)) {\n            if (amountToDistribute == 0) revert ZeroInput();\n            uint256 nusdToVest = previewRedeem(amountToDistribute);\n            _burn(from, amountToDistribute);\n            // to address of address(0) enables burning\n            if (to == address(0)) {\n                _updateVestingAmount(nusdToVest);\n            } else {\n                _mint(to, amountToDistribute);\n            }\n            emit LockedAmountRedistributed(from, to, amountToDistribute);\n        } else {\n            revert OperationNotAllowed();\n        }\n    }\n\n    /*//////////////////////////////////////////////////////////////\n                            AUTHORIZED FUNCTIONS\n    //////////////////////////////////////////////////////////////*/\n\n    ///@notice Allows the owner to transfer rewards from the controller contract into this contract.\n    ///@param _amount The amount of rewards to transfer.\n    ///@dev This function is called by the YieldDistributor contract\n    function transferInRewards(uint256 _amount) external onlyRole(REWARDER_ROLE) {\n        if (_amount == 0) revert ZeroInput();\n        _updateVestingAmount(_amount);\n\n        // Transfer assets from rewarder to this contract\n        IERC20(asset()).safeTransferFrom(msg.sender, address(this), _amount);\n        emit RewardsReceived(_amount);\n    }\n\n    /// @notice Allows  blacklist managers to blacklist addresses.\n    /// @param target The address to blacklist.\n    /// @param isFullBlacklisting Soft or full blacklisting level.\n    function addToBlacklist(address target, bool isFullBlacklisting) external onlyRole(BLACKLIST_MANAGER_ROLE) {\n        bytes32 role = isFullBlacklisting ? FULL_RESTRICTED_STAKER_ROLE : SOFT_RESTRICTED_STAKER_ROLE;\n        _grantRole(role, target);\n    }\n\n    /// @notice Allows blacklist managers to un-blacklist addresses.\n    /// @param target The address to un-blacklist.\n    /// @param isFullBlacklisting Soft or full blacklisting level.\n    function removeFromBlacklist(address target, bool isFullBlacklisting) external onlyRole(BLACKLIST_MANAGER_ROLE) {\n        bytes32 role = isFullBlacklisting ? FULL_RESTRICTED_STAKER_ROLE : SOFT_RESTRICTED_STAKER_ROLE;\n        _revokeRole(role, target);\n    }\n\n    /*//////////////////////////////////////////////////////////////\n                             ERC4626 \n    //////////////////////////////////////////////////////////////*/\n\n    /// @dev See {IERC4626-deposit}.\n    function deposit(uint256 assets, address receiver) public virtual override whenNotPaused returns (uint256) {\n        return super.deposit(assets, receiver);\n    }\n\n    /// @dev See {IERC4626-mint}.\n    function mint(uint256 shares, address receiver) public virtual override whenNotPaused returns (uint256) {\n        return super.mint(shares, receiver);\n    }\n\n    /// @dev See {IERC4626-withdraw}.\n    function withdraw(uint256 assets, address receiver, address _owner)\n        public\n        virtual\n        override\n        whenNotPaused\n        returns (uint256)\n    {\n        if (cooldownDuration != 0) revert CooldownOn();\n        return super.withdraw(assets, receiver, _owner);\n    }\n\n    /// @dev See {IERC4626-redeem}.\n    function redeem(uint256 shares, address receiver, address _owner)\n        public\n        virtual\n        override\n        whenNotPaused\n        returns (uint256)\n    {\n        if (cooldownDuration != 0) revert CooldownOn();\n        return super.redeem(shares, receiver, _owner);\n    }\n\n    /// @notice Claim the staking amount after the cooldown has finished. The address can only retire the full amount of assets.\n    /// @dev unstake can be called after cooldown have been set to 0, to let accounts to be able to claim remaining assets locked at Silo\n    /// @param receiver Address to send the assets by the staker\n    function unstake(address receiver) external whenNotPaused {\n        if (hasRole(FULL_RESTRICTED_STAKER_ROLE, msg.sender) || hasRole(FULL_RESTRICTED_STAKER_ROLE, receiver)) {\n            revert OperationNotAllowed();\n        }\n\n        UserCooldown storage userCooldown = cooldowns[msg.sender];\n        uint256 assets = userCooldown.underlyingAmount;\n        if (assets == 0) revert ZeroInput();\n\n        if (block.timestamp >= userCooldown.cooldownEnd || cooldownDuration == 0) {\n            userCooldown.cooldownEnd = 0;\n            userCooldown.underlyingAmount = 0;\n\n            silo.withdraw(receiver, assets);\n        } else {\n            revert InvalidCooldown();\n        }\n\n        emit Unstaked(msg.sender, receiver, assets);\n    }\n\n    /// @notice Redeem assets and starts a cooldown to claim the converted underlying asset\n    /// @param assets assets to redeem\n    function cooldownAssets(uint256 assets) external whenNotPaused returns (uint256 shares) {\n        if (cooldownDuration == 0) revert CooldownOff();\n        if (assets > maxWithdraw(msg.sender)) revert ExcessiveWithdrawAmount();\n\n        shares = previewWithdraw(assets);\n\n        uint104 newCooldownEnd = uint104(block.timestamp) + cooldownDuration;\n        cooldowns[msg.sender].cooldownEnd =\n            cooldowns[msg.sender].cooldownEnd > newCooldownEnd ? cooldowns[msg.sender].cooldownEnd : newCooldownEnd;\n        cooldowns[msg.sender].underlyingAmount += uint152(assets);\n\n        _withdraw(msg.sender, address(silo), msg.sender, assets, shares);\n        emit UnstakeRequested(msg.sender, shares, assets, cooldowns[msg.sender].cooldownEnd);\n    }\n\n    /// @notice Redeem shares into assets and starts a cooldown to claim the converted underlying asset\n    /// @param shares shares to redeem\n    function cooldownShares(uint256 shares) external whenNotPaused returns (uint256 assets) {\n        if (cooldownDuration == 0) revert CooldownOff();\n        if (shares > maxRedeem(msg.sender)) revert ExcessiveRedeemAmount();\n\n        assets = previewRedeem(shares);\n\n        uint104 newCooldownEnd = uint104(block.timestamp) + cooldownDuration;\n        cooldowns[msg.sender].cooldownEnd =\n            cooldowns[msg.sender].cooldownEnd > newCooldownEnd ? cooldowns[msg.sender].cooldownEnd : newCooldownEnd;\n        cooldowns[msg.sender].underlyingAmount += uint152(assets);\n\n        _withdraw(msg.sender, address(silo), msg.sender, assets, shares);\n        emit UnstakeRequested(msg.sender, shares, assets, cooldowns[msg.sender].cooldownEnd);\n    }\n\n    /*//////////////////////////////////////////////////////////////\n                             VIEW FUNCTIONS\n    //////////////////////////////////////////////////////////////*/\n\n    /// @notice Returns the amount of NUSD tokens that are vested in the contract.\n    function totalAssets() public view override returns (uint256) {\n        return IERC20(asset()).balanceOf(address(this)) - getUnvestedAmount();\n    }\n\n    /// @notice Returns the amount of NUSD tokens that are unvested in the contract.\n    function getUnvestedAmount() public view returns (uint256) {\n        uint256 timeSinceLastDistribution = block.timestamp - lastDistributionTimestamp;\n\n        if (timeSinceLastDistribution >= vestingPeriod) {\n            return 0;\n        }\n\n        uint256 deltaT = (vestingPeriod - timeSinceLastDistribution);\n        return (deltaT * vestingAmount) / vestingPeriod;\n    }\n\n    /// @notice Returns the number of decimals of the token\n    function decimals() public pure override(ERC4626, ERC20) returns (uint8) {\n        return 18;\n    }\n\n    /// @notice Prevents users from renouncing roles\n    function renounceRole(bytes32, address) public virtual override {\n        revert OperationNotAllowed();\n    }\n\n    /*//////////////////////////////////////////////////////////////\n                        INTERNAL FUNCTIONS\n    //////////////////////////////////////////////////////////////*/\n\n    /// @dev Deposit/mint common workflow.\n    /// @param caller sender of assets\n    /// @param receiver where to send shares\n    /// @param assets assets to deposit\n    /// @param shares shares to mint\n    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal override {\n        if (\n            hasRole(SOFT_RESTRICTED_STAKER_ROLE, caller) || hasRole(SOFT_RESTRICTED_STAKER_ROLE, receiver)\n                || hasRole(FULL_RESTRICTED_STAKER_ROLE, caller) || hasRole(FULL_RESTRICTED_STAKER_ROLE, receiver)\n        ) {\n            revert OperationNotAllowed();\n        }\n        if (assets == 0 || shares == 0) revert ZeroInput();\n        super._deposit(caller, receiver, assets, shares);\n        _checkMinShares();\n    }\n\n    /// @dev Withdraw/redeem common workflow.\n    /// @param caller tx sender\n    /// @param receiver where to send assets\n    /// @param _owner where to burn shares from\n    /// @param assets asset amount to transfer out\n    /// @param shares shares to burn\n    function _withdraw(address caller, address receiver, address _owner, uint256 assets, uint256 shares)\n        internal\n        override\n    {\n        if (\n            hasRole(FULL_RESTRICTED_STAKER_ROLE, caller) || hasRole(FULL_RESTRICTED_STAKER_ROLE, receiver)\n                || hasRole(FULL_RESTRICTED_STAKER_ROLE, _owner)\n        ) {\n            revert OperationNotAllowed();\n        }\n        if (assets == 0 || shares == 0) revert ZeroInput();\n\n        super._withdraw(caller, receiver, _owner, assets, shares);\n        _checkMinShares();\n    }\n\n    /// @notice Prevents blacklisted addresses from transferring tokens\n    function _update(address from, address to, uint256 value) internal override {\n        if (hasRole(FULL_RESTRICTED_STAKER_ROLE, from) && to != address(0)) {\n            revert OperationNotAllowed();\n        }\n        if (hasRole(FULL_RESTRICTED_STAKER_ROLE, to)) {\n            revert OperationNotAllowed();\n        }\n        super._update(from, to, value);\n    }\n\n    /// @notice Ensures a small non-zero amount of shares does not remain, exposing to donation attack\n    function _checkMinShares() internal view {\n        uint256 _totalSupply = totalSupply();\n        if (_totalSupply > 0 && _totalSupply < MIN_SHARES) {\n            revert MinSharesViolation();\n        }\n    }\n\n    /// @notice Updates the vesting amount and last distribution timestamp\n    /// @param _newVestingAmount The new vesting amount\n    function _updateVestingAmount(uint256 _newVestingAmount) internal {\n        if (getUnvestedAmount() > 0) revert StillVesting();\n\n        vestingAmount = _newVestingAmount;\n        lastDistributionTimestamp = block.timestamp;\n    }\n\n    function _setVestingPeriod(uint256 _vestingPeriod) internal {\n        vestingPeriod = _vestingPeriod;\n        emit VestingPeriodSet(_vestingPeriod);\n    }\n\n    function _setCooldownDuration(uint24 _cooldownDuration) internal {\n        cooldownDuration = _cooldownDuration;\n        emit CooldownDurationSet(_cooldownDuration);\n    }\n}\n",
+    "src/utils/SingleAdminAccessControl.sol": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.26;\n\nimport \"@openzeppelin/contracts/access/AccessControl.sol\";\nimport \"@openzeppelin/contracts/interfaces/IERC5313.sol\";\n\n/**\n * @title SingleAdminAccessControl\n * @notice SingleAdminAccessControl is a contract that provides a single admin role\n * @notice This contract is a simplified alternative to OpenZeppelin's AccessControlDefaultAdminRules\n */\nabstract contract SingleAdminAccessControl is IERC5313, AccessControl {\n    error InvalidAdminChange();\n    error NotPendingAdmin();\n\n    event AdminTransferred(address indexed oldAdmin, address indexed newAdmin);\n    event AdminTransferRequested(address indexed oldAdmin, address indexed newAdmin);\n\n    address private _currentDefaultAdmin;\n    address private _pendingDefaultAdmin;\n\n    modifier notAdmin(bytes32 role) {\n        if (role == DEFAULT_ADMIN_ROLE) revert InvalidAdminChange();\n        _;\n    }\n\n    /// @notice Transfer the admin role to a new address\n    /// @notice This can ONLY be executed by the current admin\n    /// @param newAdmin address\n    function transferAdmin(address newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {\n        if (newAdmin == address(0) || newAdmin == _msgSender()) {\n            revert InvalidAdminChange();\n        }\n        _pendingDefaultAdmin = newAdmin;\n        emit AdminTransferRequested(_currentDefaultAdmin, newAdmin);\n    }\n\n    function acceptAdmin() external {\n        if (_msgSender() != _pendingDefaultAdmin) revert NotPendingAdmin();\n        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());\n    }\n\n    /// @notice grant a role\n    /// @notice can only be executed by the current single admin\n    /// @notice admin role cannot be granted externally\n    /// @param role bytes32\n    /// @param account address\n    function grantRole(bytes32 role, address account) public override onlyRole(DEFAULT_ADMIN_ROLE) notAdmin(role) {\n        _grantRole(role, account);\n    }\n\n    /// @notice revoke a role\n    /// @notice can only be executed by the current admin\n    /// @notice admin role cannot be revoked\n    /// @param role bytes32\n    /// @param account address\n    function revokeRole(bytes32 role, address account) public override onlyRole(DEFAULT_ADMIN_ROLE) notAdmin(role) {\n        _revokeRole(role, account);\n    }\n\n    /// @notice renounce the role of _msgSender()\n    /// @notice admin role cannot be renounced\n    /// @param role bytes32\n    /// @param account address\n    function renounceRole(bytes32 role, address account) public virtual override notAdmin(role) {\n        super.renounceRole(role, account);\n    }\n\n    /**\n     * @dev See {IERC5313-owner}.\n     */\n    function owner() external view virtual returns (address) {\n        return _currentDefaultAdmin;\n    }\n\n    /**\n     * @notice no way to change admin without removing old admin first\n     */\n    function _grantRole(bytes32 role, address account) internal override returns (bool) {\n        if (role == DEFAULT_ADMIN_ROLE) {\n            emit AdminTransferred(_currentDefaultAdmin, account);\n            _revokeRole(DEFAULT_ADMIN_ROLE, _currentDefaultAdmin);\n            _currentDefaultAdmin = account;\n            delete _pendingDefaultAdmin;\n        }\n        return super._grantRole(role, account);\n    }\n}\n"
+  },
+  "limitations": [
+    "No capabilities are admitted for this recovery-context deployment, including exit methods.",
+    "Use assigned USDai fallback rather than count inactive Neutrl as a new supported protocol.",
+    "No DAU, TVL, reserve recovery valuation or financial-safety claim is made."
+  ]
+}

@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -10,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { FrontendOnlyGuard } from '../../../common/guards/frontend-only.guard';
-import { OpenfortUserGuard } from '../../../common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../../../common/guards/app-session.guard';
 import { StepUpGuard } from '../../../common/guards/step-up.guard';
 import { FrontendOnly } from '../../../common/decorators/frontend-only.decorator';
 import { RequireStepUp } from '../../../common/decorators/step-up.decorator';
@@ -25,19 +27,20 @@ import { UsdcWalletPayDto } from './dto/usdc-wallet-pay.dto';
  * POST requires IAM + FrontendOnly + real StepUp.
  * GET status requires IAM + FrontendOnly only (no StepUp).
  */
-@Controller('v1/billing/invoices/:id/usdc')
+@Controller('billing/invoices/:id/usdc')
 export class UsdcWalletPaymentController {
   constructor(private readonly walletPayment: UsdcWalletPaymentService) {}
 
   /**
-   * POST /v1/billing/invoices/:id/usdc/pay-from-wallet
+   * POST /billing/invoices/:id/usdc/pay-from-wallet
    * Body: { paymentAttemptId } only.
    * Returns 202-shaped accepted/not-paid state (or idempotent existing).
    */
   @Post('pay-from-wallet')
+  @HttpCode(HttpStatus.ACCEPTED)
   @FrontendOnly()
   @RequireStepUp()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard, StepUpGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard, StepUpGuard)
   @Throttle({ short: { limit: 5, ttl: 60000 }, medium: { limit: 20, ttl: 3600000 } })
   async payFromWallet(
     @CurrentUser('id') userId: string,
@@ -48,12 +51,12 @@ export class UsdcWalletPaymentController {
   }
 
   /**
-   * GET /v1/billing/invoices/:id/usdc/payment-status?paymentAttemptId=
+   * GET /billing/invoices/:id/usdc/payment-status?paymentAttemptId=
    * Poll reserved wallet-payment state without StepUp.
    */
   @Get('payment-status')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   @Throttle({ short: { limit: 30, ttl: 60000 }, medium: { limit: 120, ttl: 3600000 } })
   async paymentStatus(
     @CurrentUser('id') userId: string,

@@ -1,0 +1,1414 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "address": "0x7E7A0e201FD38d3ADAA9523Da6C109a07118C96a",
+  "protocol": "synapse-router",
+  "website": "https://docs.synapseprotocol.com/docs/Contracts/Synapse-Router",
+  "admissionStatus": "blocked: nested adapter/pool execution requires approved scope design",
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.synapseprotocol.com/docs/Contracts/Synapse-Router ; https://etherscan.io/address/0x7e7a0e201fd38d3adaa9523da6c109a07118c96a#code",
+    "verifiedAt": "2026-10-17",
+    "chainId": 1,
+    "address": "0x7E7A0e201FD38d3ADAA9523Da6C109a07118C96a",
+    "deployment": {
+      "transactionHash": "0x9e9cbb5825af7f2799c8f308e602f8f68647d398496d016707db03920647ef21",
+      "blockNumber": "16669241",
+      "transactionIndex": "23",
+      "deployer": "0x890Bc5691E6011F580e264065d09a7a1A6902131"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "evidence": "Official page explicitly names this Router address; exact Ethereum explorer independently labels Synapse: Router. The table below the router header lists chain bridge addresses (Ethereum 0x2796317b0fF8538F253012862c06787Adfb8cEb6, also constructor-bound synapseBridge), not interchangeable router targets. Exact-address Sourcify binds direct SynapseRouter, not a proxy or later RouterV2/FastBridge deployment."
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x7e7a0e201fd38d3adaa9523da6c109a07118c96a?fields=abi,compilation,deployment,proxyResolution ; https://sourcify.dev/server/v2/contract/1/0x7e7a0e201fd38d3adaa9523da6c109a07118c96a?fields=sources",
+    "verifiedAt": "2026-10-17",
+    "chainId": 1,
+    "address": "0x7E7A0e201FD38d3ADAA9523Da6C109a07118C96a",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.6.12+commit.27d51765",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "istanbul",
+        "remappings": [
+          ":@boringcrypto/=node_modules/@boringcrypto/",
+          ":@ensdomains/=node_modules/@ensdomains/",
+          ":@openzeppelin/=node_modules/@openzeppelin/",
+          ":ds-test/=lib/forge-std/lib/ds-test/src/",
+          ":eth-gas-reporter/=node_modules/eth-gas-reporter/",
+          ":forge-std/=lib/forge-std/src/",
+          ":hardhat-deploy/=node_modules/hardhat-deploy/",
+          ":hardhat/=node_modules/hardhat/",
+          ":sol-explore/=node_modules/sol-explore/",
+          ":solmate/=lib/solmate/src/",
+          ":synthetix/=node_modules/synthetix/"
+        ]
+      },
+      "name": "SynapseRouter",
+      "fullyQualifiedName": "contracts/bridge/router/SynapseRouter.sol:SynapseRouter"
+    },
+    "matchId": "6610701",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "sourceSha256": {
+      "contracts/bridge/router/SynapseRouter.sol": "3b1f02611be9acbc9d18d18ce2b3e245dcea22721fe53a93653b1a596b95c1a3",
+      "contracts/bridge/router/SynapseAdapter.sol": "ed049f1bc550aeb6e171d6313f2725e0335a78578fea72964d71da3f9bd878ff",
+      "contracts/bridge/router/LocalBridgeConfig.sol": "38707e755d3bff701ff1325d4c83fea2c942107fa673829dabec5a691dbe949e"
+    },
+    "evidence": "Complete original exact-address ABI retained unchanged. All 36 callable functions individually excluded: three nested execution entries, ten administration methods and twenty-three read-only functions. Constructor, event and receive do not create capabilities. Reported exact_match is historical source-service evidence, not an independent fresh runtime check."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_synapseBridge",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "OwnershipTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "adapterSwap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "rawParams",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "addToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "symbol",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenType",
+          "type": "uint8",
+          "internalType": "enum LocalBridgeConfig.TokenType"
+        },
+        {
+          "name": "bridgeToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "bridgeFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wasAdded",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokens",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "id",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "decimals",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "tokenType",
+              "type": "uint8",
+              "internalType": "enum LocalBridgeConfig.TokenType"
+            },
+            {
+              "name": "bridgeToken",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "bridgeFee",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "minFee",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "maxFee",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct LocalBridgeConfig.BridgeTokenConfig[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "allPools",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "pools",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "pool",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "lpToken",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokens",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "isWeth",
+                  "type": "bool",
+                  "internalType": "bool"
+                },
+                {
+                  "name": "token",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ],
+              "internalType": "struct PoolToken[]"
+            }
+          ],
+          "internalType": "struct Pool[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "bridge",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "chainId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "originQuery",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "swapAdapter",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "minAmountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "rawParams",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "internalType": "struct SwapQuery"
+        },
+        {
+          "name": "destQuery",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "swapAdapter",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "minAmountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "rawParams",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "internalType": "struct SwapQuery"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "bridgeTokens",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "tokens",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "bridgeTokensAmount",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "calculateAddLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "pool",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "calculateBridgeFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "feeAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "calculateRemoveLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "pool",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountsOut",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "calculateSwap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "pool",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenIndexFrom",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "tokenIndexTo",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "dx",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "calculateWithdrawOneToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "pool",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokenIndex",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "config",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tokenType",
+          "type": "uint8",
+          "internalType": "enum LocalBridgeConfig.TokenType"
+        },
+        {
+          "name": "bridgeToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "fee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bridgeFee",
+          "type": "uint40",
+          "internalType": "uint40"
+        },
+        {
+          "name": "minFee",
+          "type": "uint104",
+          "internalType": "uint104"
+        },
+        {
+          "name": "maxFee",
+          "type": "uint112",
+          "internalType": "uint112"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "swapAdapter",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "minAmountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "rawParams",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "internalType": "struct SwapQuery"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getConnectedBridgeTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tokens",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "symbol",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "internalType": "struct BridgeToken[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getDestinationAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "requests",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "symbol",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "internalType": "struct DestRequest[]"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "destQueries",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "swapAdapter",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "minAmountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "rawParams",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "internalType": "struct SwapQuery[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getOriginAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenSymbols",
+          "type": "string[]",
+          "internalType": "string[]"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "originQueries",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "swapAdapter",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "minAmountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "rawParams",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "internalType": "struct SwapQuery[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "multicallView",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "data",
+          "type": "bytes[]",
+          "internalType": "bytes[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "callResults",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "success",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "returnData",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "internalType": "struct MulticallView.Result[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "poolInfo",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "pool",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "poolTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "pool",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tokens",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "isWeth",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "internalType": "struct PoolToken[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "poolsAmount",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "removeToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wasRemoved",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokens",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "contract IERC20"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setSwapQuoter",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_swapQuoter",
+          "type": "address",
+          "internalType": "contract ISwapQuoter"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setTokenConfig",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenType",
+          "type": "uint8",
+          "internalType": "enum LocalBridgeConfig.TokenType"
+        },
+        {
+          "name": "bridgeToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setTokenFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "bridgeFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxFee",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "query",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "swapAdapter",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenOut",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "minAmountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "rawParams",
+              "type": "bytes",
+              "internalType": "bytes"
+            }
+          ],
+          "internalType": "struct SwapQuery"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapQuoter",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract ISwapQuoter"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "symbolToToken",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "synapseBridge",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract ISynapseBridge"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "tokenToSymbol",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transferOwnership",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "adapterSwap",
+      "signature": "adapterSwap(address,address,uint256,address,bytes)",
+      "decision": "excluded",
+      "reason": "Decodes opaque rawParams as SynapseParams containing caller-selected action and pool; may grant unlimited pool allowance and call unreviewed pool swap/liquidity or native wrapping targets. No existing execution scope binds these nested targets and child capabilities."
+    },
+    {
+      "functionName": "addToken",
+      "signature": "addToken(string,address,uint8,address,uint256,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Owner-only bridge token/configuration admission, not a user swap."
+    },
+    {
+      "functionName": "addTokens",
+      "signature": "addTokens((string,address,uint256,uint8,address,uint256,uint256,uint256)[])",
+      "decision": "excluded",
+      "reason": "Owner-only bulk bridge token/configuration admission, not user execution."
+    },
+    {
+      "functionName": "allPools",
+      "signature": "allPools()",
+      "decision": "excluded",
+      "reason": "Read-only allPools metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "bridge",
+      "signature": "bridge(address,uint256,address,uint256,(address,address,uint256,uint256,bytes),(address,address,uint256,uint256,bytes))",
+      "decision": "excluded",
+      "reason": "Origin SwapQuery permits a caller-selected swapAdapter with opaque rawParams; _adapterSwap pulls caller assets to that adapter and calls adapterSwap with native value. Destination rawParams also selects nested bridge/swap actions. Requires reviewed nested-execution scope, not outer-selector admission."
+    },
+    {
+      "functionName": "bridgeTokens",
+      "signature": "bridgeTokens()",
+      "decision": "excluded",
+      "reason": "Read-only bridgeTokens metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "bridgeTokensAmount",
+      "signature": "bridgeTokensAmount()",
+      "decision": "excluded",
+      "reason": "Read-only bridgeTokensAmount metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "calculateAddLiquidity",
+      "signature": "calculateAddLiquidity(address,uint256[])",
+      "decision": "excluded",
+      "reason": "Read-only calculateAddLiquidity metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "calculateBridgeFee",
+      "signature": "calculateBridgeFee(address,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only calculateBridgeFee metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "calculateRemoveLiquidity",
+      "signature": "calculateRemoveLiquidity(address,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only calculateRemoveLiquidity metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "calculateSwap",
+      "signature": "calculateSwap(address,uint8,uint8,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only calculateSwap metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "calculateWithdrawOneToken",
+      "signature": "calculateWithdrawOneToken(address,uint256,uint8)",
+      "decision": "excluded",
+      "reason": "Read-only calculateWithdrawOneToken metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "config",
+      "signature": "config(address)",
+      "decision": "excluded",
+      "reason": "Read-only config metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "fee",
+      "signature": "fee(address)",
+      "decision": "excluded",
+      "reason": "Read-only fee metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(address,address,uint256)",
+      "decision": "excluded",
+      "reason": "Read-only getAmountOut metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "getConnectedBridgeTokens",
+      "signature": "getConnectedBridgeTokens(address)",
+      "decision": "excluded",
+      "reason": "Read-only getConnectedBridgeTokens metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "getDestinationAmountOut",
+      "signature": "getDestinationAmountOut((string,uint256)[],address)",
+      "decision": "excluded",
+      "reason": "Read-only getDestinationAmountOut metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "getOriginAmountOut",
+      "signature": "getOriginAmountOut(address,string[],uint256)",
+      "decision": "excluded",
+      "reason": "Read-only getOriginAmountOut metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "multicallView",
+      "signature": "multicallView(bytes[])",
+      "decision": "excluded",
+      "reason": "Read-only static self-call aggregator, not a transaction capability; no read API is added."
+    },
+    {
+      "functionName": "owner",
+      "signature": "owner()",
+      "decision": "excluded",
+      "reason": "Read-only owner metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "poolInfo",
+      "signature": "poolInfo(address)",
+      "decision": "excluded",
+      "reason": "Read-only poolInfo metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "poolTokens",
+      "signature": "poolTokens(address)",
+      "decision": "excluded",
+      "reason": "Read-only poolTokens metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "poolsAmount",
+      "signature": "poolsAmount()",
+      "decision": "excluded",
+      "reason": "Read-only poolsAmount metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "removeToken",
+      "signature": "removeToken(address)",
+      "decision": "excluded",
+      "reason": "Owner-only supported bridge-token removal."
+    },
+    {
+      "functionName": "removeTokens",
+      "signature": "removeTokens(address[])",
+      "decision": "excluded",
+      "reason": "Owner-only bulk supported bridge-token removal."
+    },
+    {
+      "functionName": "renounceOwnership",
+      "signature": "renounceOwnership()",
+      "decision": "excluded",
+      "reason": "Owner-only permanent renunciation of router administrative authority."
+    },
+    {
+      "functionName": "setAllowance",
+      "signature": "setAllowance(address,address,uint256)",
+      "decision": "excluded",
+      "reason": "Owner-only arbitrary router token allowance/spender configuration."
+    },
+    {
+      "functionName": "setSwapQuoter",
+      "signature": "setSwapQuoter(address)",
+      "decision": "excluded",
+      "reason": "Owner-only swap-quoter dependency replacement."
+    },
+    {
+      "functionName": "setTokenConfig",
+      "signature": "setTokenConfig(address,uint8,address)",
+      "decision": "excluded",
+      "reason": "Owner-only bridge token type and bridge-token dependency configuration."
+    },
+    {
+      "functionName": "setTokenFee",
+      "signature": "setTokenFee(address,uint256,uint256,uint256)",
+      "decision": "excluded",
+      "reason": "Owner-only bridge fee/minimum/maximum configuration."
+    },
+    {
+      "functionName": "swap",
+      "signature": "swap(address,address,uint256,(address,address,uint256,uint256,bytes))",
+      "decision": "excluded",
+      "reason": "SwapQuery selects an external swapAdapter and opaque rawParams; _adapterSwap transfers input to the chosen adapter, invokes it and trusts its reported output. Outer canonical ABI and minimum-output checks do not authorize nested adapter execution."
+    },
+    {
+      "functionName": "swapQuoter",
+      "signature": "swapQuoter()",
+      "decision": "excluded",
+      "reason": "Read-only swapQuoter metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "symbolToToken",
+      "signature": "symbolToToken(string)",
+      "decision": "excluded",
+      "reason": "Read-only symbolToToken metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "synapseBridge",
+      "signature": "synapseBridge()",
+      "decision": "excluded",
+      "reason": "Read-only synapseBridge metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "tokenToSymbol",
+      "signature": "tokenToSymbol(address)",
+      "decision": "excluded",
+      "reason": "Read-only tokenToSymbol metadata/quote; excluded from transaction capabilities and does not create a read API."
+    },
+    {
+      "functionName": "transferOwnership",
+      "signature": "transferOwnership(address)",
+      "decision": "excluded",
+      "reason": "Owner-only transfer of router administrative authority."
+    }
+  ],
+  "selectedFunctions": [],
+  "admissionBlocker": {
+    "requiredHumanDecision": "Approve a closed, versioned Synapse execution scope with adapter/pool/action bindings and child capability/pause checks before implementing it. No current DefiExecutionScope variant interprets Synapse SwapQuery/SynapseParams.",
+    "evidence": [
+      "SynapseRouter._adapterSwap pulls caller token to query.swapAdapter then invokes ISwapAdapter(query.swapAdapter).adapterSwap with query.rawParams and msg.value.",
+      "SynapseAdapter.adapterSwap ABI-decodes rawParams, approves caller-selected params.pool without an exact reviewed target binding, and dispatches swap/addLiquidity/removeLiquidityOneToken. Its inner calls use zero minimum and MAX_UINT deadline, relying on an outer adapter caller for constraints.",
+      "SynapseRouter.bridge may call that same arbitrary origin adapter and additionally interprets destination action bytes. API/quote-generated calldata is not trusted authorization."
+    ],
+    "unchangedControls": "No catalog capability, API-key grant, frontend listing or execution-language change. KyberSwap and Alpaca remain independently skipped."
+  }
+}

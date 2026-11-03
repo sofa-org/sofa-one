@@ -49,7 +49,7 @@ Usage:
 Options:
   (default)           Dry-run: print resolved config and planned checks; no HTTP.
   --health            GET /health/live and /health/ready
-  --dashboard         GET /v1/billing/plans, /summary, /invoices
+  --dashboard         GET /billing/plans, /summary, /invoices
                       (requires BILLING_SMOKE_IAM_TOKEN + BILLING_SMOKE_ORIGIN)
   --help, -h          Show this help
 
@@ -187,7 +187,7 @@ function describePlan(mode: { health: boolean; dashboard: boolean }): string {
   }
   if (mode.health) parts.push('GET /health/live', 'GET /health/ready');
   if (mode.dashboard) {
-    parts.push('GET /v1/billing/plans', 'GET /v1/billing/summary', 'GET /v1/billing/invoices');
+    parts.push('GET /billing/plans', 'GET /billing/summary', 'GET /billing/invoices');
   }
   return parts.join(', ');
 }
@@ -383,18 +383,18 @@ async function checkDashboard(cfg: SmokeConfig): Promise<CheckResult[]> {
     summarize: (body: unknown) => string;
   }> = [
     {
-      name: 'GET /v1/billing/plans',
-      path: '/v1/billing/plans',
+      name: 'GET /billing/plans',
+      path: '/billing/plans',
       summarize: summarizePlans,
     },
     {
-      name: 'GET /v1/billing/summary',
-      path: `/v1/billing/summary?period=${encodeURIComponent(cfg.period)}`,
+      name: 'GET /billing/summary',
+      path: `/billing/summary?period=${encodeURIComponent(cfg.period)}`,
       summarize: summarizeSummary,
     },
     {
-      name: 'GET /v1/billing/invoices',
-      path: '/v1/billing/invoices?page=1&limit=5',
+      name: 'GET /billing/invoices',
+      path: '/billing/invoices?page=1&limit=5',
       summarize: summarizeInvoices,
     },
   ];

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useOpenfort } from '@openfort/react';
+import { useAppSession } from './AppSessionProvider';
 import { Navigate, useLocation } from 'react-router-dom';
 
 type RedirectState = {
@@ -20,15 +20,12 @@ function getDashboardRedirectPath(state: unknown) {
   return `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`;
 }
 
-function reloadPage() {
-  window.location.reload();
-}
 
 export default function PublicOnlyRoute({ children }: { children: ReactNode }) {
-  const { isLoading, user } = useOpenfort();
+  const { session, loading, error, refresh } = useAppSession();
   const location = useLocation();
 
-  if (isLoading) {
+  if (!session && (loading || error)) {
     return (
       <div className="flex min-h-[320px] w-full items-center justify-center rounded-2xl border border-brand-border bg-white p-8 text-center shadow-2xl shadow-[#E8E2D9]/40">
         <div className="max-w-sm">
@@ -39,27 +36,27 @@ export default function PublicOnlyRoute({ children }: { children: ReactNode }) {
             Account check
           </p>
           <h1 className="mt-2 font-serif text-2xl font-bold text-brand-text">
-            Checking your Openfort session
+            {error ? 'Session check unavailable' : 'Checking your SOFA session'}
           </h1>
           <p className="mt-3 text-sm leading-6 text-brand-muted">
             Confirming whether to open the dashboard or continue email OTP sign-in.
           </p>
           <p className="mt-3 text-xs leading-5 text-brand-muted/80">
-            If this check takes more than a few seconds, reload the page to refresh your Openfort session.
+            {error ?? 'Your dashboard session is restored securely from the server.'}
           </p>
           <button
             type="button"
-            onClick={reloadPage}
+            onClick={() => { void refresh().catch(() => undefined); }}
             className="mt-4 rounded-full border border-brand-border px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text transition hover:border-brand-accent hover:text-brand-accent"
           >
-            Reload page
+            Retry session check
           </button>
         </div>
       </div>
     );
   }
 
-  if (user) {
+  if (session) {
     return <Navigate to={getDashboardRedirectPath(location.state)} replace />;
   }
 

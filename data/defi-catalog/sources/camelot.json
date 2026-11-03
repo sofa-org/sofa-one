@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "camelot-v2",
+      "familyVersion": "v2",
+      "contracts": [
+        {
+          "chainId": 42161,
+          "address": "0xc873fEcbd354f5A56E00E710B90EF4201db2448d",
+          "status": "inactive",
+          "contractName": "Camelot AMM V2 Arbitrum One router",
+          "sourceRefs": [
+            "camelot-official-deployment",
+            "camelot-address-verified-abi"
+          ],
+          "abiFunctions": [
+            {
+              "name": "addLiquidity",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "tokenA",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "tokenB",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "amountADesired",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountBDesired",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountAMin",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountBMin",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "to",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "deadline",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "amountA",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountB",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "liquidity",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable"
+            },
+            {
+              "name": "removeLiquidity",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "tokenA",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "tokenB",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "liquidity",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountAMin",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountBMin",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "to",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "deadline",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "amountA",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountB",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable"
+            },
+            {
+              "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+              "type": "function",
+              "inputs": [
+                {
+                  "name": "amountIn",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "amountOutMin",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "path",
+                  "type": "address[]",
+                  "internalType": "address[]"
+                },
+                {
+                  "name": "to",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "referrer",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "deadline",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ],
+              "outputs": [],
+              "stateMutability": "nonpayable"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "sources": [
+    {
+      "sourceId": "camelot-official-deployment",
+      "url": "https://docs.camelot.exchange/contracts/arbitrum/one-mainnet",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Official documentation identifies Arbitrum One Camelot AMM V2 deployment 0xc873fEcbd354f5A56E00E710B90EF4201db2448d."
+    },
+    {
+      "sourceId": "camelot-address-verified-abi",
+      "url": "https://sourcify.dev/server/v2/contract/42161/0xc873fecbd354f5a56e00e710b90ef4201db2448d?fields=abi,sources,metadata",
+      "retrievedAtUtc": "2026-10-04",
+      "evidence": "Address-specific Sourcify record: verifiedAt 2024-08-08T15:03:36Z, match=match, chainId=42161, address=0xc873fEcbd354f5A56E00E710B90EF4201db2448d; methods are the exact three ordinary functions recorded in this candidate."
+    }
+  ]
+}

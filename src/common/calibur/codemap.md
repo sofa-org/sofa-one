@@ -2,12 +2,13 @@
 
 ## Responsibility
 
-Pure, framework-agnostic helpers for interacting with the **Calibur** smart-contract
-account (EIP-7702 delegated EOA) used for server-side session-key signing. This folder
-owns all Calibur-specific ABI encoding, key hashing/settings packing, on-chain status
-queries, and the construction of a viem "smart account" that signs UserOperations with a
-backend agent key. It contains no NestJS services, DI, or HTTP logic — it is a leaf
-library consumed by services elsewhere in the backend.
+Framework-agnostic Calibur helpers for the EIP-7702 delegated EOA account.
+`calibur-primitives.ts` is the browser-safe shared leaf: contract/delegation constants,
+key types, hashing, settings packing/unpacking, and register/update/EntryPoint call
+encoding. Backend services and the standalone frontend import it directly.
+`calibur.ts` owns async on-chain status queries, backend agent-key usability policy,
+and the viem smart-account factory that signs UserOperations with a backend agent key.
+Neither file depends on NestJS or Prisma; the shared leaf contains no signing logic.
 
 Key job: translate between the backend's notion of an "agent key" (a Calibur session key
 owned by an Openfort TEE-managed wallet) and the on-chain Calibur contract + ERC-4337
@@ -15,9 +16,10 @@ EntryPoint v0.8 representation.
 
 ## Design / Patterns
 
-- **Single file, pure functions + one factory.** `calibur.ts` exports constants, types,
-  pure encoding/decoding helpers, async on-chain readers, and a single smart-account
-  factory. No classes, no state.
+- **Shared pure leaf + separate account factories.** `calibur-primitives.ts` is the
+  only source of common encodings and constants. `calibur.ts` contains backend readers
+  and `createCaliburSessionAccount`; the browser owner-account factory remains in
+  `frontend/src/lib/calibur.ts`. No compatibility re-exports.
 - **EIP-7702 delegation.** An EOA is "Calibur-enabled" when its `code` equals
   `0xef0100 <caliburAddress>` (the EIP-7702 delegation designator + implementation
   address). Two supported deployments: current `CALIBUR_ADDRESS` and `LEGACY_CALIBUR_ADDRESS`
@@ -60,20 +62,22 @@ EntryPoint v0.8 representation.
 ## Integration
 
 - **`src/core/openfort/openfort.service.ts`** — primary consumer. Imports
-  `CALIBUR_ADDRESSES`, `createCaliburSessionAccount`, `getCaliburKeySettings`,
-  `hasCaliburDelegation`, `isCaliburKeyRegistered`. Uses `hasCaliburDelegation` +
+  `CALIBUR_ADDRESSES`, `hashKey`, `KeyType` from `calibur-primitives.ts`, and
+  `createCaliburSessionAccount`, `getCaliburKeySettings`, `getAgentKeyUsabilityFailure`,
+  `hasCaliburDelegation`, `isCaliburKeyRegistered` from `calibur.ts`. Uses `hasCaliburDelegation` +
   `isCaliburKeyRegistered` + `getCaliburKeySettings` to validate the agent key before
   signing (`assertCaliburContractAvailable` checks `CALIBUR_ADDRESSES` for deployment),
   and `createCaliburSessionAccount` in `sendUserOperation` to submit UserOps with the
   backend agent key.
 - **`src/modules/session-key/session-key-policy.service.ts`** — imports
-  `hasCaliburDelegation`, `isCaliburKeyRegistered`, `getCaliburKeySettings`,
-  `getAgentKeyUsabilityFailure`, `encodeUpdateKeySettings`, `ZERO_ADDRESS`. `verifyOnChainKeyStatus`
+  readers and `getAgentKeyUsabilityFailure` from `calibur.ts`;
+  `encodeUpdateKeySettings`, `ZERO_ADDRESS`, `CaliburKeySettings` from the shared leaf. `verifyOnChainKeyStatus`
   runs the delegation → registration → settings → usability flow (fail-closed on RPC
   error); `generateRevocationCalldata` encodes a Calibur `update(keyHash, settings)` call
   with `expiration: 0` to revoke a key on-chain.
-- **`src/modules/wallet/wallet.service.ts`** — `wrapCaliburSignature` wraps a raw agent
-  signature into the Calibur `(keyHash, signature, authData)` ABI envelope for submission.
+- **`frontend/src/pages/dashboard/Wallet.tsx`** — imports shared key types, constants,
+  hashing and registry encoders directly; browser-only account construction and
+  self-call encoding stay in `frontend/src/lib/calibur.ts`.
 - **`src/modules/transactions/transactions.service.ts`** — records `execution:
   'calibur_agent_user_operation'` when a transaction is executed via a session key.
 - **`src/modules/auth/auth.controller.ts`** — records the receipt result of the Calibur
@@ -87,13 +91,13 @@ EntryPoint v0.8 representation.
 
 ### Key symbols
 
-- Constants: `CALIBUR_ADDRESS`, `LEGACY_CALIBUR_ADDRESS`, `CALIBUR_ADDRESSES`,
-  `ENTRYPOINT_V08_ADDRESS`, `EIP7702_DELEGATION_PREFIX`, `ZERO_ADDRESS`, `STUB_SIGNATURE`.
-- Types/enums: `KeyType` (P256=0, WebAuthnP256=1, Secp256k1=2), `CaliburKey`,
-  `CaliburKeySettings`, `CaliburSessionAccountParams`.
-- Pure helpers: `getCaliburDelegationCode`, `getCaliburDelegationCodes`, `hashKey`,
-  `packSettings`, `unpackSettings`, `getAgentKeyUsabilityFailure`,
+- Shared constants: `CALIBUR_ADDRESS`, `LEGACY_CALIBUR_ADDRESS`, `CALIBUR_ADDRESSES`,
+  `CALIBUR_DELEGATION_CODES`, `ENTRYPOINT_V08_ADDRESS`, `EIP7702_DELEGATION_PREFIX`, `ZERO_ADDRESS`.
+- Shared types/enums: `KeyType` (P256=0, WebAuthnP256=1, Secp256k1=2), `CaliburKey`,
+  `CaliburKeySettings`.
+- Shared pure helpers: `getCaliburDelegationCode`, `hashKey`, `packSettings`, `unpackSettings`,
   `encodeUpdateKeySettings`, `encodeRegisterKey`, `encodeCaliburExecuteUserOpCalls`.
+- Backend-only types/policy: `CaliburSessionAccountParams`, `getAgentKeyUsabilityFailure`.
 - Async on-chain readers: `hasCaliburDelegation`, `isCaliburKeyRegistered`,
   `getCaliburKeySettings`.
 - Factory: `createCaliburSessionAccount`.

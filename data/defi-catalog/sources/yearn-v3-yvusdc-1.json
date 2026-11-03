@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 1,
+  "familyId": "yearn-v3-yvusdc-1",
+  "familyVersion": "etherscan-implementation-0x1ab62413",
+  "contracts": [
+    {
+      "chainId": 1,
+      "address": "0xBe53A109B494E5c9f97b9Cd39Fe969BE68BF6204",
+      "status": "active",
+      "contractName": "Yearn V3 Vault yvUSDC-1",
+      "implementation": "0x1ab62413e0cf2eBEb73da7D40C70E7202ae14467",
+      "sourceRefs": [
+        "yearn-yvusdc-1-etherscan-deployment"
+      ],
+      "abiFunctions": [
+        {
+          "type": "function",
+          "name": "deposit",
+          "stateMutability": "nonpayable",
+          "inputs": [
+            {
+              "name": "assets",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "receiver",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "status": "active",
+          "sourceRefs": [
+            "yearn-yvusdc-1-etherscan-deployment"
+          ]
+        },
+        {
+          "type": "function",
+          "name": "mint",
+          "stateMutability": "nonpayable",
+          "inputs": [
+            {
+              "name": "shares",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "receiver",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "status": "active",
+          "sourceRefs": [
+            "yearn-yvusdc-1-etherscan-deployment"
+          ]
+        },
+        {
+          "type": "function",
+          "name": "withdraw",
+          "stateMutability": "nonpayable",
+          "inputs": [
+            {
+              "name": "assets",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "receiver",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "owner",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "status": "active",
+          "sourceRefs": [
+            "yearn-yvusdc-1-etherscan-deployment"
+          ]
+        },
+        {
+          "type": "function",
+          "name": "redeem",
+          "stateMutability": "nonpayable",
+          "inputs": [
+            {
+              "name": "shares",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "receiver",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "owner",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "status": "active",
+          "sourceRefs": [
+            "yearn-yvusdc-1-etherscan-deployment"
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "yearn-yvusdc-1-etherscan-deployment",
+      "url": "https://etherscan.io/address/0xBe53A109B494E5c9f97b9Cd39Fe969BE68BF6204#code",
+      "retrievedAtUtc": "2026-10-16",
+      "evidence": "Etherscan deployment page identifies the exact Ethereum target as Yearn V3 Vault minimal proxy and reports implementation 0x1ab62413e0cf2eBEb73da7D40C70E7202ae14467. Its verified ABI page supplies the four recorded nonpayable fragments and exact argument names/types. This page evidence is not an independent on-chain check of current implementation/runtime state, and does not verify Yearn endorsement, balances, liquidity, execution, or safety."
+    }
+  ],
+  "abiSnapshot": [
+    {
+      "type": "function",
+      "name": "deposit",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "mint",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "withdraw",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "redeem",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "No Yearn official registry or endorsement was verified.",
+    "Administrative, strategy-management, and unrelated vault methods are intentionally excluded.",
+    "Only withdraw(uint256,address,address) and redeem(uint256,address,address) are included; max_loss or strategies overloads are intentionally excluded."
+  ]
+}

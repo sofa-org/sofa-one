@@ -43,7 +43,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanCatalogEntry> = {
     description: 'For individual developers, hackathons, testnet projects, and early demos.',
     features: [
       'Basic wallet creation and management',
-      'Basic API key creation, revocation, and rotation',
+      'Basic API key creation, listing, and revocation',
       'Testnet-first, with limited mainnet access',
       'Basic transaction status queries',
       'Community or documentation support',

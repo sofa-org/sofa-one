@@ -1,0 +1,3041 @@
+{
+  "schemaVersion": 1,
+  "protocol": "BaseSwap",
+  "chainId": 8453,
+  "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+  "observedAt": "2026-10-23",
+  "admission": "rejected-current-maintenance-unbound",
+  "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+  "sourceRefs": [
+    "https://baseswap.fi/",
+    "https://github.com/baseswapfi",
+    "https://basescan.org/address/0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+    "https://sourcify.dev/server/v2/contract/8453/0x327Df1E6de05895d2ab08513aaDD9313Fe505d86?fields=all"
+  ],
+  "lifecycleEvidence": [
+    {
+      "sourceRef": "https://baseswap.fi/",
+      "observedAt": "2026-10-23",
+      "method": "functions.read and real Chromium",
+      "staticObservation": "HTTP410",
+      "browserObservation": "Title baseswap.fi; link Buy this domain. | More domains at Seo.Domains points to https://www.mydomaincontact.com/?domain_name=baseswap.fi; Privacy Policy only.",
+      "interpretation": "Current original product site unavailable and parked; no trusted new app domain linked. No shutdown inference from third-party figures or merely absent recent posts."
+    }
+  ],
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x327Df1E6de05895d2ab08513aaDD9313Fe505d86?fields=all",
+    "binding": "Exact verified BaseSwap Router deployment ABI/source preserved, not a generic Uniswap ABI; ABI/source availability alone does not satisfy current lifecycle prerequisite."
+  },
+  "sourceSnapshots": {
+    "router": {
+      "sourceRef": "https://sourcify.dev/server/v2/contract/8453/0x327Df1E6de05895d2ab08513aaDD9313Fe505d86?fields=all",
+      "observedAt": "2026-10-23",
+      "chainId": "8453",
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "matchId": "37701",
+      "match": "match",
+      "creationMatch": "match",
+      "runtimeMatch": "match",
+      "verifiedAt": "2025-07-23T19:39:51Z",
+      "deployment": {
+        "transactionHash": "0x4c7d5dbbff8c6f2dbcf9e5c9ed2a20240d5c3c750f5d20ddb17cd729efc7b3d4",
+        "blockNumber": "2062103",
+        "transactionIndex": "2",
+        "deployer": "0x03d4C4b1B115c068Ef864De2e21E724a758892A2"
+      },
+      "compilation": {
+        "language": "Solidity",
+        "compiler": "solc",
+        "compilerVersion": "0.6.6+commit.6c089d02",
+        "compilerSettings": {
+          "libraries": {},
+          "optimizer": {
+            "runs": 99999,
+            "enabled": true
+          }
+        },
+        "name": "PancakeRouter",
+        "fullyQualifiedName": ".sol:PancakeRouter"
+      },
+      "proxyResolution": {
+        "isProxy": false,
+        "proxyType": null,
+        "implementations": []
+      },
+      "abi": [
+        {
+          "type": "constructor",
+          "inputs": [
+            {
+              "name": "_factory",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "_WETH",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "WETH",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "addLiquidity",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "tokenA",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenB",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amountADesired",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountBDesired",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountAMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountBMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amountA",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountB",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "liquidity",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "addLiquidityETH",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amountTokenDesired",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountTokenMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountETHMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amountToken",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountETH",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "liquidity",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "payable"
+        },
+        {
+          "name": "factory",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getAmountIn",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "reserveIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "reserveOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "pure"
+        },
+        {
+          "name": "getAmountOut",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "reserveIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "reserveOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "pure"
+        },
+        {
+          "name": "getAmountsIn",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "path",
+              "type": "address[]",
+              "internalType": "address[]"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amounts",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "getAmountsOut",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "path",
+              "type": "address[]",
+              "internalType": "address[]"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amounts",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "view"
+        },
+        {
+          "name": "quote",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountA",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "reserveA",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "reserveB",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amountB",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "pure"
+        },
+        {
+          "name": "removeLiquidity",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "tokenA",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenB",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "liquidity",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountAMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountBMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amountA",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountB",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "removeLiquidityETH",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "liquidity",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountTokenMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountETHMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amountToken",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountETH",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "liquidity",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountTokenMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountETHMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amountETH",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "removeLiquidityETHWithPermit",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "liquidity",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountTokenMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountETHMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "approveMax",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "v",
+              "type": "uint8",
+              "internalType": "uint8"
+            },
+            {
+              "name": "r",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "s",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amountToken",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountETH",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "token",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "liquidity",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountTokenMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountETHMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "approveMax",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "v",
+              "type": "uint8",
+              "internalType": "uint8"
+            },
+            {
+              "name": "r",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "s",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amountETH",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "removeLiquidityWithPermit",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "tokenA",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "tokenB",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "liquidity",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountAMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountBMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "approveMax",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "v",
+              "type": "uint8",
+              "internalType": "uint8"
+            },
+            {
+              "name": "r",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "s",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amountA",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountB",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "swapETHForExactTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "path",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amounts",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "payable"
+        },
+        {
+          "name": "swapExactETHForTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountOutMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "path",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amounts",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "payable"
+        },
+        {
+          "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountOutMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "path",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "payable"
+        },
+        {
+          "name": "swapExactTokensForETH",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountOutMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "path",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amounts",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountOutMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "path",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "swapExactTokensForTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountOutMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "path",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amounts",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountIn",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountOutMin",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "path",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "swapTokensForExactETH",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountInMax",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "path",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amounts",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "name": "swapTokensForExactTokens",
+          "type": "function",
+          "inputs": [
+            {
+              "name": "amountOut",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "amountInMax",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "path",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "to",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "amounts",
+              "type": "uint256[]",
+              "internalType": "uint256[]"
+            }
+          ],
+          "stateMutability": "nonpayable"
+        },
+        {
+          "type": "receive",
+          "stateMutability": "payable"
+        }
+      ],
+      "metadata": {
+        "compiler": {
+          "version": "0.6.6+commit.6c089d02"
+        },
+        "language": "Solidity",
+        "output": {
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "_factory",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "_WETH",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "constructor"
+            },
+            {
+              "inputs": [],
+              "name": "WETH",
+              "outputs": [
+                {
+                  "internalType": "address",
+                  "name": "",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "tokenA",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "tokenB",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountADesired",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountBDesired",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountAMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountBMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "addLiquidity",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountA",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountB",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "liquidity",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountTokenDesired",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountTokenMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountETHMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "addLiquidityETH",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountToken",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountETH",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "liquidity",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "factory",
+              "outputs": [
+                {
+                  "internalType": "address",
+                  "name": "",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOut",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "reserveIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "reserveOut",
+                  "type": "uint256"
+                }
+              ],
+              "name": "getAmountIn",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "reserveIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "reserveOut",
+                  "type": "uint256"
+                }
+              ],
+              "name": "getAmountOut",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOut",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOut",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "path",
+                  "type": "address[]"
+                }
+              ],
+              "name": "getAmountsIn",
+              "outputs": [
+                {
+                  "internalType": "uint256[]",
+                  "name": "amounts",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "path",
+                  "type": "address[]"
+                }
+              ],
+              "name": "getAmountsOut",
+              "outputs": [
+                {
+                  "internalType": "uint256[]",
+                  "name": "amounts",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountA",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "reserveA",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "reserveB",
+                  "type": "uint256"
+                }
+              ],
+              "name": "quote",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountB",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "tokenA",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "tokenB",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "liquidity",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountAMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountBMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "removeLiquidity",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountA",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountB",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "liquidity",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountTokenMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountETHMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "removeLiquidityETH",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountToken",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountETH",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "liquidity",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountTokenMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountETHMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountETH",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "liquidity",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountTokenMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountETHMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "approveMax",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "uint8",
+                  "name": "v",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "r",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "s",
+                  "type": "bytes32"
+                }
+              ],
+              "name": "removeLiquidityETHWithPermit",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountToken",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountETH",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "liquidity",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountTokenMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountETHMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "approveMax",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "uint8",
+                  "name": "v",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "r",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "s",
+                  "type": "bytes32"
+                }
+              ],
+              "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountETH",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "tokenA",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "tokenB",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "liquidity",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountAMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountBMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "approveMax",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "uint8",
+                  "name": "v",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "r",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "s",
+                  "type": "bytes32"
+                }
+              ],
+              "name": "removeLiquidityWithPermit",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountA",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountB",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOut",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "path",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swapETHForExactTokens",
+              "outputs": [
+                {
+                  "internalType": "uint256[]",
+                  "name": "amounts",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOutMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "path",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swapExactETHForTokens",
+              "outputs": [
+                {
+                  "internalType": "uint256[]",
+                  "name": "amounts",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOutMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "path",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+              "outputs": [],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountOutMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "path",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swapExactTokensForETH",
+              "outputs": [
+                {
+                  "internalType": "uint256[]",
+                  "name": "amounts",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountOutMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "path",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountOutMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "path",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swapExactTokensForTokens",
+              "outputs": [
+                {
+                  "internalType": "uint256[]",
+                  "name": "amounts",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountOutMin",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "path",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOut",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountInMax",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "path",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swapTokensForExactETH",
+              "outputs": [
+                {
+                  "internalType": "uint256[]",
+                  "name": "amounts",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOut",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountInMax",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "path",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swapTokensForExactTokens",
+              "outputs": [
+                {
+                  "internalType": "uint256[]",
+                  "name": "amounts",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "stateMutability": "payable",
+              "type": "receive"
+            }
+          ],
+          "devdoc": {
+            "methods": {}
+          },
+          "userdoc": {
+            "methods": {}
+          }
+        },
+        "settings": {
+          "compilationTarget": {
+            ".sol": "PancakeRouter"
+          },
+          "evmVersion": "istanbul",
+          "libraries": {},
+          "metadata": {
+            "bytecodeHash": "ipfs"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 99999
+          },
+          "remappings": []
+        },
+        "sources": {
+          ".sol": {
+            "keccak256": "0x07711da4c70029af4c3189b1876ac0dbd04c4544561150122aee56665b1034d4",
+            "urls": [
+              "bzz-raw://360d60fd4d69d15f3f01822957492306e25df35877d0b0c98f1c396873caee74",
+              "dweb:/ipfs/QmXK3C9WpWaoApkWW8L9a3Rk2rRDvncVZdZ1xV1zuhWQ5s"
+            ]
+          }
+        },
+        "version": 1
+      },
+      "signatures": {
+        "function": [
+          {
+            "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+            "signatureHash4": "0xe8e33700",
+            "signatureHash32": "0xe8e337003368fc77c2595d117bb98b627132bf8afacee71c7334a2a489802c4c"
+          },
+          {
+            "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+            "signatureHash4": "0xf305d719",
+            "signatureHash32": "0xf305d719ae6a56b8622b751b4c4b2c6e07b0c9d05c189ce8928d2721bd2f0673"
+          },
+          {
+            "signature": "factory()",
+            "signatureHash4": "0xc45a0155",
+            "signatureHash32": "0xc45a01550ceb4bc5c6b2e6f722b5033a03078f9bd6673457375ba94c26ac1cf0"
+          },
+          {
+            "signature": "getAmountIn(uint256,uint256,uint256)",
+            "signatureHash4": "0x85f8c259",
+            "signatureHash32": "0x85f8c259b777afafa57282a58af06d9d71699b413398a11ca4045d5ebb17092b"
+          },
+          {
+            "signature": "getAmountOut(uint256,uint256,uint256)",
+            "signatureHash4": "0x054d50d4",
+            "signatureHash32": "0x054d50d4f949b70b1d55e431a2b8e5410ba27458feade042aa97734d0cf9ae1b"
+          },
+          {
+            "signature": "getAmountsIn(uint256,address[])",
+            "signatureHash4": "0x1f00ca74",
+            "signatureHash32": "0x1f00ca74de2ddbfe0a30eb5954c815db0f4f6e34d72d7820a318d365d84affc9"
+          },
+          {
+            "signature": "getAmountsOut(uint256,address[])",
+            "signatureHash4": "0xd06ca61f",
+            "signatureHash32": "0xd06ca61f25ab98fb51e50a9633944d63589671c24cd68f3ce0c1db5f37307caf"
+          },
+          {
+            "signature": "quote(uint256,uint256,uint256)",
+            "signatureHash4": "0xad615dec",
+            "signatureHash32": "0xad615decb052a656833a8c3c9d0733010547fce84c660a8b954d3dfa4729d5aa"
+          },
+          {
+            "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+            "signatureHash4": "0xbaa2abde",
+            "signatureHash32": "0xbaa2abdea0af8b36706fa0a9a34a6e89e53bd90c580cbf95a99472e3a5ecda88"
+          },
+          {
+            "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+            "signatureHash4": "0x02751cec",
+            "signatureHash32": "0x02751cec7f32e16e2966ef33211325554122fc54d4db00b60a89c8d0de7018ec"
+          },
+          {
+            "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+            "signatureHash4": "0xaf2979eb",
+            "signatureHash32": "0xaf2979eb4e1e081d188c62c5fde3e20dd850471166343ff02fe2d375aab9c7d1"
+          },
+          {
+            "signature": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+            "signatureHash4": "0xded9382a",
+            "signatureHash32": "0xded9382afcd14fe9f238f5ce4772d0da136a44cc2ac81b043c2bf3c11e539bbb"
+          },
+          {
+            "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+            "signatureHash4": "0x5b0d5984",
+            "signatureHash32": "0x5b0d5984bcb765a5a2ffa29a2bb7ec8260b9477b6e928e046263162374efd4bf"
+          },
+          {
+            "signature": "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+            "signatureHash4": "0x2195995c",
+            "signatureHash32": "0x2195995c91a5efa0c28651a32af73de8f2811647b6e0c7b3b9e6cdf48ee86d9c"
+          },
+          {
+            "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+            "signatureHash4": "0xfb3bdb41",
+            "signatureHash32": "0xfb3bdb414409743d27e2cbc57f2bcf81b448c5a00825f0d3f6b717f0f0c29407"
+          },
+          {
+            "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+            "signatureHash4": "0xb6f9de95",
+            "signatureHash32": "0xb6f9de954cf54026dd7b0f1eb7008015c6138b21fb7944b53af71b5128a78365"
+          },
+          {
+            "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+            "signatureHash4": "0x7ff36ab5",
+            "signatureHash32": "0x7ff36ab5759d6a6f3666c17e7dae0b66684a53581fd3cada68e6fd19d01f9b11"
+          },
+          {
+            "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+            "signatureHash4": "0x791ac947",
+            "signatureHash32": "0x791ac9477e2d4606a81a205cf3dd7bdb27673037d74725aff8c552ad981cf090"
+          },
+          {
+            "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+            "signatureHash4": "0x18cbafe5",
+            "signatureHash32": "0x18cbafe5fb6ab7d2558a55ccc138a3172aa304c3a08214c1ab07223dcb9e7f8e"
+          },
+          {
+            "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+            "signatureHash4": "0x5c11d795",
+            "signatureHash32": "0x5c11d79526ce10b4a02fad7c13a4f0c7482b8f962c004e4f4d599003116c5f92"
+          },
+          {
+            "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+            "signatureHash4": "0x38ed1739",
+            "signatureHash32": "0x38ed1739ee07daf49933f1800d1a9bc8d39a6876ea11e643f9c4c39c66df0ee8"
+          },
+          {
+            "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+            "signatureHash4": "0x4a25d94a",
+            "signatureHash32": "0x4a25d94a96ff7a29f18f4f1154f634d0bb2bc027b6d31af01f47c4fdd038f225"
+          },
+          {
+            "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+            "signatureHash4": "0x8803dbee",
+            "signatureHash32": "0x8803dbeef1adfe1a9306daa835152093f0a5085700e080f4de0d56162dfadb09"
+          },
+          {
+            "signature": "WETH()",
+            "signatureHash4": "0xad5c4648",
+            "signatureHash32": "0xad5c46488b7de578b546a5d35cea48a937114e7ed63179543cd1f8e1899a1241"
+          }
+        ],
+        "event": [],
+        "error": []
+      },
+      "sources": {
+        ".sol": {
+          "content": "// SPDX-License-Identifier: GPL-3.0\npragma solidity =0.6.6;\n\ninterface IPancakeRouter01 {\n    function factory() external pure returns (address);\n\n    function WETH() external pure returns (address);\n\n    function addLiquidity(\n        address tokenA,\n        address tokenB,\n        uint256 amountADesired,\n        uint256 amountBDesired,\n        uint256 amountAMin,\n        uint256 amountBMin,\n        address to,\n        uint256 deadline\n    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);\n\n    function addLiquidityETH(\n        address token,\n        uint256 amountTokenDesired,\n        uint256 amountTokenMin,\n        uint256 amountETHMin,\n        address to,\n        uint256 deadline\n    ) external payable returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);\n\n    function removeLiquidity(\n        address tokenA,\n        address tokenB,\n        uint256 liquidity,\n        uint256 amountAMin,\n        uint256 amountBMin,\n        address to,\n        uint256 deadline\n    ) external returns (uint256 amountA, uint256 amountB);\n\n    function removeLiquidityETH(\n        address token,\n        uint256 liquidity,\n        uint256 amountTokenMin,\n        uint256 amountETHMin,\n        address to,\n        uint256 deadline\n    ) external returns (uint256 amountToken, uint256 amountETH);\n\n    function removeLiquidityWithPermit(\n        address tokenA,\n        address tokenB,\n        uint256 liquidity,\n        uint256 amountAMin,\n        uint256 amountBMin,\n        address to,\n        uint256 deadline,\n        bool approveMax,\n        uint8 v,\n        bytes32 r,\n        bytes32 s\n    ) external returns (uint256 amountA, uint256 amountB);\n\n    function removeLiquidityETHWithPermit(\n        address token,\n        uint256 liquidity,\n        uint256 amountTokenMin,\n        uint256 amountETHMin,\n        address to,\n        uint256 deadline,\n        bool approveMax,\n        uint8 v,\n        bytes32 r,\n        bytes32 s\n    ) external returns (uint256 amountToken, uint256 amountETH);\n\n    function swapExactTokensForTokens(\n        uint256 amountIn,\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external returns (uint256[] memory amounts);\n\n    function swapTokensForExactTokens(\n        uint256 amountOut,\n        uint256 amountInMax,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external returns (uint256[] memory amounts);\n\n    function swapExactETHForTokens(\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external payable returns (uint256[] memory amounts);\n\n    function swapTokensForExactETH(\n        uint256 amountOut,\n        uint256 amountInMax,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external returns (uint256[] memory amounts);\n\n    function swapExactTokensForETH(\n        uint256 amountIn,\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external returns (uint256[] memory amounts);\n\n    function swapETHForExactTokens(\n        uint256 amountOut,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external payable returns (uint256[] memory amounts);\n\n    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) external pure returns (uint256 amountB);\n\n    function getAmountOut(\n        uint256 amountIn,\n        uint256 reserveIn,\n        uint256 reserveOut\n    ) external pure returns (uint256 amountOut);\n\n    function getAmountIn(\n        uint256 amountOut,\n        uint256 reserveIn,\n        uint256 reserveOut\n    ) external pure returns (uint256 amountIn);\n\n    function getAmountsOut(uint256 amountIn, address[] calldata path) external view returns (uint256[] memory amounts);\n\n    function getAmountsIn(uint256 amountOut, address[] calldata path) external view returns (uint256[] memory amounts);\n}\n\ninterface IPancakeRouter02 is IPancakeRouter01 {\n    function removeLiquidityETHSupportingFeeOnTransferTokens(\n        address token,\n        uint256 liquidity,\n        uint256 amountTokenMin,\n        uint256 amountETHMin,\n        address to,\n        uint256 deadline\n    ) external returns (uint256 amountETH);\n\n    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(\n        address token,\n        uint256 liquidity,\n        uint256 amountTokenMin,\n        uint256 amountETHMin,\n        address to,\n        uint256 deadline,\n        bool approveMax,\n        uint8 v,\n        bytes32 r,\n        bytes32 s\n    ) external returns (uint256 amountETH);\n\n    function swapExactTokensForTokensSupportingFeeOnTransferTokens(\n        uint256 amountIn,\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external;\n\n    function swapExactETHForTokensSupportingFeeOnTransferTokens(\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external payable;\n\n    function swapExactTokensForETHSupportingFeeOnTransferTokens(\n        uint256 amountIn,\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external;\n}\n\ninterface IPancakeFactory {\n    event PairCreated(address indexed token0, address indexed token1, address pair, uint256);\n\n    function feeTo() external view returns (address);\n\n    function feeToSetter() external view returns (address);\n\n    function getPair(address tokenA, address tokenB) external view returns (address pair);\n\n    function allPairs(uint256) external view returns (address pair);\n\n    function allPairsLength() external view returns (uint256);\n\n    function createPair(address tokenA, address tokenB) external returns (address pair);\n\n    function setFeeTo(address) external;\n\n    function setFeeToSetter(address) external;\n\n    function INIT_CODE_PAIR_HASH() external view returns (bytes32);\n}\n\ninterface IPancakePair {\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n    event Transfer(address indexed from, address indexed to, uint256 value);\n\n    function name() external pure returns (string memory);\n\n    function symbol() external pure returns (string memory);\n\n    function decimals() external pure returns (uint8);\n\n    function totalSupply() external view returns (uint256);\n\n    function balanceOf(address owner) external view returns (uint256);\n\n    function allowance(address owner, address spender) external view returns (uint256);\n\n    function approve(address spender, uint256 value) external returns (bool);\n\n    function transfer(address to, uint256 value) external returns (bool);\n\n    function transferFrom(address from, address to, uint256 value) external returns (bool);\n\n    function DOMAIN_SEPARATOR() external view returns (bytes32);\n\n    function PERMIT_TYPEHASH() external pure returns (bytes32);\n\n    function nonces(address owner) external view returns (uint256);\n\n    function permit(\n        address owner,\n        address spender,\n        uint256 value,\n        uint256 deadline,\n        uint8 v,\n        bytes32 r,\n        bytes32 s\n    ) external;\n\n    event Mint(address indexed sender, uint256 amount0, uint256 amount1);\n    event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to);\n    event Swap(\n        address indexed sender,\n        uint256 amount0In,\n        uint256 amount1In,\n        uint256 amount0Out,\n        uint256 amount1Out,\n        address indexed to\n    );\n    event Sync(uint112 reserve0, uint112 reserve1);\n\n    function MINIMUM_LIQUIDITY() external pure returns (uint256);\n\n    function factory() external view returns (address);\n\n    function token0() external view returns (address);\n\n    function token1() external view returns (address);\n\n    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);\n\n    function price0CumulativeLast() external view returns (uint256);\n\n    function price1CumulativeLast() external view returns (uint256);\n\n    function kLast() external view returns (uint256);\n\n    function mint(address to) external returns (uint256 liquidity);\n\n    function burn(address to) external returns (uint256 amount0, uint256 amount1);\n\n    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;\n\n    function skim(address to) external;\n\n    function sync() external;\n\n    function initialize(address, address) external;\n}\n\n// a library for performing overflow-safe math, courtesy of DappHub (https://github.com/dapphub/ds-math)\n\nlibrary SafeMath {\n    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {\n        require((z = x + y) >= x, \"ds-math-add-overflow\");\n    }\n\n    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {\n        require((z = x - y) <= x, \"ds-math-sub-underflow\");\n    }\n\n    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {\n        require(y == 0 || (z = x * y) / y == x, \"ds-math-mul-overflow\");\n    }\n}\n\nlibrary PancakeLibrary {\n    using SafeMath for uint256;\n\n    // returns sorted token addresses, used to handle return values from pairs sorted in this order\n    function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {\n        require(tokenA != tokenB, \"PancakeLibrary: IDENTICAL_ADDRESSES\");\n        (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);\n        require(token0 != address(0), \"PancakeLibrary: ZERO_ADDRESS\");\n    }\n\n    // calculates the CREATE2 address for a pair without making any external calls\n    function pairFor(address factory, address tokenA, address tokenB) internal view returns (address pair) {\n        pair = IPancakeFactory(factory).getPair(tokenA, tokenB);\n    }\n\n    // fetches and sorts the reserves for a pair\n    function getReserves(\n        address factory,\n        address tokenA,\n        address tokenB\n    ) internal view returns (uint256 reserveA, uint256 reserveB) {\n        (address token0, ) = sortTokens(tokenA, tokenB);\n        pairFor(factory, tokenA, tokenB);\n        (uint256 reserve0, uint256 reserve1, ) = IPancakePair(pairFor(factory, tokenA, tokenB)).getReserves();\n        (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);\n    }\n\n    // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset\n    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) internal pure returns (uint256 amountB) {\n        require(amountA > 0, \"PancakeLibrary: INSUFFICIENT_AMOUNT\");\n        require(reserveA > 0 && reserveB > 0, \"PancakeLibrary: INSUFFICIENT_LIQUIDITY\");\n        amountB = amountA.mul(reserveB) / reserveA;\n    }\n\n    // given an input amount of an asset and pair reserves, returns the maximum output amount of the other asset\n    function getAmountOut(\n        uint256 amountIn,\n        uint256 reserveIn,\n        uint256 reserveOut\n    ) internal pure returns (uint256 amountOut) {\n        require(amountIn > 0, \"PancakeLibrary: INSUFFICIENT_INPUT_AMOUNT\");\n        require(reserveIn > 0 && reserveOut > 0, \"PancakeLibrary: INSUFFICIENT_LIQUIDITY\");\n        uint256 amountInWithFee = amountIn.mul(9975);\n        uint256 numerator = amountInWithFee.mul(reserveOut);\n        uint256 denominator = reserveIn.mul(10000).add(amountInWithFee);\n        amountOut = numerator / denominator;\n    }\n\n    // given an output amount of an asset and pair reserves, returns a required input amount of the other asset\n    function getAmountIn(\n        uint256 amountOut,\n        uint256 reserveIn,\n        uint256 reserveOut\n    ) internal pure returns (uint256 amountIn) {\n        require(amountOut > 0, \"PancakeLibrary: INSUFFICIENT_OUTPUT_AMOUNT\");\n        require(reserveIn > 0 && reserveOut > 0, \"PancakeLibrary: INSUFFICIENT_LIQUIDITY\");\n        uint256 numerator = reserveIn.mul(amountOut).mul(10000);\n        uint256 denominator = reserveOut.sub(amountOut).mul(9975);\n        amountIn = (numerator / denominator).add(1);\n    }\n\n    // performs chained getAmountOut calculations on any number of pairs\n    function getAmountsOut(\n        address factory,\n        uint256 amountIn,\n        address[] memory path\n    ) internal view returns (uint256[] memory amounts) {\n        require(path.length >= 2, \"PancakeLibrary: INVALID_PATH\");\n        amounts = new uint256[](path.length);\n        amounts[0] = amountIn;\n        for (uint256 i; i < path.length - 1; i++) {\n            (uint256 reserveIn, uint256 reserveOut) = getReserves(factory, path[i], path[i + 1]);\n            amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);\n        }\n    }\n\n    // performs chained getAmountIn calculations on any number of pairs\n    function getAmountsIn(\n        address factory,\n        uint256 amountOut,\n        address[] memory path\n    ) internal view returns (uint256[] memory amounts) {\n        require(path.length >= 2, \"PancakeLibrary: INVALID_PATH\");\n        amounts = new uint256[](path.length);\n        amounts[amounts.length - 1] = amountOut;\n        for (uint256 i = path.length - 1; i > 0; i--) {\n            (uint256 reserveIn, uint256 reserveOut) = getReserves(factory, path[i - 1], path[i]);\n            amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);\n        }\n    }\n}\n\n// helper methods for interacting with ERC20 tokens and sending ETH that do not consistently return true/false\nlibrary TransferHelper {\n    function safeApprove(address token, address to, uint256 value) internal {\n        // bytes4(keccak256(bytes('approve(address,uint256)')));\n        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0x095ea7b3, to, value));\n        require(\n            success && (data.length == 0 || abi.decode(data, (bool))),\n            \"TransferHelper::safeApprove: approve failed\"\n        );\n    }\n\n    function safeTransfer(address token, address to, uint256 value) internal {\n        // bytes4(keccak256(bytes('transfer(address,uint256)')));\n        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0xa9059cbb, to, value));\n        require(\n            success && (data.length == 0 || abi.decode(data, (bool))),\n            \"TransferHelper::safeTransfer: transfer failed\"\n        );\n    }\n\n    function safeTransferFrom(address token, address from, address to, uint256 value) internal {\n        // bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));\n        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0x23b872dd, from, to, value));\n        require(\n            success && (data.length == 0 || abi.decode(data, (bool))),\n            \"TransferHelper::transferFrom: transferFrom failed\"\n        );\n    }\n\n    function safeTransferETH(address to, uint256 value) internal {\n        (bool success, ) = to.call{ value: value }(new bytes(0));\n        require(success, \"TransferHelper::safeTransferETH: ETH transfer failed\");\n    }\n}\n\ninterface IERC20 {\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n    event Transfer(address indexed from, address indexed to, uint256 value);\n\n    function name() external view returns (string memory);\n\n    function symbol() external view returns (string memory);\n\n    function decimals() external view returns (uint8);\n\n    function totalSupply() external view returns (uint256);\n\n    function balanceOf(address owner) external view returns (uint256);\n\n    function allowance(address owner, address spender) external view returns (uint256);\n\n    function approve(address spender, uint256 value) external returns (bool);\n\n    function transfer(address to, uint256 value) external returns (bool);\n\n    function transferFrom(address from, address to, uint256 value) external returns (bool);\n}\n\ninterface IWETH {\n    function deposit() external payable;\n\n    function transfer(address to, uint256 value) external returns (bool);\n\n    function withdraw(uint256) external;\n}\n\ncontract PancakeRouter is IPancakeRouter02 {\n    using SafeMath for uint256;\n\n    address public immutable override factory;\n    address public immutable override WETH;\n\n    modifier ensure(uint256 deadline) {\n        require(deadline >= block.timestamp, \"PancakeRouter: EXPIRED\");\n        _;\n    }\n\n    constructor(address _factory, address _WETH) public {\n        factory = _factory;\n        WETH = _WETH;\n    }\n\n    receive() external payable {\n        assert(msg.sender == WETH); // only accept ETH via fallback from the WETH contract\n    }\n\n    // **** ADD LIQUIDITY ****\n    function _addLiquidity(\n        address tokenA,\n        address tokenB,\n        uint256 amountADesired,\n        uint256 amountBDesired,\n        uint256 amountAMin,\n        uint256 amountBMin\n    ) internal virtual returns (uint256 amountA, uint256 amountB) {\n        // create the pair if it doesn't exist yet\n        if (IPancakeFactory(factory).getPair(tokenA, tokenB) == address(0)) {\n            IPancakeFactory(factory).createPair(tokenA, tokenB);\n        }\n        (uint256 reserveA, uint256 reserveB) = PancakeLibrary.getReserves(factory, tokenA, tokenB);\n        if (reserveA == 0 && reserveB == 0) {\n            (amountA, amountB) = (amountADesired, amountBDesired);\n        } else {\n            uint256 amountBOptimal = PancakeLibrary.quote(amountADesired, reserveA, reserveB);\n            if (amountBOptimal <= amountBDesired) {\n                require(amountBOptimal >= amountBMin, \"PancakeRouter: INSUFFICIENT_B_AMOUNT\");\n                (amountA, amountB) = (amountADesired, amountBOptimal);\n            } else {\n                uint256 amountAOptimal = PancakeLibrary.quote(amountBDesired, reserveB, reserveA);\n                assert(amountAOptimal <= amountADesired);\n                require(amountAOptimal >= amountAMin, \"PancakeRouter: INSUFFICIENT_A_AMOUNT\");\n                (amountA, amountB) = (amountAOptimal, amountBDesired);\n            }\n        }\n    }\n\n    function addLiquidity(\n        address tokenA,\n        address tokenB,\n        uint256 amountADesired,\n        uint256 amountBDesired,\n        uint256 amountAMin,\n        uint256 amountBMin,\n        address to,\n        uint256 deadline\n    ) external virtual override ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {\n        (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);\n        address pair = PancakeLibrary.pairFor(factory, tokenA, tokenB);\n        TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);\n        TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);\n        liquidity = IPancakePair(pair).mint(to);\n    }\n\n    function addLiquidityETH(\n        address token,\n        uint256 amountTokenDesired,\n        uint256 amountTokenMin,\n        uint256 amountETHMin,\n        address to,\n        uint256 deadline\n    )\n        external\n        payable\n        virtual\n        override\n        ensure(deadline)\n        returns (uint256 amountToken, uint256 amountETH, uint256 liquidity)\n    {\n        (amountToken, amountETH) = _addLiquidity(\n            token,\n            WETH,\n            amountTokenDesired,\n            msg.value,\n            amountTokenMin,\n            amountETHMin\n        );\n        address pair = PancakeLibrary.pairFor(factory, token, WETH);\n        TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);\n        IWETH(WETH).deposit{ value: amountETH }();\n        assert(IWETH(WETH).transfer(pair, amountETH));\n        liquidity = IPancakePair(pair).mint(to);\n        // refund dust eth, if any\n        if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);\n    }\n\n    // **** REMOVE LIQUIDITY ****\n    function removeLiquidity(\n        address tokenA,\n        address tokenB,\n        uint256 liquidity,\n        uint256 amountAMin,\n        uint256 amountBMin,\n        address to,\n        uint256 deadline\n    ) public virtual override ensure(deadline) returns (uint256 amountA, uint256 amountB) {\n        address pair = PancakeLibrary.pairFor(factory, tokenA, tokenB);\n        IPancakePair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair\n        (uint256 amount0, uint256 amount1) = IPancakePair(pair).burn(to);\n        (address token0, ) = PancakeLibrary.sortTokens(tokenA, tokenB);\n        (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);\n        require(amountA >= amountAMin, \"PancakeRouter: INSUFFICIENT_A_AMOUNT\");\n        require(amountB >= amountBMin, \"PancakeRouter: INSUFFICIENT_B_AMOUNT\");\n    }\n\n    function removeLiquidityETH(\n        address token,\n        uint256 liquidity,\n        uint256 amountTokenMin,\n        uint256 amountETHMin,\n        address to,\n        uint256 deadline\n    ) public virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountETH) {\n        (amountToken, amountETH) = removeLiquidity(\n            token,\n            WETH,\n            liquidity,\n            amountTokenMin,\n            amountETHMin,\n            address(this),\n            deadline\n        );\n        TransferHelper.safeTransfer(token, to, amountToken);\n        IWETH(WETH).withdraw(amountETH);\n        TransferHelper.safeTransferETH(to, amountETH);\n    }\n\n    function removeLiquidityWithPermit(\n        address tokenA,\n        address tokenB,\n        uint256 liquidity,\n        uint256 amountAMin,\n        uint256 amountBMin,\n        address to,\n        uint256 deadline,\n        bool approveMax,\n        uint8 v,\n        bytes32 r,\n        bytes32 s\n    ) external virtual override returns (uint256 amountA, uint256 amountB) {\n        address pair = PancakeLibrary.pairFor(factory, tokenA, tokenB);\n        uint256 value = approveMax ? uint256(-1) : liquidity;\n        IPancakePair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);\n        (amountA, amountB) = removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline);\n    }\n\n    function removeLiquidityETHWithPermit(\n        address token,\n        uint256 liquidity,\n        uint256 amountTokenMin,\n        uint256 amountETHMin,\n        address to,\n        uint256 deadline,\n        bool approveMax,\n        uint8 v,\n        bytes32 r,\n        bytes32 s\n    ) external virtual override returns (uint256 amountToken, uint256 amountETH) {\n        address pair = PancakeLibrary.pairFor(factory, token, WETH);\n        uint256 value = approveMax ? uint256(-1) : liquidity;\n        IPancakePair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);\n        (amountToken, amountETH) = removeLiquidityETH(token, liquidity, amountTokenMin, amountETHMin, to, deadline);\n    }\n\n    // **** REMOVE LIQUIDITY (supporting fee-on-transfer tokens) ****\n    function removeLiquidityETHSupportingFeeOnTransferTokens(\n        address token,\n        uint256 liquidity,\n        uint256 amountTokenMin,\n        uint256 amountETHMin,\n        address to,\n        uint256 deadline\n    ) public virtual override ensure(deadline) returns (uint256 amountETH) {\n        (, amountETH) = removeLiquidity(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);\n        TransferHelper.safeTransfer(token, to, IERC20(token).balanceOf(address(this)));\n        IWETH(WETH).withdraw(amountETH);\n        TransferHelper.safeTransferETH(to, amountETH);\n    }\n\n    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(\n        address token,\n        uint256 liquidity,\n        uint256 amountTokenMin,\n        uint256 amountETHMin,\n        address to,\n        uint256 deadline,\n        bool approveMax,\n        uint8 v,\n        bytes32 r,\n        bytes32 s\n    ) external virtual override returns (uint256 amountETH) {\n        address pair = PancakeLibrary.pairFor(factory, token, WETH);\n        uint256 value = approveMax ? uint256(-1) : liquidity;\n        IPancakePair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);\n        amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(\n            token,\n            liquidity,\n            amountTokenMin,\n            amountETHMin,\n            to,\n            deadline\n        );\n    }\n\n    // **** SWAP ****\n    // requires the initial amount to have already been sent to the first pair\n    function _swap(uint256[] memory amounts, address[] memory path, address _to) internal virtual {\n        for (uint256 i; i < path.length - 1; i++) {\n            (address input, address output) = (path[i], path[i + 1]);\n            (address token0, ) = PancakeLibrary.sortTokens(input, output);\n            uint256 amountOut = amounts[i + 1];\n            (uint256 amount0Out, uint256 amount1Out) = input == token0\n                ? (uint256(0), amountOut)\n                : (amountOut, uint256(0));\n            address to = i < path.length - 2 ? PancakeLibrary.pairFor(factory, output, path[i + 2]) : _to;\n            IPancakePair(PancakeLibrary.pairFor(factory, input, output)).swap(amount0Out, amount1Out, to, new bytes(0));\n        }\n    }\n\n    function swapExactTokensForTokens(\n        uint256 amountIn,\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {\n        amounts = PancakeLibrary.getAmountsOut(factory, amountIn, path);\n        require(amounts[amounts.length - 1] >= amountOutMin, \"PancakeRouter: INSUFFICIENT_OUTPUT_AMOUNT\");\n        TransferHelper.safeTransferFrom(\n            path[0],\n            msg.sender,\n            PancakeLibrary.pairFor(factory, path[0], path[1]),\n            amounts[0]\n        );\n        _swap(amounts, path, to);\n    }\n\n    function swapTokensForExactTokens(\n        uint256 amountOut,\n        uint256 amountInMax,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {\n        amounts = PancakeLibrary.getAmountsIn(factory, amountOut, path);\n        require(amounts[0] <= amountInMax, \"PancakeRouter: EXCESSIVE_INPUT_AMOUNT\");\n        TransferHelper.safeTransferFrom(\n            path[0],\n            msg.sender,\n            PancakeLibrary.pairFor(factory, path[0], path[1]),\n            amounts[0]\n        );\n        _swap(amounts, path, to);\n    }\n\n    function swapExactETHForTokens(\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {\n        require(path[0] == WETH, \"PancakeRouter: INVALID_PATH\");\n        amounts = PancakeLibrary.getAmountsOut(factory, msg.value, path);\n        require(amounts[amounts.length - 1] >= amountOutMin, \"PancakeRouter: INSUFFICIENT_OUTPUT_AMOUNT\");\n        IWETH(WETH).deposit{ value: amounts[0] }();\n        assert(IWETH(WETH).transfer(PancakeLibrary.pairFor(factory, path[0], path[1]), amounts[0]));\n        _swap(amounts, path, to);\n    }\n\n    function swapTokensForExactETH(\n        uint256 amountOut,\n        uint256 amountInMax,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {\n        require(path[path.length - 1] == WETH, \"PancakeRouter: INVALID_PATH\");\n        amounts = PancakeLibrary.getAmountsIn(factory, amountOut, path);\n        require(amounts[0] <= amountInMax, \"PancakeRouter: EXCESSIVE_INPUT_AMOUNT\");\n        TransferHelper.safeTransferFrom(\n            path[0],\n            msg.sender,\n            PancakeLibrary.pairFor(factory, path[0], path[1]),\n            amounts[0]\n        );\n        _swap(amounts, path, address(this));\n        IWETH(WETH).withdraw(amounts[amounts.length - 1]);\n        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);\n    }\n\n    function swapExactTokensForETH(\n        uint256 amountIn,\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {\n        require(path[path.length - 1] == WETH, \"PancakeRouter: INVALID_PATH\");\n        amounts = PancakeLibrary.getAmountsOut(factory, amountIn, path);\n        require(amounts[amounts.length - 1] >= amountOutMin, \"PancakeRouter: INSUFFICIENT_OUTPUT_AMOUNT\");\n        TransferHelper.safeTransferFrom(\n            path[0],\n            msg.sender,\n            PancakeLibrary.pairFor(factory, path[0], path[1]),\n            amounts[0]\n        );\n        _swap(amounts, path, address(this));\n        IWETH(WETH).withdraw(amounts[amounts.length - 1]);\n        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);\n    }\n\n    function swapETHForExactTokens(\n        uint256 amountOut,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {\n        require(path[0] == WETH, \"PancakeRouter: INVALID_PATH\");\n        amounts = PancakeLibrary.getAmountsIn(factory, amountOut, path);\n        require(amounts[0] <= msg.value, \"PancakeRouter: EXCESSIVE_INPUT_AMOUNT\");\n        IWETH(WETH).deposit{ value: amounts[0] }();\n        assert(IWETH(WETH).transfer(PancakeLibrary.pairFor(factory, path[0], path[1]), amounts[0]));\n        _swap(amounts, path, to);\n        // refund dust eth, if any\n        if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);\n    }\n\n    // **** SWAP (supporting fee-on-transfer tokens) ****\n    // requires the initial amount to have already been sent to the first pair\n    function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal virtual {\n        for (uint256 i; i < path.length - 1; i++) {\n            (address input, address output) = (path[i], path[i + 1]);\n            (address token0, ) = PancakeLibrary.sortTokens(input, output);\n            IPancakePair pair = IPancakePair(PancakeLibrary.pairFor(factory, input, output));\n            uint256 amountInput;\n            uint256 amountOutput;\n            {\n                // scope to avoid stack too deep errors\n                (uint256 reserve0, uint256 reserve1, ) = pair.getReserves();\n                (uint256 reserveInput, uint256 reserveOutput) = input == token0\n                    ? (reserve0, reserve1)\n                    : (reserve1, reserve0);\n                amountInput = IERC20(input).balanceOf(address(pair)).sub(reserveInput);\n                amountOutput = PancakeLibrary.getAmountOut(amountInput, reserveInput, reserveOutput);\n            }\n            (uint256 amount0Out, uint256 amount1Out) = input == token0\n                ? (uint256(0), amountOutput)\n                : (amountOutput, uint256(0));\n            address to = i < path.length - 2 ? PancakeLibrary.pairFor(factory, output, path[i + 2]) : _to;\n            pair.swap(amount0Out, amount1Out, to, new bytes(0));\n        }\n    }\n\n    function swapExactTokensForTokensSupportingFeeOnTransferTokens(\n        uint256 amountIn,\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external virtual override ensure(deadline) {\n        TransferHelper.safeTransferFrom(\n            path[0],\n            msg.sender,\n            PancakeLibrary.pairFor(factory, path[0], path[1]),\n            amountIn\n        );\n        uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);\n        _swapSupportingFeeOnTransferTokens(path, to);\n        require(\n            IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,\n            \"PancakeRouter: INSUFFICIENT_OUTPUT_AMOUNT\"\n        );\n    }\n\n    function swapExactETHForTokensSupportingFeeOnTransferTokens(\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external payable virtual override ensure(deadline) {\n        require(path[0] == WETH, \"PancakeRouter: INVALID_PATH\");\n        uint256 amountIn = msg.value;\n        IWETH(WETH).deposit{ value: amountIn }();\n        assert(IWETH(WETH).transfer(PancakeLibrary.pairFor(factory, path[0], path[1]), amountIn));\n        uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);\n        _swapSupportingFeeOnTransferTokens(path, to);\n        require(\n            IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,\n            \"PancakeRouter: INSUFFICIENT_OUTPUT_AMOUNT\"\n        );\n    }\n\n    function swapExactTokensForETHSupportingFeeOnTransferTokens(\n        uint256 amountIn,\n        uint256 amountOutMin,\n        address[] calldata path,\n        address to,\n        uint256 deadline\n    ) external virtual override ensure(deadline) {\n        require(path[path.length - 1] == WETH, \"PancakeRouter: INVALID_PATH\");\n        TransferHelper.safeTransferFrom(\n            path[0],\n            msg.sender,\n            PancakeLibrary.pairFor(factory, path[0], path[1]),\n            amountIn\n        );\n        _swapSupportingFeeOnTransferTokens(path, address(this));\n        uint256 amountOut = IERC20(WETH).balanceOf(address(this));\n        require(amountOut >= amountOutMin, \"PancakeRouter: INSUFFICIENT_OUTPUT_AMOUNT\");\n        IWETH(WETH).withdraw(amountOut);\n        TransferHelper.safeTransferETH(to, amountOut);\n    }\n\n    // **** LIBRARY FUNCTIONS ****\n    function quote(\n        uint256 amountA,\n        uint256 reserveA,\n        uint256 reserveB\n    ) public pure virtual override returns (uint256 amountB) {\n        return PancakeLibrary.quote(amountA, reserveA, reserveB);\n    }\n\n    function getAmountOut(\n        uint256 amountIn,\n        uint256 reserveIn,\n        uint256 reserveOut\n    ) public pure virtual override returns (uint256 amountOut) {\n        return PancakeLibrary.getAmountOut(amountIn, reserveIn, reserveOut);\n    }\n\n    function getAmountIn(\n        uint256 amountOut,\n        uint256 reserveIn,\n        uint256 reserveOut\n    ) public pure virtual override returns (uint256 amountIn) {\n        return PancakeLibrary.getAmountIn(amountOut, reserveIn, reserveOut);\n    }\n\n    function getAmountsOut(\n        uint256 amountIn,\n        address[] memory path\n    ) public view virtual override returns (uint256[] memory amounts) {\n        return PancakeLibrary.getAmountsOut(factory, amountIn, path);\n    }\n\n    function getAmountsIn(\n        uint256 amountOut,\n        address[] memory path\n    ) public view virtual override returns (uint256[] memory amounts) {\n        return PancakeLibrary.getAmountsIn(factory, amountOut, path);\n    }\n}\n",
+          "sha256": "6ef8c8bb0c7899701a3fc257df16741cedf9968d2208f83e49c0002d6e622715"
+        }
+      },
+      "creationBytecode": {
+        "linkReferences": {},
+        "cborAuxdata": {
+          "1": {
+            "value": "0xa2646970667358221220bdc7122e82b466bdb3661903fafb07dab43527cdce9d27fa4bc145774193eb8f64736f6c63430006060033",
+            "offset": 22266
+          }
+        },
+        "transformations": [
+          {
+            "id": "1",
+            "type": "replace",
+            "offset": 22266,
+            "reason": "cborAuxdata"
+          },
+          {
+            "type": "insert",
+            "offset": 22319,
+            "reason": "constructorArguments"
+          }
+        ],
+        "transformationValues": {
+          "cborAuxdata": {
+            "1": "0xa26469706673582212201838952e531dedee26eeaf249aee8685cb03f74ee5973241bef2af16e6f7f97f64736f6c63430006060033"
+          },
+          "constructorArguments": "0x000000000000000000000000fda619b6d20975be80a10332cd39b9a4b0faa8bb0000000000000000000000004200000000000000000000000000000000000006"
+        }
+      },
+      "runtimeBytecode": {
+        "linkReferences": {},
+        "cborAuxdata": {
+          "1": {
+            "value": "0xa2646970667358221220bdc7122e82b466bdb3661903fafb07dab43527cdce9d27fa4bc145774193eb8f64736f6c63430006060033",
+            "offset": 21875
+          }
+        },
+        "immutableReferences": {
+          "1488": [
+            {
+              "start": 4295,
+              "length": 32
+            },
+            {
+              "start": 4549,
+              "length": 32
+            },
+            {
+              "start": 4971,
+              "length": 32
+            },
+            {
+              "start": 5028,
+              "length": 32
+            },
+            {
+              "start": 5455,
+              "length": 32
+            },
+            {
+              "start": 6116,
+              "length": 32
+            },
+            {
+              "start": 6324,
+              "length": 32
+            },
+            {
+              "start": 6817,
+              "length": 32
+            },
+            {
+              "start": 8799,
+              "length": 32
+            },
+            {
+              "start": 9216,
+              "length": 32
+            },
+            {
+              "start": 9641,
+              "length": 32
+            },
+            {
+              "start": 10908,
+              "length": 32
+            },
+            {
+              "start": 11743,
+              "length": 32
+            },
+            {
+              "start": 12401,
+              "length": 32
+            },
+            {
+              "start": 12442,
+              "length": 32
+            },
+            {
+              "start": 12490,
+              "length": 32
+            },
+            {
+              "start": 12967,
+              "length": 32
+            },
+            {
+              "start": 13398,
+              "length": 32
+            },
+            {
+              "start": 14381,
+              "length": 32
+            },
+            {
+              "start": 14795,
+              "length": 32
+            },
+            {
+              "start": 17398,
+              "length": 32
+            },
+            {
+              "start": 17465,
+              "length": 32
+            },
+            {
+              "start": 18329,
+              "length": 32
+            },
+            {
+              "start": 18810,
+              "length": 32
+            },
+            {
+              "start": 20213,
+              "length": 32
+            },
+            {
+              "start": 20438,
+              "length": 32
+            },
+            {
+              "start": 20566,
+              "length": 32
+            }
+          ],
+          "1491": [
+            {
+              "start": 428,
+              "length": 32
+            },
+            {
+              "start": 3677,
+              "length": 32
+            },
+            {
+              "start": 3736,
+              "length": 32
+            },
+            {
+              "start": 4053,
+              "length": 32
+            },
+            {
+              "start": 4760,
+              "length": 32
+            },
+            {
+              "start": 5874,
+              "length": 32
+            },
+            {
+              "start": 6358,
+              "length": 32
+            },
+            {
+              "start": 7710,
+              "length": 32
+            },
+            {
+              "start": 8098,
+              "length": 32
+            },
+            {
+              "start": 8306,
+              "length": 32
+            },
+            {
+              "start": 8569,
+              "length": 32
+            },
+            {
+              "start": 9004,
+              "length": 32
+            },
+            {
+              "start": 9153,
+              "length": 32
+            },
+            {
+              "start": 9843,
+              "length": 32
+            },
+            {
+              "start": 10010,
+              "length": 32
+            },
+            {
+              "start": 10223,
+              "length": 32
+            },
+            {
+              "start": 10484,
+              "length": 32
+            },
+            {
+              "start": 10716,
+              "length": 32
+            },
+            {
+              "start": 10845,
+              "length": 32
+            },
+            {
+              "start": 12524,
+              "length": 32
+            },
+            {
+              "start": 13346,
+              "length": 32
+            },
+            {
+              "start": 13432,
+              "length": 32
+            },
+            {
+              "start": 13484,
+              "length": 32
+            },
+            {
+              "start": 13613,
+              "length": 32
+            },
+            {
+              "start": 14151,
+              "length": 32
+            },
+            {
+              "start": 14583,
+              "length": 32
+            },
+            {
+              "start": 14732,
+              "length": 32
+            }
+          ]
+        },
+        "transformations": [
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 4295,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 4549,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 4971,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 5028,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 5455,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 6116,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 6324,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 6817,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 8799,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 9216,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 9641,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 10908,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 11743,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 12401,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 12442,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 12490,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 12967,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 13398,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 14381,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 14795,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 17398,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 17465,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 18329,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 18810,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 20213,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 20438,
+            "reason": "immutable"
+          },
+          {
+            "id": "1488",
+            "type": "replace",
+            "offset": 20566,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 428,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 3677,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 3736,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 4053,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 4760,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 5874,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 6358,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 7710,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 8098,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 8306,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 8569,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 9004,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 9153,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 9843,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 10010,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 10223,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 10484,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 10716,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 10845,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 12524,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 13346,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 13432,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 13484,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 13613,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 14151,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 14583,
+            "reason": "immutable"
+          },
+          {
+            "id": "1491",
+            "type": "replace",
+            "offset": 14732,
+            "reason": "immutable"
+          },
+          {
+            "id": "1",
+            "type": "replace",
+            "offset": 21875,
+            "reason": "cborAuxdata"
+          }
+        ],
+        "transformationValues": {
+          "immutables": {
+            "1488": "0x000000000000000000000000fda619b6d20975be80a10332cd39b9a4b0faa8bb",
+            "1491": "0x0000000000000000000000004200000000000000000000000000000000000006"
+          },
+          "cborAuxdata": {
+            "1": "0xa26469706673582212201838952e531dedee26eeaf249aee8685cb03f74ee5973241bef2af16e6f7f97f64736f6c63430006060033"
+          }
+        }
+      },
+      "bytecodeHashes": {
+        "creationBytecode": {
+          "onchainBytecode": "23b023820e63e709e7ae1454627f32bcb5fb32efcc85751523bcd5520554d1c0",
+          "recompiledBytecode": "e6c76cf05eb0adfe2532f5ce186a48a9b9d4569c7374e2b55118b4c044611475"
+        },
+        "runtimeBytecode": {
+          "onchainBytecode": "a8d7f053cbc05011fa7da550d98dd95d813be1d3f81d93e6b1515e9a04275d1a",
+          "recompiledBytecode": "bc57ee118796422a15d4e1f233649de0f5e5557cf780fe4cde739dc551bedd2e"
+        }
+      },
+      "bytecodeHashEncoding": "SHA-256 of original hex UTF-8 text, not Keccak runtime identity attestation; full sources/ABI are preserved above."
+    }
+  },
+  "functionInventory": [
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "WETH()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "payable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "factory()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "getAmountIn(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "getAmountOut(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "getAmountsIn(uint256,address[])",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "getAmountsOut(uint256,address[])",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "quote(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    },
+    {
+      "chainId": 8453,
+      "address": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "abiSourceAddress": "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Not admitted: canonical baseswap.fi now serves parked-domain sale content in real Chromium and static read returned HTTP410. No current primary maintained product or successor domain could be bound; third-party contract activity and token listings are not maintenance evidence. This is not a categorical shutdown/team-disbandment conclusion.",
+      "capabilityId": null
+    }
+  ],
+  "selectedFunctions": [],
+  "limitations": [
+    "No raw or generic executor admitted, and no legacy exit-only rescue."
+  ]
+}

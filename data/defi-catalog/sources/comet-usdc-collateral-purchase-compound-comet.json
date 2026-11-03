@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {
+      "familyId": "compound-iii",
+      "familyVersion": "v3-comet@f766f515",
+      "contracts": [
+        {
+          "chainId": 1,
+          "address": "0xc3d688b66703497daa19211eedff47f25384cdc3",
+          "status": "inactive",
+          "contractName": "Comet USDC",
+          "sourceRefs": ["compound-comet-implementation", "compound-comet-main-interface", "compound-comet-usdc-mainnet-role"],
+          "abiFunctions": [
+            {
+              "status": "inactive",
+              "type": "function",
+              "name": "buyCollateral",
+              "stateMutability": "nonpayable",
+              "inputs": [
+                { "name": "asset", "type": "address", "internalType": "address" },
+                { "name": "minAmount", "type": "uint256", "internalType": "uint256" },
+                { "name": "baseAmount", "type": "uint256", "internalType": "uint256" },
+                { "name": "recipient", "type": "address", "internalType": "address" }
+              ],
+              "outputs": [],
+              "sourceRefs": ["compound-comet-implementation", "compound-comet-main-interface", "compound-comet-usdc-mainnet-role"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "compound-comet-implementation",
+      "url": "https://github.com/compound-finance/comet/blob/f766f51583c23acc33b2a7824654ef2029a96804/contracts/CometWithExtendedAssetList.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official implementation blob 3490e984d133789aa1afe2e8f7e37a11d2512396 at commit f766f51583c23acc33b2a7824654ef2029a96804. CometWithExtendedAssetList.sol lines 1122–1141 implement buyCollateral: when protocol pause/reserve conditions allow, the fixed configured base token transfers baseAmount in from msg.sender, the fixed configured collateral/pricing path computes the purchase, protocol slippage/reserve checks enforce minAmount, and the fixed collateral token transfers out to the caller-selected recipient. No callback, arbitrary callee, or arbitrary calldata path is exposed. This pinned body is not proof of current proxy/runtime implementation or execution outcome."
+    },
+    {
+      "sourceId": "compound-comet-main-interface",
+      "url": "https://github.com/compound-finance/comet/blob/f766f51583c23acc33b2a7824654ef2029a96804/contracts/CometMainInterface.sol",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official interface blob 5347b22f73d010017a1162579d1fd8bad13f8328 at commit f766f51583c23acc33b2a7824654ef2029a96804. It declares buyCollateral(address asset,uint256 minAmount,uint256 baseAmount,address recipient) as nonpayable with no outputs. The declaration model preserves canonical uint256 ABI types and named inputs; it is not represented as compiler output."
+    },
+    {
+      "sourceId": "compound-comet-usdc-mainnet-role",
+      "url": "https://github.com/compound-finance/comet/blob/f766f51583c23acc33b2a7824654ef2029a96804/deployments/mainnet/usdc/roots.json",
+      "retrievedAtUtc": "2026-10-05",
+      "evidence": "Pinned official mainnet USDC deployment role blob 8cdf987c178cd0ba8af8286a4089b70c11bbcf24 at commit f766f51583c23acc33b2a7824654ef2029a96804 identifies the Ethereum Comet target 0xc3d688b66703497daa19211eedff47f25384cdc3. This dated role does not establish current proxy/runtime identity, configuration, liquidity, or financial state."
+    }
+  ],
+  "unresolved": []
+}

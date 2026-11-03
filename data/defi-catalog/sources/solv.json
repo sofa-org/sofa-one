@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "families": [{
+    "familyId": "solv",
+    "familyVersion": "router-v2",
+    "contracts": [{
+      "chainId": 1,
+      "address": "0x3d93B9e8F0886358570646dAd9421564C5fE6334",
+      "status": "inactive",
+      "contractName": "SolvBTC Router V2 user proxy",
+      "sourceRefs": ["solvbtc-source-repository", "solvbtc-mainnet-proxy-deployment", "solvbtc-deployment-upgrade-record", "solvbtc-router-v2-etherscan-source"],
+      "abiFunctions": [
+        { "type": "function", "name": "deposit", "stateMutability": "nonpayable", "inputs": [{ "name": "targetToken_", "type": "address", "internalType": "address" }, { "name": "currency_", "type": "address", "internalType": "address" }, { "name": "currencyAmount_", "type": "uint256", "internalType": "uint256" }, { "name": "minimumTargetTokenAmount_", "type": "uint256", "internalType": "uint256" }, { "name": "expireTime_", "type": "uint64", "internalType": "uint64" }], "outputs": [{ "name": "targetTokenAmount_", "type": "uint256", "internalType": "uint256" }], "sourceId": "solvbtc-router-v2-etherscan-source" },
+        { "type": "function", "name": "withdrawRequest", "stateMutability": "nonpayable", "inputs": [{ "name": "targetToken_", "type": "address", "internalType": "address" }, { "name": "currency_", "type": "address", "internalType": "address" }, { "name": "withdrawAmount_", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "", "type": "address", "internalType": "address" }, { "name": "", "type": "uint256", "internalType": "uint256" }], "sourceId": "solvbtc-router-v2-etherscan-source" },
+        { "type": "function", "name": "cancelWithdrawRequest", "stateMutability": "nonpayable", "inputs": [{ "name": "targetToken_", "type": "address", "internalType": "address" }, { "name": "redemption_", "type": "address", "internalType": "address" }, { "name": "redemptionId_", "type": "uint256", "internalType": "uint256" }], "outputs": [{ "name": "targetTokenAmount_", "type": "uint256", "internalType": "uint256" }], "sourceId": "solvbtc-router-v2-etherscan-source" }
+      ]
+    }]
+  }],
+  "sources": [
+    { "sourceId": "solvbtc-source-repository", "url": "https://github.com/solv-finance/SolvBTC/tree/74dd242c676f6934d73767fc8b2d409c25207810", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned official SolvBTC repository commit 74dd242c676f6934d73767fc8b2d409c25207810; its deployment and router-v2 source identity do not assert current proxy implementation." },
+    { "sourceId": "solvbtc-mainnet-proxy-deployment", "url": "https://github.com/solv-finance/SolvBTC/blob/74dd242c676f6934d73767fc8b2d409c25207810/deployments/mainnet/SolvBTCRouterV2Proxy.json", "retrievedAtUtc": "2026-10-04", "evidence": "Pinned mainnet deployment artifact identifies Ethereum user-facing SolvBTC Router V2 proxy 0x3d93B9e8F0886358570646dAd9421564C5fE6334 and deployment transaction 0x34cda00dab7e095da8b4945721c5f420e75bf011016685ad21aa842016ceb8c3." },
+    { "sourceId": "solvbtc-deployment-upgrade-record", "url": "https://etherscan.io/tx/0x34cda00dab7e095da8b4945721c5f420e75bf011016685ad21aa842016ceb8c3", "retrievedAtUtc": "2026-10-04", "evidence": "Recorded deployment/upgrade evidence identifies block 21587187 and an Upgraded implementation 0xeEdFBda83be3D1ADeB6f5A3D48933A372AcB7C9C. This receipt implementation differs from the separately currently listed verified implementation below; no same-implementation/current-slot conclusion is made." },
+    { "sourceId": "solvbtc-router-v2-etherscan-source", "url": "https://etherscan.io/address/0x1D8595e194Eaaff37496a9A5F3F509f5EEA9C70b#code", "retrievedAtUtc": "2026-10-04", "evidence": "Etherscan currently listed verified SolvBTCRouterV2 implementation at 0x1D8595e194Eaaff37496a9A5F3F509f5EEA9C70b provides the complete 24-function ABI and source declarations. It is separate dated source evidence, not a fabricated Git pin, deployment-receipt implementation identity, current proxy-slot proof, or authorized target." }
+  ]
+}

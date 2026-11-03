@@ -6,7 +6,7 @@ import { StripeWebhookService } from './stripe-webhook.service';
 
 /**
  * Public Stripe webhook endpoint. Intentionally NOT part of the public
- * API-key spec (openapi.yaml) and NOT protected by OpenfortUserGuard,
+ * API-key spec (openapi.yaml) and NOT protected by AppSessionGuard,
  * FrontendOnlyGuard, or ApiKeyAuthGuard — Stripe signs the payload and the
  * service verifies the signature from `req.rawBody` (never re-parsed).
  * Throttling is skipped so Stripe retries are never rate-limited.

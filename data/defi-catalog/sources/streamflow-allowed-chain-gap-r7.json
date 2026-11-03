@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Streamflow",
+  "website": "https://streamflow.finance/",
+  "observedAt": "2026-10-24",
+  "status": "deferred",
+  "reason": "Current primary documentation identifies Solana, Aptos and Sui products, with no current deployment on allowed EVM chains 1, 10, 56, 137, 143, 8453 or 42161. No allowed-chain deployment -> current implementation -> matching full deployed ABI/source binding was established. This is a chain/deployment evidence gap, NOT a shutdown or retirement finding.",
+  "sourceRefs": [
+    "https://docs.streamflow.finance/en/articles/9339023-welcome-to-streamflow",
+    "https://docs.streamflow.finance/en/articles/9675598-chain-addresses",
+    "https://docs.streamflow.finance/en/articles/9339223-token-vesting"
+  ],
+  "primaryEvidence": [
+    {
+      "url": "https://docs.streamflow.finance/en/articles/9339023-welcome-to-streamflow",
+      "excerpt": "Streamflow is available across multiple blockchains: Solana — full product suite; Aptos — token vesting, token locks and payments; Sui — token vesting, token locks, and payments.",
+      "observation": "Reader fetched current primary article; its supported-chain list contains no allowed EVM chain."
+    },
+    {
+      "url": "https://docs.streamflow.finance/en/articles/9675598-chain-addresses",
+      "excerpt": "In this section, you will find the essential blockchain address for Streamflow on the Solana network. Solana Address: strmRqUCoQUgGUan5YhzUZa6KqdzwX5L6FpUxfmKg5m",
+      "observation": "Reader fetched current primary address documentation; no EVM address is listed."
+    }
+  ],
+  "selectedFunctions": [],
+  "allFunctionDecisions": [],
+  "replacement": "Parent explicitly authorized Unvest as the second protocol; Team Finance only if Unvest failed. Neither Solana execution nor a new chain/signing permission is added."
+}

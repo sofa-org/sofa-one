@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Astera Money",
+  "observedAt": "2026-10-24",
+  "decision": "not-admitted-unresolved-primary-deployment",
+  "reason": "Authorized replacement could not be bound to current own supported-chain lending deployment. Exact-name searches returned only docs.astera.fi asUSD Ethereum credit facility. No BNB primary deployment attribution obtained.",
+  "attempts": [
+    {
+      "sourceRef": "https://docs.astera.fi/",
+      "observation": "Search index describes DeFi-native credit facility issuing asUSD; direct read and requests failed DNS resolution."
+    },
+    {
+      "sourceRef": "https://docs.astera.fi/llms.txt",
+      "observation": "Unable to connect."
+    },
+    {
+      "sourceRef": "https://astera.fi/",
+      "observation": "Direct read and requests failed DNS resolution."
+    },
+    {
+      "sourceRef": "https://astera.money/",
+      "observation": "Requests failed DNS resolution; domain was discovery attempt, not asserted official."
+    }
+  ],
+  "limitations": [
+    "Fetch/DNS failures do not prove shutdown, retirement or unmaintained status.",
+    "No guessed-domain or unrelated protocol substitution. Parent authorized Native as next replacement."
+  ]
+}

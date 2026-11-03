@@ -1,0 +1,238 @@
+{
+  "schemaVersion": 1,
+  "familyId": "sofa-smarttrend-vault-redeem",
+  "familyVersion": "implementation-0x6e72c872",
+  "contracts": [
+    {
+      "chainId": 1,
+      "address": "0x106825b71cce77a70b69f57a0acf9c4a6acf292a",
+      "status": "active",
+      "contractName": "SmartBullVault (ETH/USDT proxy)",
+      "sourceRefs": [
+        "sofa-deployment-docs",
+        "sofa-smartbull-proxy-etherscan",
+        "sofa-smarttrend-implementation-etherscan"
+      ],
+      "abiFunctions": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "expiry",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256[2]",
+              "name": "anchorPrices",
+              "type": "uint256[2]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "isMaker",
+              "type": "uint256"
+            }
+          ],
+          "name": "burn",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "status": "active",
+          "sourceRefs": [
+            "sofa-smarttrend-implementation-etherscan"
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "expiry",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256[2]",
+                  "name": "anchorPrices",
+                  "type": "uint256[2]"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "isMaker",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct SmartTrendVault.Product[]",
+              "name": "products",
+              "type": "tuple[]"
+            }
+          ],
+          "name": "burnBatch",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "status": "active",
+          "sourceRefs": [
+            "sofa-smarttrend-implementation-etherscan"
+          ]
+        }
+      ]
+    },
+    {
+      "chainId": 1,
+      "address": "0x9c5d3c3abd633b8ea68c5a51325f8630dc620ad9",
+      "status": "active",
+      "contractName": "SmartBearVault (ETH/USDT proxy)",
+      "sourceRefs": [
+        "sofa-deployment-docs",
+        "sofa-smartbear-proxy-etherscan",
+        "sofa-smarttrend-implementation-etherscan"
+      ],
+      "abiFunctions": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "expiry",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256[2]",
+              "name": "anchorPrices",
+              "type": "uint256[2]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "isMaker",
+              "type": "uint256"
+            }
+          ],
+          "name": "burn",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "status": "active",
+          "sourceRefs": [
+            "sofa-smarttrend-implementation-etherscan"
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "expiry",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256[2]",
+                  "name": "anchorPrices",
+                  "type": "uint256[2]"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "isMaker",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct SmartTrendVault.Product[]",
+              "name": "products",
+              "type": "tuple[]"
+            }
+          ],
+          "name": "burnBatch",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "status": "active",
+          "sourceRefs": [
+            "sofa-smarttrend-implementation-etherscan"
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "sofa-deployment-docs",
+      "url": "https://docs.sofa.org/en/developer/contracts.html",
+      "retrievedAtUtc": "2026-10-15",
+      "evidence": "Official deployment documentation identifies Ethereum SmartBullVault(ETH/USDT) at 0x106825b71ccE77a70B69f57A0ACf9C4a6acf292a and SmartBearVault(ETH/USDT) at 0x9C5D3C3AbD633b8eA68C5a51325f8630DC620AD9. This deployment reference does not prove current proxy configuration."
+    },
+    {
+      "sourceId": "sofa-smartbull-proxy-etherscan",
+      "url": "https://etherscan.io/address/0x106825b71ccE77a70B69f57A0ACf9C4a6acf292a#code",
+      "retrievedAtUtc": "2026-10-15",
+      "evidence": "Etherscan identifies this target as a TransparentUpgradeableProxy and reports implementation 0x6E72C8726c71a4Cbc6e31ff7d47B399Fa983C7B8. This page-level pointer is not an independent on-chain runtime verification."
+    },
+    {
+      "sourceId": "sofa-smartbear-proxy-etherscan",
+      "url": "https://etherscan.io/address/0x9C5D3C3AbD633b8eA68C5a51325f8630DC620AD9#code",
+      "retrievedAtUtc": "2026-10-15",
+      "evidence": "Etherscan identifies this target as a TransparentUpgradeableProxy and reports implementation 0x6E72C8726c71a4Cbc6e31ff7d47B399Fa983C7B8. Both products therefore share the same reviewed implementation ABI, but their live pointer may change."
+    },
+    {
+      "sourceId": "sofa-smarttrend-implementation-etherscan",
+      "url": "https://etherscan.io/address/0x6E72C8726c71a4Cbc6e31ff7d47B399Fa983C7B8#code",
+      "retrievedAtUtc": "2026-10-15",
+      "evidence": "Etherscan identifies the exact-match verified Solidity 0.8.10 implementation as SmartTrendVault. This local ABI-fragment snapshot contains only the two admitted nonpayable redemption functions (not mint/mintBatch or the full contract ABI). Canonical sorted-key JSON SHA-256 of abiSnapshot is 636c583be3d949a963e4c78d3d6dbcd41f811ed94038337f3832cfde705473de; ABI identity in catalog is independently committed using repository Keccak-256 rules. Source verification and proxy pointer evidence do not establish present deployed runtime identity, configuration, ownership, oracle state, or execution safety."
+    }
+  ],
+  "abiSnapshot": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "expiry",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256[2]",
+          "name": "anchorPrices",
+          "type": "uint256[2]"
+        },
+        {
+          "internalType": "uint256",
+          "name": "isMaker",
+          "type": "uint256"
+        }
+      ],
+      "name": "burn",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "expiry",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256[2]",
+              "name": "anchorPrices",
+              "type": "uint256[2]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "isMaker",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct SmartTrendVault.Product[]",
+          "name": "products",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "burnBatch",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "abiSnapshotSha256": "sha256:636c583be3d949a963e4c78d3d6dbcd41f811ed94038337f3832cfde705473de",
+  "unresolved": []
+}

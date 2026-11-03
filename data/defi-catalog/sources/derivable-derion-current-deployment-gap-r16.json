@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "protocol": "Derivable",
+  "canonicalIdentity": "Derion",
+  "website": "https://derion.io/",
+  "observedAt": "2026-10-26",
+  "status": "rejected",
+  "reason": "Current official address reference explicitly marks published roots as legacy v3 and does not publish current-version deployments. Current application advertises a Robinhood-chain forked-EVM sandbox requiring message signatures rather than supported real-chain ordinary transactions. Current Pool API also exposes arbitrary helper/payload, forwarded oracle data and optional Permit2; none admitted. This is not a blanket shutdown finding.",
+  "sourceRefs": [
+    "https://hacken.io/audits/derivable/",
+    "https://hacken.io/audits/derivable/sca-derivable-dex-aug2023",
+    "https://derivable.org/",
+    "https://derion.io/",
+    "https://app.derion.io/",
+    "https://docs.derion.io/contracts/addresses.md",
+    "https://docs.derion.io/contracts/api.md",
+    "https://docs.derion.io/readme.md",
+    "https://api.github.com/repos/derion-io/configs/git/trees/21184c62583bf42e52c6b6b0d642f329802fca35?recursive=1"
+  ],
+  "primarySnapshots": [
+    {
+      "sourceRef": "https://docs.derion.io/contracts/addresses.md",
+      "content": "> For the complete documentation index, see [llms.txt](https://docs.derion.io/llms.txt). Markdown versions of documentation pages are available by appending `.md` to page URLs; this page is available as [Markdown](https://docs.derion.io/contracts/addresses.md).\n\n# Addresses\n\n{% hint style=\"warning\" %}\nThe addresses below are **legacy (v3) deployments**. The core repository holds no deployment record for the current protocol version; deployment records live in the separate `derion-io/configs` repository, which the deploy tool prepares entries for. Addresses will be published here once deployed.\n{% endhint %}\n\n## Arbitrum (42161)\n\nUTR (ERC-6120): 0x8Bd6072372189A12A2889a56b6ec982fD02b0B87\\\nHelper: 0x3be9E00cF66c3ceb129F88172B08888651948D09\\\nToken (ERC-1155): 0x0819281c74BeD5423C1B3283808F8E26AAd18DBe\\\nPoolDeployer: 0xB5C6C6fC01c3E552345F1b34125bABF159DFA03b\n\n## Polygon (137)\n\nUTR (ERC-6120): 0xAe68B2DcCd3aD80a5adD5E7e566d243F64fF8BA9\\\nHelper: 0x7C867A856a13DC1b5A22Cb37b0699D37846Dd49D\\\nToken (ERC-1155): 0x3E72Fa9C575A28cc311dCb817dD9E7b5E2E6462d\\\nPoolDeployer: 0x129e17D002022620e583eB17e68dD3A91d8fF398\n",
+      "sha256": "244e0762e1823167c89d870f1f91f7abf0c066006cc59e920369c49c3332f4f8"
+    },
+    {
+      "sourceRef": "https://docs.derion.io/contracts/api.md",
+      "content": "> For the complete documentation index, see [llms.txt](https://docs.derion.io/llms.txt). Markdown versions of documentation pages are available by appending `.md` to page URLs; this page is available as [Markdown](https://docs.derion.io/contracts/api.md).\n\n# Pool API\n\n## transition\n\nAll trades, deposits into and withdrawals from the LP class, flips, and rotations go through one function on the pool:\n\n```solidity\nfunction transition(Param memory param, Payment memory payment)\n    external payable\n    returns (int256 dA, int256 dB, int256 dC, int256 dR, uint256 price);\n\nstruct Param {\n    int256 dAMin;       // floor on \u03b4(your LONG balance)\n    int256 dBMin;       // floor on \u03b4(your SHORT balance)\n    int256 dCMin;       // floor on \u03b4(your LP balance)\n    int256 dRMin;       // floor on the reserve you receive\n    address helper;     // untrusted solver contract\n    bytes payload;      // intent, decoded by the helper\n    bool unwrapETH;     // deliver received reserve as native ETH\n    bytes oracleData;   // optional oracle update, forwarded verbatim to the fetcher\n}\n\nstruct Payment {\n    address recipient;  // where minted tokens / paid-out reserve go (required)\n    address owner;      // Permit2 signer; on the signature path MUST equal recipient\n    uint256 nonce;      // Permit2 nonce\n    uint256 deadline;   // Permit2 deadline\n    bytes signature;    // empty \u2192 transferFrom(msg.sender); non-empty \u2192 Permit2\n}\n```\n\nEvery delta is signed from the caller's perspective: positive = received, negative = given. The returns are the realized deltas and the TWAP the trade was marked at.\n\nThe four minimums are pure slippage floors: a receiver floors what it gets (`> 0`), a giver caps what it gives (`< 0`), and `type(int256).min` means no floor. They carry no direction information; every gate runs at both oracle bases regardless ([Price Oracle](/protocol/oracle.md)). See [State Transition](/protocol/state-transition.md) for the verification flow and [Payments](/design/payments.md) for the two payment paths.\n\n`payload` is opaque to the pool and passed to `helper.solve()` unchanged. The reference Helper takes:\n\n| Operation                                  | `payload`                                                                                                                 |\n| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |\n| open, close, flip, LP deposit, LP withdraw | `abi.encode(uint256 sideIn, uint256 sideOut, uint256 amount)`                                                             |\n| rotate (open one side, close the other)    | `abi.encode(type(uint256).max, uint256 openSide, uint256 openReserve, uint256 closeSide, uint256 closeAmount, uint256 0)` |\n\nwith sides `SIDE_R = 0x00`, `SIDE_A = 0x10`, `SIDE_B = 0x20`, `SIDE_C = 0x30`. `SIDE_E = 0x01` is `SIDE_R` paid out as native ETH; the quoting functions accept it as `sideOut` on a close, as an alias of `SIDE_R`, while a transition makes the same choice with `unwrapETH`. For an open (`SIDE_R \u2192 A/B`) `amount` is the **net** reserve; the opening fee is added on top and pulled as part of `dR`. For an LP deposit (`SIDE_R \u2192 C`) it is the reserve paid. For closes, withdrawals, and flips it is the number of shares to burn.\n\n`oracleData` is empty for a read-only fetcher. On a pull-oracle pool it carries the signed update blobs, and `msg.value` may carry the update fee; the pool forwards native value to the fetcher only when `oracleData` is non-empty, and what the fetcher does not spend is wrapped toward the reserve owed or returned ([Payments](/design/payments.md)).\n\n### Closing by transfer\n\n```solidity\nIERC1155(token).safeTransferFrom(owner, pool, id, amount, abi.encode(param));\n```\n\nThe pool's `onERC1155Received` decodes the `Param`, runs `transition` with the recipient pinned to the sender, pays out, and refunds any part of the transferred position the close did not consume. Batch transfers are rejected.\n\nThe reference Helper accepts the same transfer as a relay: `safeTransferFrom(owner, helper, id, amount, abi.encode(pool, recipient, abi.encode(param)))` makes it forward the position to `pool`, unwrap the WETH it is paid, and send native ETH to `recipient`. It predates `unwrapETH`, which does the same on a direct transfer. Because the pool sees the Helper as the sender, any refund of an unconsumed remainder lands on the Helper, and `sweep(id, recipient)` moves such a balance out for whoever calls it first.\n\n## Helper interface\n\n```solidity\ninterface IHelper {\n    function solve(uint256 openRate, Slippable calldata before, bytes calldata payload)\n        external view returns (Proposal memory);\n}\n\nstruct Slippable {\n    uint256 xk;    // (TWAP / MARK)^K, the funding basis\n    uint256 xkS;   // the same at the spot; equals xk when the oracle did not diverge\n    uint256 R;     // engine reserve\n    uint256 rA;    // LONG reserve at the TWAP\n    uint256 rB;    // SHORT reserve at the TWAP\n    uint256 rAS;   // LONG reserve at the spot\n    uint256 rBS;   // SHORT reserve at the spot\n    uint256 sA;    // LONG supply\n    uint256 sB;    // SHORT supply\n    uint256 sC;    // LP supply\n}\n\nstruct Proposal {\n    uint256 a;     // LONG coefficient after the trade\n    uint256 b;     // SHORT coefficient after the trade\n    int256 dA;     // \u03b4(transactor's LONG)\n    int256 dB;     // \u03b4(transactor's SHORT)\n    int256 dC;     // \u03b4(transactor's LP)\n    int256 dR;     // reserve the transactor receives; the pool sets R1 = R \u2212 dR\n}\n```\n\nThe pool calls the transactor's `helper` once, with the post-funding snapshot at both bases and the pool's `OPEN_RATE`, and takes the complete proposal back. The LP reserve at each basis is derivable as $$R - r\\_A - r\\_B$$. Everything returned is re-priced and verified by the pool ([State Transition](/protocol/state-transition.md)); a dishonest proposal reverts. Anyone can deploy a Helper and name it per call.\n\n## init\n\n```solidity\nfunction init(State memory state, Payment memory payment)\n    external payable\n    returns (uint256 rA, uint256 rB, uint256 rC);\n\nstruct State {\n    uint256 R;   // reserve deposited = the initial engine reserve\n    uint256 a;   // LONG coefficient\n    uint256 b;   // SHORT coefficient\n}\n```\n\nSeeds a freshly deployed pool. `R`, `a`, and `b` must be positive and below $$2^{224}$$. The reserve is pulled through the `Payment` path, the two curves are evaluated at the fetcher's spot price, and all three classes must clear the minimum reserve (currently 10\u2076 wei each). An insolvent seed, whose two sides already exceed `R` at that price, fails the residual computation outright. The three seeds are minted to `address(1)` and can never be withdrawn. See [Pool Creation](/guide/pool-creation.md).\n\n## sync\n\n```solidity\nfunction sync() external returns (uint256 xk, uint256 rA, uint256 rB, uint256 price);\nfunction sync(bytes memory oracleData) external returns (uint256 xk, uint256 rA, uint256 rB, uint256 price);\n```\n\nThe permissionless poke: accrues [funding](/protocol/funding-rate.md) at the TWAP, persists the recovered coefficients, and flushes the outbox (the protocol's cut plus any donations) to `FEE_TO`. Returns the post-funding snapshot. Nothing of the LP's depends on it being called.\n\n## Quoting\n\n```solidity\nfunction getAmountOut(uint256 sideIn, uint256 sideOut, uint256 amountIn, bool minOut)\n    external returns (uint256 amountOut);\nfunction getAmountOut(uint256 sideIn, uint256 sideOut, uint256 amountIn, bool minOut, bytes memory oracleData)\n    external returns (uint256 amountOut);\n```\n\nQuotes one leg against the pool at one bound of the TWAP/spot pair. An open (`sideIn = SIDE_R`, `sideOut` a class) returns the shares minted for `amountIn` of net reserve, before the opening fee; a close (`sideIn` a class, `sideOut = SIDE_R` or `SIDE_E`) returns the reserve for `amountIn` shares. `minOut = true` picks the bound adverse to the caller: the class dear on an open (fewest shares), cheap on a close (lowest payout). For the LP class the bounds are compared on the realized residual, since it is not monotone in price. The quote does not accrue pending funding; `View` does.\n\n## State\n\n```solidity\nfunction getStates() external view returns (uint256 R, uint256 a, uint256 b, uint32 lastTime);\nfunction loadConfig() external pure returns (Config memory);\nfunction ensureStateIntegrity() external view;   // reverts while a transition is in progress\nfunction FEE_TO() external view returns (address);      // protocol-fee destination, a logic immutable\nfunction FEE_RATE() external view returns (uint256);    // 1/FEE_RATE of the funding release; 0 = no cut\n```\n\n`R` is the engine reserve; the pool's token balance in excess of it is the pending protocol cut. A pool also answers the built-in fetcher's `fetch` and `spot`, which it inherits, and the ERC-1155 receiver hooks used by the transfer-close path.\n\n## Config\n\nA pool is fully described by its immutable config, which also determines its address ([Technical Design](/design.md)):\n\n```solidity\nstruct Config {\n    address FETCHER;      // oracle logic; address(0) = the built-in Uniswap v3 / Chainlink fetcher\n    bytes32 ORACLE;       // packed oracle word, interpreted by the fetcher\n    address TOKEN_R;      // the reserve = settlement token\n    uint256 K;            // the exponent applied to the fetcher's price\n    uint256 MARK;         // the mark price, in the fetcher's price convention (Q128)\n    uint256 INTEREST_HL;  // interest half-life in seconds; 0 = off\n    uint256 PREMIUM_HL;   // premium half-life in seconds; 0 = off\n    uint256 OPEN_RATE;    // opening-fee rate (x128); 2^128 or 0 = no fee\n}\n```\n\n`K` and `MARK` follow the fetcher's price convention:\n\n| Fetcher                                         | Prices      | `K`  | `MARK`        |\n| ----------------------------------------------- | ----------- | ---- | ------------- |\n| built-in, Uniswap v3 branch; `CompositeFetcher` | square-root | `2k` | \u221a(mark price) |\n| built-in, Chainlink branch; `RobinhoodFetcher`  | plain       | `k`  | mark price    |\n\nwhere $$k$$ is the pay-off power traders see. There is no provider field: the pool knows no LP by name. `FEE_TO` and `FEE_RATE`, the protocol-fee destination and rate, are immutables on the shared pool logic contract, not per-pool config.\n\n## Events\n\n```solidity\nevent Position(\n    address indexed payer,      // payment.owner when set, otherwise msg.sender\n    address indexed recipient,  // mint: the recipient; burn: address(0)\n    address indexed index,      // the low 160 bits of ORACLE\n    uint256 id,                 // (side << 160) | pool\n    uint256 amount,             // shares minted or burned\n    uint256 price,              // the TWAP the transition was marked at\n    uint256 valueR              // the leg's mark-to-curve reserve value at that TWAP\n);\n\nevent Sync(uint256 R, uint256 price, uint256 xk, uint256 rA, uint256 rB);\n```\n\nOne `Position` event is emitted per settled leg, so a position is fully described by its own events; there is no separate transition event. `valueR` is `|\u03b4| \u00b7 r / s` on the post-trade class, the indexer's cost basis, not the cash that moved (it differs from `dR` by the spread and fee). LP-class legs emit it like the sides, so decoders must handle the `0x30` id. The three seeds minted at initialization are the exception: they appear only as ERC-1155 transfers to `address(1)`, not as `Position` events.\n\n`Sync` is the post-funding state snapshot, emitted by every poke and before every trade. It fully describes the reserve state: `a = v(xk, rA, R)`, `b = v(1/xk, rB, R)`, `rC = R \u2212 rA \u2212 rB`, and the pending protocol cut is `balanceOf(pool) \u2212 R`.\n\n## Factory\n\n```solidity\nfunction createPool(Config memory config) external returns (address pool);\n\nfunction deploy(\n    Config memory config, State memory state, Payment memory payment,\n    address baseToken, bytes32 baseSymbol, bytes32 topic2, bytes32 topic3\n) external payable returns (address pool);\n\nfunction deployWithStrategy(\n    Config memory config, State memory state, Payment memory payment,\n    address baseToken, bytes32 baseSymbol, bytes32 topic2, bytes32 topic3,\n    address vault, address baseStrategy, uint256 rampHL, uint256 headRoom\n) external payable returns (address pool, address strategy);\n\nfunction create(Config memory config) external returns (address pool);   // createPool without the revert; zero on failure\naddress public immutable LOGIC;                                         // the shared pool logic\n```\n\nA pool's address is the CREATE2 address, with salt 0 and the Factory as deployer, of the MetaProxy init code built from `LOGIC` and `abi.encode(config)`; `MetaProxyView.computeBytecodeHash` produces that hash. `createPool` deploys the MetaProxy only and emits nothing. `deploy` also runs `init` in the same transaction: on a WETH pool `msg.value` is either zero, with the seed pulled through `payment`, or exactly `state.R`; on any other reserve it must be zero. Since `init` pulls from its caller, a `deploy` that sends no native value needs a Permit2 signature in `payment`; the direct-allowance path would pull from the Factory itself. `deployWithStrategy` additionally asks `vault` to write a strategy extending `baseStrategy` (or a fresh single-pool one when it is zero) with the new pool, which LPs can then vote for ([Strategy Governance](/liquidity/governance.md)). `deploy` and `deployWithStrategy` emit an anonymous log with four topics (`baseToken`, `baseSymbol`, `topic2`, `topic3`) whose data is the ABI-encoded config fields followed by the pool address; this is how indexers discover pools, and a pool created with `createPool` is invisible to them.\n\n## Token\n\n```solidity\nfunction mint(address to, uint256 id, uint256 amount, bytes memory data) external;   // only address(uint160(id))\nfunction burn(address from, uint256 id, uint256 amount) external;                     // only address(uint160(id))\nfunction totalSupply(uint256 id) external view returns (uint256);\nfunction uri(uint256 id) external view returns (string memory);      // delegated to the descriptor\nfunction setDescriptor(address descriptor) external;                 // descriptor setter only\nfunction setDescriptorSetter(address setter) external;               // descriptor setter only\n```\n\nThe shared ERC-1155 is an OpenZeppelin `ERC1155Supply` named `Derion Position` (`DERION-POS`), plus the open mint/burn rule ([Derivative Tokens](/design/derivative-tokens.md)). `uri` forwards to the descriptor's `constructMetadata(id)`, which the reference descriptor answers only for ids whose low 160 bits resolve to a pool of its Factory (`NOT_A_DERION_TOKEN` otherwise).\n\n## Reverts\n\nPool, Factory, and Helper checks are `require` strings. Not every revert carries one: a proposal that cannot be applied at all (a burn larger than a class's supply, an insolvent seed at `init`) fails with a Solidity arithmetic panic, a burn or transfer beyond the holder's balance surfaces as the token's OpenZeppelin custom error (`ERC1155InsufficientBalance`), and a malformed `Param` or payload fails in ABI decoding.\n\n| Reason                                                                                                              | When                                                                                                                                                                                                                                                                                                                                                         |\n| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |\n| `PoolBase: ZERO_RECIPIENT`, `SIG_RECIPIENT`                                                                         | no recipient; the recipient differs from the Permit2 signer                                                                                                                                                                                                                                                                                                  |\n| `PoolBase: ALREADY_INITIALIZED`, `ZERO_PARAM`, `STATE_OVERFLOW_R/A/B`, `MINIMUM_RESERVE_A/B/C`                      | `init` on a seeded pool; a zero seed value; a seed value at or above 2^224; a class seeded below 10\u2076 wei (an insolvent seed, whose sides already exceed `R`, panics on the residual before this check)                                                                                                                                                       |\n| `PoolBase: ONLY_TOKEN`, `WRONG_POOL`, `BATCH_NOT_SUPPORTED`                                                         | a transfer-close not sent by the token, carrying another pool's id, or sent as a batch                                                                                                                                                                                                                                                                       |\n| `PoolBase: STATE_INTEGRITY`                                                                                         | `ensureStateIntegrity()` called during a transition                                                                                                                                                                                                                                                                                                          |\n| `PoolLogic: SLIPPAGE`                                                                                               | a realized delta below its floor                                                                                                                                                                                                                                                                                                                             |\n| `PoolLogic: CHARGE`, `INVARIANT_A/B/C`                                                                              | a value gate failed at either basis                                                                                                                                                                                                                                                                                                                          |\n| `PoolLogic: STATE1_OVERFLOW_R/A/B`                                                                                  | a proposed post-trade value at or above 2^224                                                                                                                                                                                                                                                                                                                |\n| `PoolLogic: SIDE_IN`, `SIDE_OUT`                                                                                    | an unsupported side pair in a quote                                                                                                                                                                                                                                                                                                                          |\n| `Utils: NOT_WETH`, `msg.value > amount`                                                                             | native value on a non-WETH reserve at `init`; more native than the reserve owed                                                                                                                                                                                                                                                                              |\n| `PoolFactory: CREATE2_FAILED`, `VALUE_MISMATCH`, `UNUSED_VALUE`, `POOL_INIT_FAILED`                                 | a duplicate config; a WETH seed value that is neither zero nor `state.R`; native value on a non-WETH pool; the seed did not reach the pool                                                                                                                                                                                                                   |\n| `Helper: ONLY_TOKEN`, `SAME_SIDE`, `SIDE_IN`, `SIDE_OUT`, `ROTATE_SAME`, `ROTATE_OPEN`, `ROTATE_CLOSE`, `NO_TARGET` | reference Helper: a position with data sent to it by anything but the token; `sideIn == sideOut`; a `sideIn` other than A or B on a close or flip; a `sideOut` other than A or B on an open, other than R on an LP withdrawal, or other than R, A, or B on a close; rotation legs that are equal or not both A or B; an aim that lands a coefficient at zero |\n| `UNAUTHORIZED_MINT_BURN`, `UNAUTHORIZED`                                                                            | token: a mint or burn of an id whose low 160 bits are not the caller; a descriptor change by anyone but the setter                                                                                                                                                                                                                                           |\n",
+      "sha256": "cf004be74304a50baeefddff0e66ad8896961d58ec82d18f11bfadd0748ca85d"
+    },
+    {
+      "sourceRef": "https://docs.derion.io/readme.md",
+      "content": "> For the complete documentation index, see [llms.txt](https://docs.derion.io/llms.txt). Markdown versions of documentation pages are available by appending `.md` to page URLs; this page is available as [Markdown](https://docs.derion.io/readme.md).\n\n# Introduction\n\nPermissionless perpetual AMM with compound leverage and no position liquidation\n\nDerion is a permissionless perpetual AMM with compound leverage and no position liquidation. Anyone can deploy a market on any index value with an oracle feed, trade leveraged Long or Short exposure on it, or provide the liquidity behind it. Positions are fungible tokens whose value follows a power of the index price rather than a straight line. That curve is what removes the liquidation price, and the pool behind it runs with no order book, no operator, and no key over its funds.\n\n### Permissionless\n\nA Derion market is one contract, deployed by whoever wants it. The deployer picks a reserve token, a price source, a leverage, and the funding and fee rates; the configuration is hashed into the pool's address, so the same market cannot be deployed twice and anyone can derive its address from its parameters. The price source can be a Uniswap v3 pair, a Chainlink feed, a tokenized stock, or any custom fetcher contract. Creating a pool earns nothing and grants no privilege over it.\n\nAfter that there is no operator. Nobody can list or delist the market, change its parameters, or decide who trades. Providing liquidity goes through the same public path as every trade, so there is no provider role to be granted either. No admin, pause, or upgrade key touches pool funds anywhere in the system.\n\n<figure><img src=\"https://3880200605-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FpouuXNBk9RhrfwmGohvR%2Fuploads%2Fjewc1c1UOsEmXoi53fbt%2Fimage.png?alt=media&amp;token=c2411e29-3e1f-4646-b76b-fafc22141694\" alt=\"\"><figcaption></figcaption></figure>\n\n### A perpetual AMM\n\nThere is no order book, no matching, and no counterparty to find. The pool takes the other side of every trade by formula. It holds a single ERC-20 reserve and issues three fungible share classes against it: **Long**, **Short**, and the **LP class**. Opening a position mints shares of a side out of the reserve; closing burns them back into it. The index price comes from the pool's oracle, and two pay-off curves decide how much of the reserve each class is worth at that price. Every trade is verified at both of the oracle's prices, the time-weighted average and the spot, so whichever is adverse to the trade binds.\n\nPositions are shares of a class, not accounts. They have no entry price, no expiry, and no per-account margin. Two holders of the same side own the same pay-off, and a position can be transferred, held by a contract, or composed like any other token.\n\nThe LP class is the counterparty. It holds whatever the two curves leave of the reserve, which makes it both the depth that keeps the sides at full leverage and the balance sheet that absorbs their imbalance. For that it collects the continuous funding both Long and Short pay, less the protocol's cut, along with the opening fee and the spread between the oracle's two prices. Anyone can hold it, directly or through the shared [Liquidity Vault](/liquidity/vault.md). A pool with an empty LP class still works: it deleverages sooner, and it never fails.\n\n### Compound leverage\n\nA Derion position does not track the index price along a straight line. A Long \u00d73 is worth the cube of the index price and a Short \u00d73 its inverse cube, so the leverage a trader experiences, the percentage change in value per percentage change in price, stays at 3 as the price moves, until the side grows toward the pool's reserve and begins to delever. A linear pay-off has its stated leverage only at the entry price: it fades as the position wins and grows without bound as it loses.\n\nCompounding works in the trader's favor in both directions. A Long \u00d74 opened with 1.0 of reserve is worth about 1.46 after the index rises 10% and about 0.66 after it falls 10%; a linear \u00d74 would pay 1.40 and 0.60. Gains accelerate on the right side and losses slow on the wrong side, and what a trader pays for that shape is a continuous funding fee to the LP class.\n\n<figure><img src=\"https://3880200605-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FpouuXNBk9RhrfwmGohvR%2Fuploads%2FZq8Ror0niioTnncUPazl%2Fimage.png?alt=media&amp;token=6c02c569-d127-4713-be74-69873eb10743\" alt=\"\" width=\"563\"><figcaption></figcaption></figure>\n\n### No position liquidation\n\nA linear pay-off crosses zero at a finite price, and that crossing is a liquidation price. Every market built on one depends on keepers closing positions before it is reached, and on an insurance fund, auto-deleveraging, or socialized losses for when they are late.\n\nA power curve never crosses zero. On the losing side, value approaches zero and never reaches it, so there is nothing to liquidate and no margin call to answer. On the winning side, the claim bends onto an asymptote as it grows toward the pool's reserve and approaches it without ever taking all of it; effective leverage compresses smoothly toward zero instead. Deleveraging replaces liquidation, so there are no keepers, no bad debt, and no one racing an oracle update.\n\n<figure><img src=\"https://3880200605-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FpouuXNBk9RhrfwmGohvR%2Fuploads%2FTi2MR5PDHlzryjyPGYKX%2Fimage.png?alt=media&amp;token=a1c6e881-7602-4e79-92cb-71d5def2dfd3\" alt=\"\" width=\"563\"><figcaption></figcaption></figure>\n\nSolvency is a property of the arithmetic, not an operational process. It reduces to one inequality on the pool's state, checked at every state change and holding at every price in between, in a pool untouched for a year as much as in one traded every block. No position can be liquidated, and the market itself cannot go bankrupt.\n\n[Protocol Design](/protocol.md) works through the curve, the three share classes, the value gates, and funding. [Liquidity](/liquidity.md) covers the LP class and the Vault, [Guide](/guide.md) covers trading and pool creation, and [Contracts](/contracts.md) has the addresses and APIs.\n",
+      "sha256": "5448954d0cc8bef6b894eaefacb56ced6eb44e271c15a8f7655bc613a98ccd1c"
+    }
+  ],
+  "configRevision": "21184c62583bf42e52c6b6b0d642f329802fca35",
+  "configTree": {
+    "sha": "21184c62583bf42e52c6b6b0d642f329802fca35",
+    "url": "https://api.github.com/repos/derion-io/configs/git/trees/21184c62583bf42e52c6b6b0d642f329802fca35",
+    "tree": [
+      {
+        "path": "137",
+        "mode": "040000",
+        "type": "tree",
+        "sha": "3d25a3b82e22b7812dadaeaae1b31b490ef1b46c",
+        "url": "https://api.github.com/repos/derion-io/configs/git/trees/3d25a3b82e22b7812dadaeaae1b31b490ef1b46c"
+      },
+      {
+        "path": "137/network.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "5f2046a90ad951fd0fb6c63af5b94e791a842dc3",
+        "size": 2754,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/5f2046a90ad951fd0fb6c63af5b94e791a842dc3"
+      },
+      {
+        "path": "137/pools.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "e30194543ed8559336e6dc35b831750e369c923f",
+        "size": 195,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/e30194543ed8559336e6dc35b831750e369c923f"
+      },
+      {
+        "path": "137/routes.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "bfdb5217fa5d208729a75b39ddf44c526676fbd5",
+        "size": 739,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/bfdb5217fa5d208729a75b39ddf44c526676fbd5"
+      },
+      {
+        "path": "204",
+        "mode": "040000",
+        "type": "tree",
+        "sha": "4447ffcc473dfed4e6dc774627f1ca8170dab115",
+        "url": "https://api.github.com/repos/derion-io/configs/git/trees/4447ffcc473dfed4e6dc774627f1ca8170dab115"
+      },
+      {
+        "path": "204/network.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "8b19c7a97989b58dba56dad3139e93d104a857a7",
+        "size": 2099,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/8b19c7a97989b58dba56dad3139e93d104a857a7"
+      },
+      {
+        "path": "204/pools.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "e39f81b2de2eda4be1fdd371971457be2e74daab",
+        "size": 53,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/e39f81b2de2eda4be1fdd371971457be2e74daab"
+      },
+      {
+        "path": "204/routes.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "2c6669b7a9944dda7b4c90d20ac9120fe7ff84e9",
+        "size": 199,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/2c6669b7a9944dda7b4c90d20ac9120fe7ff84e9"
+      },
+      {
+        "path": "42161",
+        "mode": "040000",
+        "type": "tree",
+        "sha": "8e8e5780944236fa48c5ea3b5048fef7bf70a679",
+        "url": "https://api.github.com/repos/derion-io/configs/git/trees/8e8e5780944236fa48c5ea3b5048fef7bf70a679"
+      },
+      {
+        "path": "42161/network.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "7c08ccb3a70d234e23e04a82f4f86cbb58738a61",
+        "size": 3010,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/7c08ccb3a70d234e23e04a82f4f86cbb58738a61"
+      },
+      {
+        "path": "42161/pools.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "72cf2af2dbafe797bce4965f7c182c6895c9e5a6",
+        "size": 147,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/72cf2af2dbafe797bce4965f7c182c6895c9e5a6"
+      },
+      {
+        "path": "42161/routes.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "68a8aa352856ab5e088be6484485b05ffb33d2b9",
+        "size": 555,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/68a8aa352856ab5e088be6484485b05ffb33d2b9"
+      },
+      {
+        "path": "56",
+        "mode": "040000",
+        "type": "tree",
+        "sha": "00914e9e9c035607ecf7aa2d701f1be1dfc2189e",
+        "url": "https://api.github.com/repos/derion-io/configs/git/trees/00914e9e9c035607ecf7aa2d701f1be1dfc2189e"
+      },
+      {
+        "path": "56/network.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "b0dfc56869975f0742475c1ab37984f6a01ccc55",
+        "size": 3351,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/b0dfc56869975f0742475c1ab37984f6a01ccc55"
+      },
+      {
+        "path": "56/pools.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "c906eba7acf74c89f74eba75700339ebbe9a37b5",
+        "size": 99,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/c906eba7acf74c89f74eba75700339ebbe9a37b5"
+      },
+      {
+        "path": "56/routes.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "1494b39a9abd49944b76bf7ac27f63f3bca3aeab",
+        "size": 1107,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/1494b39a9abd49944b76bf7ac27f63f3bca3aeab"
+      },
+      {
+        "path": "8453",
+        "mode": "040000",
+        "type": "tree",
+        "sha": "914c7f1fe893112e8bc363d9cc27fe761b1bbf83",
+        "url": "https://api.github.com/repos/derion-io/configs/git/trees/914c7f1fe893112e8bc363d9cc27fe761b1bbf83"
+      },
+      {
+        "path": "8453/network.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "59ebb36e57b15f89654a23db81544804784b563d",
+        "size": 1634,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/59ebb36e57b15f89654a23db81544804784b563d"
+      },
+      {
+        "path": "8453/pools.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "0d4f101c7a37a4c875e6999bee1a287fdb733380",
+        "size": 4,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/0d4f101c7a37a4c875e6999bee1a287fdb733380"
+      },
+      {
+        "path": "8453/routes.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "69a1dc53c9448fdf34ff7c918f41f4ddf318f8d0",
+        "size": 555,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/69a1dc53c9448fdf34ff7c918f41f4ddf318f8d0"
+      },
+      {
+        "path": "README.md",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "cad0268b145af4a2d72fd4677a439356e22eaf4a",
+        "size": 46,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/cad0268b145af4a2d72fd4677a439356e22eaf4a"
+      },
+      {
+        "path": "market",
+        "mode": "040000",
+        "type": "tree",
+        "sha": "389be495cb5994bbc8ee23edde3f896042da844d",
+        "url": "https://api.github.com/repos/derion-io/configs/git/trees/389be495cb5994bbc8ee23edde3f896042da844d"
+      },
+      {
+        "path": "market/prices.json",
+        "mode": "100644",
+        "type": "blob",
+        "sha": "35fc991aba1554bfd3f71a32788033df48ea9d54",
+        "size": 67,
+        "url": "https://api.github.com/repos/derion-io/configs/git/blobs/35fc991aba1554bfd3f71a32788033df48ea9d54"
+      }
+    ],
+    "truncated": false
+  },
+  "supportedChainPools": {
+    "137": [
+      "0x3932157A2fcE1B9Cf9c5a05BEB01548394cCDDc0",
+      "0x181E077AB3E3b28e675010DdDa73E6F470893086",
+      "0x90c153Fc30F6C2AbDD5FF3ccF22BaFBA872D1509",
+      "0x45c0C6a6d08B430F73b80b54dF09050114f5D55b"
+    ],
+    "42161": [
+      "0x3ed9997b3039b4A000f1BAfF3F6104FB05F4e53B",
+      "0xAaf8FAC8F5709B0c954c9Af1d369A9b157e31FfE",
+      "0xf3cE4cbfF83AE70e9F76b22cd9b683F167d396dd"
+    ],
+    "56": [
+      "0xcE3f8638A553e684AA42eC45D22e33714CFf8D73",
+      "0xCDE0253d1FFF060507a08d4B00aBC4a0d9F1AFDb"
+    ],
+    "8453": []
+  },
+  "selectedFunctions": [],
+  "limitations": [
+    "Historical deployments are not relabeled maintained current deployments; no generic ABI substituted. The current app sandbox is not a live supported-chain deployment."
+  ]
+}

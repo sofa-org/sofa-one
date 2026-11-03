@@ -1,0 +1,2394 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "address": "0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884",
+  "protocol": "Concentrator aCRV",
+  "protocolId": "concentrator-acrv",
+  "website": "https://concentrator.aladdin.club/",
+  "scope": "Current Ethereum Concentrator aCRV (AladdinCRVV2) fixed cvxCRV compounder. Five direct cvxCRV/CRV/fixed-wrapper deposit and cvxCRV withdrawal/redemption functions; distinct product/address from f(x) fxSAVE, despite common Aladdin ecosystem.",
+  "lifecycleEvidence": {
+    "verifiedAt": "2026-10-22",
+    "decision": "eligible-active",
+    "sourceRefs": [
+      "https://docs.aladdin.club/concentrator/contracts",
+      "https://docs.aladdin.club/concentrator",
+      "https://docs.aladdin.club/concentrator/concentrator-tutorial/deposit-and-withdraw",
+      "https://concentrator.aladdin.club/",
+      "https://etherscan.io/address/0x2b95A1Dcc3D405535f9ed33c219ab38E8d7e0884#code"
+    ],
+    "evidence": "Official current contracts table lists AladdinCRV/aCRV at the reviewed address without deprecation, while separately marking AladdinConvexVault 0xc8fF...E0e8 deprecated. Official product docs and tutorial continue to describe direct CRV/cvxCRV to aCRV deposits and unwrapping. Current app still exposes aCRV category and cvxcrv harvester entry, but its static compounder section does not itself establish a live aCRV AUM quote. Explorer snapshot shows depositWithCRV on 2026-10-19 and current deposit on 2026-10-16, plus withdrawals; reviewed sources contain no target retirement/wind-down/disband notice. Lifecycle inference is bounded to these signals, not DAU, transaction success, fresh runtime availability or vault TVL. Source annotations deprecate legacy overloads, not the entire upgraded aCRV product."
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://docs.aladdin.club/concentrator/contracts",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884",
+    "deployment": {
+      "transactionHash": "0x6d72e4c1ee2208dd684d39e2c14d563780d5c527d76f442bc3ebd0687163c8db",
+      "blockNumber": "14338749",
+      "transactionIndex": "187",
+      "deployer": "0x07dA2d30E26802ED65a52859a50872cfA615bD0A"
+    },
+    "proxyResolution": {
+      "isProxy": true,
+      "proxyType": "EIP1967Proxy",
+      "implementations": [
+        {
+          "address": "0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3",
+          "name": "AladdinCRVV2"
+        }
+      ]
+    },
+    "proxyContractName": "TransparentUpgradeableProxy",
+    "reportedProxyCreationMatch": "match",
+    "reportedProxyRuntimeMatch": "match",
+    "sourceServiceVerifiedAt": "2026-01-11T01:39:16Z"
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3?fields=all",
+    "verifiedAt": "2026-10-22",
+    "chainId": 1,
+    "address": "0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884",
+    "implementationAddress": "0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3",
+    "proxyResolutionSourceRef": "https://sourcify.dev/server/v2/contract/1/0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884?fields=all",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "sourceServiceVerifiedAt": "2024-08-08T18:51:18Z",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.7.6+commit.7338295f",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 200,
+          "enabled": true
+        },
+        "evmVersion": "istanbul",
+        "remappings": []
+      },
+      "name": "AladdinCRVV2",
+      "fullyQualifiedName": "contracts/concentrator/cvxcrv/AladdinCRVV2.sol:AladdinCRVV2"
+    },
+    "constructorArguments": "0x000000000000000000000000971add32ea87f10bd192671630be3be8a11b8623000000000000000000000000aa0c3f5f7dfd688c6e646f66cd2a6b66acdbe434",
+    "explorerSourceRef": "https://etherscan.io/address/0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3#code",
+    "explorerVerificationLabel": "Exact Match",
+    "evidence": "Complete actual deployed implementation ABI and source from Sourcify v2, bound by its reported EIP1967Proxy resolution; no generic ERC4626 substitution or fresh RPC attestation.",
+    "reportedProxyExplorerLabel": "Similar Match",
+    "proxySimilarMatchReference": "0xe293Bf6BcF1A72768dA0209F437491046359b9f2"
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_curveCvxCrvPool",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_wrapper",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "Approval",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "CancleCustomizeFee",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_feeType",
+          "type": "bytes32",
+          "indexed": false,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "_user",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "CustomizeFee",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_feeType",
+          "type": "bytes32",
+          "indexed": false,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "_user",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_rate",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Deposit",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Harvest",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "caller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "platformFee",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "harvestBounty",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Harvest",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_caller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MigrateStrategy",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_oldStrategy",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "_newStrategy",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OwnershipTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Transfer",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UpdateHarvestBountyPercentage",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_percentage",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UpdateHarvester",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_harvester",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UpdatePlatform",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_platform",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UpdatePlatformFeePercentage",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_feePercentage",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UpdateWithdrawalFeePercentage",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_feePercentage",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "UpdateZap",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_zap",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "receiver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "owner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "assets",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Withdraw",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "_sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "_option",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "enum IAladdinCRV.WithdrawOption"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "allowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "approve",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "asset",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "balanceOf",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "balanceOfUnderlying",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToAssets",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "convertToShares",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decimals",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "decreaseAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "subtractedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "deposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositAll",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositAllWithCRV",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositReward",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositWithCRV",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositWithWrapper",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "depositor",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getFeeRate",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_feeType",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "_user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "rate",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "harvest",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_minimumOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "harvestBountyPercentage",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "increaseAllowance",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "addedValue",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "initializeV2",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_strategy",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "maxDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "maxMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "maxRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "maxWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "migrateStrategy",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_newStrategy",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "mint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "name",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "platform",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "platformFeePercentage",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewDeposit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewMint",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewRedeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "previewWithdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "redeem",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "renounceOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "setWithdrawFeeForUser",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_user",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_percentage",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "strategy",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "symbol",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalAssets",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalSupply",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "totalUnderlying",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transfer",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferFrom",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "transferOwnership",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateDepositor",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_depositor",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateHarvestBountyPercentage",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_percentage",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateHarvester",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_harvester",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updatePlatform",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_platform",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updatePlatformFeePercentage",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_feePercentage",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateStrategyRewards",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newRewards",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateWithdrawFeePercentage",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_feePercentage",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "updateZap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_zap",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_minimumOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_option",
+          "type": "uint8",
+          "internalType": "enum IAladdinCRV.WithdrawOption"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "_withdrawed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdraw",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_assets",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_receiver",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdrawAll",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_minimumOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_option",
+          "type": "uint8",
+          "internalType": "enum IAladdinCRV.WithdrawOption"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "withdrawFeePercentage",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "zap",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "proxyAbi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_logic",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "admin_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "AdminChanged",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "Upgraded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "fallback",
+      "stateMutability": "payable"
+    },
+    {
+      "name": "admin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "admin_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "changeAdmin",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newAdmin",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "implementation",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "implementation_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "upgradeTo",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "upgradeToAndCall",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newImplementation",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "data",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionDecisions": [
+    {
+      "signature": "allowance(address,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only allowance metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "approve(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "approve modifies transferable share-token allowances rather than depositing or redeeming underlying assets; token-approval authorization remains separate."
+    },
+    {
+      "signature": "asset()",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "Read-only asset metadata/accounting/configuration query retained in ABI with pure mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "balanceOf(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only balanceOf metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "balanceOfUnderlying(address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only balanceOfUnderlying metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "convertToAssets(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToAssets metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "convertToShares(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only convertToShares metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "decimals()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only decimals metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "decreaseAllowance(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "decreaseAllowance modifies transferable share-token allowances rather than depositing or redeeming underlying assets; token-approval authorization remains separate."
+    },
+    {
+      "signature": "deposit(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Source explicitly marks this convenience/legacy entry deprecated; use current amount-first cvxCRV deposit or depositWithCRV instead; no legacy alias capability."
+    },
+    {
+      "signature": "deposit(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Concrete nonReentrant entry transfers fixed CVXCRV to the configured strategy and mints proportional aCRV to receiver; uint256 max means caller entire cvxCRV balance."
+    },
+    {
+      "signature": "depositAll(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Source explicitly marks this convenience/legacy entry deprecated; use current amount-first cvxCRV deposit or depositWithCRV instead; no legacy alias capability."
+    },
+    {
+      "signature": "depositAllWithCRV(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Source explicitly marks this convenience/legacy entry deprecated; use current amount-first cvxCRV deposit or depositWithCRV instead; no legacy alias capability."
+    },
+    {
+      "signature": "depositReward(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Requires msg.sender == depositor; protocol reward funding, not an ordinary aCRV deposit."
+    },
+    {
+      "signature": "depositWithCRV(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Fixed CRV input converts only through constructor-bound Curve CRV/cvxCRV pool or fixed Convex CRV depositor, then deposits strategy and mints aCRV; no arbitrary executor."
+    },
+    {
+      "signature": "depositWithWrapper(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Transfers only constructor-bound staking wrapper to configured strategy and mints corresponding aCRV; caller cannot choose input token or executor."
+    },
+    {
+      "signature": "depositor()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only depositor metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "getFeeRate(bytes32,address)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only getFeeRate metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "harvest(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Protocol-wide reward harvesting/compounding keeper operation, not a personal deposit/exit; aCRV ensureCallerIsHarvester may restrict caller to configured harvester."
+    },
+    {
+      "signature": "harvestBountyPercentage()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only harvestBountyPercentage metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "increaseAllowance(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "increaseAllowance modifies transferable share-token allowances rather than depositing or redeeming underlying assets; token-approval authorization remains separate."
+    },
+    {
+      "signature": "initializeV2(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "initializeV2 is one-time deployment/upgrade initialization, not an ordinary initialized deployment user action."
+    },
+    {
+      "signature": "maxDeposit(address)",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "Read-only maxDeposit metadata/accounting/configuration query retained in ABI with pure mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "maxMint(address)",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "Read-only maxMint metadata/accounting/configuration query retained in ABI with pure mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "maxRedeem(address)",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "Read-only maxRedeem metadata/accounting/configuration query retained in ABI with pure mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "maxWithdraw(address)",
+      "stateMutability": "pure",
+      "selected": false,
+      "reason": "Read-only maxWithdraw metadata/accounting/configuration query retained in ABI with pure mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "migrateStrategy(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "migrateStrategy is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "mint(uint256,address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Always reverts: mint is nonReentrant and internally calls deposit(uint256,address), also nonReentrant, hitting ReentrancyGuard: reentrant call. Not ordinary usable mint support."
+    },
+    {
+      "signature": "name()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only name metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "owner()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only owner metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "platform()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only platform metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "platformFeePercentage()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only platformFeePercentage metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "previewDeposit(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewDeposit metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "previewMint(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewMint metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "previewRedeem(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewRedeem metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "previewWithdraw(uint256)",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only previewWithdraw metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "redeem(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Owner or share-approved caller burns specified aCRV through _withdraw and configured strategy sends cvxCRV after owner-specific withdrawal fee; max sentinel redeems all owner shares."
+    },
+    {
+      "signature": "renounceOwnership()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "renounceOwnership is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "setWithdrawFeeForUser(address,uint32)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "setWithdrawFeeForUser is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "strategy()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only strategy metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "symbol()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only symbol metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "totalAssets()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalAssets metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "totalSupply()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalSupply metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "totalUnderlying()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only totalUnderlying metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "transfer(address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "transfer transfers vault/pool share tokens rather than performing the reviewed underlying savings workflow; separate token-transfer scope not admitted."
+    },
+    {
+      "signature": "transferFrom(address,address,uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "transferFrom transfers vault/pool share tokens rather than performing the reviewed underlying savings workflow; separate token-transfer scope not admitted."
+    },
+    {
+      "signature": "transferOwnership(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "transferOwnership is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "updateDepositor(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "updateDepositor is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "updateHarvestBountyPercentage(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "updateHarvestBountyPercentage is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "updateHarvester(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "updateHarvester is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "updatePlatform(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "updatePlatform is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "updatePlatformFeePercentage(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "updatePlatformFeePercentage is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "updateStrategyRewards(address[])",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "updateStrategyRewards is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "updateWithdrawFeePercentage(uint256)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "updateWithdrawFeePercentage is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "updateZap(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "updateZap is privileged owner/DEFAULT_ADMIN_ROLE configuration, ownership, fee or strategy administration; not admitted for ordinary users."
+    },
+    {
+      "signature": "withdraw(address,uint256,uint256,uint8)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Source marks enum-option withdrawal deprecated and exposes alternate fixed zap/native-token outputs; only current direct cvxCRV withdraw/redeem admitted."
+    },
+    {
+      "signature": "withdraw(uint256,address,address)",
+      "stateMutability": "nonpayable",
+      "selected": true,
+      "reason": "Owner or share-approved caller burns fee-adjusted owner shares through _withdraw and fixed strategy sends cvxCRV to receiver."
+    },
+    {
+      "signature": "withdrawAll(address,uint256,uint8)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Source marks enum-option withdrawal deprecated and exposes alternate fixed zap/native-token outputs; only current direct cvxCRV withdraw/redeem admitted."
+    },
+    {
+      "signature": "withdrawFeePercentage()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only withdrawFeePercentage metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "zap()",
+      "stateMutability": "view",
+      "selected": false,
+      "reason": "Read-only zap metadata/accounting/configuration query retained in ABI with view mutability; not activated as a transaction capability or implied read service."
+    },
+    {
+      "signature": "admin()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Transparent proxy administrator introspection, not an ordinary vault user operation.",
+      "interface": "proxy"
+    },
+    {
+      "signature": "changeAdmin(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Proxy administration changes the privileged administrator; forbidden administrative surface.",
+      "interface": "proxy"
+    },
+    {
+      "signature": "implementation()",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Transparent proxy implementation introspection, not a savings operation.",
+      "interface": "proxy"
+    },
+    {
+      "signature": "upgradeTo(address)",
+      "stateMutability": "nonpayable",
+      "selected": false,
+      "reason": "Proxy administrator can replace executable implementation; forbidden upgrade surface.",
+      "interface": "proxy"
+    },
+    {
+      "signature": "upgradeToAndCall(address,bytes)",
+      "stateMutability": "payable",
+      "selected": false,
+      "reason": "Proxy administrator upgrade with arbitrary delegatecall initialization data; forbidden upgrade/executor surface.",
+      "interface": "proxy"
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "abi": {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "concentrator-acrv:v1:1:0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884:deposit",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884",
+      "functionName": "deposit",
+      "signature": "deposit(uint256,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Concentrator aCRV",
+      "operation": "deposit",
+      "label": "Deposit cvxCRV for aCRV",
+      "warnings": [
+        "Static deployment/ABI admission only; no fresh RPC bytecode, storage, simulation, liquidity or successful-execution guarantee. Independent authorization, canonical calldata, pause and signing controls remain mandatory.",
+        "aCRV is an auto-compounding cvxCRV strategy share, not a USD stablecoin; Convex/Curve, strategy, depeg and owner-upgrade risks apply.",
+        "Withdraw/redeem charges the owner-specific withdrawal fee (except the final holder, whose exit harvests). Preview functions use the default fee and may not match customized owner fees; max* views return uint256 max rather than user-specific executable limits.",
+        "The deployed mint(uint256,address) is excluded: both mint and its internal call to deposit are nonReentrant, so mint always reverts at the nested guard."
+      ]
+    },
+    {
+      "abi": {
+        "name": "depositWithCRV",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_recipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "concentrator-acrv:v1:1:0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884:deposit-crv",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884",
+      "functionName": "depositWithCRV",
+      "signature": "depositWithCRV(address,uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Concentrator aCRV",
+      "operation": "deposit-crv",
+      "label": "Deposit CRV for aCRV",
+      "warnings": [
+        "Static deployment/ABI admission only; no fresh RPC bytecode, storage, simulation, liquidity or successful-execution guarantee. Independent authorization, canonical calldata, pause and signing controls remain mandatory.",
+        "aCRV is an auto-compounding cvxCRV strategy share, not a USD stablecoin; Convex/Curve, strategy, depeg and owner-upgrade risks apply.",
+        "Withdraw/redeem charges the owner-specific withdrawal fee (except the final holder, whose exit harvests). Preview functions use the default fee and may not match customized owner fees; max* views return uint256 max rather than user-specific executable limits.",
+        "The deployed mint(uint256,address) is excluded: both mint and its internal call to deposit are nonReentrant, so mint always reverts at the nested guard.",
+        "CRV conversion has no user-provided minimum-out parameter and uses Curve exchange min_dy=0 or Convex deposit; caller must account for execution-price and MEV risk."
+      ]
+    },
+    {
+      "abi": {
+        "name": "depositWithWrapper",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_recipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "concentrator-acrv:v1:1:0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884:deposit-wrapper",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884",
+      "functionName": "depositWithWrapper",
+      "signature": "depositWithWrapper(address,uint256)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Concentrator aCRV",
+      "operation": "deposit-wrapper",
+      "label": "Deposit cvxCRV wrapper for aCRV",
+      "warnings": [
+        "Static deployment/ABI admission only; no fresh RPC bytecode, storage, simulation, liquidity or successful-execution guarantee. Independent authorization, canonical calldata, pause and signing controls remain mandatory.",
+        "aCRV is an auto-compounding cvxCRV strategy share, not a USD stablecoin; Convex/Curve, strategy, depeg and owner-upgrade risks apply.",
+        "Withdraw/redeem charges the owner-specific withdrawal fee (except the final holder, whose exit harvests). Preview functions use the default fee and may not match customized owner fees; max* views return uint256 max rather than user-specific executable limits.",
+        "The deployed mint(uint256,address) is excluded: both mint and its internal call to deposit are nonReentrant, so mint always reverts at the nested guard.",
+        "Input is the immutable wrapper 0xaa0c3f5f7dfd688c6e646f66cd2a6b66acdbe434, not arbitrary ERC20 or underlying cvxCRV."
+      ]
+    },
+    {
+      "abi": {
+        "name": "redeem",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_shares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "concentrator-acrv:v1:1:0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884:redeem",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884",
+      "functionName": "redeem",
+      "signature": "redeem(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Concentrator aCRV",
+      "operation": "redeem",
+      "label": "Redeem aCRV for cvxCRV",
+      "warnings": [
+        "Static deployment/ABI admission only; no fresh RPC bytecode, storage, simulation, liquidity or successful-execution guarantee. Independent authorization, canonical calldata, pause and signing controls remain mandatory.",
+        "aCRV is an auto-compounding cvxCRV strategy share, not a USD stablecoin; Convex/Curve, strategy, depeg and owner-upgrade risks apply.",
+        "Withdraw/redeem charges the owner-specific withdrawal fee (except the final holder, whose exit harvests). Preview functions use the default fee and may not match customized owner fees; max* views return uint256 max rather than user-specific executable limits.",
+        "The deployed mint(uint256,address) is excluded: both mint and its internal call to deposit are nonReentrant, so mint always reverts at the nested guard."
+      ]
+    },
+    {
+      "abi": {
+        "name": "withdraw",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "_assets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "_receiver",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "_owner",
+            "type": "address",
+            "internalType": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "capabilityId": "concentrator-acrv:v1:1:0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884:withdraw",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884",
+      "functionName": "withdraw",
+      "signature": "withdraw(uint256,address,address)",
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://sourcify.dev/server/v2/contract/1/0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3?fields=all",
+        "status": "verified",
+        "verifiedAt": "2026-10-22"
+      },
+      "protocol": "Concentrator aCRV",
+      "operation": "withdraw",
+      "label": "Withdraw cvxCRV from aCRV",
+      "warnings": [
+        "Static deployment/ABI admission only; no fresh RPC bytecode, storage, simulation, liquidity or successful-execution guarantee. Independent authorization, canonical calldata, pause and signing controls remain mandatory.",
+        "aCRV is an auto-compounding cvxCRV strategy share, not a USD stablecoin; Convex/Curve, strategy, depeg and owner-upgrade risks apply.",
+        "Withdraw/redeem charges the owner-specific withdrawal fee (except the final holder, whose exit harvests). Preview functions use the default fee and may not match customized owner fees; max* views return uint256 max rather than user-specific executable limits.",
+        "The deployed mint(uint256,address) is excluded: both mint and its internal call to deposit are nonReentrant, so mint always reverts at the nested guard."
+      ]
+    }
+  ],
+  "sourceSemantics": {
+    "binding": "Sourcify reports EIP1967Proxy 0x2b95...0884 implementation AladdinCRVV2 0x9A68...d3d3; explorer proxy page reports the same. Applicable implementation is Exact Match on Etherscan and exact_match for Sourcify creation/runtime. Proxy itself is Similar Match on Etherscan (reference 0xe293Bf6BcF1A72768dA0209F437491046359b9f2), and Sourcify reports match/match rather than exact_match; these labels are intentionally not conflated. Constructor binds CRV/cvxCRV Curve pool 0x971add32ea87f10bd192671630be3be8a11b8623 and wrapper 0xaa0c3f5f7dfd688c6e646f66cd2a6b66acdbe434.",
+    "ordinaryFlow": "Current deposit(uint256,address) transfers fixed cvxCRV to configured strategy, calls strategy.deposit and mints aCRV. CRV input path chooses constructor-bound Curve exchange or fixed Convex CRV depositor; no arbitrary target/route data. Fixed wrapper input sends only wrapper shares to strategy. Current withdraw/redeem burn authorized owner shares and receive strategy cvxCRV; owner-specific fee applies and final holder harvests before exit.",
+    "unusableMint": "mint(uint256,address) is marked nonReentrant and directly internally calls public deposit(uint256,address), also nonReentrant; inherited ReentrancyGuard status is ENTERED during the inner call and always reverts. Excluded even though ABI resembles ERC4626. No runtime simulation claimed.",
+    "excludedLegacy": "deposit(address,uint256), depositAll, depositAllWithCRV, enum-option withdraw and withdrawAll are source-deprecated and not selected. balanceOfUnderlying is source-deprecated view only. No legacy AladdinConvexVault admission.",
+    "reviewedSources": [
+      {
+        "implementationAddress": "0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3",
+        "path": "contracts/concentrator/ConcentratorBase.sol",
+        "content": "// SPDX-License-Identifier: MIT\n\npragma solidity ^0.7.6;\n\n// solhint-disable no-inline-assembly\n\ncontract ConcentratorBase {\n  /**********\n   * Events *\n   **********/\n\n  /// @notice Emitted when the harvester contract is updated.\n  /// @param _harvester The address of the harvester contract.\n  event UpdateHarvester(address _harvester);\n\n  /// @notice Emitted when the zap contract is updated.\n  /// @param _zap The address of the zap contract.\n  event UpdateZap(address _zap);\n\n  /*************\n   * Constants *\n   *************/\n\n  /// @dev The storage slot for harvester storage.\n  bytes32 private constant CONCENTRATOR_STORAGE_POSITION = keccak256(\"concentrator.base.storage\");\n\n  /***********\n   * Structs *\n   ***********/\n\n  struct BaseStorage {\n    address harvester;\n    uint256[100] gaps;\n  }\n\n  /**********************\n   * Internal Functions *\n   **********************/\n\n  function baseStorage() internal pure returns (BaseStorage storage bs) {\n    bytes32 position = CONCENTRATOR_STORAGE_POSITION;\n    assembly {\n      bs.slot := position\n    }\n  }\n\n  function _updateHarvester(address _harvester) internal {\n    baseStorage().harvester = _harvester;\n\n    emit UpdateHarvester(_harvester);\n  }\n\n  function ensureCallerIsHarvester() internal view {\n    address _harvester = baseStorage().harvester;\n\n    require(_harvester == address(0) || _harvester == msg.sender, \"only harvester\");\n  }\n}\n"
+      },
+      {
+        "implementationAddress": "0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3",
+        "path": "contracts/concentrator/cvxcrv/AladdinCRVV2.sol",
+        "content": "// SPDX-License-Identifier: MIT\n\npragma solidity ^0.7.6;\n\nimport \"@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\";\nimport \"@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol\";\n\nimport \"../../interfaces/concentrator/IAladdinCRV.sol\";\nimport \"../../interfaces/concentrator/IAladdinCompounder.sol\";\nimport \"../../interfaces/concentrator/IConcentratorStrategy.sol\";\nimport \"../../interfaces/IConvexBasicRewards.sol\";\nimport \"../../interfaces/IConvexCRVDepositor.sol\";\nimport \"../../interfaces/ICurveFactoryPlainPool.sol\";\nimport \"../../interfaces/ICvxCrvStakingWrapper.sol\";\nimport \"../../interfaces/IZap.sol\";\n\nimport \"../../common/fees/FeeCustomization.sol\";\nimport \"../ConcentratorBase.sol\";\n\n// solhint-disable no-empty-blocks, reason-string\ncontract AladdinCRVV2 is\n  ERC20Upgradeable,\n  OwnableUpgradeable,\n  ReentrancyGuardUpgradeable,\n  FeeCustomization,\n  ConcentratorBase,\n  IAladdinCRV,\n  IAladdinCompounder\n{\n  using SafeMathUpgradeable for uint256;\n  using SafeERC20Upgradeable for IERC20Upgradeable;\n\n  /// @notice Emitted when pool assets migrated.\n  /// @param _oldStrategy The address of old strategy.\n  /// @param _newStrategy The address of current strategy.\n  event MigrateStrategy(address _oldStrategy, address _newStrategy);\n\n  /// @dev The type for withdraw fee, used in FeeCustomization.\n  bytes32 internal constant WITHDRAW_FEE_TYPE = keccak256(\"AladdinCRV.WithdrawFee\");\n\n  /// @dev The maximum percentage of withdraw fee.\n  uint256 private constant MAX_WITHDRAW_FEE = 1e8; // 10%\n\n  /// @dev The maximum percentage of platform fee.\n  uint256 private constant MAX_PLATFORM_FEE = 2e8; // 20%\n\n  /// @dev The maximum percentage of harvest bounty.\n  uint256 private constant MAX_HARVEST_BOUNTY = 1e8; // 10%\n\n  /// @dev The address of cvxCRV token.\n  address private constant CVXCRV = 0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7;\n\n  /// @dev The address of CRV token.\n  address private constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;\n\n  /// @dev The address of CVX token.\n  address private constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;\n\n  /// @dev The address of Convex cvxCRV Staking Contract.\n  address private constant CVXCRV_STAKING = 0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e;\n\n  /// @dev The address of Convex CRV => cvxCRV Contract.\n  address private constant CRV_DEPOSITOR = 0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae;\n\n  /// @dev The address of Curve cvxCRV/CRV pool.\n  address private immutable curveCvxCrvPool;\n\n  /// @dev The token index for CRV in Curve cvxCRV/CRV pool.\n  int128 private immutable poolIndexCRV;\n\n  /// @dev The address of CvxCrvStakingWrapper contract.\n  address private immutable wrapper;\n\n  /// @notice The address of ZAP contract, will be used to swap tokens.\n  address public zap;\n\n  /// @notice The percentage of token to take on withdraw\n  uint256 public withdrawFeePercentage;\n\n  /// @notice The percentage of rewards to take for platform on harvest\n  uint256 public platformFeePercentage;\n\n  /// @notice The percentage of rewards to take for caller on harvest\n  uint256 public harvestBountyPercentage;\n\n  /// @notice The address of recipient of platform fee\n  address public platform;\n\n  /// @inheritdoc IAladdinCRV\n  uint256 public override totalUnderlying;\n\n  /// @notice The address of strategy.\n  address public strategy;\n\n  /// @notice The address of rewards depositor.\n  address public depositor;\n\n  receive() external payable {}\n\n  constructor(address _curveCvxCrvPool, address _wrapper) {\n    curveCvxCrvPool = _curveCvxCrvPool;\n    address _token0 = ICurveFactoryPlainPool(_curveCvxCrvPool).coins(0);\n    poolIndexCRV = _token0 == CRV ? 0 : 1;\n    wrapper = _wrapper;\n  }\n\n  function initializeV2(address _strategy) external {\n    require(strategy == address(0), \"initialized\");\n    strategy = _strategy;\n\n    // make sure harvest is called before upgrade.\n    require(IConvexBasicRewards(CVXCRV_STAKING).earned(address(this)) == 0, \"not harvested\");\n\n    // withdraw all cvxCRV from staking contract\n    uint256 _totalUnderlying = IConvexBasicRewards(CVXCRV_STAKING).balanceOf(address(this));\n    IConvexBasicRewards(CVXCRV_STAKING).withdraw(_totalUnderlying, false);\n\n    // transfer all cvxCRV to strategy contract.\n    IERC20Upgradeable(CVXCRV).safeTransfer(_strategy, _totalUnderlying);\n    IConcentratorStrategy(_strategy).deposit(address(0), _totalUnderlying);\n    totalUnderlying = _totalUnderlying;\n\n    // approves\n    IERC20Upgradeable(CRV).safeApprove(curveCvxCrvPool, uint256(-1));\n    IERC20Upgradeable(CRV).safeApprove(CRV_DEPOSITOR, uint256(-1));\n  }\n\n  /********************************** View Functions **********************************/\n\n  /// @inheritdoc IAladdinCRV\n  /// @dev deprecated.\n  function balanceOfUnderlying(address _user) external view override returns (uint256) {\n    uint256 _totalSupply = totalSupply();\n    if (_totalSupply == 0) return 0;\n    uint256 _balance = balanceOf(_user);\n    return _balance.mul(totalUnderlying) / _totalSupply;\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function asset() external pure override returns (address) {\n    return CVXCRV;\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function totalAssets() public view override returns (uint256) {\n    return totalUnderlying;\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function convertToShares(uint256 _assets) public view override returns (uint256 shares) {\n    uint256 _totalAssets = totalAssets();\n    if (_totalAssets == 0) return _assets;\n\n    uint256 _totalShares = totalSupply();\n    return _totalShares.mul(_assets) / _totalAssets;\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function convertToAssets(uint256 _shares) public view override returns (uint256) {\n    uint256 _totalShares = totalSupply();\n    if (_totalShares == 0) return _shares;\n\n    uint256 _totalAssets = totalAssets();\n    return _totalAssets.mul(_shares) / _totalShares;\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function maxDeposit(address) external pure override returns (uint256) {\n    return uint256(-1);\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function previewDeposit(uint256 _assets) external view override returns (uint256) {\n    return convertToShares(_assets);\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function maxMint(address) external pure override returns (uint256) {\n    return uint256(-1);\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function previewMint(uint256 _shares) external view override returns (uint256) {\n    return convertToAssets(_shares);\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function maxWithdraw(address) external pure override returns (uint256) {\n    return uint256(-1);\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function previewWithdraw(uint256 _assets) external view override returns (uint256) {\n    uint256 _totalAssets = totalAssets();\n    require(_assets <= _totalAssets, \"exceed total assets\");\n    uint256 _shares = convertToShares(_assets);\n    if (_assets == _totalAssets) {\n      return _shares;\n    } else {\n      return _shares.mul(FEE_PRECISION).div(FEE_PRECISION - withdrawFeePercentage);\n    }\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function maxRedeem(address) external pure override returns (uint256) {\n    return uint256(-1);\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function previewRedeem(uint256 _shares) external view override returns (uint256) {\n    uint256 _totalSupply = totalSupply();\n    require(_shares <= _totalSupply, \"exceed total supply\");\n\n    uint256 _assets = convertToAssets(_shares);\n    if (_shares == totalSupply()) {\n      return _assets;\n    } else {\n      uint256 _withdrawFee = _assets.mul(withdrawFeePercentage) / FEE_PRECISION;\n      return _assets - _withdrawFee;\n    }\n  }\n\n  /********************************** Mutated Functions **********************************/\n\n  /// @inheritdoc IAladdinCompounder\n  function deposit(uint256 _assets, address _receiver) public override nonReentrant returns (uint256) {\n    if (_assets == uint256(-1)) {\n      _assets = IERC20Upgradeable(CVXCRV).balanceOf(msg.sender);\n    }\n\n    address _strategy = strategy;\n    IERC20Upgradeable(CVXCRV).safeTransferFrom(msg.sender, _strategy, _assets);\n    IConcentratorStrategy(_strategy).deposit(_receiver, _assets);\n\n    return _deposit(_receiver, _assets);\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function mint(uint256 _shares, address _receiver) external override nonReentrant returns (uint256) {\n    uint256 _assets = convertToAssets(_shares);\n    deposit(_assets, _receiver);\n    return _assets;\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function withdraw(\n    uint256 _assets,\n    address _receiver,\n    address _owner\n  ) external override nonReentrant returns (uint256) {\n    if (_assets == uint256(-1)) {\n      _assets = convertToAssets(balanceOf(_owner));\n    }\n\n    uint256 _totalAssets = totalAssets();\n    require(_assets <= _totalAssets, \"exceed total assets\");\n\n    uint256 _shares = convertToShares(_assets);\n    if (_assets < _totalAssets) {\n      uint256 _withdrawPercentage = getFeeRate(WITHDRAW_FEE_TYPE, _owner);\n      _shares = _shares.mul(FEE_PRECISION).div(FEE_PRECISION - _withdrawPercentage);\n    }\n\n    if (msg.sender != _owner) {\n      uint256 _allowance = allowance(_owner, msg.sender);\n      require(_allowance >= _shares, \"withdraw exceeds allowance\");\n      if (_allowance != uint256(-1)) {\n        // decrease allowance if it is not max\n        _approve(_owner, msg.sender, _allowance - _shares);\n      }\n    }\n\n    _withdraw(_shares, _receiver, _owner);\n    return _shares;\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function redeem(\n    uint256 _shares,\n    address _receiver,\n    address _owner\n  ) public override nonReentrant returns (uint256) {\n    if (_shares == uint256(-1)) {\n      _shares = balanceOf(_owner);\n    }\n\n    if (msg.sender != _owner) {\n      uint256 _allowance = allowance(_owner, msg.sender);\n      require(_allowance >= _shares, \"redeem exceeds allowance\");\n      if (_allowance != uint256(-1)) {\n        // decrease allowance if it is not max\n        _approve(_owner, msg.sender, _allowance - _shares);\n      }\n    }\n\n    return _withdraw(_shares, _receiver, _owner);\n  }\n\n  /// @inheritdoc IAladdinCRV\n  /// @dev deprecated.\n  function deposit(address _recipient, uint256 _amount) public override returns (uint256) {\n    return deposit(_amount, _recipient);\n  }\n\n  /// @inheritdoc IAladdinCRV\n  /// @dev deprecated.\n  function depositAll(address _recipient) external override returns (uint256) {\n    return deposit(uint256(-1), _recipient);\n  }\n\n  /// @inheritdoc IAladdinCRV\n  function depositWithCRV(address _recipient, uint256 _amount) public override nonReentrant returns (uint256) {\n    if (_amount == uint256(-1)) {\n      _amount = IERC20Upgradeable(CRV).balanceOf(msg.sender);\n    }\n    IERC20Upgradeable(CRV).safeTransferFrom(msg.sender, address(this), _amount);\n\n    address _strategy = strategy;\n    _amount = _swapCRVToCvxCRV(_amount, _strategy);\n    IConcentratorStrategy(_strategy).deposit(_recipient, _amount);\n\n    return _deposit(_recipient, _amount);\n  }\n\n  /// @inheritdoc IAladdinCRV\n  /// @dev deprecated.\n  function depositAllWithCRV(address _recipient) external override returns (uint256) {\n    return depositWithCRV(_recipient, uint256(-1));\n  }\n\n  /// @notice Deposit cvxCRV staking wrapper token to this contract\n  /// @param _recipient - The address who will receive the aCRV token.\n  /// @param _amount - The amount of cvxCRV staking wrapper to deposit.\n  /// @return share - The amount of aCRV received.\n  function depositWithWrapper(address _recipient, uint256 _amount) external returns (uint256) {\n    if (_amount == uint256(-1)) {\n      _amount = IERC20Upgradeable(wrapper).balanceOf(msg.sender);\n    }\n    IERC20Upgradeable(wrapper).safeTransferFrom(msg.sender, strategy, _amount);\n    return _deposit(_recipient, _amount);\n  }\n\n  /// @inheritdoc IAladdinCRV\n  /// @dev deprecated.\n  function withdraw(\n    address _recipient,\n    uint256 _shares,\n    uint256 _minimumOut,\n    WithdrawOption _option\n  ) public override nonReentrant returns (uint256 _withdrawed) {\n    if (_shares == uint256(-1)) {\n      _shares = balanceOf(msg.sender);\n    }\n\n    if (_option == WithdrawOption.Withdraw) {\n      _withdrawed = _withdraw(_shares, _recipient, msg.sender);\n      require(_withdrawed >= _minimumOut, \"AladdinCRV: insufficient output\");\n    } else {\n      _withdrawed = _withdraw(_shares, address(this), msg.sender);\n      _withdrawed = _withdrawAs(_recipient, _withdrawed, _minimumOut, _option);\n    }\n\n    // legacy event from IAladdinCRV\n    emit Withdraw(msg.sender, _recipient, _shares, _option);\n  }\n\n  /// @inheritdoc IAladdinCRV\n  /// @dev deprecated.\n  function withdrawAll(\n    address _recipient,\n    uint256 _minimumOut,\n    WithdrawOption _option\n  ) external override returns (uint256) {\n    return withdraw(_recipient, uint256(-1), _minimumOut, _option);\n  }\n\n  /// @inheritdoc IAladdinCompounder\n  function harvest(address _recipient, uint256 _minimumOut)\n    public\n    override(IAladdinCRV, IAladdinCompounder)\n    nonReentrant\n    returns (uint256)\n  {\n    ensureCallerIsHarvester();\n\n    return _harvest(_recipient, _minimumOut);\n  }\n\n  /// @notice Deposit and notify new rewards.\n  /// @param _amount The amount of rewards to deposit.\n  function depositReward(uint256 _amount) external {\n    require(depositor == msg.sender, \"only reward depositor\");\n\n    address _strategy = strategy;\n    IERC20Upgradeable(CVXCRV).safeTransferFrom(msg.sender, _strategy, _amount);\n    IConcentratorStrategy(_strategy).deposit(address(this), _amount);\n\n    totalUnderlying += _amount;\n  }\n\n  /********************************** Restricted Functions **********************************/\n\n  /// @notice Update the withdraw fee percentage.\n  /// @param _feePercentage - The fee percentage to update.\n  function updateWithdrawFeePercentage(uint256 _feePercentage) external onlyOwner {\n    require(_feePercentage <= MAX_WITHDRAW_FEE, \"AladdinCRV: fee too large\");\n    withdrawFeePercentage = _feePercentage;\n\n    emit UpdateWithdrawalFeePercentage(_feePercentage);\n  }\n\n  /// @notice Update the platform fee percentage.\n  /// @param _feePercentage - The fee percentage to update.\n  function updatePlatformFeePercentage(uint256 _feePercentage) external onlyOwner {\n    require(_feePercentage <= MAX_PLATFORM_FEE, \"AladdinCRV: fee too large\");\n    platformFeePercentage = _feePercentage;\n\n    emit UpdatePlatformFeePercentage(_feePercentage);\n  }\n\n  /// @notice Update the harvest bounty percentage.\n  /// @param _percentage - The fee percentage to update.\n  function updateHarvestBountyPercentage(uint256 _percentage) external onlyOwner {\n    require(_percentage <= MAX_HARVEST_BOUNTY, \"AladdinCRV: fee too large\");\n    harvestBountyPercentage = _percentage;\n\n    emit UpdateHarvestBountyPercentage(_percentage);\n  }\n\n  /// @notice Update the recipient\n  function updatePlatform(address _platform) external onlyOwner {\n    require(_platform != address(0), \"AladdinCRV: zero platform address\");\n    platform = _platform;\n\n    emit UpdatePlatform(_platform);\n  }\n\n  /// @notice Update the zap contract\n  function updateZap(address _zap) external onlyOwner {\n    require(_zap != address(0), \"AladdinCRV: zero zap address\");\n    zap = _zap;\n\n    emit UpdateZap(_zap);\n  }\n\n  /// @notice Update the harvester contract\n  /// @param _harvester The address of the harvester contract.\n  function updateHarvester(address _harvester) external onlyOwner {\n    _updateHarvester(_harvester);\n  }\n\n  /// @notice Update the address of reward depositor.\n  /// @param _depositor The address of reward depositor.\n  function updateDepositor(address _depositor) external onlyOwner {\n    depositor = _depositor;\n  }\n\n  /// @notice Migrate pool assets to new strategy.\n  /// @param _newStrategy The address of new strategy.\n  function migrateStrategy(address _newStrategy) external onlyOwner {\n    require(_newStrategy != address(0), \"AladdinCRV: zero new strategy address\");\n\n    uint256 _totalUnderlying = totalUnderlying;\n    address _oldStrategy = strategy;\n    strategy = _newStrategy;\n\n    IConcentratorStrategy(_oldStrategy).prepareMigrate(_newStrategy);\n    IConcentratorStrategy(_oldStrategy).withdraw(_newStrategy, _totalUnderlying);\n    IConcentratorStrategy(_oldStrategy).finishMigrate(_newStrategy);\n\n    IConcentratorStrategy(_newStrategy).deposit(address(this), _totalUnderlying);\n\n    emit MigrateStrategy(_oldStrategy, _newStrategy);\n  }\n\n  /// @notice Update rewards list of underlying strategy.\n  /// @param newRewards The list of addresses of new rewards.\n  function updateStrategyRewards(address[] memory newRewards) external onlyOwner {\n    IConcentratorStrategy(strategy).updateRewards(newRewards);\n  }\n\n  /// @notice Update withdraw fee for certain user.\n  /// @param _user The address of user to update.\n  /// @param _percentage The withdraw fee percentage to be updated, multipled by 1e9.\n  function setWithdrawFeeForUser(address _user, uint32 _percentage) external onlyOwner {\n    require(_percentage <= MAX_WITHDRAW_FEE, \"withdraw fee too large\");\n\n    _setFeeCustomization(WITHDRAW_FEE_TYPE, _user, _percentage);\n  }\n\n  /********************************** Internal Functions **********************************/\n\n  function _deposit(address _recipient, uint256 _amount) internal returns (uint256) {\n    require(_amount > 0, \"AladdinCRV: zero amount deposit\");\n    uint256 _totalUnderlying = totalUnderlying;\n    uint256 _totalSupply = totalSupply();\n\n    uint256 _shares;\n    if (_totalSupply == 0) {\n      _shares = _amount;\n    } else {\n      _shares = _amount.mul(_totalSupply) / _totalUnderlying;\n    }\n    _mint(_recipient, _shares);\n    totalUnderlying = _totalUnderlying + _amount;\n\n    // legacy event from IAladdinCRV\n    emit Deposit(msg.sender, _recipient, _amount);\n\n    emit Deposit(msg.sender, _recipient, _amount, _shares);\n    return _shares;\n  }\n\n  function _withdraw(\n    uint256 _shares,\n    address _receiver,\n    address _owner\n  ) internal returns (uint256 _withdrawable) {\n    require(_shares > 0, \"AladdinCRV: zero share withdraw\");\n    require(_shares <= balanceOf(_owner), \"AladdinCRV: shares not enough\");\n    uint256 _totalUnderlying = totalUnderlying;\n    uint256 _amount = _shares.mul(_totalUnderlying) / totalSupply();\n    _burn(_owner, _shares);\n\n    if (totalSupply() == 0) {\n      // If user is last to withdraw, harvest before exit\n      // The first parameter is actually not used.\n      _harvest(msg.sender, 0);\n      _totalUnderlying = totalUnderlying; // `totalUnderlying` is updated in `_harvest`.\n      _withdrawable = _totalUnderlying;\n      IConcentratorStrategy(strategy).withdraw(_receiver, _withdrawable);\n    } else {\n      // Otherwise compute share and unstake\n      _withdrawable = _amount;\n      // Substract a small withdrawal fee to prevent users \"timing\"\n      // the harvests. The fee stays staked and is therefore\n      // redistributed to all remaining participants.\n      uint256 _withdrawFeePercentage = getFeeRate(WITHDRAW_FEE_TYPE, _owner);\n      uint256 _withdrawFee = (_withdrawable * _withdrawFeePercentage) / FEE_PRECISION;\n      _withdrawable = _withdrawable - _withdrawFee; // never overflow here\n      IConcentratorStrategy(strategy).withdraw(_receiver, _withdrawable);\n    }\n    totalUnderlying = _totalUnderlying - _withdrawable;\n\n    emit Withdraw(msg.sender, _receiver, _owner, _withdrawable, _shares);\n\n    return _withdrawable;\n  }\n\n  function _withdrawAs(\n    address _recipient,\n    uint256 _amount,\n    uint256 _minimumOut,\n    WithdrawOption _option\n  ) internal returns (uint256) {\n    if (_option == WithdrawOption.WithdrawAndStake) {\n      // simply stake the cvxCRV for _recipient\n      require(_amount >= _minimumOut, \"AladdinCRV: insufficient output\");\n      IERC20Upgradeable(CVXCRV).safeApprove(wrapper, 0);\n      IERC20Upgradeable(CVXCRV).safeApprove(wrapper, _amount);\n      ICvxCrvStakingWrapper(wrapper).stakeFor(_recipient, _amount);\n    } else {\n      address _toToken;\n      if (_option == WithdrawOption.WithdrawAsCRV) _toToken = CRV;\n      else if (_option == WithdrawOption.WithdrawAsETH) _toToken = address(0);\n      else if (_option == WithdrawOption.WithdrawAsCVX) _toToken = CVX;\n      else revert(\"AladdinCRV: unsupported option\");\n\n      address _zap = zap;\n      IERC20Upgradeable(CVXCRV).safeTransfer(_zap, _amount);\n      _amount = IZap(_zap).zap(CVXCRV, _amount, _toToken, _minimumOut);\n\n      if (_toToken == address(0)) {\n        // solhint-disable-next-line avoid-low-level-calls\n        (bool success, ) = _recipient.call{ value: _amount }(\"\");\n        require(success, \"AladdinCRV: ETH transfer failed\");\n      } else {\n        IERC20Upgradeable(_toToken).safeTransfer(_recipient, _amount);\n      }\n    }\n    return _amount;\n  }\n\n  function _harvest(address _recipient, uint256 _minimumOut) internal returns (uint256) {\n    address _strategy = strategy;\n\n    // harvest CRV from strategy\n    uint256 _amountCRV = IConcentratorStrategy(_strategy).harvest(zap, CRV);\n    // swap CRV to cvxCRV\n    uint256 _amount = _swapCRVToCvxCRV(_amountCRV, _strategy);\n    require(_amount >= _minimumOut, \"AladdinCRV: insufficient rewards\");\n    // send back to strategy\n    IConcentratorStrategy(_strategy).deposit(address(0), _amount);\n\n    // legacy event from IAladdinCRV\n    emit Harvest(msg.sender, _amount);\n\n    // distribute fee and bounty\n    uint256 _totalSupply = totalSupply();\n    uint256 _platformFee = platformFeePercentage;\n    uint256 _harvestBounty = harvestBountyPercentage;\n    if (_platformFee > 0) {\n      _platformFee = (_platformFee * _amount) / FEE_PRECISION;\n    }\n    if (_harvestBounty > 0) {\n      _harvestBounty = (_harvestBounty * _amount) / FEE_PRECISION;\n    }\n    uint256 _stakeAmount = _amount - _platformFee - _harvestBounty; // never overflow here\n    // This is the amount of underlying after staking harvested rewards.\n    uint256 _underlying = totalUnderlying + _stakeAmount;\n    // This is the share for platform fee.\n    _platformFee = (_platformFee * _totalSupply) / _underlying;\n    // This is the share for harvest bounty.\n    _harvestBounty = (_harvestBounty * _totalSupply) / _underlying;\n\n    emit Harvest(msg.sender, _recipient, _amount, _platformFee, _harvestBounty);\n\n    _mint(platform, _platformFee);\n    _mint(_recipient, _harvestBounty);\n\n    totalUnderlying += _amount;\n    return _amount;\n  }\n\n  /// @dev Internal function to swap CRV to cvxCRV\n  /// @param _amountIn The amount of CRV to swap.\n  /// @param _recipient The address of recipient who will recieve the cvxCRV.\n  function _swapCRVToCvxCRV(uint256 _amountIn, address _recipient) internal returns (uint256) {\n    // CRV swap to CVXCRV or stake to CVXCRV\n    // CRV swap to CVXCRV or stake to CVXCRV\n    uint256 _amountOut = ICurveFactoryPlainPool(curveCvxCrvPool).get_dy(poolIndexCRV, 1 - poolIndexCRV, _amountIn);\n    bool useCurve = _amountOut > _amountIn;\n\n    if (useCurve) {\n      IERC20Upgradeable(CRV).safeApprove(curveCvxCrvPool, 0);\n      IERC20Upgradeable(CRV).safeApprove(curveCvxCrvPool, _amountIn);\n      _amountOut = ICurveFactoryPlainPool(curveCvxCrvPool).exchange(\n        poolIndexCRV,\n        1 - poolIndexCRV,\n        _amountIn,\n        0,\n        _recipient\n      );\n    } else {\n      uint256 _lockIncentive = IConvexCRVDepositor(CRV_DEPOSITOR).lockIncentive();\n      // if use `lock = false`, will possible take fee\n      // if use `lock = true`, some incentive will be given\n      _amountOut = IERC20Upgradeable(CVXCRV).balanceOf(address(this));\n      if (_lockIncentive == 0) {\n        // no lock incentive, use `lock = false`\n        IConvexCRVDepositor(CRV_DEPOSITOR).deposit(_amountIn, false, address(0));\n      } else {\n        // no lock incentive, use `lock = true`\n        IConvexCRVDepositor(CRV_DEPOSITOR).deposit(_amountIn, true, address(0));\n      }\n      _amountOut = IERC20Upgradeable(CVXCRV).balanceOf(address(this)) - _amountOut; // never overflow here\n      if (_recipient != address(this)) {\n        IERC20Upgradeable(CVXCRV).safeTransfer(_recipient, _amountOut);\n      }\n    }\n    return _amountOut;\n  }\n\n  /// @inheritdoc FeeCustomization\n  function _defaultFeeRate(bytes32) internal view override returns (uint256) {\n    return withdrawFeePercentage;\n  }\n}\n"
+      },
+      {
+        "implementationAddress": "0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3",
+        "path": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol",
+        "content": "// SPDX-License-Identifier: MIT\n\npragma solidity ^0.7.0;\nimport \"../proxy/Initializable.sol\";\n\n/**\n * @dev Contract module that helps prevent reentrant calls to a function.\n *\n * Inheriting from `ReentrancyGuard` will make the {nonReentrant} modifier\n * available, which can be applied to functions to make sure there are no nested\n * (reentrant) calls to them.\n *\n * Note that because there is a single `nonReentrant` guard, functions marked as\n * `nonReentrant` may not call one another. This can be worked around by making\n * those functions `private`, and then adding `external` `nonReentrant` entry\n * points to them.\n *\n * TIP: If you would like to learn more about reentrancy and alternative ways\n * to protect against it, check out our blog post\n * https://blog.openzeppelin.com/reentrancy-after-istanbul/[Reentrancy After Istanbul].\n */\nabstract contract ReentrancyGuardUpgradeable is Initializable {\n    // Booleans are more expensive than uint256 or any type that takes up a full\n    // word because each write operation emits an extra SLOAD to first read the\n    // slot's contents, replace the bits taken up by the boolean, and then write\n    // back. This is the compiler's defense against contract upgrades and\n    // pointer aliasing, and it cannot be disabled.\n\n    // The values being non-zero value makes deployment a bit more expensive,\n    // but in exchange the refund on every call to nonReentrant will be lower in\n    // amount. Since refunds are capped to a percentage of the total\n    // transaction's gas, it is best to keep them low in cases like this one, to\n    // increase the likelihood of the full refund coming into effect.\n    uint256 private constant _NOT_ENTERED = 1;\n    uint256 private constant _ENTERED = 2;\n\n    uint256 private _status;\n\n    function __ReentrancyGuard_init() internal initializer {\n        __ReentrancyGuard_init_unchained();\n    }\n\n    function __ReentrancyGuard_init_unchained() internal initializer {\n        _status = _NOT_ENTERED;\n    }\n\n    /**\n     * @dev Prevents a contract from calling itself, directly or indirectly.\n     * Calling a `nonReentrant` function from another `nonReentrant`\n     * function is not supported. It is possible to prevent this from happening\n     * by making the `nonReentrant` function external, and make it call a\n     * `private` function that does the actual work.\n     */\n    modifier nonReentrant() {\n        // On the first call to nonReentrant, _notEntered will be true\n        require(_status != _ENTERED, \"ReentrancyGuard: reentrant call\");\n\n        // Any calls to nonReentrant after this point will fail\n        _status = _ENTERED;\n\n        _;\n\n        // By storing the original value once again, a refund is triggered (see\n        // https://eips.ethereum.org/EIPS/eip-2200)\n        _status = _NOT_ENTERED;\n    }\n    uint256[49] private __gap;\n}\n"
+      }
+    ]
+  },
+  "limitations": [
+    "Static deployment/ABI admission only; no fresh RPC bytecode, storage, simulation, liquidity or successful-execution guarantee. Independent authorization, canonical calldata, pause and signing controls remain mandatory.",
+    "aCRV is an auto-compounding cvxCRV strategy share, not a USD stablecoin; Convex/Curve, strategy, depeg and owner-upgrade risks apply.",
+    "Withdraw/redeem charges the owner-specific withdrawal fee (except the final holder, whose exit harvests). Preview functions use the default fee and may not match customized owner fees; max* views return uint256 max rather than user-specific executable limits.",
+    "The deployed mint(uint256,address) is excluded: both mint and its internal call to deposit are nonReentrant, so mint always reverts at the nested guard.",
+    "CRV input conversion lacks explicit user minimum-out; fixed wrapper input must be the exact constructor-bound token. Deprecated overloads and faulty mint are retained only as explicitly rejected inventory. No general zap or keeper harvest is admitted."
+  ],
+  "sourceRefs": [
+    "https://docs.aladdin.club/concentrator/contracts",
+    "https://docs.aladdin.club/concentrator",
+    "https://docs.aladdin.club/concentrator/concentrator-tutorial/deposit-and-withdraw",
+    "https://concentrator.aladdin.club/",
+    "https://sourcify.dev/server/v2/contract/1/0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3?fields=all",
+    "https://sourcify.dev/server/v2/contract/1/0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884?fields=all",
+    "https://etherscan.io/address/0x9A68dEa7DCddfC5c4c6B3cB8aB278BF2cD87d3d3#code",
+    "https://etherscan.io/address/0x2b95a1dcc3d405535f9ed33c219ab38e8d7e0884#code"
+  ]
+}

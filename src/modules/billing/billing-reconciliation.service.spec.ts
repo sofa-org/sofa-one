@@ -1,9 +1,22 @@
 import { ConflictException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/database/prisma.service';
 import { BillingService } from './billing.service';
 import { BillingReconciliationService } from './billing-reconciliation.service';
+import type * as OpenfortModule from '../../core/openfort/openfort.service';
+
+const mockReceiptRpc = jest.fn();
+const mockCanonicalBlockRpc = jest.fn();
+const mockHeadRpc = jest.fn();
+jest.mock('viem/actions', () => ({
+  ...jest.requireActual('viem/actions'),
+  getTransactionReceipt: mockReceiptRpc,
+  getBlock: mockCanonicalBlockRpc,
+  getBlockNumber: mockHeadRpc,
+}));
+jest.mock('@openfort/openfort-node', () => ({ __esModule: true, default: jest.fn() }));
 
 jest.mock('../../core/openfort/openfort.service', () => ({
   OpenfortService: class OpenfortService {},
@@ -123,6 +136,7 @@ describe('BillingReconciliationService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BillingReconciliationService,
+        { provide: ConfigService, useValue: new ConfigService({ billing: { outbound: { requiredConfirmations: 5 } } }) },
         {
           provide: PrismaService,
           useValue: {
@@ -168,7 +182,7 @@ describe('BillingReconciliationService', () => {
     runUpdateMany.mockResolvedValue({ count: 1 });
     txCount.mockResolvedValue(0);
     walletFindUnique.mockResolvedValue({ walletAddress: WALLET });
-    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, signerAddress: AGENT }]);
     recordSuccessfulOutbound.mockResolvedValue({ outcome: 'inserted' });
     txUpdateMany.mockResolvedValue({ count: 1 });
     txUpdate.mockResolvedValue({ id: 'tx-1' });
@@ -524,6 +538,47 @@ describe('BillingReconciliationService', () => {
     expect(result).toMatchObject({ transientError: 1, updated: 0 });
   });
 
+  it.each(['confirmations', 'canonical_hash'])(
+    'keeps outbound billing unresolved for insufficient %s and posts only after valid finality',
+    async (reason) => {
+      const actual = jest.requireActual<typeof OpenfortModule>(
+        '../../core/openfort/openfort.service',
+      );
+      // Exercise the real receipt implementation, not a mock that merely forwards options.
+      const provider = Object.create(actual.OpenfortService.prototype) as OpenfortService;
+      const getActualReceipt = actual.OpenfortService.prototype.getTransactionReceipt.bind(provider);
+      getReceipt.mockImplementation(getActualReceipt);
+      mockReceiptRpc.mockResolvedValue(successReceipt());
+      mockCanonicalBlockRpc.mockResolvedValue({
+        number: 12345n, timestamp: 1_786_320_000n,
+        hash: reason === 'canonical_hash' ? `0x${'d'.repeat(64)}` : BLOCK_HASH,
+      });
+      mockHeadRpc.mockResolvedValue(12348n);
+      mockCandidates([txRow()]);
+      const options = { targetPeriodStart: PERIOD_START, targetPeriodEnd: PERIOD_END };
+      const unresolved = await service.reconcile('user-1', options);
+      expect(unresolved).toMatchObject({ transientError: 1, posted: 0, updated: 0 });
+      expect(recordSuccessfulOutbound).not.toHaveBeenCalled();
+      expectNoTransactionStateMutation();
+      expect(runUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ summary: expect.objectContaining({ complete: false }) }),
+      }));
+
+      mockCanonicalBlockRpc.mockResolvedValue({
+        number: 12345n, timestamp: 1_786_320_000n, hash: BLOCK_HASH,
+      });
+      mockHeadRpc.mockResolvedValue(12349n);
+      mockCandidates([txRow()]);
+      const finalized = await service.reconcile('user-1', options);
+      expect(finalized).toMatchObject({ transientError: 0, posted: 1 });
+      expect(recordSuccessfulOutbound).toHaveBeenCalledTimes(1);
+      expect(recordSuccessfulOutbound).toHaveBeenCalledWith(expect.objectContaining({
+        status: 'posted', sourceKey: 'tx:tx-1:log:0',
+        receipt: expect.objectContaining({ receiptBlockHash: BLOCK_HASH }),
+      }));
+    },
+  );
+
   it('counts a tx hash mismatch as a conflict and never meters or confirms', async () => {
     mockCandidates([txRow()]);
     getReceipt.mockResolvedValue({
@@ -581,7 +636,7 @@ describe('BillingReconciliationService', () => {
 
   it('counts an unowned or mismatched transaction wallet as a conflict without metering', async () => {
     mockCandidates([txRow({ walletAddress: OTHER })]);
-    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, signerAddress: AGENT }]);
     getReceipt.mockResolvedValue({ status: 'success', receipt: successReceipt() });
 
     const result = await service.reconcile('user-1', { limit: 50, targetPeriodStart: PERIOD_START, targetPeriodEnd: PERIOD_END });
@@ -589,6 +644,17 @@ describe('BillingReconciliationService', () => {
     expect(recordSuccessfulOutbound).not.toHaveBeenCalled();
     expectNoTransactionStateMutation();
     expect(result).toMatchObject({ conflicts: 1, posted: 0, updated: 0 });
+  });
+
+  it('does not terminalize a failed inner UserOperation before outbound finality', async () => {
+    mockCandidates([txRow({ userOpHash: `0x${'a'.repeat(64)}`, userOpSuccess: false })]);
+    getReceipt.mockResolvedValue({ status: 'error', message: 'receipt awaiting required confirmations' });
+    const result = await service.reconcile('user-1', {
+      targetPeriodStart: PERIOD_START, targetPeriodEnd: PERIOD_END,
+    });
+    expect(result).toMatchObject({ transientError: 1, reverted: 0, posted: 0 });
+    expect(recordSuccessfulOutbound).not.toHaveBeenCalled();
+    expectNoTransactionStateMutation();
   });
 
   it('does not bill an outer bundle when the typed inner UserOperation failed', async () => {
@@ -601,7 +667,7 @@ describe('BillingReconciliationService', () => {
     });
 
     expect(recordSuccessfulOutbound).not.toHaveBeenCalled();
-    expect(getReceipt).not.toHaveBeenCalled();
+    expect(getReceipt).toHaveBeenCalled();
     expect(result.reverted).toBe(1);
     expect(
       txUpdateMany.mock.calls.some(
@@ -643,11 +709,11 @@ describe('BillingReconciliationService', () => {
       targetPeriodEnd: PERIOD_END,
     });
     expect(recordSuccessfulOutbound).not.toHaveBeenCalled();
-    expect(failed.reverted).toBe(1);
+    expect(failed).toMatchObject({ reverted: 0, transientError: 1, posted: 0 });
   });
 
   it('posts a backend_eoa send when receipt.from matches the wallet', async () => {
-    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, signerAddress: AGENT }]);
     mockCandidates([
       txRow({
         walletAddress: AGENT,
@@ -676,7 +742,7 @@ describe('BillingReconciliationService', () => {
   });
 
   it('quarantines a backend_eoa send whose receipt.from does not match the wallet', async () => {
-    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, agentWalletAddress: AGENT }]);
+    walletFindMany.mockResolvedValue([{ walletAddress: WALLET, signerAddress: AGENT }]);
     mockCandidates([
       txRow({
         walletAddress: AGENT,

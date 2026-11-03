@@ -1,0 +1,2181 @@
+{
+  "schemaVersion": 1,
+  "chainId": 56,
+  "address": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+  "protocol": "waultswap-v1",
+  "version": "v1",
+  "website": "https://github.com/WaultFinance/WAULT",
+  "websiteEvidence": {
+    "sourceRef": "https://github.com/WaultFinance/WAULT ; https://github.com/WaultFinance ; https://wault.finance/links/ ; https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf",
+    "verifiedAt": "2026-10-17",
+    "evidence": "Frontend directory should use the attributable WaultFinance/WAULT source repository, not a historical swap domain. GitHub profile identifies Wault Finance and links wault.finance and @Wault_Finance; surviving legacy links/transparency pages link this GitHub account. The 2021 Inspex WSwap audit independently cites this exact repository with pinned WEX/WexMaster source. Repository is reachable and informational; its current listed contracts do not include this router, so it is not substituted as router ABI/source evidence.",
+    "limitations": [
+      "Current wault.finance documentation is served as WordPress-rendered legacy GitBook content. Domain continuity/ownership and a functioning swap frontend are not established; do not advertise it as a live swap application.",
+      "A reachable repository/profile is attribution evidence, not a safety guarantee. No wallet connection or transaction was exercised."
+    ]
+  },
+  "deploymentEvidence": {
+    "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+    "deployment": {
+      "transactionHash": "0xf9b61ec36fcf7b83ff3caa41b4f1d8c513487bd22c6f11af9bfa98fde18526cd",
+      "blockNumber": "6657944",
+      "transactionIndex": "39",
+      "deployer": "0x25932EfC092400f7bc62ecbb2C3EAB67F9e8bA55"
+    },
+    "proxyResolution": {
+      "isProxy": false,
+      "proxyType": null,
+      "implementations": []
+    },
+    "constructorArguments": "0x000000000000000000000000b42e3fe71b7e0673335b3331b3e1053bd9822570000000000000000000000000bb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c",
+    "constructorDependencies": {
+      "factory": "0xb42e3fe71b7e0673335b3331b3e1053bd9822570",
+      "wrappedNative": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+      "evidence": "Exact-address Sourcify creation constructorArguments and reported runtime immutable transformation values bind factory and WBNB; reviewed source marks both immutable. Factory equals WS Factory in legacy transparency mapping and exact-address audit scope. No live RPC query was performed."
+    },
+    "evidence": "Legacy Wault transparency Contract Addresses explicitly maps WS Router to this exact BscScan address and WS Factory to its constructor factory. Published Inspex WSwap audit AUDIT2021001 v2.0, issued 2021-05-20, page 4 identifies WSwap as BSC and binds WswapV2Router02.sol to this exact target (name differs from deployed compilation name WaultSwapRouter). Independently indexed BscScan title labels exact target Wault Finance: WS Router. Sourcify chain56 supplies deployment, full ABI/source and reports direct non-proxy resolution.",
+    "limitations": [
+      "Direct BscScan request returned HTTP 403; its indexed exact-address title was retrieved by web search. ABI/source came from the exact-address source service, not the explorer page or a generic fork.",
+      "Historical docs/audit establish attribution, not a fresh operational or audit-safety endorsement. No current live bytecode, dependency configuration, balances or liquidity were checked."
+    ]
+  },
+  "abiEvidence": {
+    "sourceRef": "https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+    "verifiedAt": "2026-10-17",
+    "chainId": 56,
+    "address": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+    "compilation": {
+      "language": "Solidity",
+      "compiler": "solc",
+      "compilerVersion": "0.6.6+commit.6c089d02",
+      "compilerSettings": {
+        "metadata": {
+          "bytecodeHash": "ipfs"
+        },
+        "libraries": {},
+        "optimizer": {
+          "runs": 500,
+          "enabled": true
+        },
+        "evmVersion": "istanbul",
+        "remappings": []
+      },
+      "name": "WaultSwapRouter",
+      "fullyQualifiedName": "WaultSwapRouter.sol:WaultSwapRouter"
+    },
+    "matchId": "30696801",
+    "sourceServiceVerifiedAt": "2026-06-03T21:00:44Z",
+    "reportedCreationMatch": "exact_match",
+    "reportedRuntimeMatch": "exact_match",
+    "sourceFile": "WaultSwapRouter.sol",
+    "sourceSha256": "1e70f53620f6540c06f8f6a00baa5a03055402e79d6bc65c2312dbe3ddeffa99",
+    "sourceMetadata": {
+      "keccak256": "0xd224e542cf44cd962fb2a23da9d21ef6ae95520afa3521c911148d6739bb91c1",
+      "urls": [
+        "bzz-raw://21af90f248f60d7112d5be7e23e9fe94c8db9d411eed937f36e9340db891a0f2",
+        "dweb:/ipfs/QmYLgnotd7KpTwhCsEL3GEaL29tVTo2kcvRMt9JXhAiibx"
+      ]
+    },
+    "evidence": "Full original ABI copied from exact chain56/address Sourcify record. Complete flattened deployed source reviewed, including WaultSwapLibrary, SafeMath, TransferHelper, interfaces and all router methods. Full original selected fragments retained without generic Uniswap/fork ABI substitution. Source service actually reports exact_match for creation and runtime; these labels are preserved, not inferred from match. No fresh runtime RPC attestation or official-repository byte identity is claimed."
+  },
+  "sourceSemantics": {
+    "pairInitCodeHash": "0x9599db1eaa37ab366bf260f51beefce9296eb6197de387c533d905e9b82debe9",
+    "swapFeeFormula": "Library multiplies input by 998 with denominator reserveIn * 1000 + amountInWithFee; exact-output calculation divides by (reserveOut - amountOut) * 998 and adds one. This records reviewed router arithmetic, not current pair economics or financial safety.",
+    "nativeSettlement": "WETH is constructor-bound canonical BSC WBNB. Native-input calls wrap BNB; native-output calls unwrap WBNB and transfer BNB. receive accepts only WETH sender. addLiquidityETH and swapETHForExactTokens refund unused BNB to caller.",
+    "routing": "Explicit address[] token paths determine CREATE2 pairs from immutable factory and fixed deployed init-code hash; addLiquidity can create a missing pair. Both swap loops call pair.swap with empty bytes. No configurable mining hook or external arbitrary executor occurs in this deployed router.",
+    "liquidityMinimums": "_addLiquidity skips both minimum checks for both-zero reserves; otherwise checks only optimized-side minimum in the selected branch. There is no minimum LP minted. Removal checks pair burn-reported outputs after burning, not final post-tax receipt.",
+    "feeOnTransfer": "Supporting token/token and BNB/token swaps check recipient balance increase. Supporting token/BNB swap checks and unwraps whole router WBNB balance. Supporting token/BNB removal forwards whole router token balance and only burn-accounting minimums are checked.",
+    "dependencies": "Reviewed flattened dependency implementations are authoritative for pair derivation, arithmetic and token transfers. Pair/factory/wrapped-native/token runtime code, liquidity and nonstandard behavior were not independently live-attested.",
+    "nonFunctionEntries": "One constructor and one receive are retained in full ABI but create no capabilities; no fallback entry exists.",
+    "inventorySummary": {
+      "functions": 24,
+      "selected": 14,
+      "swaps": 9,
+      "liquidityActions": 5,
+      "excludedReadOnly": 7,
+      "excludedPermit": 3
+    },
+    "limitations": "This file preserves offline inventory evidence only; runtime consumes the generated catalog, not source snapshots. v1 is the catalog version identity, not a claim about original source filename/product version. No fresh runtime identity, liquidity or execution attestation is implied."
+  },
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_factory",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_WETH",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "WETH",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "addLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountADesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "addLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountTokenDesired",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "factory",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "getAmountsIn",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getAmountsOut",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quote",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "reserveB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "removeLiquidity",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountToken",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountTokenMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountETHMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "removeLiquidityWithPermit",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "tokenA",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenB",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "liquidity",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountAMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountBMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "approveMax",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountA",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountB",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapETHForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "name": "swapExactTokensForETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMin",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactETH",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapTokensForExactTokens",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMax",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "path",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "WETH",
+      "signature": "WETH()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability and not a new read API."
+    },
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit token/token liquidity provision; pulls caller tokens by allowance, derives pair from immutable factory, may create the pair and mints LP to specified recipient. Deadline enforced; minimum checks are branch-dependent and absent for a zero-reserve pair, not unconditional checks on both amounts."
+    },
+    {
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit token/native-BNB liquidity provision; pulls caller tokens, wraps required msg.value through immutable WBNB, mints LP to recipient and refunds unused BNB to caller. ETH ABI names denote BNB here. Deadline enforced; amount minimums retain branch-dependent _addLiquidity semantics."
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability and not a new read API."
+    },
+    {
+      "functionName": "getAmountIn",
+      "signature": "getAmountIn(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability and not a new read API."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability and not a new read API."
+    },
+    {
+      "functionName": "getAmountsIn",
+      "signature": "getAmountsIn(uint256,address[])",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability and not a new read API."
+    },
+    {
+      "functionName": "getAmountsOut",
+      "signature": "getAmountsOut(uint256,address[])",
+      "stateMutability": "view",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability and not a new read API."
+    },
+    {
+      "functionName": "quote",
+      "signature": "quote(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "decision": "excluded",
+      "reason": "Exclude read-only getter or quote; not a transaction capability and not a new read API."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/token removal; transfers specified caller LP to the derived pair using LP allowance, burns LP to recipient, checks both burn-accounting output minimums and deadline. Minimums are not net post-tax recipient guarantees."
+    },
+    {
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit non-permit token/native-BNB removal; uses caller LP allowance, checks pair-burn minimums/deadline, transfers calculated token amount, unwraps calculated WBNB amount and pays BNB to recipient."
+    },
+    {
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit non-permit fee-supporting token/native-BNB removal; checks pair-burn minimums/deadline but forwards entire router token balance. Token minimum does not guarantee net post-tax receipt."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermit",
+      "signature": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit path and approveMax allowance authority; ordinary non-permit removals are selected independently."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit path and approveMax allowance authority; ordinary non-permit removals are selected independently."
+    },
+    {
+      "functionName": "removeLiquidityWithPermit",
+      "signature": "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "decision": "excluded",
+      "reason": "Exclude signature-bearing LP permit path and approveMax allowance authority; ordinary non-permit removals are selected independently."
+    },
+    {
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit exact-output native-BNB/token path swap; requires WBNB path start, enforces deadline and msg.value input ceiling, wraps required input and refunds surplus BNB to caller."
+    },
+    {
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input native-BNB/token path swap; wraps msg.value, requires WBNB path start, checks calculated output minimum/deadline and pays specified recipient."
+    },
+    {
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input native-BNB/token fee-supporting path swap; wraps msg.value, requires WBNB path start and deadline, checks recipient output-token balance increase against minimum."
+    },
+    {
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/native-BNB path swap; pulls caller allowance-bounded input, requires WBNB path end, checks calculated minimum/deadline and unwraps calculated WBNB output to recipient."
+    },
+    {
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token/native-BNB fee-supporting swap; pulls caller amount, requires WBNB path end and deadline, checks minimum against entire router WBNB balance before unwrapping and payment."
+    },
+    {
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token path swap; pulls caller amount using allowance, checks calculated minimum/deadline and derives pair calls from immutable factory, fixed deployed pair-init-code hash and explicit token path."
+    },
+    {
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-input token fee-supporting path swap; pulls caller amount, computes each hop from pair balance minus reserve, checks recipient output-token balance delta against minimum and enforces deadline."
+    },
+    {
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-output token/native-BNB path swap; pulls calculated caller input under maximum, requires WBNB path end and deadline, unwraps specified WBNB output and pays BNB to recipient."
+    },
+    {
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "decision": "admitted",
+      "reason": "Explicit exact-output token path swap; pulls calculated caller input under maximum and enforces deadline. Pair swaps use empty callback data, not arbitrary nested execution."
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:add-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountADesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap addLiquidity",
+      "operation": "add-liquidity",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:add-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "addLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amountTokenDesired",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap addLiquidityETH",
+      "operation": "add-liquidity-eth",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidity",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "tokenA",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "tokenB",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountAMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountBMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountA",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountB",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap removeLiquidity",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:remove-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountToken",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap removeLiquidityETH",
+      "operation": "remove-liquidity-eth",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "liquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountTokenMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountETHMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountETH",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap removeLiquidityETHSupportingFeeOnTransferTokens",
+      "operation": "remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:swap-eth-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapETHForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap swapETHForExactTokens",
+      "operation": "swap-eth-for-exact-tokens",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:swap-exact-eth-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap swapExactETHForTokens",
+      "operation": "swap-exact-eth-for-tokens",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:swap-exact-tokens-for-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap swapExactTokensForETH",
+      "operation": "swap-exact-tokens-for-eth",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:swap-exact-tokens-for-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap swapExactTokensForTokens",
+      "operation": "swap-exact-tokens-for-tokens",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:swap-tokens-for-exact-eth",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactETH",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap swapTokensForExactETH",
+      "operation": "swap-tokens-for-exact-eth",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    },
+    {
+      "capabilityId": "waultswap-v1:v1:56:0xd48745e39bbed146eec15b79cbf964884f9877c2:swap-tokens-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 56,
+      "contract": "0xD48745E39BbED146eEC15b79cBF964884F9877c2",
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "name": "swapTokensForExactTokens",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amountOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "amountInMax",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "path",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "internalType": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "https://wault.finance/transparency/ ; https://wault.finance/files/audit-wault-wswap-fullreport-v2.0.pdf ; https://bscscan.com/address/0xD48745E39BbED146eEC15b79cBF964884F9877c2#code ; https://sourcify.dev/server/v2/contract/56/0xD48745E39BbED146eEC15b79cBF964884F9877c2?fields=all",
+        "verifiedAt": "2026-10-17",
+        "status": "verified"
+      },
+      "protocol": "waultswap-v1",
+      "label": "WaultSwap swapTokensForExactTokens",
+      "operation": "swap-tokens-for-exact-tokens",
+      "warnings": [
+        "Caller chooses token path, recipient, amounts, slippage bounds and deadline. Token/LP balances, allowances and native gas remain caller responsibilities subject to independent controls.",
+        "ETH/WETH ABI names refer to native BNB and constructor-bound WBNB on BSC 56. Four payable selected functions can spend msg.value; all nonpayable selected functions require zero native value.",
+        "Liquidity-add minimums are branch-dependent: zero-reserve pools use desired amounts without either minimum check; otherwise only the reserve-optimized side minimum is checked. There is no minimum LP-output argument.",
+        "Fee-supporting removal transfers the entire router token balance; supporting token-to-native swaps unwrap the entire router WBNB balance. Ordinary burn/swap amount minimums do not universally guarantee net post-tax receipts. Nonstandard, taxed or rebasing tokens can revert or change accounting.",
+        "Factory and wrapped-native addresses are immutable in reviewed source; pair addresses use the deployed library CREATE2 hash and swaps pass empty callback data. No multicall, arbitrary executor, signature/permit or administrator capability is selected.",
+        "Source-service exact_match is reported evidence as of its verification timestamp, not a fresh runtime identity, dependency safety, balance, liquidity, successful execution or financial-safety attestation. Metadata grants no API-key permission and bypasses no policy or pause."
+      ]
+    }
+  ]
+}

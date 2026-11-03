@@ -1,7 +1,7 @@
 import { Body, Controller, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { FrontendOnlyGuard } from '../../../common/guards/frontend-only.guard';
-import { OpenfortUserGuard } from '../../../common/guards/openfort-user.guard';
+import { AppSessionGuard } from '../../../common/guards/app-session.guard';
 import { FrontendOnly } from '../../../common/decorators/frontend-only.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { UsdcPaymentService } from './usdc-payment.service';
@@ -11,18 +11,18 @@ import { UsdcCancelDto } from './dto/usdc-cancel.dto';
 
 /**
  * Dashboard-only native USDC invoice payment routes. These are intentionally
- * NOT part of the public API-key spec (openapi.yaml) and require an Openfort
- * IAM bearer token plus the FrontendOnlyGuard origin/referer check. All
+ * NOT part of the public API-key spec and require a full-MFA local session
+ * plus FrontendOnlyGuard and unsafe-request Origin/CSRF checks. All
  * payment facts are server-derived; the client only supplies a verified chain
  * selector (quote), `{ paymentAttemptId, txHash }` (claim), or
  * `{ paymentAttemptId }` (cancel of a clean pending quote).
  */
-@Controller('v1/billing/invoices/:id/usdc')
+@Controller('billing/invoices/:id/usdc')
 export class UsdcPaymentController {
   constructor(private readonly usdcPaymentService: UsdcPaymentService) {}
 
   /**
-   * POST /v1/billing/invoices/:id/usdc/quote — creates (or reuses) a pending
+   * POST /billing/invoices/:id/usdc/quote — creates (or reuses) a pending
    * USDC payment attempt for a finalized, unpaid USD invoice owned by the
    * user. Returns a safe quote (token, treasury, expected payer, exact amount,
    * TTL, confirmations); never returns logs, calldata, RPC details, Openfort
@@ -30,7 +30,7 @@ export class UsdcPaymentController {
    */
   @Post('quote')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   async quote(
     @CurrentUser('id') userId: string,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -40,7 +40,7 @@ export class UsdcPaymentController {
   }
 
   /**
-   * POST /v1/billing/invoices/:id/usdc/claim — verifies a user-submitted
+   * POST /billing/invoices/:id/usdc/claim — verifies a user-submitted
    * transaction hash against the attempt's server-side quote snapshot and
    * advances the payment lifecycle (confirming → settled, or review/expired/
    * failed on any mismatch). Retryable outcomes never fabricate a payment.
@@ -51,7 +51,7 @@ export class UsdcPaymentController {
    */
   @Post('claim')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   @Throttle({ short: { limit: 5, ttl: 60000 }, medium: { limit: 20, ttl: 3600000 } })
   async claim(
     @CurrentUser('id') userId: string,
@@ -62,7 +62,7 @@ export class UsdcPaymentController {
   }
 
   /**
-   * POST /v1/billing/invoices/:id/usdc/cancel — BILL-003 user cancel of a clean
+   * POST /billing/invoices/:id/usdc/cancel — BILL-003 user cancel of a clean
    * evidence-free pending USDC quote. Body is only `{ paymentAttemptId }`.
    * No RPC/provider calls; fail closed on confirming, reservation, any hash/
    * receipt/evidence, or inconsistent state. Idempotent when already cancelled.
@@ -70,7 +70,7 @@ export class UsdcPaymentController {
    */
   @Post('cancel')
   @FrontendOnly()
-  @UseGuards(OpenfortUserGuard, FrontendOnlyGuard)
+  @UseGuards(AppSessionGuard, FrontendOnlyGuard)
   @Throttle({ short: { limit: 10, ttl: 60000 }, medium: { limit: 60, ttl: 3600000 } })
   async cancel(
     @CurrentUser('id') userId: string,

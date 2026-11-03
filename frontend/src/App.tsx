@@ -1,16 +1,18 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { AppSessionProvider } from './components/AppSessionProvider';
 
 const AuthProviders = lazy(() => import('./components/AuthProviders'));
 const ProtectedRoute = lazy(() => import('./components/ProtectedRoute'));
 const DashboardStepUpGate = lazy(() => import('./components/DashboardStepUpGate'));
 const LandingPage = lazy(() => import('./pages/Landing'));
+const ProtocolsPage = lazy(() => import('./pages/Protocols'));
 const PricingPage = lazy(() => import('./pages/Pricing'));
 const SignInPage = lazy(() => import('./pages/SignIn'));
 const DashboardLayout = lazy(() => import('./pages/dashboard/DashboardLayout'));
 const WalletPage = lazy(() => import('./pages/dashboard/Wallet'));
 const ApiKeysPage = lazy(() => import('./pages/dashboard/ApiKeys'));
-const APIDocsPage = lazy(() => import('./pages/dashboard/Docs'));
+const APIDocsPage = lazy(() => import('./pages/Docs'));
 const TransactionsPage = lazy(() => import('./pages/dashboard/Transactions'));
 const SecurityNotificationsPage = lazy(() => import('./pages/dashboard/SecurityNotifications'));
 const BillingPage = lazy(() => import('./pages/dashboard/Billing'));
@@ -38,6 +40,7 @@ function PageFallback() {
 
 export default function App() {
   return (
+    <AppSessionProvider>
     <div className="min-h-screen bg-brand-bg text-brand-text font-sans antialiased selection:bg-brand-accent selection:text-white">
       <Suspense fallback={<PageFallback />}>
         <Routes>
@@ -58,27 +61,30 @@ export default function App() {
             element={<PricingPage />}
           />
           <Route
+            path="/protocols"
+            element={<ProtocolsPage />}
+          />
+          <Route path="/docs" element={<APIDocsPage />} />
+          <Route
             path="/dashboard"
             element={
-              <AuthProviders>
                 <ProtectedRoute>
                   <DashboardStepUpGate>
                     <DashboardLayout />
                   </DashboardStepUpGate>
                 </ProtectedRoute>
-              </AuthProviders>
             }
           >
-            <Route index element={<WalletPage />} />
+            <Route index element={<AuthProviders><WalletPage /></AuthProviders>} />
             <Route path="api-keys" element={<ApiKeysPage />} />
             <Route path="transactions" element={<TransactionsPage />} />
             <Route path="notifications" element={<SecurityNotificationsPage />} />
             <Route path="billing" element={<BillingPage />} />
-            <Route path="docs" element={<APIDocsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </div>
+    </AppSessionProvider>
   );
 }

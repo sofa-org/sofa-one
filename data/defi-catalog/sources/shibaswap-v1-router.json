@@ -1,0 +1,3069 @@
+{
+  "schemaVersion": 1,
+  "chainId": 1,
+  "address": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+  "protocol": "shibaswap-v1",
+  "deploymentEvidence": {
+    "verifiedAt": "2026-10-16",
+    "chainId": 1,
+    "address": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+    "sourceRef": "https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+    "evidence": "Official Shiba Inu documentation search-index retrieval identifies this exact Router under Ethereum mainnet for ShibaSwap V1. Direct docs.shib.io requests returned HTTP 530 during review. Independently fetched Ethereum Etherscan address page labels the same exact target ShibaSwap v1: Router, links shibaswap.com, and identifies creator Shiba Inu: Deployer 2. No BSC address or deployment is admitted.",
+    "retrievalMethod": "Official documentation via indexed web search; Ethereum deployment page fetched directly.",
+    "creationTransaction": "https://etherscan.io/tx/0x1254222c15e4b870aa369b2e1234fb991a995a3164484b1fc368b8df6199a87b"
+  },
+  "abiEvidence": {
+    "verifiedAt": "2026-10-16",
+    "chainId": 1,
+    "address": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+    "sourceRef": "https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+    "evidence": "ABI parsed directly from the js-copytextarea2 element of this exact Ethereum address page. Etherscan reports Source Code Verified (Exact Match), contract name UniswapV2Router02, compiler v0.6.12+commit.27d51765, optimization 5000 runs. The ABI and reviewed source were fetched from this address, not imported from a Uniswap fork ABI or an unrelated deployment.",
+    "retrievalMethod": "Fetch HTML and JSON-decode HTML-unescaped pre#js-copytextarea2. Decode editor_contractJsonData for verified Solidity source.",
+    "contractName": "UniswapV2Router02",
+    "compilerVersion": "v0.6.12+commit.27d51765",
+    "optimizerRuns": 5000,
+    "proxy": "No proxy indirection in the reviewed verified router source: immutable factory and WETH; direct implementation. This is explorer-source review, not independent current-runtime attestation.",
+    "constructorArguments": {
+      "factory": "0x115934131916C8b277DD010Ee02de363c09d037c",
+      "WETH": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+    },
+    "sourceFile": "contracts/uniswapv2/UniswapV2Router02.sol",
+    "sourceSha256": "98fcf0c495456c663bc835e65e0507379b660a5fd6bf7f5d9428b4a300cf6b73"
+  },
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_factory",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_WETH",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "WETH",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenA",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenB",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountADesired",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountBDesired",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountAMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountBMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "addLiquidity",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountA",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountB",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquidity",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountTokenDesired",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountTokenMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountETHMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "addLiquidityETH",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountToken",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountETH",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquidity",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "factory",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "reserveIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "reserveOut",
+          "type": "uint256"
+        }
+      ],
+      "name": "getAmountIn",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "reserveIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "reserveOut",
+          "type": "uint256"
+        }
+      ],
+      "name": "getAmountOut",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        }
+      ],
+      "name": "getAmountsIn",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        }
+      ],
+      "name": "getAmountsOut",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountA",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "reserveA",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "reserveB",
+          "type": "uint256"
+        }
+      ],
+      "name": "quote",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountB",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenA",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenB",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquidity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountAMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountBMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "removeLiquidity",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountA",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountB",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquidity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountTokenMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountETHMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "removeLiquidityETH",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountToken",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountETH",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquidity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountTokenMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountETHMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountETH",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquidity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountTokenMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountETHMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "approveMax",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint8",
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "removeLiquidityETHWithPermit",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountToken",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountETH",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquidity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountTokenMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountETHMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "approveMax",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint8",
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountETH",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenA",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenB",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquidity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountAMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountBMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "approveMax",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint8",
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "removeLiquidityWithPermit",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountA",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountB",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "swapETHForExactTokens",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOutMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "swapExactETHForTokens",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOutMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOutMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "swapExactTokensForETH",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOutMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOutMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "swapExactTokensForTokens",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOutMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountInMax",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "swapTokensForExactETH",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountInMax",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "swapTokensForExactTokens",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ],
+  "functionInventory": [
+    {
+      "functionName": "WETH",
+      "signature": "WETH()",
+      "stateMutability": "view",
+      "abi": {
+        "inputs": [],
+        "name": "WETH",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      "decision": "excluded",
+      "reason": "Exclude view getter for the immutable wrapped-native address; not a state-changing transaction capability and does not introduce a read API."
+    },
+    {
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "tokenA",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "tokenB",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountADesired",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountBDesired",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountAMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountBMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "addLiquidity",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountA",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountB",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit token/token liquidity provision: caller supplies token addresses, desired amounts, minima, LP recipient and deadline. Source transfers caller tokens to the factory-derived pair and mints LP tokens; may create the pair if absent. No arbitrary execution payload or signature.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:add-liquidity"
+    },
+    {
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "payable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountTokenDesired",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountTokenMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETHMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "addLiquidityETH",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountToken",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETH",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit token/ETH liquidity provision: caller supplies token, amounts, minima, LP recipient and deadline; payable msg.value supplies ETH, wrapped through immutable WETH; unused ETH refunded to caller. No arbitrary execution payload or signature.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:add-liquidity-eth"
+    },
+    {
+      "functionName": "factory",
+      "signature": "factory()",
+      "stateMutability": "view",
+      "abi": {
+        "inputs": [],
+        "name": "factory",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      "decision": "excluded",
+      "reason": "Exclude view getter for immutable factory address; not a state-changing transaction capability and does not introduce a read API."
+    },
+    {
+      "functionName": "getAmountIn",
+      "signature": "getAmountIn(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveOut",
+            "type": "uint256"
+          }
+        ],
+        "name": "getAmountIn",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+      },
+      "decision": "excluded",
+      "reason": "Exclude pure reserve-based input quote; calculation only, not a state-changing transaction capability."
+    },
+    {
+      "functionName": "getAmountOut",
+      "signature": "getAmountOut(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveOut",
+            "type": "uint256"
+          }
+        ],
+        "name": "getAmountOut",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+      },
+      "decision": "excluded",
+      "reason": "Exclude pure reserve-based output quote; calculation only, not a state-changing transaction capability."
+    },
+    {
+      "functionName": "getAmountsIn",
+      "signature": "getAmountsIn(uint256,address[])",
+      "stateMutability": "view",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          }
+        ],
+        "name": "getAmountsIn",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      "decision": "excluded",
+      "reason": "Exclude view path input quote; does not move funds and does not introduce a read API."
+    },
+    {
+      "functionName": "getAmountsOut",
+      "signature": "getAmountsOut(uint256,address[])",
+      "stateMutability": "view",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          }
+        ],
+        "name": "getAmountsOut",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      "decision": "excluded",
+      "reason": "Exclude view path output quote; does not move funds and does not introduce a read API."
+    },
+    {
+      "functionName": "quote",
+      "signature": "quote(uint256,uint256,uint256)",
+      "stateMutability": "pure",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountA",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveA",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveB",
+            "type": "uint256"
+          }
+        ],
+        "name": "quote",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountB",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+      },
+      "decision": "excluded",
+      "reason": "Exclude pure reserve-ratio quote; calculation only, not a state-changing transaction capability."
+    },
+    {
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "tokenA",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "tokenB",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountAMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountBMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeLiquidity",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountA",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountB",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit token/token liquidity removal using existing LP allowance: caller supplies pair assets, LP quantity, minima, recipient and deadline; source burns LP and checks both output minima. No permit or arbitrary execution payload.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:remove-liquidity"
+    },
+    {
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountTokenMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETHMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeLiquidityETH",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountToken",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETH",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit token/ETH liquidity removal using existing LP allowance with caller-specified minima, recipient and deadline; source unwraps WETH to ETH. No permit or arbitrary execution payload.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:remove-liquidity-eth"
+    },
+    {
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountTokenMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETHMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountETH",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit fee-on-transfer token/ETH removal with LP allowance, caller-specified amounts, minima, recipient and deadline; source unwraps WETH and transfers the router entire token balance to recipient. Token minimum is checked against pair burn accounting, not guaranteed post-tax receipt. No permit or arbitrary execution payload.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:remove-liquidity-eth-supporting-fee-on-transfer-tokens"
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermit",
+      "signature": "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountTokenMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETHMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "approveMax",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint8",
+            "name": "v",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "r",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "s",
+            "type": "bytes32"
+          }
+        ],
+        "name": "removeLiquidityETHWithPermit",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountToken",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETH",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "excluded",
+      "reason": "Exclude LP permit/signature flow: consumes v/r/s authorization and approveMax can authorize unlimited LP spending. Signature authorization is outside this ordinary explicit allowance-based router admission."
+    },
+    {
+      "functionName": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountTokenMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETHMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "approveMax",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint8",
+            "name": "v",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "r",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "s",
+            "type": "bytes32"
+          }
+        ],
+        "name": "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountETH",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "excluded",
+      "reason": "Exclude LP permit/signature flow: consumes v/r/s authorization and approveMax can authorize unlimited LP spending. Signature authorization is outside this ordinary explicit allowance-based router admission."
+    },
+    {
+      "functionName": "removeLiquidityWithPermit",
+      "signature": "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,address,uint256,bool,uint8,bytes32,bytes32)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "tokenA",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "tokenB",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountAMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountBMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "approveMax",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint8",
+            "name": "v",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "r",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "s",
+            "type": "bytes32"
+          }
+        ],
+        "name": "removeLiquidityWithPermit",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountA",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountB",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "excluded",
+      "reason": "Exclude LP permit/signature flow: consumes v/r/s authorization and approveMax can authorize unlimited LP spending. Signature authorization is outside this ordinary explicit allowance-based router admission."
+    },
+    {
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapETHForExactTokens",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit exact-output ETH-to-token path swap with amountOut, caller recipient and deadline; msg.value caps ETH input, path begins at immutable WETH, excess ETH refunded. No arbitrary call data or signature.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-eth-for-exact-tokens"
+    },
+    {
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactETHForTokens",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit exact-input ETH-to-token path swap with caller output minimum, recipient and deadline; msg.value is input and path must begin at immutable WETH. No arbitrary call data or signature.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-eth-for-tokens"
+    },
+    {
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "stateMutability": "payable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit fee-on-transfer exact-input ETH-to-token path swap: payable msg.value supplies input; source checks recipient token balance increase against caller minimum and enforces deadline/WETH path start. No arbitrary call data or signature.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens"
+    },
+    {
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactTokensForETH",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit exact-input token-to-ETH path swap using token allowance, caller amountIn, output minimum, recipient and deadline; path ends at immutable WETH and source unwraps ETH. No arbitrary call data or signature.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-tokens-for-eth"
+    },
+    {
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit fee-on-transfer exact-input token-to-ETH path swap with allowance, caller amountIn, output minimum, recipient and deadline; source uses the router entire WETH balance for output before unwrapping. No arbitrary call data or signature.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens"
+    },
+    {
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactTokensForTokens",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit exact-input token path swap using allowance with caller amountIn, output minimum, recipient and deadline; pairs are derived from immutable factory. No arbitrary call data or signature.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-tokens-for-tokens"
+    },
+    {
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit fee-on-transfer exact-input token path swap using allowance; source checks recipient output balance increase against caller minimum and enforces deadline. No arbitrary call data or signature.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens"
+    },
+    {
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountInMax",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapTokensForExactETH",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit exact-output token-to-ETH path swap using allowance, caller output amount, input maximum, recipient and deadline; path ends at immutable WETH, source unwraps ETH. No arbitrary call data or signature.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-tokens-for-exact-eth"
+    },
+    {
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "stateMutability": "nonpayable",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountInMax",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapTokensForExactTokens",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "decision": "admitted",
+      "reason": "Admit explicit exact-output token path swap using allowance with caller output amount, input maximum, recipient and deadline; pairs derived from immutable factory. No arbitrary call data or signature.",
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-tokens-for-exact-tokens"
+    }
+  ],
+  "selectedFunctions": [
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:add-liquidity",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "addLiquidity",
+      "signature": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "tokenA",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "tokenB",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountADesired",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountBDesired",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountAMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountBMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "addLiquidity",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountA",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountB",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 addLiquidity",
+      "operation": "add-liquidity",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required.",
+        "LP positions expose callers to pool/token risks; adding liquidity may create a new pair. LP approval is separate from this catalog function."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:add-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "addLiquidityETH",
+      "signature": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountTokenDesired",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountTokenMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETHMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "addLiquidityETH",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountToken",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETH",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 addLiquidityETH",
+      "operation": "add-liquidity-eth",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required.",
+        "Payable function spends caller-supplied native ETH; addLiquidityETH and swapETHForExactTokens refund unused ETH to msg.sender when applicable."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:remove-liquidity",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "removeLiquidity",
+      "signature": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "tokenA",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "tokenB",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountAMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountBMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeLiquidity",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountA",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountB",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 removeLiquidity",
+      "operation": "remove-liquidity",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required.",
+        "LP positions expose callers to pool/token risks; adding liquidity may create a new pair. LP approval is separate from this catalog function."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:remove-liquidity-eth",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "removeLiquidityETH",
+      "signature": "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountTokenMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETHMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeLiquidityETH",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountToken",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETH",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 removeLiquidityETH",
+      "operation": "remove-liquidity-eth",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required.",
+        "LP positions expose callers to pool/token risks; adding liquidity may create a new pair. LP approval is separate from this catalog function."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "removeLiquidityETHSupportingFeeOnTransferTokens",
+      "signature": "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountTokenMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountETHMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeLiquidityETHSupportingFeeOnTransferTokens",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountETH",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 removeLiquidityETHSupportingFeeOnTransferTokens",
+      "operation": "remove-liquidity-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required.",
+        "LP positions expose callers to pool/token risks; adding liquidity may create a new pair. LP approval is separate from this catalog function.",
+        "Fee-on-transfer/rebasing/nonstandard-token behavior adds tax and accounting risk. Supporting functions do not guarantee safe behavior for every token.",
+        "Transfers the router entire token balance; amountTokenMin is checked on burn accounting before any final token transfer tax, not net tokens received by recipient."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-eth-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "swapETHForExactTokens",
+      "signature": "swapETHForExactTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapETHForExactTokens",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 swapETHForExactTokens",
+      "operation": "swap-eth-for-exact-tokens",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required.",
+        "Payable function spends caller-supplied native ETH; addLiquidityETH and swapETHForExactTokens refund unused ETH to msg.sender when applicable."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-eth-for-tokens",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "swapExactETHForTokens",
+      "signature": "swapExactETHForTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactETHForTokens",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 swapExactETHForTokens",
+      "operation": "swap-exact-eth-for-tokens",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required.",
+        "Payable function spends caller-supplied native ETH; addLiquidityETH and swapETHForExactTokens refund unused ETH to msg.sender when applicable."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactETHForTokensSupportingFeeOnTransferTokens(uint256,address[],address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-eth-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required.",
+        "Payable function spends caller-supplied native ETH; addLiquidityETH and swapETHForExactTokens refund unused ETH to msg.sender when applicable.",
+        "Fee-on-transfer/rebasing/nonstandard-token behavior adds tax and accounting risk. Supporting functions do not guarantee safe behavior for every token."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-tokens-for-eth",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "swapExactTokensForETH",
+      "signature": "swapExactTokensForETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactTokensForETH",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 swapExactTokensForETH",
+      "operation": "swap-exact-tokens-for-eth",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForETHSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactTokensForETHSupportingFeeOnTransferTokens",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 swapExactTokensForETHSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-eth-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required.",
+        "Fee-on-transfer/rebasing/nonstandard-token behavior adds tax and accounting risk. Supporting functions do not guarantee safe behavior for every token.",
+        "Unwraps the router entire WETH balance as ETH output; pre-existing router balances can affect reported output. Do not leave assets in the router."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-tokens-for-tokens",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "swapExactTokensForTokens",
+      "signature": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactTokensForTokens",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 swapExactTokensForTokens",
+      "operation": "swap-exact-tokens-for-tokens",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "signature": "swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountOutMin",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapExactTokensForTokensSupportingFeeOnTransferTokens",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 swapExactTokensForTokensSupportingFeeOnTransferTokens",
+      "operation": "swap-exact-tokens-for-tokens-supporting-fee-on-transfer-tokens",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required.",
+        "Fee-on-transfer/rebasing/nonstandard-token behavior adds tax and accounting risk. Supporting functions do not guarantee safe behavior for every token."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-tokens-for-exact-eth",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "swapTokensForExactETH",
+      "signature": "swapTokensForExactETH(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountInMax",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapTokensForExactETH",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 swapTokensForExactETH",
+      "operation": "swap-tokens-for-exact-eth",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required."
+      ]
+    },
+    {
+      "capabilityId": "shibaswap-v1:v1:1:0x03f7724180aa6b939894b5ca4314783b0b36b329:swap-tokens-for-exact-tokens",
+      "type": "contract_call",
+      "chainId": 1,
+      "contract": "0x03f7724180AA6b939894B5Ca4314783B0b36b329",
+      "functionName": "swapTokensForExactTokens",
+      "signature": "swapTokensForExactTokens(uint256,uint256,address[],address,uint256)",
+      "abi": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amountOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountInMax",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address[]",
+            "name": "path",
+            "type": "address[]"
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          }
+        ],
+        "name": "swapTokensForExactTokens",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "amounts",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      "status": "active",
+      "provenance": {
+        "sourceRef": "deployment: https://docs.shib.io/shibaswap/shibaswap-v1/deployed-address ; https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code; ABI: https://etherscan.io/address/0x03f7724180aa6b939894b5ca4314783b0b36b329#code",
+        "verifiedAt": "2026-10-16",
+        "status": "verified"
+      },
+      "protocol": "shibaswap-v1",
+      "label": "ShibaSwap V1 swapTokensForExactTokens",
+      "operation": "swap-tokens-for-exact-tokens",
+      "warnings": [
+        "Caller controls token addresses, path where present, amounts, recipient, minimums and deadline; outputs may be sent to an arbitrary recipient. Catalog admission does not constrain these financial parameters.",
+        "Token and LP-token spending requires existing allowances. Balances, gas, pool liquidity, token behavior, slippage and successful execution are not established by this source review.",
+        "Deployment/ABI review is not current bytecode, balance, execution or financial-safety attestation; independent grants, pauses, canonical decoding and transaction safety controls remain required."
+      ]
+    }
+  ],
+  "reviewSummary": {
+    "selectedFunctionCount": 14,
+    "excludedFunctionCount": 10,
+    "abiFunctionCount": 24,
+    "selectedScope": "Six ordinary exact-input/exact-output swaps, three fee-on-transfer exact-input swaps, four ordinary add/remove-liquidity actions, and one fee-on-transfer token/ETH liquidity removal.",
+    "excludedScope": "Seven view/pure getters/quotes and three LP permit/signature variants. Full verified ABI has no administrative, opaque executor or multicall function.",
+    "nonFunctionEntries": [
+      {
+        "type": "constructor",
+        "reason": "Deployment-only constructor is not a callable function capability."
+      },
+      {
+        "type": "receive",
+        "stateMutability": "payable",
+        "reason": "No selector; source restricts receipt to immutable WETH. Not a function capability or direct-ETH-transfer admission."
+      }
+    ],
+    "securityReview": "Reviewed exact address-bound router Solidity body: immutable factory/WETH, ensure(deadline), explicit typed swaps/liquidity, derived pair targets, no opaque arbitrary-call execution. Permit variants excluded independently. No live RPC, bytecode comparison, simulation, balance or liquidity verification performed.",
+    "limitations": "Official docs direct requests returned HTTP 530; official chain/address mapping was obtained from indexed search and independently corroborated by the exact Ethereum Etherscan deployment label, verified ABI/source and constructor arguments. No BSC search result was used.",
+    "metadataOnly": "This source artifact does not change runtime catalog, API-key grants or independent safety controls."
+  }
+}
